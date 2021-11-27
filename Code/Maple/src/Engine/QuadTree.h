@@ -1,9 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
-// This file is part of the Maple Engine									//
-// Copyright ?2020-2022 Tian Zeng                                           //
+// This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
-
-
 #pragma once
 #include <cstdint>
 #include <functional>
@@ -315,7 +312,7 @@ namespace Maple
 
 			auto addOrNext(K key, V val, std::function<Direction(const V&, const V&)> comparator) -> K
 			{
-				Direction dir = comparator(val, value); //���㵱ǰ�ڵ�Ӧ�÷��ڸ��ڵ��ʲôλ��;
+				Direction dir = comparator(val, value);
 				K dirkey = leaf(dir);
 				if (!dirkey)
 				{

@@ -1,3 +1,6 @@
+//////////////////////////////////////////////////////////////////////////////
+// This file is part of the Maple Engine                              		//
+//////////////////////////////////////////////////////////////////////////////
 #pragma once
 
 #include <vector>
@@ -28,7 +31,10 @@ namespace Maple
 
 		auto update(Camera* camera) -> void;
 		auto getMaxLevelLength() const->int32_t;
-		auto getType()  -> MeshType override { return TERRAIN; }
+		auto getType() -> MeshType override
+		{
+			return MeshType::TERRAIN;
+		}
 
 		inline auto setLod(bool lod) {
 			this->lod = lod;

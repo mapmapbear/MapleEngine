@@ -1,5 +1,5 @@
 //////////////////////////////////////////////////////////////////////////////
-// This file is part of the Raven Game Engine			                    //
+// This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #ifdef _WIN32
 #include "windows.h"
@@ -19,7 +19,7 @@
 #include <filesystem>
 
 #include "ImGui/ImGuiHelpers.h"
-#include "Engine/Interface/Texture.h"
+#include "RHI/Texture.h"
 #include "Engine/Quad2D.h"
 #include "Resources/MeshResource.h"
 #include "Window/NativeWindow.h"
@@ -190,7 +190,6 @@ namespace Maple
 		bool doubleClicked = false;
 		auto& editor = static_cast<Editor&>(*Application::get());
 
-		
 		if (gridView)
 		{
 			ImGui::BeginGroup();
@@ -276,7 +275,7 @@ namespace Maple
 			else
 			{
 				//LOGW("Open File {0} did not implementation {1}", currentDir[dirIndex].absolutePath, __FUNCTION__);
-				editor.openFile(file->absolutePath);
+				editor.openFileInPreview(file->absolutePath);
 			}
 		}
 
@@ -440,12 +439,17 @@ namespace Maple
 	{
 		if (ImGui::BeginPopupContextWindow("AssetsWindow::PopupWindow"))
 		{
-			bool isAdd = false;
 			if (ImGui::Selectable("Refresh current folder"))
 			{
 				currentDir->children.clear();
 				readDirectory(currentDir->absolutePath, currentDir);
 			}
+
+			if (ImGui::Selectable("Add Material"))
+			{
+				File::create(currentDir->absolutePath + "/default.material");
+			}
+
 			ImGui::EndPopup();
 		}
 	}

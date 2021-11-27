@@ -1,195 +1,295 @@
 
-
+//////////////////////////////////////////////////////////////////////////////
+// This file is part of the Maple Engine                              		//
+//////////////////////////////////////////////////////////////////////////////
 #include "Material.h"
-#include "Engine/Interface/Texture.h"
-#include "Engine/Interface/DescriptorSet.h"
-#include "Engine/Interface/Pipeline.h"
-#include "Engine/Interface/UniformBuffer.h"
-#include "Engine/Interface/Shader.h"
+#include "RHI/DescriptorSet.h"
+#include "RHI/Pipeline.h"
+#include "RHI/Shader.h"
+#include "RHI/Texture.h"
+#include "RHI/UniformBuffer.h"
+
+#include "Engine/Core.h"
+#include "Engine/Profiler.h"
+#include "Others/Console.h"
+#include "Others/Serialization.h"
 
 namespace Maple
 {
-
-	Material::Material(const std::shared_ptr<Shader>& shader, const MaterialProperties& properties, const PBRMataterialTextures& textures)
-		: pbrMaterialTextures(textures), shader(shader)
+	Material::Material(const std::shared_ptr<Shader> &shader, const MaterialProperties &properties, const PBRMataterialTextures &textures) :
+	    pbrMaterialTextures(textures), shader(shader)
 	{
-		setRenderFlag(RenderFlags::DEFERREDRENDER);
+		PROFILE_FUNCTION();
+
+		setRenderFlag(RenderFlags::DepthTest);
+		setRenderFlag(RenderFlags::DeferredRender);
 		setMaterialProperites(properties);
 	}
 
 	Material::Material()
 	{
-		setRenderFlag(RenderFlags::DEFERREDRENDER);
+		PROFILE_FUNCTION();
+		setRenderFlag(RenderFlags::DepthTest);
+		setRenderFlag(RenderFlags::DeferredRender);
+	}
+
+	Material::Material(const std::string &materialId) :
+	    materialId(materialId)
+	{
+		PROFILE_FUNCTION();
+		Serialization::loadMaterial(this, materialId);
 	}
 
 	Material::~Material()
 	{
+
 	}
 
-	auto Material::loadPBRMaterial(const std::string& name, const std::string& path, const std::string& extension) -> void
+	auto Material::loadPBRMaterial(const std::string &name, const std::string &path, const std::string &extension) -> void
 	{
+		PROFILE_FUNCTION();
 	}
 
-	auto Material::loadMaterial(const std::string& name, const std::string& path) -> void
+	auto Material::loadMaterial(const std::string &name, const std::string &path) -> void
 	{
-		this->name = name;
-		pbrMaterialTextures.albedo = Texture2D::create(name, path);
-		pbrMaterialTextures.normal = nullptr;
+		this->name                    = name;
+		pbrMaterialTextures.albedo    = Texture2D::create(name, path);
+		pbrMaterialTextures.normal    = nullptr;
 		pbrMaterialTextures.roughness = nullptr;
-		pbrMaterialTextures.metallic = nullptr;
-		pbrMaterialTextures.ao = nullptr;
-		pbrMaterialTextures.emissive = nullptr;
+		pbrMaterialTextures.metallic  = nullptr;
+		pbrMaterialTextures.ao        = nullptr;
+		pbrMaterialTextures.emissive  = nullptr;
 	}
 
-	auto Material::createDescriptorSet(Pipeline* pipeline, int32_t layoutID, bool pbr) -> void
+	auto Material::createDescriptorSet(int32_t layoutID, bool pbr) -> void
 	{
-		/*if (descriptorSet)
-			descriptorSet.reset();*/
+		PROFILE_FUNCTION();
 
-		//this->pipeline = pipeline;
-
-		if (materialPropertiesBuffer == nullptr && pbr)
+		if (descriptorSet)
 		{
-			materialPropertiesBuffer = UniformBuffer::create(sizeof(MaterialProperties),nullptr);
+			descriptorSet.reset();
 		}
 
-		if (descriptorSets[pipeline] == nullptr) {
-			DescriptorInfo info;
-			info.pipeline = pipeline;
-			info.layoutIndex = layoutID;
-			info.shader = pipeline->getShader();
-			descriptorSets[pipeline] = DescriptorSet::create(info);
-		}
-
-
-		std::vector<ImageInfo> imageInfos;
-		std::vector<BufferInfo> bufferInfos;
-
-		auto getImageInfo = [&](std::shared_ptr<Texture2D> texture,const std::string & name,float & value,int32_t binding) {
-			ImageInfo imageInfo1 = {};
-			if (texture != nullptr) 
-			{
-				imageInfo1.textures = { texture };
-			}
-			else 
-			{
-				imageInfo1.textures = { Texture2D::getDefaultTexture() };
-				value = 0.f;
-			}
-			imageInfo1.binding = binding;
-			imageInfo1.name = name;
-			imageInfos.push_back(imageInfo1);
-		};
-
-		getImageInfo(pbrMaterialTextures.albedo, "albedoMap", materialProperties.usingAlbedoMap, 0);
-
-
-		if (pbr)
+		if (shader == nullptr)
 		{
-			getImageInfo(pbrMaterialTextures.metallic, "metallicMap", materialProperties.usingMetallicMap, 1);
-			getImageInfo(pbrMaterialTextures.roughness, "roughnessMap", materialProperties.usingRoughnessMap, 2);
-			getImageInfo(pbrMaterialTextures.normal, "normalMap", materialProperties.usingNormalMap, 3);
-			getImageInfo(pbrMaterialTextures.ao, "aoMap", materialProperties.usingAOMap, 4);
-			getImageInfo(pbrMaterialTextures.emissive, "emissiveMap", materialProperties.usingAOMap, 5);
+			if (isFlagOf(RenderFlags::ForwardRender))
+			{
+				shader = Shader::create("shaders/ForwardPBR.shader");
+			}
 
+			if (isFlagOf(RenderFlags::DeferredRender))
+			{
+				shader = Shader::create("shaders/DeferredColor.shader");
+			}
 
-			BufferInfo bufferInfo = {};
-			bufferInfo.buffer = materialPropertiesBuffer;
-			bufferInfo.offset = 0;
-			bufferInfo.size = sizeof(MaterialProperties);
-			bufferInfo.type = DescriptorType::UNIFORM_BUFFER;
-			bufferInfo.binding = 6;
-			bufferInfo.shaderType = ShaderType::FRAGMENT_SHADER;
-			bufferInfo.name = "UniformMaterialData";
-			bufferInfos.push_back(bufferInfo);
-			materialPropertiesBuffer->setData(sizeof(MaterialProperties), &materialProperties);
+			if (isFlagOf(RenderFlags::ForwardPreviewRender))
+			{
+				shader = Shader::create("shaders/ForwardPreview.shader");
+			}
 		}
 
-		descriptorSets[pipeline]->update(imageInfos, bufferInfos);
+		DescriptorInfo descriptorDesc;
+		descriptorDesc.layoutIndex = layoutID;
+		descriptorDesc.shader      = shader.get();
+
+		descriptorSet = DescriptorSet::create(descriptorDesc);
+		updateDescriptorSet();
 	}
 
-	auto Material::setTextures(const PBRMataterialTextures& textures) -> void
+	auto Material::updateDescriptorSet() -> void
 	{
+		PROFILE_FUNCTION();
+		descriptorSet->setTexture("uAlbedoMap", pbrMaterialTextures.albedo);
+		descriptorSet->setTexture("uMetallicMap", pbrMaterialTextures.albedo);
+		descriptorSet->setTexture("uRoughnessMap", pbrMaterialTextures.albedo);
+		descriptorSet->setTexture("uNormalMap", pbrMaterialTextures.albedo);
+		descriptorSet->setTexture("uAOMap", pbrMaterialTextures.albedo);
+		descriptorSet->setTexture("uEmissiveMap", pbrMaterialTextures.albedo);
+
+		if (pbrMaterialTextures.albedo != nullptr)
+		{
+			descriptorSet->setTexture("uAlbedoMap", pbrMaterialTextures.albedo);
+		}
+		else
+		{
+			materialProperties.usingAlbedoMap = 0.0f;
+		}
+
+		if (pbrMaterialTextures.metallic)
+		{
+			descriptorSet->setTexture("uMetallicMap", pbrMaterialTextures.metallic);
+		}
+		else
+		{
+			materialProperties.usingMetallicMap = 0.0f;
+		}
+
+		if (pbrMaterialTextures.roughness)
+		{
+			descriptorSet->setTexture("uRoughnessMap", pbrMaterialTextures.roughness);
+		}
+		else
+		{
+			materialProperties.usingRoughnessMap = 0.0f;
+		}
+
+		if (pbrMaterialTextures.normal != nullptr)
+		{
+			descriptorSet->setTexture("uNormalMap", pbrMaterialTextures.normal);
+		}
+		else
+		{
+			materialProperties.usingNormalMap = 0.0f;
+		}
+
+		if (pbrMaterialTextures.ao != nullptr)
+		{
+			descriptorSet->setTexture("uAOMap", pbrMaterialTextures.ao);
+		}
+		else
+		{
+			materialProperties.usingAOMap = 0.0f;
+		}
+
+		if (pbrMaterialTextures.emissive != nullptr)
+		{
+			descriptorSet->setTexture("uEmissiveMap", pbrMaterialTextures.emissive);
+		}
+		else
+		{
+			materialProperties.usingEmissiveMap = 0.0f;
+		}
+
+		updateUniformBuffer();
+	}
+
+	auto Material::updateUniformBuffer() -> void
+	{
+		PROFILE_FUNCTION();
+		if (!descriptorSet)
+			return;
+
+		descriptorSet->setUniformBufferData("UniformMaterialData", &materialProperties);
+		descriptorSet->update();
+	}
+
+	auto Material::setMaterialProperites(const MaterialProperties &properties) -> void
+	{
+		PROFILE_FUNCTION();
+		materialProperties = properties;
+		updateUniformBuffer();
+	}
+
+	auto Material::setTextures(const PBRMataterialTextures &textures) -> void
+	{
+		PROFILE_FUNCTION();
 		pbrMaterialTextures = textures;
 	}
 
-	auto Material::setMaterialProperites(const MaterialProperties& properties) -> void
+	auto Material::setAlbedoTexture(const std::string &path) -> void
 	{
-		materialProperties = properties;
-		if (materialPropertiesBuffer) {
-			materialPropertiesBuffer->setData(sizeof(MaterialProperties), &materialProperties);
+		setAlbedo(Texture2D::create(path, path));
+	}
+
+	auto Material::setAlbedo(const std::shared_ptr<Texture2D> &texture) -> void
+	{
+		PROFILE_FUNCTION();
+		if (texture)
+		{
+			pbrMaterialTextures.albedo        = texture;
+			materialProperties.usingAlbedoMap = 1.0;
+			texturesUpdated                   = true;
 		}
 	}
 
-
-	auto Material::setAlbedoTexture(const std::string& path) -> void
+	auto Material::setNormalTexture(const std::string &path) -> void
 	{
+		PROFILE_FUNCTION();
 		auto tex = Texture2D::create(path, path);
 		if (tex)
 		{
-			pbrMaterialTextures.albedo = tex;
+			pbrMaterialTextures.normal        = tex;
+			materialProperties.usingNormalMap = 1.0;
+			texturesUpdated                   = true;
+		}
+	}
+
+	auto Material::setRoughnessTexture(const std::string &path) -> void
+	{
+		PROFILE_FUNCTION();
+		auto tex = Texture2D::create(path, path);
+		if (tex)
+		{
+			pbrMaterialTextures.roughness        = tex;
+			materialProperties.usingRoughnessMap = 1.0;
+
 			texturesUpdated = true;
 		}
 	}
 
-	auto Material::setNormalTexture(const std::string& path) -> void
+	auto Material::setMetallicTexture(const std::string &path) -> void
 	{
+		PROFILE_FUNCTION();
 		auto tex = Texture2D::create(path, path);
 		if (tex)
 		{
-			pbrMaterialTextures.normal = tex;
+			pbrMaterialTextures.metallic        = tex;
+			materialProperties.usingMetallicMap = 1.0;
+
 			texturesUpdated = true;
 		}
 	}
 
-	auto Material::setRoughnessTexture(const std::string& path) -> void
+	auto Material::setAOTexture(const std::string &path) -> void
 	{
+		PROFILE_FUNCTION();
 		auto tex = Texture2D::create(path, path);
 		if (tex)
 		{
-			pbrMaterialTextures.roughness = tex;
-			texturesUpdated = true;
+			pbrMaterialTextures.ao        = tex;
+			materialProperties.usingAOMap = 1.0;
+			texturesUpdated               = true;
 		}
 	}
 
-	auto Material::setMetallicTexture(const std::string& path) -> void
+	auto Material::setEmissiveTexture(const std::string &path) -> void
 	{
+		PROFILE_FUNCTION();
 		auto tex = Texture2D::create(path, path);
 		if (tex)
 		{
-			pbrMaterialTextures.metallic = tex;
-			texturesUpdated = true;
+			pbrMaterialTextures.emissive        = tex;
+			materialProperties.usingEmissiveMap = 1.0;
+			texturesUpdated                     = true;
 		}
 	}
 
-	auto Material::setAOTexture(const std::string& path) -> void
+	auto Material::bind() -> void
 	{
-		auto tex = Texture2D::create(path, path);
-		if (tex)
+		PROFILE_FUNCTION();
+
+		if (descriptorSet == nullptr || isTexturesUpdated())
 		{
-			pbrMaterialTextures.ao = tex;
-			texturesUpdated = true;
+			createDescriptorSet();
+			setTexturesUpdated(false);
 		}
+		descriptorSet->update();
 	}
 
-	auto Material::setEmissiveTexture(const std::string& path) -> void
+	auto Material::setShader(const std::string &path) -> void
 	{
-		auto tex = Texture2D::create(path, path);
-		if (tex)
-		{
-			pbrMaterialTextures.emissive = tex;
-			texturesUpdated = true;
-		}
-	}
-
-	auto Material::setShader(const std::string& path) -> void
-	{
+		PROFILE_FUNCTION();
 		shader = Shader::create(path);
 	}
 
-	auto Material::getShaderPath() const->std::string
+	auto Material::setShader(const std::shared_ptr<Shader> &shader) -> void
+	{
+		PROFILE_FUNCTION();
+		this->shader = shader;
+	}
+
+	auto Material::getShaderPath() const -> std::string
 	{
 		return shader ? shader->getFilePath() : "";
 	}
-
-};
+};        // namespace Maple

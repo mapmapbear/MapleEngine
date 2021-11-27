@@ -1,19 +1,17 @@
 //////////////////////////////////////////////////////////////////////////////
-// This file is part of the Vulkan Assignment								// 
-// Copyright ?2020-2022 Prime Zeng                                          // 
-////////////////////////////////////////////////////////////////////////////// 
-
+// This file is part of the Maple Engine                              		//
+//////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <memory>
 #include "Application.h"
 #include "EditorWindow.h"
-#include "Scene/Component/Transform.h"
 #include "Engine/CameraController.h"
 #include "FileSystem/File.h"
+#include "Math/Ray.h"
+#include "Scene/Component/Transform.h"
 #include "UI/LoadingDialog.h"
 #include <entt/entt.hpp>
 #include <glm/glm.hpp>
-#include "Math/Ray.h"
+#include <memory>
 namespace Maple
 {
 	class EditorPlugin;
@@ -23,110 +21,144 @@ namespace Maple
 	class RenderManager;
 	class Quad2D;
 
-
-	class Editor final : public Application 
+	class Editor final : public Application
 	{
-	public:
-		Editor(AppDelegate* appDelegate);
+	  public:
+		Editor(AppDelegate *appDelegate);
 		auto init() -> void override;
 		auto onImGui() -> void override;
-		auto onUpdate(const Timestep& delta) -> void override;
-
+		auto onUpdate(const Timestep &delta) -> void override;
 
 		auto onRenderDebug() -> void override;
 
-		auto setSelected(const entt::entity& selectedNode) -> void;
-		auto setCopiedEntity(const entt::entity& selectedNode, bool cut = false) -> void;
+		auto setSelected(const entt::entity &selectedNode) -> void;
+		auto setCopiedEntity(const entt::entity &selectedNode, bool cut = false) -> void;
 
-		auto getScreenRay(int32_t x, int32_t y, Camera* camera, int32_t width, int32_t height)->Ray;
+		auto getScreenRay(int32_t x, int32_t y, Camera *camera, int32_t width, int32_t height) -> Ray;
 
-
-		template<class T>
-		inline auto getEditorWindow() {
+		template <class T>
+		inline auto getEditorWindow()
+		{
 			return std::static_pointer_cast<T>(editorWindows[typeid(T).hash_code()]);
 		}
 
-		template<class T>
+		template <class T>
 		auto addSubWindow() -> void;
 
-		inline auto& getSelected() const { return selectedNode; }
-		inline auto& getPrevSelected() const { return prevSelectedNode; }
-		inline auto& getCopiedEntity() const { return copiedNode; }
-		inline auto  isCutCopyEntity() const { return cutCopyEntity; }
-		inline auto& getComponentIconMap() const { return iconMap; }
-		inline auto& getComponentIconMap() { return iconMap; }
+		inline auto &getSelected() const
+		{
+			return selectedNode;
+		}
+		inline auto &getPrevSelected() const
+		{
+			return prevSelectedNode;
+		}
+		inline auto &getCopiedEntity() const
+		{
+			return copiedNode;
+		}
+		inline auto isCutCopyEntity() const
+		{
+			return cutCopyEntity;
+		}
+		inline auto &getComponentIconMap() const
+		{
+			return iconMap;
+		}
+		inline auto &getComponentIconMap()
+		{
+			return iconMap;
+		}
 
+		inline auto &getEditorCameraTransform()
+		{
+			return editorCameraTransform;
+		}
+		inline auto &getEditorCameraController()
+		{
+			return editorCameraController;
+		}
 
+		inline auto getImGuizmoOperation() const
+		{
+			return imGuizmoOperation;
+		}
+		inline auto setImGuizmoOperation(uint32_t imGuizmoOperation)
+		{
+			this->imGuizmoOperation = imGuizmoOperation;
+		}
+		inline auto &getCamera()
+		{
+			return camera;
+		}
 
-		inline auto getImGuizmoOperation() const { return imGuizmoOperation; }
-		inline auto setImGuizmoOperation(uint32_t imGuizmoOperation) { this->imGuizmoOperation = imGuizmoOperation; }
-		inline auto& getCamera() { return camera; }
-		inline auto& getEditorCameraTransform() { return editorCameraTransform; }
-		inline auto& getEditorCameraController() { return editorCameraController; }
-		inline auto getTextureAtlas() { return textureAtlas; }
+		inline auto getTextureAtlas()
+		{
+			return textureAtlas;
+		}
 
 		auto onImGuizmo() -> void;
 
-		auto onSceneCreated(Scene* scene) -> void override;
-	
+		auto onSceneCreated(Scene *scene) -> void override;
 
-		auto getIconFontIcon(const std::string& file) -> const char*;
+		auto getIconFontIcon(const std::string &file) -> const char *;
 
-		auto openFile(const std::string& file) -> void;
+		auto openFileInPreview(const std::string &file) -> void;
+		auto openFileInEditor(const std::string &file) -> void;
 
 		auto drawGrid() -> void;
-		
-		auto getIcon(FileType type)->Quad2D*;
+
+		auto getIcon(FileType type) -> Quad2D *;
 		auto processIcons() -> void;
 
-		auto addPlugin(EditorPlugin* plugin) -> void;
-		auto addFunctionalPlugin(const std::function<void(Editor*)> & callback) -> void;
+		auto addPlugin(EditorPlugin *plugin) -> void;
+		auto addFunctionalPlugin(const std::function<void(Editor *)> &callback) -> void;
 
-		auto clickObject(const Ray& ray) -> void;
-		auto focusCamera(const glm::vec3& point, float distance, float speed = 1.0f) -> void;
-	private:
-		auto drawPlayButtons() -> void;
-		auto drawMenu() -> void;
-		auto beginDockSpace()  -> void;
-		auto endDockSpace()  -> void;
-		auto loadCachedScene()-> void;
-		auto cacheScene()-> void;
+		auto clickObject(const Ray &ray) -> void;
+		auto focusCamera(const glm::vec3 &point, float distance, float speed = 1.0f) -> void;
+
+	  private:
+		auto                                                      drawPlayButtons() -> void;
+		auto                                                      drawMenu() -> void;
+		auto                                                      beginDockSpace() -> void;
+		auto                                                      endDockSpace() -> void;
+		auto                                                      loadCachedScene() -> void;
+		auto                                                      cacheScene() -> void;
 		std::unordered_map<size_t, std::shared_ptr<EditorWindow>> editorWindows;
 
-		entt::entity selectedNode = entt::null;
-		entt::entity prevSelectedNode = entt::null;
-		entt::entity copiedNode = entt::null;
-		bool cutCopyEntity = false;
-		std::unordered_map<size_t, const char*> iconMap;
+		entt::entity                             selectedNode     = entt::null;
+		entt::entity                             prevSelectedNode = entt::null;
+		entt::entity                             copiedNode       = entt::null;
+		bool                                     cutCopyEntity    = false;
+		std::unordered_map<size_t, const char *> iconMap;
 
 		uint32_t imGuizmoOperation = 4;
-		bool showGizmos = true;
+		bool     showGizmos        = true;
 
 		std::unique_ptr<Camera> camera;
-		Transform editorCameraTransform;
-		EditorCameraController editorCameraController;
+
 		bool cameraSelected = false;
 
-		
 		//need to be optimized. should use Atlats to cache.
-		std::unordered_map<FileType, std::string> cacheIcons;
-		std::shared_ptr<TextureAtlas> textureAtlas;
+		std::unordered_map<FileType, std::string>  cacheIcons;
+		std::shared_ptr<TextureAtlas>              textureAtlas;
 		std::vector<std::unique_ptr<EditorPlugin>> plugins;
 
-		LoadingDialog dialog;
+		LoadingDialog          dialog;
+		Transform              editorCameraTransform;
+		EditorCameraController editorCameraController;
 
-	private:
-		bool transitioningCamera = false;
+	  private:
+		bool      transitioningCamera = false;
 		glm::vec3 cameraDestination;
 		glm::vec3 cameraStartPosition;
-		float cameraTransitionStartTime = 0.0f;
-		float cameraTransitionSpeed = 0.0f;
-
+		float     cameraTransitionStartTime = 0.0f;
+		float     cameraTransitionSpeed     = 0.0f;
 	};
 
-	template<class T>
+	template <class T>
 	auto Editor::addSubWindow() -> void
 	{
 		editorWindows.emplace(typeid(T).hash_code(), std::make_shared<T>());
 	}
-};
+};        // namespace Maple

@@ -1,39 +1,43 @@
-
 //////////////////////////////////////////////////////////////////////////////
-// This file is part of the Maple Engine                              //
-// Copyright ?2020-2022 Tian Zeng                                           //
+// This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
-
-#pragma  once
-#include <string>
+#pragma once
 #include <imgui.h>
 #include <memory>
+#include <string>
 
 #include "EditorWindow.h"
+#include "Engine/CameraController.h"
+#include "Scene/Component/Transform.h"
 
-namespace Maple 
+namespace Maple
 {
 	class Texture2D;
 	class SceneWindow : public EditorWindow
 	{
-	public:
+	  public:
 		SceneWindow();
-		virtual auto onImGui() -> void ;
+		virtual auto onImGui() -> void;
 		virtual auto resize(uint32_t width, uint32_t height) -> void;
-	private:
+
+		auto handleInput(float dt) -> void override;
+
+
+	  private:
 		auto drawToolBar() -> void;
-		auto drawGizmos(float width, float height, float xpos, float ypos, Scene* scene) -> void;
+		auto drawGizmos(float width, float height, float xpos, float ypos, Scene *scene) -> void;
 
-		auto draw2DGrid(ImDrawList* drawList,
-			const ImVec2& cameraPos,
-			const ImVec2& windowPos,
-			const ImVec2& canvasSize,
-			const float factor,
-			const float thickness) -> void;
+		auto draw2DGrid(ImDrawList *  drawList,
+		                const ImVec2 &cameraPos,
+		                const ImVec2 &windowPos,
+		                const ImVec2 &canvasSize,
+		                const float   factor,
+		                const float   thickness) -> void;
 
-		bool showCamera = false;
-		uint32_t width;
-		uint32_t height;
+		bool                       showCamera = false;
+		uint32_t                   width;
+		uint32_t                   height;
 		std::shared_ptr<Texture2D> previewTexture;
+
 	};
-};
+};        // namespace Maple

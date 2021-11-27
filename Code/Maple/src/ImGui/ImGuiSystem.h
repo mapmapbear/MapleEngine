@@ -1,8 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
-// This file is part of the Maple Engine                              // 
-// Copyright ?2020-2022 Tian Zeng                                           // 
-////////////////////////////////////////////////////////////////////////////// 
-
+// This file is part of the Maple Engine                              		//
+//////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "Engine/Timestep.h"
 #include "Event/EventHandler.h"
@@ -11,7 +9,7 @@
 
 namespace Maple
 {
-	class VkImGUIRenderer ;
+	class ImGuiRenderer;
 	class Scene;
 
 	class ImGuiSystem : public ISystem
@@ -19,7 +17,8 @@ namespace Maple
 	public:
 		ImGuiSystem(bool clearScreen = false);
 		~ImGuiSystem();
-		
+
+		auto newFrame(const Timestep &step) -> void;
 		auto onInit() -> void override;
 		auto onUpdate(float dt, Scene* scene) -> void override;
 		auto onImGui() -> void override {};
@@ -31,7 +30,7 @@ namespace Maple
 	private:
 
 		bool clearScreen = false;
-		std::unique_ptr<VkImGUIRenderer> imguiRender;
+		std::shared_ptr<ImGuiRenderer> imguiRender;
 		EventHandler handler;
 	};
 }

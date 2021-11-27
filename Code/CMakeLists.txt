@@ -25,6 +25,25 @@ get_filename_component(TOOL_CHAIN_DIR
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 
 
+option(ENGINE_AS_LIBRARY "build engine as dynamic library" OFF)
+option(MAPLE_OPENGL "Opengl as the default renderer" ON)
+option(MAPLE_VULKAN "Vulkan as the default renderer" OFF)
+
+if(ENGINE_AS_LIBRARY)
+	add_definitions(-DMAPLE_DYNAMIC)
+endif()
+
+if(MAPLE_OPENGL)
+	add_definitions(-DMAPLE_DYNAMIC)
+endif()
+
+if(MAPLE_VULKAN)
+	add_definitions(-DGLM_FORCE_DEPTH_ZERO_TO_ONE)
+	add_definitions(-DMAPLE_VULKAN)
+endif()
+
+
+
 add_subdirectory(Maple)
 add_subdirectory(Scripts)
 
@@ -53,9 +72,6 @@ add_definitions(
 	-D_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES 
 	-DPLATFORM_WINDOWS 
 	-DPLATFORM_DESKTOP
-	-DGLM_FORCE_DEPTH_ZERO_TO_ONE 
-	-DMAPLE_DYNAMIC
-	-DTOOLS_DIR=${TOOL_CHAIN_DIR}
 )
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
@@ -96,8 +112,6 @@ add_custom_command(TARGET Editor Game
 	COMMAND powershell Copy-Item ${ASSET_DIR}/${CMAKE_BUILD_TYPE}/MapleEngine.dll ${GLEW32_OUT_PATH}
 )
 
-
-
 target_include_directories(Editor PUBLIC
 	${APP_SRC_DIR}
 	${LIB_SRC_DIR}/opengl/include
@@ -112,6 +126,8 @@ target_include_directories(Editor PUBLIC
 	${LIB_SRC_DIR}/ktx/include
 	${LIB_SRC_DIR}/ktx/other_include
 	${LIB_SRC_DIR}/cereal/include
+	${LIB_SRC_DIR}/glad/include
+	${LIB_SRC_DIR}/imGuIZMO/
 )
 
 
@@ -129,6 +145,7 @@ target_include_directories(Game PUBLIC
 	${LIB_SRC_DIR}/ktx/include
 	${LIB_SRC_DIR}/ktx/other_include
 	${LIB_SRC_DIR}/cereal/include
+	${LIB_SRC_DIR}/glad/include
 )
 
 target_link_libraries(
@@ -140,8 +157,6 @@ target_link_libraries(
 	Game 
 	MapleEngine
 )
-
-
 
 endif()
 

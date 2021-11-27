@@ -1,51 +1,42 @@
 //////////////////////////////////////////////////////////////////////////////
-// This file is part of the Maple Engine                              //
-// Copyright ?2020-2022 Tian Zeng                                           //
+// This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
-
 #include "PropertiesWindow.h"
 #include "Editor.h"
-#include <glm/gtc/type_ptr.hpp>
-#include "Scene/SceneManager.h"
-#include "Scene/Scene.h"
-#include "Scene/Entity/Entity.h"
-#include "Scene/Component/Component.h"
-#include "Scene/Component/Sprite.h"
-#include "Scene/Component/Light.h"
-#include "Scene/Component/Transform.h"
-#include "Scene/Component/CameraControllerComponent.h"
-#include "Scene/Component/MeshRenderer.h"
 #include "Engine/GBuffer.h"
-#include "Engine/Renderer/RenderManager.h"
-#include "Engine/Renderer/ShadowRenderer.h"
-#include "Engine/Renderer/OmniShadowRenderer.h"
-#include "Engine/Renderer/PreProcessRenderer.h"
+#include "Scene/Component/CameraControllerComponent.h"
+#include "Scene/Component/Component.h"
+#include "Scene/Component/Light.h"
+#include "Scene/Component/MeshRenderer.h"
+#include "Scene/Component/Sprite.h"
+#include "Scene/Component/Transform.h"
+#include "Scene/Entity/Entity.h"
+#include "Scene/Scene.h"
+#include "Scene/SceneManager.h"
+#include <glm/gtc/type_ptr.hpp>
 
-#include "Scripts/Mono/MonoScript.h"
 #include "Scripts/Mono/MonoComponent.h"
+#include "Scripts/Mono/MonoScript.h"
 #include "Scripts/Mono/MonoSystem.h"
 
-#include "Others/StringUtils.h"
 #include "Engine/Camera.h"
-#include "ImGui/ImGuiHelpers.h"
-#include "Engine/Mesh.h"
 #include "Engine/Material.h"
-
+#include "Engine/Mesh.h"
+#include "ImGui/ImGuiHelpers.h"
+#include "Others/StringUtils.h"
 
 namespace MM
 {
-
-
 	using namespace Maple;
 
-	template<>
-	void ComponentEditorWidget<Transform>(entt::registry& reg, entt::registry::entity_type e)
+	template <>
+	void ComponentEditorWidget<Transform>(entt::registry &reg, entt::registry::entity_type e)
 	{
-		auto& transform = reg.get<Transform>(e);
+		auto &transform = reg.get<Transform>(e);
 
 		auto rotation = glm::degrees(transform.getLocalOrientation());
 		auto position = transform.getLocalPosition();
-		auto scale = transform.getLocalScale();
+		auto scale    = transform.getLocalScale();
 
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
 		ImGui::Columns(2);
@@ -66,7 +57,6 @@ namespace MM
 		ImGui::TextUnformatted("Rotation");
 		ImGui::NextColumn();
 		ImGui::PushItemWidth(-1);
-
 
 		if (ImGui::DragFloat3("##Rotation", glm::value_ptr(rotation), 0.1))
 		{
@@ -92,8 +82,7 @@ namespace MM
 		ImGui::PopStyleVar();
 	}
 
-
-	auto textureWidget(const char* label, Material* material, std::shared_ptr<Texture2D> tex, float& usingMapProperty, glm::vec4& colorProperty, const std::function<void(const std::string&)>& callback) -> void
+	auto textureWidget(const char *label, Material *material, std::shared_ptr<Texture2D> tex, float &usingMapProperty, glm::vec4 &colorProperty, const std::function<void(const std::string &)> &callback) -> void
 	{
 		if (ImGui::TreeNodeEx(label, ImGuiTreeNodeFlags_DefaultOpen))
 		{
@@ -103,19 +92,18 @@ namespace MM
 
 			ImGui::AlignTextToFramePadding();
 
-			const ImGuiPayload* payload = ImGui::GetDragDropPayload();
+			const ImGuiPayload *payload = ImGui::GetDragDropPayload();
 
 			auto min = ImGui::GetCursorPos();
-			auto max = min + ImVec2{ 64,64 } + ImGui::GetStyle().FramePadding;
+			auto max = min + ImVec2{64, 64} + ImGui::GetStyle().FramePadding;
 
 			bool hoveringButton = ImGui::IsMouseHoveringRect(min, max, false);
-			bool showTexture = !(hoveringButton && (payload != NULL && payload->IsDataType("AssetFile")));
+			bool showTexture    = !(hoveringButton && (payload != NULL && payload->IsDataType("AssetFile")));
 			if (tex && showTexture)
 			{
 				const bool flipImage = false;
-				if (ImGui::ImageButton(tex->getHandle(), ImVec2{ 64,64 }, ImVec2(0.0f, flipImage ? 1.0f : 0.0f), ImVec2(1.0f, flipImage ? 0.0f : 1.0f)))
+				if (ImGui::ImageButton(tex->getHandle(), ImVec2{64, 64}, ImVec2(0.0f, flipImage ? 1.0f : 0.0f), ImVec2(1.0f, flipImage ? 0.0f : 1.0f)))
 				{
-
 				}
 
 				if (ImGui::IsItemHovered() && tex)
@@ -127,7 +115,7 @@ namespace MM
 			}
 			else
 			{
-				if (ImGui::Button(tex ? "" : "Empty", ImVec2{ 64,64 }))
+				if (ImGui::Button(tex ? "" : "Empty", ImVec2{64, 64}))
 				{
 					/*Lumos::Editor::GetEditor()->GetFileBrowserWindow().Open();
 					Lumos::Editor::GetEditor()->GetFileBrowserWindow().SetCallback(callback);*/
@@ -136,7 +124,7 @@ namespace MM
 
 			if (payload != NULL && payload->IsDataType("AssetFile"))
 			{
-				auto filePath = std::string(reinterpret_cast<const char*>(payload->Data));
+				auto filePath = std::string(reinterpret_cast<const char *>(payload->Data));
 				if (StringUtils::isTextureFile(filePath))
 				{
 					if (ImGui::BeginDragDropTarget())
@@ -167,7 +155,7 @@ namespace MM
 			{
 				ImGuiHelper::tooltip(tex->getFilePath().c_str());
 				ImGui::Text("%u x %u", tex->getWidth(), tex->getHeight());
-				ImGui::Text("Mip Levels : %u", tex->getMipmapLevel());
+				//ImGui::Text("Mip Levels : %u", tex->getMipmapLevel());
 			}
 			ImGui::PopItemWidth();
 			ImGui::NextColumn();
@@ -182,11 +170,10 @@ namespace MM
 		}
 	}
 
-
-	template<>
-	void ComponentEditorWidget<Sprite>(entt::registry& reg, entt::registry::entity_type e)
+	template <>
+	void ComponentEditorWidget<Sprite>(entt::registry &reg, entt::registry::entity_type e)
 	{
-		auto& sprite = reg.get<Sprite>(e);
+		auto &sprite = reg.get<Sprite>(e);
 
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
 		ImGui::Columns(2);
@@ -208,32 +195,30 @@ namespace MM
 			sprite.getQuad().setColor(color);*/
 
 		ImGui::Columns(1);
-	
+
 		if (ImGui::TreeNode("Texture"))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
 			ImGui::Columns(2);
 			ImGui::Separator();
-			
 
 			ImGui::AlignTextToFramePadding();
 			auto tex = sprite.getQuad().getTexture();
 
 			ImVec2 imageButtonSize(64, 64);
 
-			auto callback = std::bind(&Sprite::setTextureFromFile, &sprite, std::placeholders::_1);
-			const ImGuiPayload* payload = ImGui::GetDragDropPayload();
-			auto min = ImGui::GetCursorPos();
-			auto max = min + imageButtonSize + ImGui::GetStyle().FramePadding;
+			auto                callback = std::bind(&Sprite::setTextureFromFile, &sprite, std::placeholders::_1);
+			const ImGuiPayload *payload  = ImGui::GetDragDropPayload();
+			auto                min      = ImGui::GetCursorPos();
+			auto                max      = min + imageButtonSize + ImGui::GetStyle().FramePadding;
 
 			bool hoveringButton = ImGui::IsMouseHoveringRect(min, max, false);
-			bool showTexture = !(hoveringButton && (payload != NULL && payload->IsDataType("AssetFile")));
-			bool flipImage = false;
+			bool showTexture    = !(hoveringButton && (payload != NULL && payload->IsDataType("AssetFile")));
+			bool flipImage      = false;
 			if (tex && showTexture)
 			{
 				if (ImGui::ImageButton(tex->getHandle(), imageButtonSize, ImVec2(0.0f, flipImage ? 1.0f : 0.0f), ImVec2(1.0f, flipImage ? 0.0f : 1.0f)))
 				{
-				
 				}
 
 				if (ImGui::IsItemHovered() && tex)
@@ -247,14 +232,12 @@ namespace MM
 			{
 				if (ImGui::Button(tex ? "" : "Empty", imageButtonSize))
 				{
-					
-					
 				}
 			}
 
 			if (payload != NULL && payload->IsDataType("AssetFile"))
 			{
-				auto filePath = std::string(reinterpret_cast<const char*>(payload->Data));
+				auto filePath = std::string(reinterpret_cast<const char *>(payload->Data));
 				if (StringUtils::isTextureFile(filePath))
 				{
 					if (ImGui::BeginDragDropTarget())
@@ -285,7 +268,7 @@ namespace MM
 			{
 				ImGuiHelper::tooltip(tex->getFilePath().c_str());
 				ImGui::Text("%u x %u", tex->getWidth(), tex->getHeight());
-				ImGui::Text("Mip Levels : %u", tex->getMipmapLevel());
+				//	ImGui::Text("Mip Levels : %u", tex->getMipmapLevel());
 			}
 
 			ImGui::PopItemWidth();
@@ -302,65 +285,65 @@ namespace MM
 		ImGui::PopStyleVar();
 	}
 
-	template<>
-	void ComponentEditorWidget<AnimatedSprite>(entt::registry& reg, entt::registry::entity_type e)
+	template <>
+	void ComponentEditorWidget<AnimatedSprite>(entt::registry &reg, entt::registry::entity_type e)
 	{
-		auto& sprite = reg.get<AnimatedSprite>(e);
+		auto &sprite = reg.get<AnimatedSprite>(e);
 
 		ImGui::Columns(2);
 
 		auto frame = sprite.getCurrentId();
-		if (ImGuiHelper::property("Frame", frame, 0, sprite.getFrames() - 1)) {
+		if (ImGuiHelper::property("Frame", frame, 0, sprite.getFrames() - 1))
+		{
 			sprite.setCurrentFrame(frame);
 		}
 		bool loop = sprite.isLoop();
-		if (ImGuiHelper::property("Loop", loop)) {
+		if (ImGuiHelper::property("Loop", loop))
+		{
 			sprite.setLoop(loop);
 		}
 
 		auto delay = sprite.getDelay();
-		if (ImGuiHelper::inputFloat("Delay", delay)) {}
+		if (ImGuiHelper::inputFloat("Delay", delay))
+		{}
 
 		auto timer = sprite.getTimer();
-		if (ImGuiHelper::inputFloat("Timer", timer)) {}
+		if (ImGuiHelper::inputFloat("Timer", timer))
+		{}
 
 		ImGui::Columns(1);
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
 		ImGui::Separator();
 		ImGui::AlignTextToFramePadding();
-		auto tex = sprite.getQuad().getTexture();
+		auto tex    = sprite.getQuad().getTexture();
 		auto coords = sprite.getQuad().getTexCoords();
 
-		auto& color = sprite.getQuad().getColor();
+		auto &color = sprite.getQuad().getColor();
 
 		if (tex)
 		{
-			
-			auto w = (float)sprite.getQuad().getWidth();
-			auto h = (float)sprite.getQuad().getHeight();
+			auto w = (float) sprite.getQuad().getWidth();
+			auto h = (float) sprite.getQuad().getHeight();
 
-			if (w > 256) {
+			if (w > 256)
+			{
 				h = 256.f / w * h;
 				w = 256;
 			}
 
-	
-			ImGui::Image(tex->getHandle(), {w,h}, 
-				ImVec2(coords[3].x, coords[3].y), 
-				ImVec2(coords[1].x, coords[1].y),
-				{color.r,color.g ,color.b ,color.a}
-			);
+			ImGui::Image(tex->getHandle(), {w, h},
+			             ImVec2(coords[3].x, coords[3].y),
+			             ImVec2(coords[1].x, coords[1].y),
+			             {color.r, color.g, color.b, color.a});
 		}
 
 		ImGui::PopStyleVar();
-	
 	}
 
-
-	template<>
-	void ComponentEditorWidget<MeshRenderer>(entt::registry& reg, entt::registry::entity_type e)
+	template <>
+	void ComponentEditorWidget<MeshRenderer>(entt::registry &reg, entt::registry::entity_type e)
 	{
-		auto& mesh = reg.get<MeshRenderer>(e);
+		auto &mesh = reg.get<MeshRenderer>(e);
 
 		auto material = mesh.getMesh()->getMaterial();
 
@@ -373,10 +356,9 @@ namespace MM
 		}
 		else if (ImGui::TreeNodeEx(matName.c_str(), 0))
 		{
-
-			auto & prop = material->getProperties();
-			auto color = glm::vec4(0.f);
-			auto textures = material->getTextures();
+			auto &prop     = material->getProperties();
+			auto  color    = glm::vec4(0.f);
+			auto  textures = material->getTextures();
 
 			textureWidget("Albedo", material.get(), textures.albedo, prop.usingAlbedoMap, prop.albedoColor, std::bind(&Material::setAlbedoTexture, material, std::placeholders::_1));
 			ImGui::Separator();
@@ -399,28 +381,25 @@ namespace MM
 
 			ImGui::TreePop();
 		}
-
 	}
 
-
-	template<>
-	void ComponentEditorWidget<Light>(entt::registry& reg, entt::registry::entity_type e)
+	template <>
+	void ComponentEditorWidget<Light>(entt::registry &reg, entt::registry::entity_type e)
 	{
-		auto& light = reg.get<Light>(e);
+		auto &light = reg.get<Light>(e);
 		light.onImGui();
 	}
 
-
-	template<>
-	void ComponentEditorWidget<MonoComponent>(entt::registry& reg, entt::registry::entity_type e)
+	template <>
+	void ComponentEditorWidget<MonoComponent>(entt::registry &reg, entt::registry::entity_type e)
 	{
-		auto& mono = reg.get<MonoComponent>(e);
+		auto &mono = reg.get<MonoComponent>(e);
 		ImGui::PushID("add c# script");
 		static std::string path = "scripts/";
 		ImGui::PushItemWidth(-1);
 		if (ImGui::BeginCombo("", "", 0))
 		{
-			for (const auto& entry : std::filesystem::directory_iterator(path))
+			for (const auto &entry : std::filesystem::directory_iterator(path))
 			{
 				bool isDir = std::filesystem::is_directory(entry);
 				if (StringUtils::isCSharpFile(entry.path().string()))
@@ -429,7 +408,6 @@ namespace MM
 					{
 						mono.addScript(entry.path().string(), Application::get()->getSystemManager()->getSystem<MonoSystem>());
 					}
-				
 				}
 			}
 			ImGui::EndCombo();
@@ -437,20 +415,17 @@ namespace MM
 		ImGui::PopID();
 	}
 
-
-	template<>
-	void ComponentEditorWidget<Environment>(entt::registry& reg, entt::registry::entity_type e)
+	template <>
+	void ComponentEditorWidget<Environment>(entt::registry &reg, entt::registry::entity_type e)
 	{
-		auto& env = reg.get<Environment>(e);
+		auto &env = reg.get<Environment>(e);
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
 		ImGui::Columns(2);
 		ImGui::Separator();
 
-	
 		auto label = env.getFilePath();
 		if (ImGuiHelper::property("File", label, true))
 		{
-			
 		}
 
 		if (ImGui::BeginDragDropTarget())
@@ -458,8 +433,9 @@ namespace MM
 			auto data = ImGui::AcceptDragDropPayload("AssetFile", ImGuiDragDropFlags_None);
 			if (data)
 			{
-				std::string file = (char*)data->Data;
-				if (StringUtils::isTextureFile(file)) {
+				std::string file = (char *) data->Data;
+				if (StringUtils::isTextureFile(file))
+				{
 					env.init(file);
 				}
 			}
@@ -468,6 +444,11 @@ namespace MM
 
 		ImGui::Columns(1);
 		ImGui::Separator();
+
+		if (env.getEquirectangularMap())
+		{
+			ImGuiHelper::image(env.getEquirectangularMap().get(), {64, 64});
+		}
 
 		/*ImGui::Columns(1);
 		ImGui::Separator();
@@ -482,16 +463,14 @@ namespace MM
 		ImGui::PopStyleVar();
 	}
 
-
-	template<>
-	void ComponentEditorWidget<Camera>(entt::registry& reg, entt::registry::entity_type e)
+	template <>
+	void ComponentEditorWidget<Camera>(entt::registry &reg, entt::registry::entity_type e)
 	{
-		auto& camera = reg.get<Camera>(e);
+		auto &camera = reg.get<Camera>(e);
 
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
 		ImGui::Columns(2);
 		ImGui::Separator();
-
 
 		float aspect = camera.getAspectRatio();
 
@@ -518,17 +497,15 @@ namespace MM
 		if (ImGuiHelper::property("Orthographic", ortho))
 			camera.setOrthographic(ortho);
 
-
 		ImGui::Columns(1);
 		ImGui::Separator();
 		ImGui::PopStyleVar();
-
 	}
 
-	template<>
-	void ComponentEditorWidget<CameraControllerComponent>(entt::registry& reg, entt::registry::entity_type e)
+	template <>
+	void ComponentEditorWidget<CameraControllerComponent>(entt::registry &reg, entt::registry::entity_type e)
 	{
-		auto& controllerComp = reg.get<CameraControllerComponent>(e);
+		auto &controllerComp = reg.get<CameraControllerComponent>(e);
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
 		ImGui::Columns(2);
 		ImGui::Separator();
@@ -538,10 +515,9 @@ namespace MM
 		ImGui::NextColumn();
 		ImGui::PushItemWidth(-1);
 
-
-		const std::array<std::string, 2> controllerTypes = { "FPS" ,"Editor" };
-		std::string currentController = CameraControllerComponent::typeToString(controllerComp.getType());
-		if (ImGui::BeginCombo("", currentController.c_str(), 0)) // The second parameter is the label previewed before opening the combo.
+		const std::array<std::string, 2> controllerTypes   = {"FPS", "Editor"};
+		std::string                      currentController = CameraControllerComponent::typeToString(controllerComp.getType());
+		if (ImGui::BeginCombo("", currentController.c_str(), 0))        // The second parameter is the label previewed before opening the combo.
 		{
 			for (auto n = 0; n < controllerTypes.size(); n++)
 			{
@@ -564,8 +540,7 @@ namespace MM
 		ImGui::PopStyleVar();
 	}
 
-};
-
+};        // namespace MM
 
 namespace Maple
 {
@@ -577,10 +552,9 @@ namespace Maple
 
 	auto PropertiesWindow::onImGui() -> void
 	{
-		auto& editor = static_cast<Editor&>(*Application::get());
-		auto& registry = editor.getSceneManager()->getCurrentScene()->getRegistry();
-		auto selected = editor.getSelected();
-
+		auto &editor   = static_cast<Editor &>(*Application::get());
+		auto &registry = editor.getSceneManager()->getCurrentScene()->getRegistry();
+		auto  selected = editor.getSelected();
 
 		if (ImGui::Begin(title.c_str(), &active))
 		{
@@ -591,7 +565,7 @@ namespace Maple
 			}
 
 			auto activeComponent = registry.try_get<ActiveComponent>(selected);
-			bool active = activeComponent ? activeComponent->active : true;
+			bool active          = activeComponent ? activeComponent->active : true;
 			if (ImGui::Checkbox("##ActiveCheckbox", &active))
 			{
 				if (!activeComponent)
@@ -603,7 +577,7 @@ namespace Maple
 			ImGui::TextUnformatted(ICON_MDI_CUBE);
 			ImGui::SameLine();
 
-			bool hasName = registry.has<NameComponent>(selected);
+			bool        hasName = registry.has<NameComponent>(selected);
 			std::string name;
 			if (hasName)
 				name = registry.get<NameComponent>(selected).name;
@@ -625,7 +599,6 @@ namespace Maple
 				auto data = ImGui::AcceptDragDropPayload("AssetFile", ImGuiDragDropFlags_None);
 				if (data)
 				{
-				
 				}
 				ImGui::EndDragDropTarget();
 			}
@@ -633,59 +606,65 @@ namespace Maple
 		ImGui::End();
 	}
 
-	auto PropertiesWindow::onSceneCreated(Scene* scene) -> void
+	auto PropertiesWindow::onSceneCreated(Scene *scene) -> void
 	{
 		enttEditor.clear();
 
-		auto& editor = static_cast<Editor&>(*Application::get());
-		auto& iconMap = editor.getComponentIconMap();
+		auto &editor  = static_cast<Editor &>(*Application::get());
+		auto &iconMap = editor.getComponentIconMap();
 
-#define TRIVIAL_COMPONENT(ComponentType,show,showName) \
-	{ \
-		std::string name; \
-		if(iconMap.find(typeid(ComponentType).hash_code()) != iconMap.end()) \
-			name += iconMap[typeid(ComponentType).hash_code()]; \
-        else \
-            name += iconMap[typeid(Editor).hash_code()]; \
-		name += "\t"; \
-		if(showName != std::string("")){ \
-			name+=showName; \
-		} else {\
-			name += ###ComponentType; \
-		}\
-		enttEditor.registerComponent<ComponentType>(name,show); \
+#define TRIVIAL_COMPONENT(ComponentType, show, showName)                      \
+	{                                                                         \
+		std::string name;                                                     \
+		if (iconMap.find(typeid(ComponentType).hash_code()) != iconMap.end()) \
+			name += iconMap[typeid(ComponentType).hash_code()];               \
+		else                                                                  \
+			name += iconMap[typeid(Editor).hash_code()];                      \
+		name += "\t";                                                         \
+		if (showName != std::string(""))                                      \
+		{                                                                     \
+			name += showName;                                                 \
+		}                                                                     \
+		else                                                                  \
+		{                                                                     \
+			name += ## #ComponentType;                                        \
+		}                                                                     \
+		enttEditor.registerComponent<ComponentType>(name, show);              \
 	}
 
-		TRIVIAL_COMPONENT(Transform, true,"");
+		TRIVIAL_COMPONENT(Transform, true, "");
 		TRIVIAL_COMPONENT(Light, true, "");
 		TRIVIAL_COMPONENT(Camera, true, "");
 		TRIVIAL_COMPONENT(CameraControllerComponent, true, "Camera Controller");
-		TRIVIAL_COMPONENT(Environment, true,"");
+		TRIVIAL_COMPONENT(Environment, true, "");
 		TRIVIAL_COMPONENT(Sprite, true, "");
 		TRIVIAL_COMPONENT(AnimatedSprite, true, "Animation Sprite");
-		TRIVIAL_COMPONENT(MeshRenderer, false,"Mesh Renderer");
+		TRIVIAL_COMPONENT(MeshRenderer, false, "Mesh Renderer");
 
 		MM::EntityEditor<entt::entity>::ComponentInfo info;
 		info.hasChildren = true;
 
-
-		info.childrenDraw = [](entt::registry & registry,entt::entity ent) {
+		info.childrenDraw = [](entt::registry &registry, entt::entity ent) {
 			auto mono = registry.try_get<MonoComponent>(ent);
 
-			if (mono) {
-				for (auto & script : mono->getScripts())
+			if (mono)
+			{
+				for (auto &script : mono->getScripts())
 				{
 					ImGui::PushID(script.first.c_str());
-					if (ImGui::Button("-")) {
+					if (ImGui::Button("-"))
+					{
 						mono->remove(script.first);
 						ImGui::PopID();
 						continue;
 					}
-					else {
+					else
+					{
 						ImGui::SameLine();
 					}
 
-					if (ImGui::CollapsingHeader(script.second->getClassNameInEditor().c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
+					if (ImGui::CollapsingHeader(script.second->getClassNameInEditor().c_str(), ImGuiTreeNodeFlags_DefaultOpen))
+					{
 						ImGui::Indent(30.f);
 						ImGui::PushID("Widget");
 						//	ci.widget(registry, e);
@@ -699,14 +678,14 @@ namespace Maple
 		};
 		enttEditor.registerComponent<MonoComponent>(info);
 
-		enttEditor.acceptFile = [&](const std::string& fileName, entt::registry& registry, entt::entity & ent) {
-			if (StringUtils::isCSharpFile(fileName)) {
-				auto & mono = registry.get_or_emplace<MonoComponent>(ent);
+		enttEditor.acceptFile = [&](const std::string &fileName, entt::registry &registry, entt::entity &ent) {
+			if (StringUtils::isCSharpFile(fileName))
+			{
+				auto &mono = registry.get_or_emplace<MonoComponent>(ent);
 				mono.setEntity(ent);
 				mono.addScript(fileName, Application::get()->getSystemManager()->getSystem<MonoSystem>());
 			}
 		};
 	}
 
-};
-
+};        // namespace Maple

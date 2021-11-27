@@ -1,10 +1,9 @@
 //////////////////////////////////////////////////////////////////////////////
-// This file is part of the Maple Engine                              //
-// Copyright ?2020-2022 Tian Zeng                                           //
+// This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #include "Terrain.h"
-#include "Vulkan/VulkanTexture.h"
 #include "Others/Noise.h"
+
 
 namespace Maple 
 {

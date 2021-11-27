@@ -1,119 +1,132 @@
 //////////////////////////////////////////////////////////////////////////////
-// This file is part of the Maple Game Engine			                    //
+// This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 
 #include "Transform.h"
-#include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 
 namespace Maple
 {
-	glm::vec3 Transform::getForwardDirection() const
+	auto Transform::getForwardDirection() const -> glm::vec3
 	{
 		return getWorldOrientation() * FORWARD;
 	}
 
-	glm::vec3 Transform::getRightDirection() const
+	auto Transform::getRightDirection() const -> glm::vec3
 	{
 		return getWorldOrientation() * RIGHT;
 	}
 
-	glm::vec3 Transform::getUpDirection() const
+	auto Transform::getUpDirection() const -> glm::vec3
 	{
 		return getWorldOrientation() * UP;
 	}
 
-
 	Transform::Transform()
 	{
-		localPosition = { 0.0f, 0.0f, 0.0f };
+		localPosition    = {0.0f, 0.0f, 0.0f};
 		localOrientation = {};
-		localScale = { 1.0f, 1.0f, 1.0f };
-		localMatrix = glm::mat4(1.f);
-		worldMatrix = glm::mat4(1.f);
+		localScale       = {1.0f, 1.0f, 1.0f};
+		localMatrix      = glm::mat4(1.f);
+		worldMatrix      = glm::mat4(1.f);
 
-		initLocalPosition = localPosition;
-		initLocalScale = localScale;
+		initLocalPosition    = localPosition;
+		initLocalScale       = localScale;
 		initLocalOrientation = localOrientation;
 	}
 
-	Transform::Transform(const glm::mat4& matrix)
+	Transform::Transform(const glm::mat4 &matrix)
 	{
 		glm::vec3 skew;
 		glm::quat rotation;
 		glm::vec4 perspective;
 		glm::decompose(matrix, localScale, rotation, localPosition, skew, perspective);
-		localOrientation = glm::eulerAngles(rotation);
-		localMatrix = matrix;
-		worldMatrix = matrix;
+		localOrientation   = glm::eulerAngles(rotation);
+		localMatrix        = matrix;
+		worldMatrix        = matrix;
+		worldMatrixInverse = glm::inverse(worldMatrix);
 
-		initLocalPosition = localPosition;
-		initLocalScale = localScale;
+		initLocalPosition    = localPosition;
+		initLocalScale       = localScale;
 		initLocalOrientation = localOrientation;
-
 	}
 
-	Transform::Transform(const glm::vec3& position)
+	Transform::Transform(const glm::vec3 &position)
 	{
-		localPosition = position;
+		localPosition    = position;
 		localOrientation = {};
-		localScale = { 1.0f, 1.0f, 1.0f };
-		localMatrix = glm::mat4(1.f);
-		worldMatrix = glm::mat4(1.f);
+		localScale       = {1.0f, 1.0f, 1.0f};
+		localMatrix      = glm::mat4(1.f);
+		worldMatrix      = glm::mat4(1.f);
 		setLocalPosition(position);
 
-		initLocalPosition = localPosition;
-		initLocalScale = localScale;
+		initLocalPosition    = localPosition;
+		initLocalScale       = localScale;
 		initLocalOrientation = localOrientation;
 	}
 
 	Transform::~Transform() = default;
 
-	void Transform::setWorldMatrix(const glm::mat4 & mat)
+	auto Transform::setWorldMatrix(const glm::mat4 &mat) -> void
 	{
 		if (dirty)
 			updateLocalMatrix();
-		worldMatrix = mat * localMatrix;
+		worldMatrix        = mat * localMatrix;
+		worldMatrixInverse = glm::inverse(worldMatrix);
 	}
 
-	void Transform::setLocalTransform(const glm::mat4& localMat)
+	auto Transform::setLocalTransform(const glm::mat4 &localMat) -> void
 	{
 		localMatrix = localMat;
-		hasUpdate = true;
-		applyTransform();//decompose 
+		hasUpdate   = true;
+		applyTransform();        //decompose
 	}
 
-	void Transform::setLocalPosition(const glm::vec3& localPos)
+	auto Transform::setLocalPosition(const glm::vec3 &localPos) -> void
 	{
-		dirty = true;
+		dirty         = true;
 		localPosition = localPos;
 	}
 
-	void Transform::setLocalScale(const glm::vec3& scale)
+	auto Transform::setLocalScale(const glm::vec3 &scale) -> void
 	{
-		dirty = true;
+		dirty      = true;
 		localScale = scale;
 	}
 
 	//void Transform::SetLocalOrientation(const glm::quat& quat)
-	void Transform::setLocalOrientation(const glm::vec3& rotation)
+	auto Transform::setLocalOrientation(const glm::vec3 &rotation) -> void
 	{
-		dirty = true;
+		dirty            = true;
 		localOrientation = rotation;
 	}
 
-	void Transform::updateLocalMatrix()
+	auto Transform::setLocalOrientation(const glm::quat &rotation) -> void
+	{
+		dirty            = true;
+		localOrientation = glm::eulerAngles(rotation);
+	}
+
+	auto Transform::lookAt(const glm::vec3 &target) -> void
+	{
+		localMatrix = glm::lookAt(localPosition, target, getUpDirection());
+		applyTransform();
+		dirty = true;
+	}
+
+	auto Transform::updateLocalMatrix() -> void
 	{
 		localMatrix = glm::translate(glm::mat4(1), localPosition);
 		localMatrix *= glm::toMat4(glm::quat(localOrientation));
-		localMatrix = glm::scale(localMatrix,localScale);
-		dirty = false;
-		hasUpdate = true;
+		localMatrix = glm::scale(localMatrix, localScale);
+		dirty       = false;
+		hasUpdate   = true;
 	}
 
-	void Transform::applyTransform()
+	auto Transform::applyTransform() -> void
 	{
 		glm::vec3 skew;
 		glm::vec4 perspective;
@@ -122,7 +135,7 @@ namespace Maple
 		localOrientation = glm::eulerAngles(rotation);
 	}
 
-	glm::vec3 Transform::getScaleFromMatrix(const glm::mat4& mat)
+	auto Transform::getScaleFromMatrix(const glm::mat4 &mat) -> glm::vec3
 	{
 		glm::vec3 skew;
 		glm::vec3 localScale;
@@ -133,18 +146,17 @@ namespace Maple
 		return localScale;
 	}
 
-	void Transform::setOffsetTransform(const glm::mat4& localMat)
+	auto Transform::setOffsetTransform(const glm::mat4 &localMat) -> void
 	{
 		offsetMatrix = localMat;
 	}
 
-	void Transform::resetTransform()
+	auto Transform::resetTransform() -> void
 	{
-		dirty = true;
-		localPosition = initLocalPosition;
-		localScale = initLocalScale;
+		dirty            = true;
+		localPosition    = initLocalPosition;
+		localScale       = initLocalScale;
 		localOrientation = initLocalOrientation;
 	}
 
-};
-
+};        // namespace Maple

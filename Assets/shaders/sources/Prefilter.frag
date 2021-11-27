@@ -10,12 +10,12 @@ layout (location = 0) in vec3 fragPos;
 
 layout (location = 0) out vec4 outColor;
 
-layout (binding = 1) uniform UniformBufferObject
+layout (set = 0,binding = 1) uniform UniformBufferRoughness
 {
     float constRoughness;
 } ubo;
 
-layout (binding = 2) uniform samplerCube cubemapSampler;
+layout (set = 0,binding = 2) uniform samplerCube uCubeMapSampler;
 
 const float PI = 3.14159265359;
 
@@ -84,8 +84,6 @@ void main()
     const uint SAMPLE_COUNT = 1024u;
     vec3 prefilteredColor = vec3(0.0);
     float totalWeight = 0.0;
-    
-    debugPrintfEXT(" ubo.constRoughness %f \n", ubo.constRoughness);
 
     for(uint i = 0u; i < SAMPLE_COUNT; ++i)
     {
@@ -109,7 +107,7 @@ void main()
 
             float mipLevel = ubo.constRoughness == 0.0 ? 0.0 : 0.5 * log2(saSample / saTexel); 
             
-            prefilteredColor += textureLod(cubemapSampler, L, mipLevel).rgb * NdotL;
+            prefilteredColor += textureLod(uCubeMapSampler, L, mipLevel).rgb * NdotL;
             totalWeight      += NdotL;
         }
     }

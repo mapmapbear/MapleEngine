@@ -1,7 +1,5 @@
-
 //////////////////////////////////////////////////////////////////////////////
-// This file is part of the Maple Engine                              //
-// Copyright ?2020-2022 Tian Zeng                                           //
+// This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
 
@@ -22,10 +20,40 @@ namespace Maple
 		glm::vec2 texCoord;
 		glm::vec3 normal;
 		glm::vec3 tangent;
-		auto operator==(const Vertex& other) const -> bool;
-		auto operator-(const Vertex& right)->Vertex;
-		auto operator+(const Vertex& right)->Vertex;
-		auto operator*(float factor)->Vertex;
+		inline auto operator-(const Vertex &right) -> Vertex
+		{
+			Vertex ret;
+			ret.pos      = pos - right.pos;
+			ret.color    = color - right.color;
+			ret.texCoord = texCoord - right.texCoord;
+			ret.normal   = normal - right.normal;
+			return ret;
+		}
+
+		inline auto operator+(const Vertex &right) -> Vertex
+		{
+			Vertex ret;
+			ret.pos      = pos + right.pos;
+			ret.color    = color + right.color;
+			ret.texCoord = texCoord + right.texCoord;
+			ret.normal   = normal + right.normal;
+			return ret;
+		}
+
+		inline auto operator*(float factor) -> Vertex
+		{
+			Vertex ret;
+			ret.pos      = pos * factor;
+			ret.color    = color * factor;
+			ret.texCoord = texCoord * factor;
+			ret.normal   = normal * factor;
+			return ret;
+		}
+
+		inline auto operator==(const Vertex &other) const -> bool
+		{
+			return pos == other.pos && color == other.color && texCoord == other.texCoord && normal == other.normal && tangent == other.tangent;
+		}
 	};
 
 	struct Vertex2D
@@ -33,22 +61,37 @@ namespace Maple
 		glm::vec3 vertex;
 		glm::vec3 uv;
 		glm::vec4 color;
-		auto operator==(const Vertex2D& other) const-> bool;
+		inline auto operator==(const Vertex2D &other) const -> bool
+		{
+			return vertex == other.vertex && uv == other.uv && color == other.color;
+		}
 	};
 
+	struct LineVertex
+	{
+		glm::vec3 vertex;
+		glm::vec4 color;
+
+		inline auto operator==(const LineVertex &other) const
+		{
+			return vertex == other.vertex && color == other.color;
+		}
+	};
+
+	struct PointVertex
+	{
+		glm::vec3 vertex;
+		glm::vec4 color;
+		glm::vec2 size;
+		glm::vec2 uv;
+
+		inline auto operator==(const PointVertex &other) const
+		{
+			return vertex == other.vertex && color == other.color && size == other.size && uv == other.uv;
+		}
+	};
 };
 namespace std {
-	/*template<> struct hash<Maple::Vertex> {
-		size_t operator()(const Maple::Vertex & vertex) const {
-			return 
-				(
-				(hash<glm::vec3>()(vertex.pos) ^ 
-				(hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^ 
-				(hash<glm::vec2>()(vertex.texCoord) << 1
-					);
-		}
-	};*/
-
 	template<> struct hash<Maple::Vertex> {
 		size_t operator()(const Maple::Vertex& vertex) const {
 			return

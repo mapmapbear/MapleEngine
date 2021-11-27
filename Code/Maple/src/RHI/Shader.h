@@ -1,0 +1,116 @@
+//////////////////////////////////////////////////////////////////////////////
+// This file is part of the Maple Engine                              		//
+//////////////////////////////////////////////////////////////////////////////
+#pragma once
+#include "DescriptorSet.h"
+#include "Engine/Core.h"
+
+namespace spirv_cross
+{
+	struct SPIRType;
+}
+
+namespace Maple
+{
+	enum class ShaderType : int32_t
+	{
+		Vertex,
+		Fragment,
+		Geometry,
+		TessellationControl,
+		TessellationEvaluation,
+		Compute,
+		Unknown,
+		Length
+	};
+
+	inline auto shaderTypeToName(ShaderType type) -> std::string
+	{
+		switch (type)
+		{
+#define STR(r)                 \
+	case Maple::ShaderType::r: \
+		return #r
+			STR(Vertex);
+			STR(Fragment);
+			STR(Geometry);
+			STR(TessellationControl);
+			STR(TessellationEvaluation);
+			STR(Compute);
+#undef STR
+		}
+		return "Unknown";
+	}
+
+	struct PushConstant
+	{
+		uint32_t             size;
+		ShaderType           shaderStage;
+		std::vector<uint8_t> data;
+		uint32_t             offset = 0;
+		std::string          name;
+
+		std::vector<BufferMemberInfo> members;
+
+		inline auto setValue(const std::string &name, const void *value)
+		{
+			for (auto &member : members)
+			{
+				if (member.name == name)
+				{
+					memcpy(&data[member.offset], value, member.size);
+					break;
+				}
+			}
+		}
+
+		inline auto setData(const void *value)
+		{
+			memcpy(data.data(), value, size);
+		}
+	};
+
+	struct ShaderEnumClassHash
+	{
+		template <typename T>
+		constexpr auto operator()(T t) const -> std::size_t
+		{
+			return static_cast<std::size_t>(t);
+		}
+	};
+
+	class CommandBuffer;
+	class Pipeline;
+	class DescriptorSet;
+
+
+	class MAPLE_EXPORT Shader
+	{
+	  public:
+		virtual ~Shader()                                                                        = default;
+		virtual auto bind() const -> void                                                        = 0;
+		virtual auto unbind() const -> void                                                      = 0;
+		virtual auto getName() const -> const std::string &                                      = 0;
+		virtual auto getFilePath() const -> const std::string &                                  = 0;
+		virtual auto getHandle() const -> void *                                                 = 0;
+		virtual auto getPushConstants() -> std::vector<PushConstant> &                           = 0;
+		virtual auto bindPushConstants(CommandBuffer *commandBuffer, Pipeline *pipeline) -> void = 0;
+		virtual auto getPushConstant(uint32_t index) -> PushConstant *
+		{
+			return nullptr;
+		}
+		virtual auto getDescriptorInfo(uint32_t index) -> const DescriptorSetInfo
+		{
+			return DescriptorSetInfo();
+		}
+
+		auto spirvTypeToDataType(const spirv_cross::SPIRType &type) -> ShaderDataType;
+
+	  protected:
+		auto parseSource(const std::vector<std::string> &lines, std::unordered_map<ShaderType, std::string> &shaders) -> void;
+
+	  public:
+		static auto create(const std::string &filepath) -> std::shared_ptr<Shader>;
+		static auto create(const std::vector<uint32_t> &vertData, const std::vector<uint32_t> &fragData) -> std::shared_ptr<Shader>;
+	};
+}        // namespace Maple

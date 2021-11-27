@@ -1,25 +1,28 @@
 //////////////////////////////////////////////////////////////////////////////
-// This file is part of the Maple Engine                              //
-// Copyright ?2020-2022 Tian Zeng                                           //
+// This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
-
 #include "DisplayZeroWindow.h"
-#include "Engine/Interface/Texture.h"
-#include "Engine/Vulkan/VulkanContext.h"
-#include "Event/WindowEvent.h"
+
+#include "RHI/GraphicsContext.h"
+#include "RHI/Texture.h"
+
 #include "Devices/Input.h"
-#include "Engine/Camera.h"
-#include "ImGui/ImGuiHelpers.h"
 #include "Editor.h"
-#include "Scene/Scene.h"
+#include "Engine/Camera.h"
 #include "Engine/GBuffer.h"
+#include "Event/WindowEvent.h"
+#include "IconsMaterialDesignIcons.h"
+#include "ImGui/ImGuiHelpers.h"
 #include "Math/MathUtils.h"
+#include "Scene/Scene.h"
+
+#define IMGUI_DEFINE_MATH_OPERATORS
+
+#include "imgui_internal.h"
 #include <ImGuizmo.h>
 #include <glm/gtc/type_ptr.hpp>
-#include "IconsMaterialDesignIcons.h"
-#include "imgui_internal.h"
 
-namespace Maple 
+namespace Maple
 {
 	const ImVec4 SelectedColor(0.28f, 0.56f, 0.9f, 1.0f);
 	DisplayZeroWindow::DisplayZeroWindow()
@@ -29,29 +32,29 @@ namespace Maple
 
 	auto DisplayZeroWindow::onImGui() -> void
 	{
-		auto& editor = *static_cast<Editor*>(Application::get());
+		auto &editor = *static_cast<Editor *>(Application::get());
 
 		ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 5.f);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(5, 5));
 		auto flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
 		ImGui::SetNextWindowBgAlpha(0.0f);
 		auto currentScene = Application::get()->getSceneManager()->getCurrentScene();
-		if (ImGui::Begin(title.c_str(), &active, flags)) 
+		if (ImGui::Begin(title.c_str(), &active, flags))
 		{
-			Camera* camera = nullptr;
-			auto& registry = currentScene->getRegistry();
-			auto cameraView = registry.view<Camera>();
+			Camera *camera     = nullptr;
+			auto &  registry   = currentScene->getRegistry();
+			auto    cameraView = registry.view<Camera>();
 			if (!cameraView.empty())
 			{
 				camera = &registry.get<Camera>(cameraView.front());
 			}
 
-			if (camera != nullptr) 
+			if (camera != nullptr)
 			{
 				ImVec2 offset = ImGui::GetCursorPos();
 				drawToolBar();
 				ImGuizmo::SetDrawlist();
-				auto sceneViewSize = ImGui::GetWindowContentRegionMax() - ImGui::GetWindowContentRegionMin() - offset / 2.0f;// - offset * 0.5f;
+				auto sceneViewSize     = ImGui::GetWindowContentRegionMax() - ImGui::GetWindowContentRegionMin() - offset / 2.0f;        // - offset * 0.5f;
 				auto sceneViewPosition = ImGui::GetWindowPos() + offset;
 
 				sceneViewSize.x -= static_cast<int>(sceneViewSize.x) % 2 != 0 ? 1.0f : 0.0f;
@@ -64,18 +67,18 @@ namespace Maple
 					if (heightNeededForAspect > sceneViewSize.y)
 					{
 						sceneViewSize.x = sceneViewSize.y * aspect;
-						float xOffset = ((ImGui::GetContentRegionAvail() - sceneViewSize) * 0.5f).x;
+						float xOffset   = ((ImGui::GetContentRegionAvail() - sceneViewSize) * 0.5f).x;
 						sceneViewPosition.x += xOffset;
-						ImGui::SetCursorPos({ ImGui::GetCursorPosX() + xOffset, ImGui::GetCursorPosY() });
+						ImGui::SetCursorPos({ImGui::GetCursorPosX() + xOffset, ImGui::GetCursorPosY()});
 						offset.x += xOffset;
 					}
 					else
 					{
 						sceneViewSize.y = sceneViewSize.x / aspect;
-						float yOffset = ((ImGui::GetContentRegionAvail() - sceneViewSize) * 0.5f).y;
+						float yOffset   = ((ImGui::GetContentRegionAvail() - sceneViewSize) * 0.5f).y;
 						sceneViewPosition.y += yOffset;
 
-						ImGui::SetCursorPos({ ImGui::GetCursorPosX(), ImGui::GetCursorPosY()  + yOffset });
+						ImGui::SetCursorPos({ImGui::GetCursorPosX(), ImGui::GetCursorPosY() + yOffset});
 						offset.y += yOffset;
 					}
 				}
@@ -88,33 +91,34 @@ namespace Maple
 				}
 
 				resize(static_cast<uint32_t>(sceneViewSize.x), static_cast<uint32_t>(sceneViewSize.y));
-				if (camera != nullptr) {
-					ImGuiHelper::image(previewTexture.get(), { static_cast<uint32_t>(sceneViewSize.x), static_cast<uint32_t>(sceneViewSize.y) });
+				if (camera != nullptr)
+				{
+					ImGuiHelper::image(previewTexture.get(), {static_cast<uint32_t>(sceneViewSize.x), static_cast<uint32_t>(sceneViewSize.y)});
 				}
 
-			//	ImGuizmo::SetRect(sceneViewPosition.x, sceneViewPosition.y, sceneViewSize.x, sceneViewSize.y);
-				ImGui::GetWindowDrawList()->PushClipRect(sceneViewPosition, { sceneViewSize.x + sceneViewPosition.x, sceneViewSize.y + sceneViewPosition.y - 2.0f });;
+				//	ImGuizmo::SetRect(sceneViewPosition.x, sceneViewPosition.y, sceneViewSize.x, sceneViewSize.y);
+				ImGui::GetWindowDrawList()->PushClipRect(sceneViewPosition, {sceneViewSize.x + sceneViewPosition.x, sceneViewSize.y + sceneViewPosition.y - 2.0f});
+				;
 
 				if (editor.isSceneActive() && !ImGuizmo::IsUsing() && Input::getInput()->isMouseClicked(KeyCode::MouseKey::ButtonLeft))
 				{
 					auto clickPos = Input::getInput()->getMousePosition() - glm::vec2(sceneViewPosition.x, sceneViewPosition.y);
 				}
 			}
-			else 
+			else
 			{
-
 			}
 		}
-		else 
+		else
 		{
-			this->width =0;
-			this->height =	0;
+			this->width  = 0;
+			this->height = 0;
 		}
 		ImGui::End();
 		ImGui::PopStyleVar(2);
 	}
 
-	static float stringToAspect(const std::string& aspect)
+	static float stringToAspect(const std::string &aspect)
 	{
 		if (aspect == "16:10")
 		{
@@ -141,7 +145,6 @@ namespace Maple
 			return 1.0f;
 		}
 	}
-
 
 	static std::string aspectToString(float aspect)
 	{
@@ -173,30 +176,28 @@ namespace Maple
 
 	auto DisplayZeroWindow::resize(uint32_t width, uint32_t height) -> void
 	{
-		bool resized = false;
-		auto& editor = *static_cast<Editor*>(Application::get());
+		bool  resized = false;
+		auto &editor  = *static_cast<Editor *>(Application::get());
 		if (this->width != width || this->height != height)
 		{
-			resized = true;
-			this->width = width;
+			resized      = true;
+			this->width  = width;
 			this->height = height;
 		}
-		
-		if (previewTexture == nullptr) {
+
+		if (previewTexture == nullptr)
+		{
 			previewTexture = Texture2D::create();
 		}
-		if (resized) 
+		if (resized)
 		{
-			VulkanContext::get()->waiteIdle();
+			Application::get()->getGraphicsContext()->waitIdle();
 			previewTexture->buildTexture(TextureFormat::RGBA8, width, height, false, false, false);
-			for (auto & r : Application::get()->getRenderManagers())
-			{
-				if (!r->isEditor()) {
-					r->setRenderTarget(previewTexture, false);
-					r->onResize(width, height);
-				}
-			}
-			VulkanContext::get()->waiteIdle();
+
+			Application::getRenderGraph()->setRenderTarget(previewTexture, false);
+			Application::getRenderGraph()->onResize(width, height);
+
+			Application::get()->getGraphicsContext()->waitIdle();
 		}
 	}
 
@@ -204,8 +205,8 @@ namespace Maple
 	{
 		ImGui::Indent();
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
-	
-		static std::string supportedAspects[] = { "Free Aspect", "16:10", "16:9", "4:3", "3:2", "9:16" };
+
+		static std::string supportedAspects[] = {"Free Aspect", "16:10", "16:9", "4:3", "3:2", "9:16"};
 
 		if (ImGui::Button("Aspect " ICON_MDI_CHEVRON_DOWN))
 			ImGui::OpenPopup("AspectPopup");
@@ -225,7 +226,7 @@ namespace Maple
 					else
 					{
 						freeAspect = false;
-						aspect = stringToAspect(supportedAspects[n]);
+						aspect     = stringToAspect(supportedAspects[n]);
 					}
 				}
 			}
@@ -236,5 +237,4 @@ namespace Maple
 		ImGui::Unindent();
 	}
 
-};
-
+};        // namespace Maple

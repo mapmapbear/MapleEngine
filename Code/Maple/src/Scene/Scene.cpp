@@ -1,43 +1,38 @@
 //////////////////////////////////////////////////////////////////////////////
-// This file is part of the Maple Game Engine			                    //
-
+// This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 
 #include "Scene.h"
 #include "Entity/Entity.h"
 #include "Entity/EntityManager.h"
-#include "SceneGraph.h"
-#include "Scene/Component/Transform.h"
-#include "Scene/Component/Light.h"
 #include "Scene/Component/CameraControllerComponent.h"
+#include "Scene/Component/Light.h"
 #include "Scene/Component/MeshRenderer.h"
 #include "Scene/Component/Sprite.h"
+#include "Scene/Component/Transform.h"
+#include "SceneGraph.h"
 
-#include "Engine/Material.h"
-#include "Engine/CameraController.h"
-#include "Engine/Profiler.h"
-#include "Others/StringUtils.h"
-#include "Engine/Camera.h"
 #include "Devices/Input.h"
+#include "Engine/Camera.h"
+#include "Engine/CameraController.h"
+#include "Engine/Material.h"
+#include "Engine/Profiler.h"
 #include "Others/Serialization.h"
+#include "Others/StringUtils.h"
 
-#include "Scripts/Mono/MonoSystem.h"
 #include "Others/Console.h"
-#include <fstream>
+#include "Scripts/Mono/MonoSystem.h"
 #include <filesystem>
+#include <fstream>
 
 #include "Application.h"
 
-
-
-
-
-namespace Maple { 
-
-	Scene::Scene(const std::string& initName)
-		:name(initName)
+namespace Maple
+{
+	Scene::Scene(const std::string &initName) :
+	    name(initName)
 	{
-		LOGV("{0} {1}", __FUNCTION__,initName);
+		LOGV("{0} {1}", __FUNCTION__, initName);
 		entityManager = std::make_shared<EntityManager>(this);
 		entityManager->addDependency<Camera, Transform>();
 		entityManager->addDependency<Light, Transform>();
@@ -50,21 +45,22 @@ namespace Maple {
 		sceneGraph->init(entityManager->getRegistry());
 	}
 
-	entt::registry& Scene::getRegistry()
+	auto Scene::getRegistry() -> entt::registry &
 	{
 		return entityManager->getRegistry();
 	}
 
 	auto Scene::setSize(uint32_t w, uint32_t h) -> void
 	{
-		width = w;
+		width  = w;
 		height = h;
 	}
 
-	auto Scene::saveTo(const std::string& path, bool binary) -> void
+	auto Scene::saveTo(const std::string &path, bool binary) -> void
 	{
 		PROFILE_FUNCTION();
-		if (dirty) {
+		if (dirty)
+		{
 			LOGV("save to disk");
 			if (path != "" && path != filePath)
 			{
@@ -79,10 +75,11 @@ namespace Maple {
 		}
 	}
 
-	auto Scene::loadFrom()-> void
+	auto Scene::loadFrom() -> void
 	{
 		PROFILE_FUNCTION();
-		if(filePath != ""){
+		if (filePath != "")
+		{
 			entityManager->clear();
 			sceneGraph->disconnectOnConstruct(true, getRegistry());
 			Serialization::loadScene(this, filePath);
@@ -92,65 +89,71 @@ namespace Maple {
 
 	auto Scene::createEntity() -> Entity
 	{
-		dirty = true;
-		return entityManager->create();
+		dirty       = true;
+		auto entity = entityManager->create();
+		if (onEntityAdd)
+			onEntityAdd(entity);
+		return entity;
 	}
 
-	auto Scene::createEntity(const std::string& name) -> Entity
+	auto Scene::createEntity(const std::string &name) -> Entity
 	{
 		PROFILE_FUNCTION();
-		dirty = true;
-		int32_t i = 0; 
-		auto entity = entityManager->getEntityByName(name);
-		while (entity.valid()) {
-			entity = entityManager->getEntityByName(name+"("+std::to_string(i + 1)+")");
+		dirty          = true;
+		int32_t i      = 0;
+		auto    entity = entityManager->getEntityByName(name);
+		while (entity.valid())
+		{
+			entity = entityManager->getEntityByName(name + "(" + std::to_string(i + 1) + ")");
 			i++;
 		}
-		return entityManager->create(i == 0 ? name : name + "(" + std::to_string(i) + ")");
+		auto newEntity = entityManager->create(i == 0 ? name : name + "(" + std::to_string(i) + ")");
+		if (onEntityAdd)
+			onEntityAdd(newEntity);
+		return newEntity;
 	}
 
-	auto Scene::duplicateEntity(const Entity& entity, const Entity& parent) -> void
+	auto Scene::duplicateEntity(const Entity &entity, const Entity &parent) -> void
 	{
 		PROFILE_FUNCTION();
 		dirty = true;
 
 		Entity newEntity = entityManager->create();
-		
+
 		if (parent)
 			newEntity.setParent(parent);
 
 		copyComponents(entity, newEntity);
 	}
 
-	auto Scene::duplicateEntity(const Entity& entity)  -> void
+	auto Scene::duplicateEntity(const Entity &entity) -> void
 	{
-		dirty = true;
+		dirty            = true;
 		Entity newEntity = entityManager->create();
 		//COPY
-		copyComponents(entity,newEntity);
+		copyComponents(entity, newEntity);
 	}
 
-	auto Scene::getCamera() ->std::pair<Camera*, Transform*>
+	auto Scene::getCamera() -> std::pair<Camera *, Transform *>
 	{
 		auto camsEttView = entityManager->getEntitiesWithType<Camera>();
-		if (!camsEttView.empty() && gameView)
+		if (!camsEttView.empty() && useSceneCamera)
 		{
-			Camera& sceneCam = camsEttView.front().getComponent<Camera>();
-			Transform& sceneCamTr = camsEttView.front().getComponent<Transform>();
-			return { &sceneCam,&sceneCamTr };
+			Camera &   sceneCam   = camsEttView.front().getComponent<Camera>();
+			Transform &sceneCamTr = camsEttView.front().getComponent<Transform>();
+			return {&sceneCam, &sceneCamTr};
 		}
-		return { overrideCamera,overrideTransform };
+		return {overrideCamera, overrideTransform};
 	}
 
-
-	auto Scene::copyComponents(const Entity& from, const Entity& to) -> void
+	auto Scene::copyComponents(const Entity &from, const Entity &to) -> void
 	{
 		LOGW("Not implementation {0}", __FUNCTION__);
 	}
 
 	auto Scene::onInit() -> void
 	{
-		if (initCallback != nullptr) 
+		if (initCallback != nullptr)
 		{
 			initCallback(this);
 		}
@@ -159,7 +162,6 @@ namespace Maple {
 
 	auto Scene::onClean() -> void
 	{
-
 	}
 
 	auto Scene::updateCameraController(float dt) -> void
@@ -169,10 +171,10 @@ namespace Maple {
 		for (auto entity : controller)
 		{
 			const auto mousePos = Input::getInput()->getMousePosition();
-			auto& [con, trans] = controller.get<CameraControllerComponent, Transform>(entity);
-			if (Application::get()->isSceneActive() && 
-				Application::get()->getEditorState() == EditorState::Play&&
-				con.getController() )
+			auto &[con, trans]  = controller.get<CameraControllerComponent, Transform>(entity);
+			if (Application::get()->isSceneActive() &&
+			    Application::get()->getEditorState() == EditorState::Play &&
+			    con.getController())
 			{
 				con.getController()->handleMouse(trans, dt, mousePos.x, mousePos.y);
 				con.getController()->handleKeyboard(trans, dt);
@@ -188,9 +190,9 @@ namespace Maple {
 		auto view = entityManager->getRegistry().group<AnimatedSprite>(entt::get<Transform>);
 		for (auto entity : view)
 		{
-			const auto& [anim, trans] = view.get<AnimatedSprite, Transform>(entity);
+			const auto &[anim, trans] = view.get<AnimatedSprite, Transform>(entity);
 			anim.onUpdate(dt);
 		}
 	}
 
-};
+};        // namespace Maple

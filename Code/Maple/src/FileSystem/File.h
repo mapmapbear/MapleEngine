@@ -1,8 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
-// This file is part of the Maple Engine                              //
-// Copyright ?2020-2022 Tian Zeng                                           //
+// This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
-
 #pragma once
 #include <string>
 #include <fstream>
@@ -55,7 +53,8 @@ namespace Maple
 		static auto getFileName(const std::string& file) -> const std::string;
 		static auto fileExists(const std::string& file) -> bool;
 		static auto removeExtension(const std::string& file) -> std::string;
-		static auto read(const std::string& name)->std::vector<uint8_t>;
+
+		static auto read(const std::string &name) -> std::unique_ptr<std::vector<uint8_t>>;
 
 		static auto list(const std::function<bool(const std::string&)> & predict = nullptr) -> const std::vector<std::string>;
 		static auto list(std::vector<std::string>& out, const std::function<bool(const std::string&)>& predict = nullptr) -> void;
@@ -63,7 +62,11 @@ namespace Maple
 
 		static auto getFileType(const std::string& path)->FileType;
 
-	private:
+		static auto create(const std::string &file) -> void;
+
+		static auto openFile(const std::function<void(int32_t, const std::string & )> & ) -> void;
+
+	  private:
 		std::string file;
 		//std::ifstream stream;
 		FILE* filePtr = nullptr;

@@ -1,4 +1,6 @@
-
+//////////////////////////////////////////////////////////////////////////////
+// This file is part of the Maple Engine                              		//
+//////////////////////////////////////////////////////////////////////////////
 #include "QuadCollapseMesh.h"
 #include "Others/Console.h"
 #include "Engine/Camera.h"
@@ -200,8 +202,7 @@ namespace Maple
 		}
 
 
-		indexBuffer = std::make_shared<IndexBuffer>(indices.data(), indices.size());
-		vertexBuffer = std::make_shared<VertexBuffer>();
+	
 
 		maxLevelVerticesLength = width;
 		if (maxLevelVerticesLength < 2 /*|| !isPowerOf2(maxLevelVerticesLength - 1)*/) {
@@ -274,6 +275,7 @@ namespace Maple
 
 	auto QuadCollapseMesh::update(Camera* camera) -> void
 	{
+/*
 		updateFrame++;
 
 		if (lod)
@@ -301,7 +303,7 @@ namespace Maple
 				if (indexBuffer->getSize() != sizeof(uint32_t) * indices.size())
 					indexBuffer->setData(sizeof(uint32_t) * size, indices.data());
 			}
-		}
+		}*/
 	}
 
 	auto QuadCollapseMesh::getMaxLevelLength() const -> int32_t

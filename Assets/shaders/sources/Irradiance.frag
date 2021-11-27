@@ -7,7 +7,7 @@ layout (location = 0) out vec4 outColor;
 
 layout (location = 0) in vec3 sampleDirection;
 
-layout (binding = 1) uniform samplerCube cubemapSampler;
+layout (set = 0,binding = 1) uniform samplerCube uCubeMapSampler;
 
 const float PI = 3.1415926536;
 
@@ -33,7 +33,7 @@ void main()
 	        // Tangent space to world
 	        vec3 sampleVec = tangentSample.x * right + tangentSample.y * up + tangentSample.z * normal; 
 
-	        irradiance += texture(cubemapSampler, sampleVec).rgb * cos(theta) * sin(theta);
+	        irradiance += texture(uCubeMapSampler, sampleVec).rgb * cos(theta) * sin(theta);
 	        ++nrSamples;
 	    }
 	}

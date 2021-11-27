@@ -1,6 +1,8 @@
 //////////////////////////////////////////////////////////////////////////////
-// This file is part of the Maple Game Engine			                    //
+// This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
+
+
 #pragma once
 #include <string>
 #include <glm/glm.hpp>
@@ -34,10 +36,14 @@ namespace glm
 namespace Maple
 {
 	class Scene;
+	class Material;
 
 	namespace Serialization
 	{
 		auto serialize(Scene* scene) -> void;
 		auto loadScene(Scene* scene,const std::string & file) -> void;
+
+		auto loadMaterial(Material *material, const std::string &path) -> void;
+		auto serialize(Material *material) -> void;
 	};
 };

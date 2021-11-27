@@ -1,12 +1,10 @@
 //////////////////////////////////////////////////////////////////////////////
-// This file is part of the Maple Engine                              //
-// Copyright ?2020-2022 Tian Zeng                                           //
+// This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
-
 #pragma once
-#include "Engine/Vulkan/VulkanHelper.h"
 #include <memory>
 #include <vector>
+#include "RHI/Vulkan/VulkanHelper.h"
 
 struct ImGui_ImplVulkanH_Window;
 namespace Maple 
@@ -17,8 +15,6 @@ namespace Maple
 	class VulkanRenderPass;
 	class VulkanTexture2D;
 
-
-	//a class for renderering imgui in vulkan
 
 	class VkImGUIRenderer 
 	{

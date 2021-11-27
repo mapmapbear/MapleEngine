@@ -1,12 +1,12 @@
 //////////////////////////////////////////////////////////////////////////////
-// This file is part of the Maple Game Engine			                    //
-
+// This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 
 #pragma once
 #include "Scene/Scene.h"
 #include "Scene/SceneGraph.h"
 #include "Scene/Component/Component.h"
+#include "Others/Console.h"
 
 namespace Maple
 {

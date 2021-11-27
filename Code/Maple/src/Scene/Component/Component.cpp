@@ -1,29 +1,27 @@
 //////////////////////////////////////////////////////////////////////////////
-// This file is part of the Maple Engine                              // 
-// Copyright ?2020-2022 Tian Zeng                                           // 
-////////////////////////////////////////////////////////////////////////////// 
+// This file is part of the Maple Engine                              		//
+//////////////////////////////////////////////////////////////////////////////
 
 #include "Component.h"
+#include "RHI/Texture.h"
 #include "Scene/Entity/Entity.h"
 #include "Scene/SceneManager.h"
-#include "Engine/Interface/Texture.h"
+
 #include "Application.h"
-
-
 
 namespace Maple
 {
-	Hierarchy::Hierarchy(entt::entity p)
-		:parent(p)
+	Hierarchy::Hierarchy(entt::entity p) :
+	    parent(p)
 	{
 		first = entt::null;
-		next = entt::null;
-		prev = entt::null;
+		next  = entt::null;
+		prev  = entt::null;
 	}
 	Hierarchy::Hierarchy()
 	{
 	}
-	bool Hierarchy::compare(const entt::registry& registry, entt::entity rhs) const
+	bool Hierarchy::compare(const entt::registry &registry, entt::entity rhs) const
 	{
 		if (rhs == entt::null || rhs == parent || rhs == prev)
 		{
@@ -36,8 +34,8 @@ namespace Maple
 		}
 		else
 		{
-			auto& thisParent = registry.get<Hierarchy>(parent);
-			auto& rhsParent = registry.get<Hierarchy>(rhs).parent;
+			auto &thisParent = registry.get<Hierarchy>(parent);
+			auto &rhsParent  = registry.get<Hierarchy>(rhs).parent;
 			if (thisParent.compare(registry, parent))
 			{
 				return true;
@@ -49,17 +47,17 @@ namespace Maple
 	void Hierarchy::reset()
 	{
 		parent = entt::null;
-		first = entt::null;
-		next = entt::null;
-		prev = entt::null;
+		first  = entt::null;
+		next   = entt::null;
+		prev   = entt::null;
 	}
 
-	void Hierarchy::onConstruct(entt::registry& registry, entt::entity entity)
+	void Hierarchy::onConstruct(entt::registry &registry, entt::entity entity)
 	{
-		auto& hierarchy = registry.get<Hierarchy>(entity);
-		if (hierarchy.parent != entt::null) 
+		auto &hierarchy = registry.get<Hierarchy>(entity);
+		if (hierarchy.parent != entt::null)
 		{
- 			auto& parentHierarchy = registry.get_or_emplace<Hierarchy>(hierarchy.parent);
+			auto &parentHierarchy = registry.get_or_emplace<Hierarchy>(hierarchy.parent);
 
 			if (parentHierarchy.first == entt::null)
 			{
@@ -67,23 +65,23 @@ namespace Maple
 			}
 			else
 			{
-				auto prevEnt = parentHierarchy.first;
+				auto prevEnt          = parentHierarchy.first;
 				auto currentHierarchy = registry.try_get<Hierarchy>(prevEnt);
 
 				while (currentHierarchy != nullptr && currentHierarchy->next != entt::null)
 				{
-					prevEnt = currentHierarchy->next;
+					prevEnt          = currentHierarchy->next;
 					currentHierarchy = registry.try_get<Hierarchy>(prevEnt);
 				}
 				currentHierarchy->next = entity;
-				hierarchy.prev = prevEnt;
+				hierarchy.prev         = prevEnt;
 			}
 		}
 	}
 
-	void Hierarchy::onDestroy(entt::registry& registry, entt::entity entity)
+	void Hierarchy::onDestroy(entt::registry &registry, entt::entity entity)
 	{
-		auto& hierarchy = registry.get<Hierarchy>(entity);
+		auto &hierarchy = registry.get<Hierarchy>(entity);
 		if (hierarchy.prev == entt::null || !registry.valid(hierarchy.prev))
 		{
 			if (hierarchy.parent != entt::null && registry.valid(hierarchy.parent))
@@ -121,9 +119,9 @@ namespace Maple
 		}
 	}
 
-	void Hierarchy::onUpdate(entt::registry& registry, entt::entity entity)
+	void Hierarchy::onUpdate(entt::registry &registry, entt::entity entity)
 	{
-		auto& hierarchy = registry.get<Hierarchy>(entity);
+		auto &hierarchy = registry.get<Hierarchy>(entity);
 		// if is the first child
 		if (hierarchy.prev == entt::null)
 		{
@@ -162,13 +160,13 @@ namespace Maple
 		}
 	}
 
-	void Hierarchy::reparent(entt::entity ent, entt::entity parent, entt::registry& registry, Hierarchy& hierarchy)
+	void Hierarchy::reparent(entt::entity ent, entt::entity parent, entt::registry &registry, Hierarchy &hierarchy)
 	{
 		Hierarchy::onDestroy(registry, ent);
 
 		hierarchy.parent = entt::null;
-		hierarchy.next = entt::null;
-		hierarchy.prev = entt::null;
+		hierarchy.next   = entt::null;
+		hierarchy.prev   = entt::null;
 
 		if (parent != entt::null)
 		{
@@ -191,24 +189,24 @@ namespace Maple
 	{
 	}
 
-	Environment::Environment(const std::string& filePath)
+	Environment::Environment(const std::string &filePath)
 	{
 		init(filePath);
 	}
 
-	auto Environment::init(const std::string& filePath) -> void
+	auto Environment::init(const std::string &filePath) -> void
 	{
 		this->filePath = filePath;
-		if (filePath != "") {
+		if (filePath != "")
+		{
 			TextureLoadOptions options(false, false, true);
-			TextureParameters parameters(TextureFormat::RGBA32);
-			equirectangularMap = Texture2D::create(filePath, parameters, options);
-			width = equirectangularMap->getWidth();
-			height = equirectangularMap->getHeight();
-			numMips = equirectangularMap->getMipmapLevel();
-			irradianceMap = TextureCube::create(IrradianceMapSize, TextureFormat::RGBA32);
+			TextureParameters  parameters(TextureFormat::RGBA32, TextureWrap::ClampToEdge);
+			equirectangularMap = Texture2D::create(filePath, filePath, parameters, options);
+			width              = equirectangularMap->getWidth();
+			height             = equirectangularMap->getHeight();
+			numMips            = equirectangularMap->getMipMapLevels();
+			irradianceMap          = TextureCube::create(IrradianceMapSize, TextureFormat::RGBA32, 0);
 			prefilteredEnvironment = TextureCube::create(PrefilterMapSize, TextureFormat::RGBA32, 5);
 		}
 	}
-}
-
+}        // namespace Maple

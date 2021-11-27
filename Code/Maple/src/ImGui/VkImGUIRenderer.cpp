@@ -1,20 +1,9 @@
 //////////////////////////////////////////////////////////////////////////////
-// This file is part of the Maple Engine                              //
-// Copyright ?2020-2022 Tian Zeng                                           //
+// This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
-
 #include "VkImGUIRenderer.h"
-#include "Engine/Vulkan/VulkanContext.h"
-#include "Engine/Vulkan/VulkanSwapChain.h"
-#include "Engine/Vulkan/VulkanDevice.h"
-#include "Engine/Vulkan/VulkanRenderPass.h"
-#include "Engine/Vulkan/VulkanCommandBuffer.h"
-#include "Engine/Vulkan/VulkanTexture.h"
-#include "Engine/Vulkan/VulkanFrameBuffer.h"
-
 #include <imgui_impl_vulkan.h>
 #include "Application.h"
-#include "Engine/Renderer/VkRenderDevice.h"
 
 static ImGui_ImplVulkanH_Window g_WindowData;
 static VkAllocationCallbacks* g_Allocator = nullptr;
@@ -37,6 +26,7 @@ namespace Maple
 
 	VkImGUIRenderer::~VkImGUIRenderer()
 	{
+/*
 		for (int i = 0; i < VulkanContext::get()->getSwapChain()->getSwapChainBuffers().size(); i++)
 		{
 			ImGui_ImplVulkanH_Frame* fd = &g_WindowData.Frames[i];
@@ -44,12 +34,12 @@ namespace Maple
 			vkDestroyCommandPool(*VulkanDevice::get(), fd->CommandPool, g_Allocator);
 		}
 		vkDestroyDescriptorPool(*VulkanDevice::get(), g_DescriptorPool, nullptr);
-		ImGui_ImplVulkan_Shutdown();
+		ImGui_ImplVulkan_Shutdown();*/
 	}
 
 	auto VkImGUIRenderer::setupVulkanWindowData(ImGui_ImplVulkanH_Window* wd, VkSurfaceKHR surface, int32_t width, int32_t height) -> void
 	{
-		//some uniforms in vulkan shader.
+		/*//some uniforms in vulkan shader.
 		const uint32_t maxSize = 10;
 		VkDescriptorPoolSize poolSizes[] =
 		{
@@ -141,13 +131,13 @@ namespace Maple
 			bufferInfo.attachments[0] = swapChain->getTexture(i);
 			frameBuffers[i] = std::make_shared<VulkanFrameBuffer>(bufferInfo);
 			wd->Frames[i].Framebuffer = *frameBuffers[i];
-		}
+		}*/
 
 	}
 	auto VkImGUIRenderer::init() -> void
 	{
 
-		auto wd = &g_WindowData;
+	/*	auto wd = &g_WindowData;
 		VkSurfaceKHR surface = VulkanContext::get()->getVkSurface();
 		setupVulkanWindowData(wd, surface, width, height);
 
@@ -167,7 +157,7 @@ namespace Maple
 		ImGui_ImplVulkan_Init(&init_info, wd->RenderPass);
 		// Upload Fonts
 
-		rebuildFontTexture();
+		rebuildFontTexture();*/
 
 	}
 	auto VkImGUIRenderer::newFrame() -> void
@@ -179,7 +169,7 @@ namespace Maple
 	}
 	auto VkImGUIRenderer::onResize(uint32_t width, uint32_t height) -> void
 	{
-		auto swapChain = std::static_pointer_cast<VulkanSwapChain>(VulkanContext::get()->getSwapChain());
+		/*auto swapChain = std::static_pointer_cast<VulkanSwapChain>(VulkanContext::get()->getSwapChain());
 		auto* wd = &g_WindowData;
 		wd->Swapchain = *swapChain;
 		for (uint32_t i = 0; i < wd->ImageCount; i++)
@@ -211,14 +201,14 @@ namespace Maple
 			bufferInfo.attachments[0] = swapChain->getTexture(i);
 			frameBuffers[i] = std::make_shared<VulkanFrameBuffer>(bufferInfo);
 			wd->Frames[i].Framebuffer = *frameBuffers[i];
-		}
+		}*/
 	}
 	auto VkImGUIRenderer::clear() -> void
 	{
 	}
 	auto VkImGUIRenderer::frameRender(ImGui_ImplVulkanH_Window* wd) -> void
 	{
-		wd->FrameIndex = VulkanContext::get()->getSwapChain()->getCurrentBuffer();
+		/*wd->FrameIndex = VulkanContext::get()->getSwapChain()->getCurrentBuffer();
 
 		auto cmd = VulkanContext::get()->getSwapChain()->getCurrentCommandBuffer();
 
@@ -229,13 +219,14 @@ namespace Maple
 		);
 
 		renderPass->endRenderpass(cmd);
+*/
 
 		//Application::get()->getRenderDevice()->present(commandBuffers[wd->FrameIndex].get());
 	}
 
 	auto VkImGUIRenderer::rebuildFontTexture() -> void
 	{
-		ImGuiIO& io = ImGui::GetIO();
+	/*	ImGuiIO& io = ImGui::GetIO();
 
 		unsigned char* pixels;
 		int width, height;
@@ -254,6 +245,7 @@ namespace Maple
 		io.Fonts->TexID = (ImTextureID)fontTexture->getHandle();// GetImage();
 
 		ImGui_ImplVulkan_AddTexture(io.Fonts->TexID, ImGui_ImplVulkanH_GetFontDescriptor());
+*/
 
 		//ImGui_ImplVulkan_InvalidateFontUploadObjects();
 	}

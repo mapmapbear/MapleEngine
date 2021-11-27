@@ -1,36 +1,35 @@
+
 //////////////////////////////////////////////////////////////////////////////
-// This file is part of the Maple Game Engine			                    //
-// Copyright ?2021-2023 Prime Zeng                                          //
+// This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #include "SceneManager.h"
-#include "Others/StringUtils.h"
-#include "Scene/Scene.h"
 #include "Application.h"
 #include "Engine/Camera.h"
-#include "Entity/Entity.h"
-#include "Entity/EntityManager.h"
-#include "Scripts/Mono/MonoSystem.h"
 #include "Engine/Core.h"
 #include "Engine/Profiler.h"
-namespace Maple 
+#include "Entity/Entity.h"
+#include "Entity/EntityManager.h"
+#include "Others/StringUtils.h"
+#include "Scene/Scene.h"
+#include "Scripts/Mono/MonoSystem.h"
+namespace Maple
 {
-	auto SceneManager::switchScene(const std::string& name) -> void
+	auto SceneManager::switchScene(const std::string &name) -> void
 	{
 		switchingScenes = true;
 
-		if (auto iter = allScenes.find(name); iter != allScenes.end()) 
+		if (auto iter = allScenes.find(name); iter != allScenes.end())
 		{
 			switchingScenes = true;
-			currentName = name;
+			currentName     = name;
 		}
-		else 
+		else
 		{
 			switchingScenes = false;
 			LOGW("[{0} : {1}] - Unknown Scene : {2}", __FILE__, __LINE__, name);
 		}
 	}
 
-	
 	auto SceneManager::apply() -> void
 	{
 		PROFILE_FUNCTION();
@@ -38,14 +37,15 @@ namespace Maple
 		{
 			if (currentScene != nullptr)
 				return;
-			if (allScenes.empty()) { 
+			if (allScenes.empty() || (allScenes.size() == 1 && hasPreviewScene()))
+			{
 				currentName = "default";
 				addScene(currentName, new Scene(currentName));
 			}
 		}
 
 		//switching to new scene
-		if (currentScene != nullptr) //clear before
+		if (currentScene != nullptr)        //clear before
 		{
 			currentScene->onClean();
 		}
@@ -54,9 +54,9 @@ namespace Maple
 
 		currentScene->loadFrom();
 
-		if (Application::get()->getEditorState() == EditorState::Play) {
+		if (Application::get()->getEditorState() == EditorState::Play)
+		{
 			currentScene->onInit();
-		
 		}
 
 		Application::get()->onSceneCreated(currentScene);
@@ -64,16 +64,20 @@ namespace Maple
 		switchingScenes = false;
 	}
 
-
-	auto SceneManager::addSceneFromFile(const std::string& filePath) -> void
+	auto SceneManager::addSceneFromFile(const std::string &filePath) -> void
 	{
-		auto name = StringUtils::removeExtension(StringUtils::getFileName(filePath));
+		auto name  = StringUtils::removeExtension(StringUtils::getFileName(filePath));
 		auto scene = new Scene(name);
 		scene->setPath(filePath);
-		addScene(filePath,scene);
+		addScene(filePath, scene);
 	}
 
-	Scene* SceneManager::getSceneByName(const std::string& sceneName) 
+	auto SceneManager::hasPreviewScene() -> bool
+	{
+		return getSceneByName("PreviewScene") != nullptr;
+	}
+
+	Scene *SceneManager::getSceneByName(const std::string &sceneName)
 	{
 		if (auto iter = allScenes.find(sceneName); iter != allScenes.end())
 		{
@@ -82,18 +86,18 @@ namespace Maple
 		return nullptr;
 	}
 
-	auto SceneManager::addScene(const std::string& name, Scene* scene) -> void
+	auto SceneManager::addScene(const std::string &name, Scene *scene) -> void
 	{
 		allScenes[name] = std::shared_ptr<Scene>(scene);
-		auto cameras = scene->getEntityManager()->getEntitiesWithType<Camera>();
-		if (cameras.empty()) { 
-			auto entity = scene->createEntity("Main Camera");
-			auto & camera = entity.addComponent<Camera>();
+		auto cameras    = scene->getEntityManager()->getEntitiesWithType<Camera>();
+		if (cameras.empty())
+		{
+			auto  entity = scene->createEntity("Main Camera");
+			auto &camera = entity.addComponent<Camera>();
 			camera.setFov(45.f);
 			camera.setFar(100);
 			camera.setNear(0.01);
 			camera.setAspectRatio(4 / 3.f);
 		}
 	}
-
-};
+};        // namespace Maple

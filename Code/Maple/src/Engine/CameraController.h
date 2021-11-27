@@ -1,9 +1,6 @@
-
 //////////////////////////////////////////////////////////////////////////////
-// This file is part of the Maple Engine                              //
-// Copyright ?2020-2022 Tian Zeng                                           //
+// This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
-
 #pragma once
 #include <glm/glm.hpp>
 #include "Scene/Component/Transform.h"
@@ -12,7 +9,7 @@ namespace Maple
 {
 	class Camera;
 
-	class MAPLE_EXPORT CameraController
+	class MAPLE_EXPORT CameraController : public Component
 	{
 	public:
 		CameraController() = default;

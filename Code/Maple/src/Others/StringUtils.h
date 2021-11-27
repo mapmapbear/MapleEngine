@@ -1,9 +1,6 @@
 //////////////////////////////////////////////////////////////////////////////
-// This file is part of the Maple Engine                              //
-// Copyright ?2020-2022 Tian Zeng                                           //
+// This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
-
-
 #pragma once
 #include <string>
 #include <vector>
@@ -19,7 +16,7 @@ namespace Maple
 	{
 	public:
 		template <typename... Args>
-		static auto  format(const std::string& format, Args... args) -> std::string
+		inline static auto format(const std::string& format, Args... args) -> std::string
 		{
 			size_t size = snprintf(nullptr, 0, format.c_str(), args...) + 1; // Extra space for '\0'
 			std::unique_ptr<char[]> buf(new char[size]);

@@ -1,11 +1,8 @@
 //////////////////////////////////////////////////////////////////////////////
-// This file is part of the Maple Engine									//
-// Copyright ?2020-2022 Tian Zeng                                           //
+// This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 
-
 #include "TextureAtlas.h"
-#include "Engine/Interface/Texture.h"
 #include "FileSystem/ImageLoader.h"
 
 namespace Maple
@@ -160,6 +157,7 @@ namespace Maple
 
 		texture->bind();
 		texture->update(x, y, w, h, buffer);
+		texture->unbind();
 		auto& offset = offsets[uniqueName];
 		offset.setTexture(texture);
 		offset.setTexCoords(x, y, w, h);

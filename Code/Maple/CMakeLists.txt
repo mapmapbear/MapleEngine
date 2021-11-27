@@ -8,16 +8,15 @@ get_filename_component(ENGINE_LIB_SRC_DIR
 
 
 get_filename_component(ENGINE_ASSET_DIR
-					  ${CMAKE_CURRENT_LIST_DIR}/../../Assets
+					  ${CMAKE_SOURCE_DIR}/Assets
                       ABSOLUTE)					   
 					   
 get_filename_component(TOOL_CHAIN_DIR
-					  ${CMAKE_CURRENT_LIST_DIR}/../../Toolchains
+					  ${CMAKE_SOURCE_DIR}/Toolchains
                       ABSOLUTE)					   
 					   					  
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
-
 
 
 add_subdirectory(lib/spdlog)
@@ -29,6 +28,8 @@ add_subdirectory(lib/charset-detect)
 add_subdirectory(lib/zlib)
 add_subdirectory(lib/lua)
 add_subdirectory(lib/tracy)
+add_subdirectory(lib/glad)
+add_subdirectory(lib/nativefiledialog)
 
 file(GLOB SHADERS_GLSL 
 	"${ENGINE_ASSET_DIR}/shaders/*.vert" 
@@ -49,6 +50,7 @@ file(GLOB IMGUI_SRC
 	${ENGINE_LIB_SRC_DIR}/imgui/src/imgui_impl_glfw.cpp
 	${ENGINE_LIB_SRC_DIR}/imgui/src/ImGuizmo.cpp
 	${ENGINE_LIB_SRC_DIR}/imgui/src/cimgui.cpp
+	${ENGINE_LIB_SRC_DIR}/imGuIZMOquat/imGuIZMOquat.cpp
 )
 
 file(GLOB VK_APP_SRC
@@ -56,12 +58,16 @@ file(GLOB VK_APP_SRC
 	src/*.h	
 	src/Engine/*.h
 	src/Engine/*.cpp
-	src/Engine/Interface/*.h
-	src/Engine/Interface/*.cpp
-	src/Engine/Vulkan/*.h
-	src/Engine/Vulkan/*.cpp
 	src/Engine/Renderer/*.cpp
 	src/Engine/Renderer/*.h
+	src/RHI/*.h
+	src/RHI/*.cpp
+	#src/RHI/Vulkan/*.h
+	#src/RHI/Vulkan/*.cpp
+	src/RHI/OpenGL/*.h
+	src/RHI/OpenGL/*.cpp
+	src/RHI/ImGui/*.h
+	src/RHI/ImGui/*.cpp
 	src/Event/*.h
 	src/Event/*.cpp
 	src/Others/*.h
@@ -99,6 +105,21 @@ file(GLOB VK_APP_SRC
 )
 
 
+if(ENGINE_AS_LIBRARY)
+	add_definitions(-DMAPLE_DYNAMIC -DMAPLE_ENGINE)
+endif()
+
+if(MAPLE_OPENGL)
+	add_definitions(-DMAPLE_OPENGL)
+endif()
+
+if(MAPLE_VULKAN)
+	add_definitions(-DGLM_FORCE_DEPTH_ZERO_TO_ONE)
+	add_definitions(-DMAPLE_VULKAN)
+endif()
+
+
+
 if (${Target} MATCHES "Windows")
 
 	add_compile_options("/std:c++17")
@@ -108,10 +129,9 @@ if (${Target} MATCHES "Windows")
 		-D_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES 
 		-DPLATFORM_WINDOWS
 		-DPLATFORM_DESKTOP
-		-DGLM_FORCE_DEPTH_ZERO_TO_ONE
-		-DMAPLE_DYNAMIC
-		-DMAPLE_ENGINE
 		-DMAPLE_PROFILE
+		-DMAPLE_DEBUG
+		-DNOMINMAX #conflict between windows and limits
 	)
 
 	set_property(GLOBAL PROPERTY USE_FOLDERS ON)
@@ -120,10 +140,15 @@ if (${Target} MATCHES "Windows")
 
 	source_group("Shaders\\GLSL" FILES ${SHADERS_GLSL})
 
+if(ENGINE_AS_LIBRARY)
 	add_library(MapleEngine SHARED ${VK_APP_SRC} ${KTX_SOURCES} ${SHADERS_GLSL} ${IMGUI_SRC})
+else()
+	add_library(MapleEngine STATIC ${VK_APP_SRC} ${KTX_SOURCES} ${SHADERS_GLSL} ${IMGUI_SRC})
+endif()
 
 	SET_TARGET_PROPERTIES(MapleEngine PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${ASSET_DIR})
 	#set(LIBRARY_OUTPUT_PATH ${ASSET_DIR})
+
 	target_include_directories(MapleEngine PUBLIC
 		src
 		${ENGINE_LIB_SRC_DIR}/opengl/include
@@ -145,12 +170,13 @@ if (${Target} MATCHES "Windows")
 		${ENGINE_LIB_SRC_DIR}/lua/include
 		${ENGINE_LIB_SRC_DIR}/libmono/6.13.0/include
 		${ENGINE_LIB_SRC_DIR}/tracy
+		${ENGINE_LIB_SRC_DIR}/glad/include
+		${ENGINE_LIB_SRC_DIR}/nativefiledialog/include
 	)
 
 	target_link_libraries(MapleEngine 
 		${ENGINE_LIB_SRC_DIR}/opengl/lib/${Arch}/glfw3.lib
 		${ENGINE_LIB_SRC_DIR}/opengl/lib/${Arch}/opengl32.lib
-		${ENGINE_LIB_SRC_DIR}/opengl/lib/${Arch}/glew.lib
 		${ENGINE_LIB_SRC_DIR}/vulkan/lib/${Arch}/vulkan-1.lib
 		${ENGINE_LIB_SRC_DIR}/vulkan/lib/${Arch}/VkLayer_utils.lib
 		${ENGINE_LIB_SRC_DIR}/libmono/6.13.0/windows/${Arch}/libmono-static-sgen.lib
@@ -166,9 +192,11 @@ if (${Target} MATCHES "Windows")
 		Version
 		Bcrypt
 		TracyClient
+		glad
+		filedlg
 	)
 
-	set_target_properties(lua zlib tinyobjloader tellenc spirvCross ktx spdlog_headers_for_ide stb_image TracyClient PROPERTIES FOLDER Library)
+	set_target_properties(lua zlib tinyobjloader tellenc spirvCross ktx spdlog_headers_for_ide stb_image glad TracyClient filedlg PROPERTIES FOLDER Library)
 	
 
 endif()

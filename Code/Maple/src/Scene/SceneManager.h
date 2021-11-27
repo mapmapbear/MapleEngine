@@ -1,5 +1,5 @@
 //////////////////////////////////////////////////////////////////////////////
-// This file is part of the Maple Game Engine			                    //
+// This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include <string>
@@ -26,10 +26,13 @@ namespace Maple
 		inline auto setSwitchScene(bool switching){ switchingScenes = switching; }
 		inline auto isSwitchingScene() const  { return switchingScenes; }
 
-		Scene* getSceneByName(const std::string& sceneName);
+		auto getSceneByName(const std::string &sceneName) -> Scene *;
 	
 		auto addScene(const std::string& name,Scene * scene)-> void;
 		auto addSceneFromFile(const std::string& filePath) -> void;
+
+		auto hasPreviewScene() -> bool;
+
 	protected:
 		Scene* currentScene = nullptr;
 		std::vector<std::string> sceneFilePaths;

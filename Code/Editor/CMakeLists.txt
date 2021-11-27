@@ -40,6 +40,7 @@ target_include_directories(EditorStatic PUBLIC
 	${EDITOR_LIB_SRC_DIR}/ktx/other_include
 	${EDITOR_LIB_SRC_DIR}/cereal/include
 	${EDITOR_LIB_SRC_DIR}/libmono/6.13.0/include
+	${EDITOR_LIB_SRC_DIR}/imGuIZMOquat/
 )
 
 source_group(TREE ${CMAKE_CURRENT_LIST_DIR} FILES ${EDITOR_STATIC_SRC})

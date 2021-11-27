@@ -1,4 +1,7 @@
 
+//////////////////////////////////////////////////////////////////////////////
+// This file is part of the Maple Engine                              		//
+//////////////////////////////////////////////////////////////////////////////
 #include "MapleMonoAssembly.h"
 #include "MapleMonoClass.h"
 #include "MonoHelper.h"
@@ -208,17 +211,12 @@ namespace Maple
 
 		// Load MDB file
 #if MAPLE_DEBUG
-		auto mdbPath = mPath + ".mdb";
+		auto mdbPath = path + ".mdb";
 		if (File::fileExists(mdbPath))
 		{
 			File file(mdbPath);
 			auto buffer = file.getBuffer();
-
-			if (file)
-			{
-
-				mono_debug_open_image_from_memory(image, debugData, mdbSize);
-			}
+			mono_debug_open_image_from_memory(image, debugData, file.getFileSize());
 		}
 #endif
 
