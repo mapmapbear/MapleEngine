@@ -4,9 +4,9 @@
 
 layout(location = 0) in vec3 inPosition;
 
-layout(location = 0) out vec4 outColor;
-
 layout(set = 0,binding = 1) uniform sampler2D equirectangularMap;
+
+layout(location = 0) out vec4 outColor;
 
 const vec2 invAtan = vec2(0.1591, 0.3183);
 
@@ -22,5 +22,5 @@ void main(void)
 {
     vec2 uv = sampleSphericalMap(normalize(inPosition));
     vec3 color = texture(equirectangularMap, uv).rgb;
-    outColor = vec4(color, 1.0);
+    outColor = vec4(color,1.0);
 }

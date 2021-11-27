@@ -2,7 +2,7 @@
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
 //#extension GL_EXT_debug_printf : enable
-
+const float Epsilon = 0.001;
 
 layout(location = 0) out vec4 outColor;
 
@@ -28,7 +28,6 @@ vec4 Grid(float divisions)
 	vec2 grid = abs(fract(coord - 0.5) - 0.5) / fwidth(coord);
 	float line = min(grid.x, grid.y);
 	float lineResult = ubo.res - min(line, ubo.res);
-	
 	vec3 color = vec3(lineResult) * vec3(0.3, 0.3, 0.3);
 
 	return vec4( color, 0.1 * lineResult);
@@ -43,5 +42,6 @@ void main()
 	float decreaseDistance = ubo.maxDistance * 1.5;
 
 	outColor = Grid(divs) + Grid(divs / subdivisions);
+
 	outColor.a *= clamp((decreaseDistance - distanceToCamera) / decreaseDistance, 0.0f, 1.0f);
 }

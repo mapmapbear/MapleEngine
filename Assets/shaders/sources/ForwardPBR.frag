@@ -8,7 +8,7 @@
 #define MAX_SHADOWMAPS 4
 
 const float PBR_WORKFLOW_SEPARATE_TEXTURES = 0.0f;
-const float PBR_WORKFLOW_METALLIC_roughness = 1.0f;
+const float PBR_WORKFLOW_METALLIC_ROUGHNESS = 1.0f;
 const float PBR_WORKFLOW_SPECULAR_GLOSINESS = 2.0f;
 
 const int NUM_PCF_SAMPLES = 16;
@@ -45,6 +45,7 @@ layout(set = 1, binding = 2) uniform sampler2D uRoughnessMap;
 layout(set = 1, binding = 3) uniform sampler2D uNormalMap;
 layout(set = 1, binding = 4) uniform sampler2D uAOMap;
 layout(set = 1, binding = 5) uniform sampler2D uEmissiveMap;
+
 layout(set = 1, binding = 6) uniform UniformMaterialData
 {
 	vec4  albedoColor;
@@ -53,7 +54,7 @@ layout(set = 1, binding = 6) uniform UniformMaterialData
 	vec4  emissiveColor;
 	float usingAlbedoMap;
 	float usingMetallicMap;
-	float usingroughnessMap;
+	float usingRoughnessMap;
 	float usingNormalMap;
 	float usingAOMap;
 	float usingEmissiveMap;
@@ -63,7 +64,7 @@ layout(set = 1, binding = 6) uniform UniformMaterialData
 
 
 layout(set = 2, binding = 0) uniform sampler2D uPreintegratedFG;//BRDFLUT
-layout(set = 2, binding = 1) uniform samplerCube uEnvironmentMap;
+layout(set = 2, binding = 1) uniform samplerCube uPrefilterMap;
 layout(set = 2, binding = 2) uniform samplerCube uIrradianceMap;
 layout(set = 2, binding = 3) uniform sampler2DArray uShadowMap;
 layout(set = 2, binding = 4) uniform UniformBufferLight
@@ -83,6 +84,7 @@ layout(set = 2, binding = 4) uniform UniformBufferLight
 	int shadowCount;
 	int mode;
 	int cubeMapMipLevels;
+
 	float initialBias;
 } ubo;
 
@@ -123,9 +125,9 @@ vec3 getMetallic()
 	return (1.0 - materialProperties.usingMetallicMap) * materialProperties.metallicColor.rgb + materialProperties.usingMetallicMap * gammaCorrectTextureRGB(texture(uMetallicMap, fragTexCoord)).rgb;
 }
 
-float getroughness()
+float getRoughness()
 {
-	return (1.0 - materialProperties.usingroughnessMap) *  materialProperties.roughnessColor.r + materialProperties.usingroughnessMap * gammaCorrectTextureRGB(texture(uRoughnessMap, fragTexCoord)).r;
+	return (1.0 - materialProperties.usingRoughnessMap) *  materialProperties.roughnessColor.r + materialProperties.usingRoughnessMap * gammaCorrectTextureRGB(texture(uRoughnessMap, fragTexCoord)).r;
 }
 
 float getAO()
@@ -364,7 +366,7 @@ vec3 fresnelSchlick(vec3 F0, float cosTheta)
 
 vec3 fresnelSchlickroughness(vec3 F0, float cosTheta, float roughness)
 {
-    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
+    return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
 
 vec3 lighting(vec3 F0, vec3 wsPos, Material material)
@@ -425,7 +427,7 @@ vec3 lighting(vec3 F0, vec3 wsPos, Material material)
 		float cosLi = max(0.0, dot(material.normal, Li));
 		float cosLh = max(0.0, dot(material.normal, Lh));
 		
-		//vec3 F = fresnelSchlick(F0, max(0.0, dot(Lh, material.View)));
+		//vec3 F = fresnelSchlick(F0, max(0.0, dot(Lh, material.view)));
 		vec3 F = fresnelSchlickroughness(F0, max(0.0, dot(Lh,  material.view)), material.roughness);
 		
 		float D = ndfGGX(cosLh, material.roughness);
@@ -450,17 +452,21 @@ vec3 radianceIBLIntegration(float NdotV, float roughness, vec3 metallic)
 
 vec3 IBL(vec3 F0, vec3 Lr, Material material)
 {
+	float level = float(ubo.cubeMapMipLevels);
+	if(textureSize(uIrradianceMap,0).x == 1)
+	{
+		return vec3(0,0,0);
+	}
 	vec3 irradiance = texture(uIrradianceMap, material.normal).rgb;
 	vec3 F = fresnelSchlickroughness(F0, material.normalDotView, material.roughness);
 	vec3 kd = (1.0 - F) * (1.0 - material.metallic.x);
-	vec3 diffuseIBL = material.albedo.xyz * irradiance;
-	
-	vec3 specularIrradiance = textureLod(uEnvironmentMap, Lr, material.roughness * ubo.cubeMapMipLevels).rgb;
-	
-	vec2 specularBRDF = texture(uPreintegratedFG, vec2(material.normalDotView, 1.0 - material.roughness.x)).rg;
+	vec3 diffuseIBL = irradiance * material.albedo.rgb;
+
+	vec3 specularIrradiance = textureLod(uPrefilterMap, Lr, material.roughness * level).rgb;
+	vec2 specularBRDF = texture(uPreintegratedFG, vec2(material.normalDotView, material.roughness)).rg;
 	vec3 specularIBL = specularIrradiance * (F0 * specularBRDF.x + specularBRDF.y);
 	
-	return kd * diffuseIBL + specularIBL;
+	return (kd * diffuseIBL + specularIBL) * material.ao;
 }
 
 vec3 finalGamma(vec3 color)
@@ -493,9 +499,9 @@ void main()
 	if(materialProperties.workflow == PBR_WORKFLOW_SEPARATE_TEXTURES)
 	{
 		metallic  = getMetallic().x;
-		roughness = getroughness();
+		roughness = getRoughness();
 	}
-	else if( materialProperties.workflow == PBR_WORKFLOW_METALLIC_roughness)
+	else if( materialProperties.workflow == PBR_WORKFLOW_METALLIC_ROUGHNESS)
 	{
 		vec3 tex = gammaCorrectTextureRGB(texture(uMetallicMap, fragTexCoord));
 		metallic = tex.b;
@@ -513,7 +519,7 @@ void main()
     material.albedo    	= texColor;
     material.metallic  	= vec3(metallic);
     material.roughness 	= roughness;
-    material.normal    	= normalize(getNormalFromMap());
+    material.normal    	= getNormalFromMap();
 	material.ao			= getAO();
 	material.emissive  	= getEmissive();
 	
@@ -524,21 +530,21 @@ void main()
     float shadowDistance = ubo.maxShadowDistance;
 	float transitionDistance = ubo.shadowFade;
 	
-	vec4 viewPos = vec4(wsPos, 1.0) * ubo.viewMatrix;
+	vec4 viewPos = ubo.viewMatrix * vec4(wsPos, 1.0);
 	
 	float distance = length(viewPos);
 	ShadowFade = distance - (shadowDistance - transitionDistance);
 	ShadowFade /= transitionDistance;
 	ShadowFade = clamp(1.0 - ShadowFade, 0.0, 1.0);
 	
-	vec3 Lr = 2.0 * material.normalDotView * material.normal - material.view;
+	vec3 Lr =  reflect(-material.view,material.normal); 
+	//2.0 * material.normalDotView * material.normal - material.view;
 	// Fresnel reflectance, metals use albedo
 	vec3 F0 = mix(Fdielectric, material.albedo.xyz, material.metallic.x);
 	
 	vec3 lightContribution = lighting(F0, wsPos, material);
-	//vec3 iblContribution = IBL(F0, Lr, material) * 2.0;
-	
-	vec3 finalColor = lightContribution;// + iblContribution + material.emissive;
+	vec3 iblContribution = IBL(F0, Lr, material) * 2.0;
+	vec3 finalColor = lightContribution + iblContribution;// + material.emissive;
 	outColor = vec4(finalColor, 1.0);
 	
 	if(ubo.mode > 0)
