@@ -21,6 +21,9 @@ namespace Maple
 		virtual auto onSceneCreated(Scene* scene) -> void override;
 
 	private:
+
+		auto drawResource(const std::string & path) -> void;
+
 		bool init = false;
 		MM::EntityEditor<entt::entity> enttEditor;
 	};

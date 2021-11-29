@@ -61,7 +61,15 @@ namespace Maple
 	Model::Model(const std::string &file) :
 	    filePath(file)
 	{
-		resource = MeshResource::get(file);
+		resource = Application::getCache()->emplace<MeshResource>(file);
+	}
+
+	auto Model::load() -> void
+	{
+		if (type == PrimitiveType::File)
+		{
+			resource = Application::getCache()->emplace<MeshResource>(filePath);
+		}
 	}
 
 };        // namespace Maple

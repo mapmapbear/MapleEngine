@@ -25,7 +25,8 @@ namespace Maple
 		Capsule  = 5,
 		Cylinder = 6,
 		Terrain  = 7,
-		File     = 8
+		File     = 8,
+		Length
 	};
 
 	class MAPLE_EXPORT Model final : public Component
@@ -44,13 +45,15 @@ namespace Maple
 		auto load(Archive &archive) -> void
 		{
 			archive(filePath, type, entity);
-			if (type == PrimitiveType::File)
-				resource = MeshResource::get(filePath);
+			load();
 		}
 
 		std::string                   filePath;
-		PrimitiveType                 type;
+		PrimitiveType                 type = PrimitiveType::Length;
 		std::shared_ptr<MeshResource> resource;
+
+	  private:
+		auto load() -> void;
 	};
 
 	class MAPLE_EXPORT MeshRenderer : public Component
@@ -73,7 +76,7 @@ namespace Maple
 
 		auto loadFromModel() -> void;
 
-		inline auto& getMesh()
+		inline auto &getMesh()
 		{
 			if (mesh == nullptr)
 				getMesh(meshName);

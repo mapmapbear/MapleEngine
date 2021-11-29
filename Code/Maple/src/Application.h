@@ -140,7 +140,6 @@ namespace Maple
 			return get()->renderDevice;
 		}
 
-		
 		inline static auto &getTimer()
 		{
 			return get()->timer;
@@ -151,36 +150,42 @@ namespace Maple
 			return app;
 		}
 
-		inline static auto getCurrentScene()->Scene *
+		inline static auto getCurrentScene() -> Scene *
 		{
 			return get()->getSceneManager()->getCurrentScene();
+		}
+
+		inline static auto getCache()
+		{
+			return get()->cache;
 		}
 
 		static Application *app;
 
 	  protected:
-		std::unique_ptr<NativeWindow>               window;
-		std::unique_ptr<SceneManager>               sceneManager;
-		std::unique_ptr<ThreadPool>                 threadPool;
-		std::unique_ptr<TexturePool>                texturePool;
-		std::unique_ptr<LuaVirtualMachine>          luaVm;
-		std::unique_ptr<SystemManager>              systemManager;
+		std::unique_ptr<NativeWindow>      window;
+		std::unique_ptr<SceneManager>      sceneManager;
+		std::unique_ptr<ThreadPool>        threadPool;
+		std::unique_ptr<TexturePool>       texturePool;
+		std::unique_ptr<LuaVirtualMachine> luaVm;
+		std::unique_ptr<SystemManager>     systemManager;
 
-		std::shared_ptr<MonoVirtualMachine>         monoVm;
-		std::shared_ptr<ImGuiSystem>                imGuiManager;
-		std::shared_ptr<AppDelegate>                appDelegate;
-		std::shared_ptr<RenderDevice>               renderDevice;
-		std::shared_ptr<GraphicsContext>            graphicsContext;
-		std::shared_ptr<RenderGraph>                renderGraph;
+		std::shared_ptr<MonoVirtualMachine> monoVm;
+		std::shared_ptr<ImGuiSystem>        imGuiManager;
+		std::shared_ptr<AppDelegate>        appDelegate;
+		std::shared_ptr<RenderDevice>       renderDevice;
+		std::shared_ptr<GraphicsContext>    graphicsContext;
+		std::shared_ptr<RenderGraph>        renderGraph;
+		std::shared_ptr<Cache>              cache;
 
-		EventDispatcher dispatcher;
-		Timer           timer;
-		uint64_t        updates     = 0;
-		uint64_t        frames      = 0;
-		float           secondTimer = 0.0f;
-		bool            sceneActive = true;
-		EditorState     state       = EditorState::Play;
-		std::mutex      executeMutex;
+		EventDispatcher                                                  dispatcher;
+		Timer                                                            timer;
+		uint64_t                                                         updates     = 0;
+		uint64_t                                                         frames      = 0;
+		float                                                            secondTimer = 0.0f;
+		bool                                                             sceneActive = true;
+		EditorState                                                      state       = EditorState::Play;
+		std::mutex                                                       executeMutex;
 		std::queue<std::pair<std::promise<bool>, std::function<bool()>>> executeQueue;
 	};
 

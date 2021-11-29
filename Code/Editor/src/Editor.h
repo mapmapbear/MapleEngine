@@ -32,6 +32,8 @@ namespace Maple
 		auto onRenderDebug() -> void override;
 
 		auto setSelected(const entt::entity &selectedNode) -> void;
+		auto setSelected(const std::string &selectResource) -> void;
+
 		auto setCopiedEntity(const entt::entity &selectedNode, bool cut = false) -> void;
 
 		auto getScreenRay(int32_t x, int32_t y, Camera *camera, int32_t width, int32_t height) -> Ray;
@@ -87,6 +89,12 @@ namespace Maple
 		{
 			this->imGuizmoOperation = imGuizmoOperation;
 		}
+
+		inline auto setEditingResource(const std::string &selectResource)
+		{
+			this->editingResource = selectResource;
+		}
+
 		inline auto &getCamera()
 		{
 			return camera;
@@ -95,6 +103,26 @@ namespace Maple
 		inline auto getTextureAtlas()
 		{
 			return textureAtlas;
+		}
+
+		inline auto &getSelectResource() const
+		{
+			return selectResource;
+		}
+
+		inline auto isLockInspector() const
+		{
+			return lockInspector;
+		}
+
+		inline auto &getEditingResource() const
+		{
+			return editingResource;
+		}
+
+		inline auto setLockInspector(bool lock)
+		{
+			return lockInspector = lock;
 		}
 
 		auto onImGuizmo() -> void;
@@ -118,26 +146,29 @@ namespace Maple
 		auto focusCamera(const glm::vec3 &point, float distance, float speed = 1.0f) -> void;
 
 	  private:
-		auto                                                      drawPlayButtons() -> void;
-		auto                                                      drawMenu() -> void;
-		auto                                                      beginDockSpace() -> void;
-		auto                                                      endDockSpace() -> void;
-		auto                                                      loadCachedScene() -> void;
-		auto                                                      cacheScene() -> void;
+		auto drawPlayButtons() -> void;
+		auto drawMenu() -> void;
+		auto beginDockSpace() -> void;
+		auto endDockSpace() -> void;
+		auto loadCachedScene() -> void;
+		auto cacheScene() -> void;
+
 		std::unordered_map<size_t, std::shared_ptr<EditorWindow>> editorWindows;
 
-		entt::entity                             selectedNode     = entt::null;
-		entt::entity                             prevSelectedNode = entt::null;
-		entt::entity                             copiedNode       = entt::null;
-		bool                                     cutCopyEntity    = false;
+		entt::entity selectedNode     = entt::null;
+		entt::entity prevSelectedNode = entt::null;
+		entt::entity copiedNode       = entt::null;
+
 		std::unordered_map<size_t, const char *> iconMap;
 
 		uint32_t imGuizmoOperation = 4;
-		bool     showGizmos        = true;
+
+		bool cutCopyEntity  = false;
+		bool showGizmos     = true;
+		bool cameraSelected = false;
+		bool lockInspector  = false;
 
 		std::unique_ptr<Camera> camera;
-
-		bool cameraSelected = false;
 
 		//need to be optimized. should use Atlats to cache.
 		std::unordered_map<FileType, std::string>  cacheIcons;
@@ -147,6 +178,9 @@ namespace Maple
 		LoadingDialog          dialog;
 		Transform              editorCameraTransform;
 		EditorCameraController editorCameraController;
+
+		std::string selectResource;
+		std::string editingResource;
 
 	  private:
 		bool      transitioningCamera = false;

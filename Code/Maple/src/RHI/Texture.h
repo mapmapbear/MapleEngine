@@ -3,11 +3,12 @@
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "Definitions.h"
+#include "FileSystem/IResource.h"
 #include <string>
 
 namespace Maple
 {
-	class MAPLE_EXPORT Texture
+	class MAPLE_EXPORT Texture : public IResource
 	{
 	  public:
 		virtual ~Texture()
@@ -78,6 +79,16 @@ namespace Maple
 			return name;
 		};
 
+		virtual auto getResourceType() const -> FileType override
+		{
+			return FileType::Texture;
+		};
+
+		virtual auto getPath() const -> std::string override
+		{
+			return "";
+		}
+
 	  public:
 		static auto getStrideFromFormat(TextureFormat format) -> uint8_t;
 		static auto bitsToTextureFormat(uint32_t bits) -> TextureFormat;
@@ -98,7 +109,7 @@ namespace Maple
 		static auto  create() -> std::shared_ptr<Texture2D>;
 		static auto  create(uint32_t width, uint32_t height, void *data, TextureParameters parameters = TextureParameters(), TextureLoadOptions loadOptions = TextureLoadOptions()) -> std::shared_ptr<Texture2D>;
 		static auto  create(const std::string &name, const std::string &filePath, TextureParameters parameters = TextureParameters(), TextureLoadOptions loadOptions = TextureLoadOptions()) -> std::shared_ptr<Texture2D>;
-		virtual auto update(int32_t x, int32_t y, int32_t w, int32_t h, const void *buffer) -> void                                                                         = 0;
+		virtual auto update(int32_t x, int32_t y, int32_t w, int32_t h, const void *buffer) -> void                                                                                              = 0;
 		virtual auto buildTexture(TextureFormat internalformat, uint32_t width, uint32_t height, bool srgb = false, bool depth = false, bool samplerShadow = false, bool mipmap = false) -> void = 0;
 	};
 
@@ -117,7 +128,7 @@ namespace Maple
 		static auto createFromFile(const std::string &filePath) -> std::shared_ptr<TextureCube>;
 		static auto createFromFiles(const std::array<std::string, 6> &files) -> std::shared_ptr<TextureCube>;
 		static auto createFromVCross(const std::vector<std::string> &files, uint32_t mips, TextureParameters params, TextureLoadOptions loadOptions, InputFormat = InputFormat::VERTICAL_CROSS) -> std::shared_ptr<TextureCube>;
-	
+
 		virtual auto update(CommandBuffer *commandBuffer, FrameBuffer *framebuffer, int32_t cubeIndex, int32_t mipmapLevel = 0) -> void = 0;
 
 		virtual auto generateMipmap() -> void = 0;

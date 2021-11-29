@@ -24,7 +24,7 @@ namespace Maple
 
 
 	  private:
-		auto drawToolBar() -> void;
+		auto drawToolBar() -> bool;
 		auto drawGizmos(float width, float height, float xpos, float ypos, Scene *scene) -> void;
 
 		auto draw2DGrid(ImDrawList *  drawList,

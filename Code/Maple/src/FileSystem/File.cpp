@@ -111,8 +111,8 @@ namespace Maple
 		if (fileExists(name))
 		{
 			std::ifstream fileReader(name, std::ios::ate | std::ios::binary);
-			auto fileSize = fileReader.tellg();
-			auto buffer   = std::make_unique<std::vector<uint8_t>>(fileSize);
+			auto          fileSize = fileReader.tellg();
+			auto          buffer   = std::make_unique<std::vector<uint8_t>>(fileSize);
 			fileReader.seekg(0);
 			fileReader.read(reinterpret_cast<char *>(buffer->data()), fileSize);
 			return buffer;
@@ -122,32 +122,9 @@ namespace Maple
 
 	auto File::getFileType(const std::string &path) -> FileType
 	{
-		static std::unordered_map<std::string, FileType> types = {
-		    {"mp3", FileType::MP3},
-		    {"ogg", FileType::OGG},
-		    {"wav", FileType::WAV},
-		    {"aac", FileType::AAC},
-		    {"jpg", FileType::Texture},
-		    {"png", FileType::Texture},
-		    {"tga", FileType::Texture},
-		    {"lua", FileType::Script},
-		    {"cs", FileType::C_SHARP},
-		    {"glsl", FileType::Text},
-		    {"shader", FileType::Text},
-		    {"vert", FileType::Text},
-		    {"frag", FileType::Text},
-		    {"text", FileType::Text},
-		    {"scene", FileType::Scene},
-		    {"obj", FileType::Model},
-		    {"fbx", FileType::Model},
-		    {"glb", FileType::Model},
-		    {"gltf", FileType::Model},
-		    {"dll", FileType::Dll},
-		    {"so", FileType::Dll}};
-
 		auto extension = StringUtils::getExtension(path);
 		std::transform(extension.begin(), extension.end(), extension.begin(), [](unsigned char c) -> unsigned char { return std::tolower(c); });
-		if (auto iter = types.find(extension); iter != types.end())
+		if (auto iter = ExtensionsToType.find(extension); iter != ExtensionsToType.end())
 		{
 			return iter->second;
 		}
@@ -159,8 +136,7 @@ namespace Maple
 		std::ofstream{file};
 	}
 
-
-	auto File::openFile(const std::function<void(int32_t, const std::string &)> & call) -> void
+	auto File::openFile(const std::function<void(int32_t, const std::string &)> &call) -> void
 	{
 		nfdchar_t * outPath = NULL;
 		nfdresult_t result  = NFD_OpenDialog(NULL, NULL, &outPath);

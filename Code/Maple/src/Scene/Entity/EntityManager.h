@@ -38,6 +38,12 @@ namespace Maple
 
 		auto clear() -> void;
 
+
+		auto removeAllChildren(entt::entity entity, bool root = true) -> void;
+		auto removeEntity(entt::entity entity) -> void;
+	
+
+
 	private:
 		Scene* scene = nullptr;
 		entt::registry registry;

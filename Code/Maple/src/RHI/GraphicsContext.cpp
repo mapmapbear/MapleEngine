@@ -64,18 +64,12 @@ namespace Maple
 
 	auto Shader::create(const std::string &filePath) -> std::shared_ptr<Shader>
 	{
-		auto &shaderCache = Application::getGraphicsContext()->getShaderCache();
-
-		if (auto iter = shaderCache.find(filePath); iter != shaderCache.end())
-		{
-			return iter->second;
-		}
-		return shaderCache.emplace(filePath, std::make_shared<GLShader>(filePath)).first->second;
+		return Application::getCache()->emplace<GLShader>(filePath);
 	}
 
 	auto Shader::create(const std::vector<uint32_t> &vertData, const std::vector<uint32_t> &fragData) -> std::shared_ptr<Shader>
 	{
-		return std::make_shared<GLShader>(vertData, fragData);
+		return Application::getCache()->emplace<GLShader>(vertData, fragData);
 	}
 
 	auto FrameBuffer::create(const FrameBufferInfo &desc) -> std::shared_ptr<FrameBuffer>

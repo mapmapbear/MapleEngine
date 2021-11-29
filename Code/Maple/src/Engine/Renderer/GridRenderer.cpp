@@ -63,15 +63,7 @@ namespace Maple
 
 	auto GridRenderer::renderPreviewScene() -> void
 	{
-		PROFILE_FUNCTION();
-		if (pipeline)
-		{
-			pipeline->bind(getCommandBuffer());
-			descriptorSet->update();
-			bindDescriptorSets(pipeline.get(), getCommandBuffer(), 0, {descriptorSet});
-			drawMesh(getCommandBuffer(), pipeline.get(), quad.get());
-			pipeline->end(getCommandBuffer());
-		}
+		
 	}
 
 	auto GridRenderer::beginScene(Scene *scene, const glm::mat4 &projView) -> void

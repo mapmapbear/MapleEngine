@@ -3,12 +3,11 @@
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "Engine/Core.h"
+#include "FileSystem/IResource.h"
 #include <glm/glm.hpp>
 #include <memory>
 #include <string>
 #include <unordered_map>
-
-#include "Resources/Resources.h"
 
 namespace Maple
 {
@@ -51,7 +50,7 @@ namespace Maple
 		std::shared_ptr<Texture2D> emissive;
 	};
 
-	class MAPLE_EXPORT Material : public Resources<Material>
+	class MAPLE_EXPORT Material : public IResource
 	{
 	  public:
 		enum class RenderFlags
@@ -71,8 +70,6 @@ namespace Maple
 		int32_t renderFlags = 0;
 
 	  public:
-		Material(const std::string &materialId);
-
 		Material(const std::shared_ptr<Shader> &shader, const MaterialProperties &properties = MaterialProperties(), const PBRMataterialTextures &textures = PBRMataterialTextures());
 		Material();
 
@@ -149,7 +146,7 @@ namespace Maple
 			return (uint32_t) flag & renderFlags;
 		}
 
-		inline auto &GetName() const
+		inline auto &getName() const
 		{
 			return name;
 		}
@@ -169,7 +166,7 @@ namespace Maple
 			return descriptorSet;
 		}
 
-		inline auto& getMaterialId() const
+		inline auto &getMaterialId() const
 		{
 			return materialId;
 		}
@@ -252,7 +249,20 @@ namespace Maple
 
 		auto getShaderPath() const -> std::string;
 
+		inline auto getResourceType() const -> FileType
+		{
+			return FileType::Material;
+		}
+
+		inline auto getPath() const -> std::string
+		{
+			return materialId;
+		}
+
+		static auto create(const std::string &materialId) -> std::shared_ptr<Material>;
+		Material(const std::string &materialId);
 	  private:
+	
 		PBRMataterialTextures pbrMaterialTextures;
 		MaterialProperties    materialProperties;
 

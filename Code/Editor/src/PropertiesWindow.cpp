@@ -24,6 +24,7 @@
 #include "Engine/Mesh.h"
 #include "ImGui/ImGuiHelpers.h"
 #include "Others/StringUtils.h"
+#include "Others/Serialization.h"
 
 namespace MM
 {
@@ -82,7 +83,7 @@ namespace MM
 		ImGui::PopStyleVar();
 	}
 
-	auto textureWidget(const char *label, Material *material, std::shared_ptr<Texture2D> tex, float &usingMapProperty, glm::vec4 &colorProperty, const std::function<void(const std::string &)> &callback) -> void
+	auto textureWidget(const char *label, Material *material, std::shared_ptr<Texture2D> tex, float &usingMapProperty, glm::vec4 &colorProperty, const std::function<void(const std::string &)> &callback, bool &update) -> void
 	{
 		if (ImGui::TreeNodeEx(label, ImGuiTreeNodeFlags_DefaultOpen))
 		{
@@ -133,6 +134,7 @@ namespace MM
 						if (ImGui::AcceptDragDropPayload("AssetFile"))
 						{
 							callback(filePath);
+							update = true;
 							ImGui::EndDragDropTarget();
 
 							ImGui::Columns(1);
@@ -160,8 +162,14 @@ namespace MM
 			ImGui::PopItemWidth();
 			ImGui::NextColumn();
 
-			ImGuiHelper::property("Use Map", usingMapProperty, 0.0f, 1.0f);
-			ImGuiHelper::property("Color", colorProperty, 0.0f, 1.0f, false, ImGuiHelper::PropertyFlag::ColorProperty);
+			if (ImGuiHelper::property("Use Map", usingMapProperty, 0.0f, 1.0f))
+			{
+				update = true;
+			}
+			if (ImGuiHelper::property("Color", colorProperty, 0.0f, 1.0f, false, ImGuiHelper::PropertyFlag::ColorProperty))
+			{
+				update = true;
+			}
 
 			ImGui::Columns(1);
 			ImGui::PopStyleVar();
@@ -360,24 +368,27 @@ namespace MM
 			auto  color    = glm::vec4(0.f);
 			auto  textures = material->getTextures();
 
-			textureWidget("Albedo", material.get(), textures.albedo, prop.usingAlbedoMap, prop.albedoColor, std::bind(&Material::setAlbedoTexture, material, std::placeholders::_1));
+			bool update = false;
+
+			MM::textureWidget("Albedo", material.get(), textures.albedo, prop.usingAlbedoMap, prop.albedoColor, std::bind(&Material::setAlbedoTexture, material, std::placeholders::_1), update);
 			ImGui::Separator();
 
-			textureWidget("Normal", material.get(), textures.normal, prop.usingNormalMap, color, std::bind(&Material::setNormalTexture, material, std::placeholders::_1));
+			MM::textureWidget("Normal", material.get(), textures.normal, prop.usingNormalMap, color, std::bind(&Material::setNormalTexture, material, std::placeholders::_1), update);
 			ImGui::Separator();
 
-			textureWidget("Metallic", material.get(), textures.metallic, prop.usingMetallicMap, prop.metallicColor, std::bind(&Material::setMetallicTexture, material, std::placeholders::_1));
+			MM::textureWidget("Metallic", material.get(), textures.metallic, prop.usingMetallicMap, prop.metallicColor, std::bind(&Material::setMetallicTexture, material, std::placeholders::_1), update);
 			ImGui::Separator();
 
-			textureWidget("Roughness", material.get(), textures.roughness, prop.usingRoughnessMap, prop.roughnessColor, std::bind(&Material::setRoughnessTexture, material, std::placeholders::_1));
+			MM::textureWidget("Roughness", material.get(), textures.roughness, prop.usingRoughnessMap, prop.roughnessColor, std::bind(&Material::setRoughnessTexture, material, std::placeholders::_1), update);
 			ImGui::Separator();
 
-			textureWidget("AO", material.get(), textures.ao, prop.usingAOMap, color, std::bind(&Material::setAOTexture, material, std::placeholders::_1));
+			MM::textureWidget("AO", material.get(), textures.ao, prop.usingAOMap, color, std::bind(&Material::setAOTexture, material, std::placeholders::_1), update);
 			ImGui::Separator();
 
-			textureWidget("Emissive", material.get(), textures.emissive, prop.usingEmissiveMap, prop.emissiveColor, std::bind(&Material::setEmissiveTexture, material, std::placeholders::_1));
+			MM::textureWidget("Emissive", material.get(), textures.emissive, prop.usingEmissiveMap, prop.emissiveColor, std::bind(&Material::setEmissiveTexture, material, std::placeholders::_1), update);
 
-			material->setMaterialProperites(prop);
+			if (update)
+				material->setMaterialProperites(prop);
 
 			ImGui::TreePop();
 		}
@@ -552,55 +563,61 @@ namespace Maple
 
 	auto PropertiesWindow::onImGui() -> void
 	{
-		auto &editor   = static_cast<Editor &>(*Application::get());
-		auto &registry = editor.getSceneManager()->getCurrentScene()->getRegistry();
-		auto  selected = editor.getSelected();
+		auto &editor           = static_cast<Editor &>(*Application::get());
+		auto &registry         = editor.getSceneManager()->getCurrentScene()->getRegistry();
+		auto  selected         = editor.getSelected();
+		auto  selectedResource = editor.getEditingResource();
+		if (selectedResource == "")
+		{
+			selectedResource = editor.getSelectResource();
+		}
 
 		if (ImGui::Begin(title.c_str(), &active))
 		{
-			if (selected == entt::null)
+			if (selected != entt::null)
 			{
-				ImGui::End();
-				return;
-			}
-
-			auto activeComponent = registry.try_get<ActiveComponent>(selected);
-			bool active          = activeComponent ? activeComponent->active : true;
-			if (ImGui::Checkbox("##ActiveCheckbox", &active))
-			{
-				if (!activeComponent)
-					registry.emplace<ActiveComponent>(selected, active);
-				else
-					activeComponent->active = active;
-			}
-			ImGui::SameLine();
-			ImGui::TextUnformatted(ICON_MDI_CUBE);
-			ImGui::SameLine();
-
-			bool        hasName = registry.has<NameComponent>(selected);
-			std::string name;
-			if (hasName)
-				name = registry.get<NameComponent>(selected).name;
-			else
-				name = std::to_string(entt::to_integral(selected));
-
-			static char objName[INPUT_BUFFER];
-			strcpy(objName, name.c_str());
-
-			if (ImGui::InputText("##Name", objName, IM_ARRAYSIZE(objName)))
-				registry.get_or_emplace<NameComponent>(selected).name = objName;
-
-			ImGui::Separator();
-
-			enttEditor.renderEditor(registry, selected);
-
-			if (ImGui::BeginDragDropTarget())
-			{
-				auto data = ImGui::AcceptDragDropPayload("AssetFile", ImGuiDragDropFlags_None);
-				if (data)
+				auto activeComponent = registry.try_get<ActiveComponent>(selected);
+				bool active          = activeComponent ? activeComponent->active : true;
+				if (ImGui::Checkbox("##ActiveCheckbox", &active))
 				{
+					if (!activeComponent)
+						registry.emplace<ActiveComponent>(selected, active);
+					else
+						activeComponent->active = active;
 				}
-				ImGui::EndDragDropTarget();
+				ImGui::SameLine();
+				ImGui::TextUnformatted(ICON_MDI_CUBE);
+				ImGui::SameLine();
+
+				bool        hasName = registry.has<NameComponent>(selected);
+				std::string name;
+				if (hasName)
+					name = registry.get<NameComponent>(selected).name;
+				else
+					name = std::to_string(entt::to_integral(selected));
+
+				static char objName[INPUT_BUFFER];
+				strcpy(objName, name.c_str());
+
+				if (ImGui::InputText("##Name", objName, IM_ARRAYSIZE(objName)))
+					registry.get_or_emplace<NameComponent>(selected).name = objName;
+
+				ImGui::Separator();
+
+				enttEditor.renderEditor(registry, selected);
+
+				if (ImGui::BeginDragDropTarget())
+				{
+					auto data = ImGui::AcceptDragDropPayload("AssetFile", ImGuiDragDropFlags_None);
+					if (data)
+					{
+					}
+					ImGui::EndDragDropTarget();
+				}
+			}
+			else if(selectedResource != "")
+			{
+				drawResource(selectedResource);
 			}
 		}
 		ImGui::End();
@@ -686,6 +703,54 @@ namespace Maple
 				mono.addScript(fileName, Application::get()->getSystemManager()->getSystem<MonoSystem>());
 			}
 		};
+	}
+
+	auto PropertiesWindow::drawResource(const std::string &path) -> void
+	{
+		ImGui::TextUnformatted(StringUtils::getFileName(path).c_str());
+
+		ImGui::Separator();
+
+		if (File::isKindOf(path, FileType::Material))
+		{
+			auto material = Application::getCache()->emplace<Material>(path);
+
+			std::string matName = "Material";
+
+			auto &prop     = material->getProperties();
+			auto  color    = glm::vec4(0.f);
+			auto  textures = material->getTextures();
+
+			bool update = false;
+
+			MM::textureWidget("Albedo", material.get(), textures.albedo, prop.usingAlbedoMap, prop.albedoColor, std::bind(&Material::setAlbedoTexture, material, std::placeholders::_1), update);
+			ImGui::Separator();
+
+			MM::textureWidget("Normal", material.get(), textures.normal, prop.usingNormalMap, color, std::bind(&Material::setNormalTexture, material, std::placeholders::_1), update);
+			ImGui::Separator();
+
+			MM::textureWidget("Metallic", material.get(), textures.metallic, prop.usingMetallicMap, prop.metallicColor, std::bind(&Material::setMetallicTexture, material, std::placeholders::_1), update);
+			ImGui::Separator();
+
+			MM::textureWidget("Roughness", material.get(), textures.roughness, prop.usingRoughnessMap, prop.roughnessColor, std::bind(&Material::setRoughnessTexture, material, std::placeholders::_1), update);
+			ImGui::Separator();
+
+			MM::textureWidget("AO", material.get(), textures.ao, prop.usingAOMap, color, std::bind(&Material::setAOTexture, material, std::placeholders::_1), update);
+			ImGui::Separator();
+
+			MM::textureWidget("Emissive", material.get(), textures.emissive, prop.usingEmissiveMap, prop.emissiveColor, std::bind(&Material::setEmissiveTexture, material, std::placeholders::_1), update);
+
+			if (update)
+				material->setMaterialProperites(prop);
+			ImGui::Separator();
+
+			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 5.f);
+			if (ImGui::Button("Save Material"))
+			{
+				Serialization::serialize(material.get());
+			}
+			ImGui::PopStyleVar();
+		}
 	}
 
 };        // namespace Maple

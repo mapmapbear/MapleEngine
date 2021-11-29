@@ -23,7 +23,6 @@ namespace Maple
 		auto dragEntity()-> void;
 		auto drawNode(const entt::entity& node, entt::registry& registry)-> void;
 		auto isParentOfEntity(entt::entity entity, entt::entity child, entt::registry& registry)-> bool;
-		auto destroyEntity(entt::entity entity, entt::registry& registry)-> void;
 		ImGuiTextFilter hierarchyFilter;
 		entt::entity doubleClickedEntity = entt::null;
 		entt::entity droppedEntity = entt::null;

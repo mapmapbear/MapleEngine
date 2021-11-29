@@ -4,6 +4,8 @@
 #pragma once
 #include "DescriptorSet.h"
 #include "Engine/Core.h"
+#include "FileSystem/IResource.h"
+#include "Resources/Cache.h"
 
 namespace spirv_cross
 {
@@ -83,8 +85,7 @@ namespace Maple
 	class Pipeline;
 	class DescriptorSet;
 
-
-	class MAPLE_EXPORT Shader
+	class MAPLE_EXPORT Shader : public IResource
 	{
 	  public:
 		virtual ~Shader()                                                                        = default;
@@ -104,7 +105,13 @@ namespace Maple
 			return DescriptorSetInfo();
 		}
 
+		virtual auto getResourceType() const -> FileType
+		{
+			return FileType::Shader;
+		}
+
 		auto spirvTypeToDataType(const spirv_cross::SPIRType &type) -> ShaderDataType;
+
 
 	  protected:
 		auto parseSource(const std::vector<std::string> &lines, std::unordered_map<ShaderType, std::string> &shaders) -> void;

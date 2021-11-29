@@ -66,29 +66,27 @@ namespace Maple
 	auto Serialization::loadMaterial(Material *material, const std::string &file) -> void
 	{
 		File               f(file);
-		auto               buffer = f.getBuffer();
-		std::istringstream istr;
-		istr.str((const char *) buffer.get());
-		cereal::JSONInputArchive input(istr);
-		input(*material);
+		if (f.getFileSize() != 0)
+		{
+			auto               buffer = f.getBuffer();
+			std::istringstream istr;
+			istr.str((const char *) buffer.get());
+			cereal::JSONInputArchive input(istr);
+			input(*material);
+		}
 	}
 
 	auto Serialization::serialize(Material *material) -> void
 	{
-		/*auto              outPath = scene->getPath();
+		auto              outPath = material->getPath();
 		std::stringstream storage;
 		{
 			// output finishes flushing its contents when it goes out of scope
 			cereal::JSONOutputArchive output{storage};
-			output(*scene);
-			entt::snapshot{
-			    scene->getRegistry()}
-			    .entities(output)
-			    .component<ALL_COMPONENTS>(output);
+			output(*material);
 		}
 
 		File file(outPath, true);
-		file.write(storage.str());*/
+		file.write(storage.str());
 	}
-
 };        // namespace Maple

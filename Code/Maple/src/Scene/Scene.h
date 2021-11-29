@@ -84,6 +84,8 @@ namespace Maple
 
 		auto getCamera() -> std::pair<Camera *, Transform *>;
 
+		auto removeAllChildren(entt::entity entity) -> void;
+
 		inline auto &getSettings() const
 		{
 			return settings;

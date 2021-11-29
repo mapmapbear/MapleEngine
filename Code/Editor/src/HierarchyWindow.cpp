@@ -354,7 +354,7 @@ namespace Maple
 				if (ImGui::Selectable("Delete"))
 					deleteEntity = true;
 				if (editor->getSelected() == node)
-					editor->setSelected(entt::null);
+					editor->setSelected((entt::entity)entt::null);
 				ImGui::Separator();
 				if (ImGui::Selectable("Rename"))
 					doubleClickedEntity = node;
@@ -432,7 +432,8 @@ namespace Maple
 
 			if (deleteEntity)
 			{
-				destroyEntity(node, registry);
+				scene->getEntityManager()->removeEntity(node);
+
 				if (nodeOpen)
 					ImGui::TreePop();
 				return;
@@ -514,23 +515,5 @@ namespace Maple
 		}
 		return false;
 	}
-
-	auto HierarchyWindow::destroyEntity(entt::entity entity, entt::registry& registry) -> void
-	{
-		auto hierarchyComponent = registry.try_get<Hierarchy>(entity);
-		if (hierarchyComponent)
-		{
-			entt::entity child = hierarchyComponent->getFirst();
-			while (child != entt::null)
-			{
-				auto hierarchyComponent = registry.try_get<Hierarchy>(child);
-				auto next = hierarchyComponent ? hierarchyComponent->getNext() : entt::null;
-				destroyEntity(child, registry);//
-				child = next;
-			}
-		}
-		registry.destroy(entity);
-	}
-
 };
 

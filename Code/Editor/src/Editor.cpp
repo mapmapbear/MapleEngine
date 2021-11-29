@@ -37,6 +37,7 @@
 #include "Scene/Scene.h"
 #include "Scene/SceneManager.h"
 
+
 #include "FileSystem/File.h"
 #include "FileSystem/MeshLoader.h"
 #include "Others/StringUtils.h"
@@ -263,6 +264,12 @@ namespace Maple
 		prevSelectedNode = selectedNode;
 		selectedNode     = node;
 		cameraSelected   = node != entt::null && getSceneManager()->getCurrentScene()->getRegistry().try_get<Camera>(selectedNode) != nullptr;
+	}
+
+	auto Editor::setSelected(const std::string &selectResource) -> void
+	{
+		LOGI("Selected File is {0}", selectResource);
+		this->selectResource = selectResource;
 	}
 
 	auto Editor::setCopiedEntity(const entt::entity &selectedNode, bool cut) -> void
@@ -625,53 +632,85 @@ namespace Maple
 	auto Editor::openFileInPreview(const std::string &filePath) -> void
 	{
 		auto scene = sceneManager->getSceneByName("PreviewScene");
-		if (scene)
+		if (scene && filePath != "")
 		{
-			if (StringUtils::isTextFile(filePath))
-			{
-				LOGW("OpenFile file : {0} did not implement", filePath);
-			}
-			else if (StringUtils::isModelFile(filePath))
-			{
-				auto meshRoot = scene->getEntityManager()->getEntityByName("MeshRoot");
-				if (meshRoot)
-				{
-					auto name        = StringUtils::getFileNameWithoutExtension(filePath);
-					auto modelEntity = scene->createEntity(name);
-					
+			auto meshRoot = scene->getEntityManager()->getEntityByName("MeshRoot");
+			LOGI("Open File in Preview Window {0}",filePath);
+			meshRoot.removeAllChildren();
 
-					auto &model = modelEntity.addComponent<Model>(filePath);
-
-					if (model.resource->getMeshes().size() == 1)
+			auto fileType = File::getFileType(filePath);
+			switch (fileType)
+			{
+				case Maple::FileType::Normal:
+					break;
+				case Maple::FileType::Folder:
+					break;
+				case Maple::FileType::Texture:
+					break;
+				case Maple::FileType::Model:
+				case Maple::FileType::FBX:
+				case Maple::FileType::OBJ: {
+					if (meshRoot)
 					{
-						modelEntity.addComponent<MeshRenderer>(model.resource->getMeshes().begin()->second);
-					}
-					else
-					{
-						for (auto &mesh : model.resource->getMeshes())
+						auto  name        = StringUtils::getFileNameWithoutExtension(filePath);
+						auto  modelEntity = scene->createEntity(name);
+						auto &model       = modelEntity.addComponent<Model>(filePath);
+						if (model.resource->getMeshes().size() == 1)
 						{
-							auto child = scene->createEntity(mesh.first);
-							child.addComponent<MeshRenderer>(mesh.second);
-							child.setParent(modelEntity);
+							modelEntity.addComponent<MeshRenderer>(model.resource->getMeshes().begin()->second);
 						}
+						else
+						{
+							for (auto &mesh : model.resource->getMeshes())
+							{
+								auto child = scene->createEntity(mesh.first);
+								child.addComponent<MeshRenderer>(mesh.second);
+								child.setParent(modelEntity);
+							}
+						}
+						model.type = PrimitiveType::File;
+						modelEntity.setParent(meshRoot);
 					}
-					model.type = PrimitiveType::File;
-
-					modelEntity.setParent(meshRoot);
 				}
-			}
-			else if (StringUtils::isAudioFile(filePath))
-			{
-				LOGW("OpenFile file : {0} did not implement", filePath);
-			}
-			else if (StringUtils::isSceneFile(filePath))
-			{
-				sceneManager->addSceneFromFile(filePath);
-				sceneManager->switchScene(filePath);
-			}
-			else if (StringUtils::isTextureFile(filePath))
-			{
-				LOGW("OpenFile file : {0} did not implement", filePath);
+				break;
+				case Maple::FileType::Text:
+					break;
+				case Maple::FileType::Script:
+					break;
+				case Maple::FileType::Dll:
+					break;
+				case Maple::FileType::Scene: {
+					sceneManager->addSceneFromFile(filePath);
+					sceneManager->switchScene(filePath);
+				}
+				break;
+				case Maple::FileType::MP3:
+					break;
+				case Maple::FileType::OGG:
+					break;
+				case Maple::FileType::AAC:
+					break;
+				case Maple::FileType::WAV:
+					break;
+				case Maple::FileType::TTF:
+					break;
+				case Maple::FileType::C_SHARP:
+					break;
+				case Maple::FileType::Shader:
+					break;
+				case Maple::FileType::Material: {
+					auto entity                       = scene->createEntity("Sphere");
+					entity.addComponent<Model>().type = PrimitiveType::Sphere;
+					auto mesh = Mesh::createSphere();
+					auto &meshRender                  = entity.addComponent<MeshRenderer>(mesh);
+					mesh->setMaterial(Material::create(filePath));
+					entity.setParent(meshRoot);
+				}
+				break;
+				case Maple::FileType::Length:
+					break;
+				default:
+					break;
 			}
 		}
 	}
@@ -765,8 +804,11 @@ namespace Maple
 		int32_t i    = 0;
 		for (auto &str : files)
 		{
-			cacheIcons[static_cast<FileType>(i++)] = str;
-			textureAtlas->addSprite(str);
+			if (str != "")
+			{
+				cacheIcons[static_cast<FileType>(i++)] = str;
+				textureAtlas->addSprite(str);
+			}
 		}
 	}
 
@@ -895,6 +937,7 @@ namespace Maple
 			}
 		}
 
+		//if (closestEntity != entt::null)
 		selectedNode = closestEntity;
 	}
 

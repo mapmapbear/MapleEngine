@@ -9,7 +9,7 @@
 
 namespace Maple
 {
-	class Image
+	class Image 
 	{
 	  public:
 		Image() = default;

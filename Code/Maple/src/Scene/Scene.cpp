@@ -146,6 +146,11 @@ namespace Maple
 		return {overrideCamera, overrideTransform};
 	}
 
+	auto Scene::removeAllChildren(entt::entity entity) -> void
+	{
+		entityManager->removeAllChildren(entity);
+	}
+
 	auto Scene::copyComponents(const Entity &from, const Entity &to) -> void
 	{
 		LOGW("Not implementation {0}", __FUNCTION__);

@@ -35,6 +35,7 @@ namespace Maple
 		renderDevice    = RenderDevice::create();
 		graphicsContext = GraphicsContext::create();
 
+		cache         = std::make_shared<Cache>();
 		sceneManager  = std::make_unique<SceneManager>();
 		threadPool    = std::make_unique<ThreadPool>(4);
 		texturePool   = std::make_unique<TexturePool>();
@@ -206,5 +207,7 @@ namespace Maple
 		}
 	}
 
+
 	Maple::Application *Application::app = nullptr;
+
 };        // namespace Maple

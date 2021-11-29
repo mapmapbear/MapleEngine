@@ -6,7 +6,7 @@
 #pragma once
 #include <string>
 #include <glm/glm.hpp>
-
+#include "Engine/Core.h"
 
 namespace glm
 {
@@ -38,12 +38,12 @@ namespace Maple
 	class Scene;
 	class Material;
 
-	namespace Serialization
+	class MAPLE_EXPORT Serialization
 	{
-		auto serialize(Scene* scene) -> void;
-		auto loadScene(Scene* scene,const std::string & file) -> void;
-
-		auto loadMaterial(Material *material, const std::string &path) -> void;
-		auto serialize(Material *material) -> void;
+	  public:
+		static auto serialize(Scene *scene) -> void;
+		static auto loadScene(Scene *scene, const std::string &file) -> void;
+		static auto loadMaterial(Material *material, const std::string &path) -> void;
+		static auto serialize(Material *material) -> void;
 	};
 };

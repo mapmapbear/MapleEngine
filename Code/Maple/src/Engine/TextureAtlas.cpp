@@ -39,7 +39,7 @@ namespace Maple
 		if (auto iter = offsets.find(file); iter != offsets.end()) {
 			return &iter->second;
 		}
-		auto image = ImageCache::get(file);
+		auto image = ImageLoader::loadAsset(file);
 		if (image->getWidth() <= 0 || image->getHeight() <= 0)
 			return nullptr;
 		return update(file, (uint8_t*)image->getData(), image->getWidth(), image->getHeight());

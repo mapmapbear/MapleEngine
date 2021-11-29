@@ -75,7 +75,7 @@ namespace Maple
 
 		inline auto getFilePath() const -> const std::string & override
 		{
-			return name;
+			return filePath;
 		}
 
 		auto getDescriptorInfo(uint32_t index) -> const DescriptorSetInfo override;
@@ -84,6 +84,11 @@ namespace Maple
 		{
 			return handle;
 		}
+
+		auto getPath() const -> std::string override
+		{
+			return filePath;
+		};
 
 	  private:
 		//spv -> glsl code
@@ -105,7 +110,6 @@ namespace Maple
 
 		BufferLayout              layout;
 		std::vector<PushConstant> pushConstants;
-
-	  public:
+		const std::string         filePath;
 	};
 }        // namespace Maple

@@ -66,7 +66,9 @@ namespace Maple
 					transform = &registry.get<Transform>(cameraView.front());
 				}
 			}
-			drawToolBar();
+			bool click = drawToolBar();
+
+
 			if (transform != nullptr)
 			{
 				ImVec2 offset            = {0.0f, 0.0f};
@@ -115,7 +117,7 @@ namespace Maple
 
 					editor.onImGuizmo();
 
-					if (editor.isSceneActive() && !ImGuizmo::IsUsing() && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+					if (editor.isSceneActive() && !ImGuizmo::IsUsing() && ImGui::IsMouseReleased(ImGuiMouseButton_Left) && !click)
 					{
 						auto clickPos = Input::getInput()->getMousePosition() - glm::vec2(sceneViewPosition.x, sceneViewPosition.y);
 						editor.clickObject(editor.getScreenRay(int32_t(clickPos.x), int32_t(clickPos.y), camera, int32_t(sceneViewSize.x), int32_t(sceneViewSize.y)));
@@ -177,7 +179,6 @@ namespace Maple
 
 	auto SceneWindow::drawGizmos(float width, float height, float xpos, float ypos, Scene *scene) -> void
 	{
-
 	}
 
 	auto SceneWindow::draw2DGrid(ImDrawList *drawList, const ImVec2 &cameraPos, const ImVec2 &windowPos, const ImVec2 &canvasSize, const float factor, const float thickness) -> void
@@ -233,8 +234,9 @@ namespace Maple
 		}
 	}
 
-	auto SceneWindow::drawToolBar() -> void
+	auto SceneWindow::drawToolBar() -> bool
 	{
+		bool clicked = false;
 		ImGui::Indent();
 		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.8f));
 		bool  selected = false;
@@ -245,7 +247,10 @@ namespace Maple
 				ImGui::PushStyleColor(ImGuiCol_Text, SelectedColor);
 			ImGui::SameLine();
 			if (ImGui::Button(ICON_MDI_CURSOR_DEFAULT))
+			{
 				editor.setImGuizmoOperation(4);
+				clicked = true;
+			}
 
 			if (selected)
 				ImGui::PopStyleColor();
@@ -262,7 +267,10 @@ namespace Maple
 				ImGui::PushStyleColor(ImGuiCol_Text, SelectedColor);
 			ImGui::SameLine();
 			if (ImGui::Button(ICON_MDI_ARROW_ALL))
+			{
+				clicked = true;
 				editor.setImGuizmoOperation(ImGuizmo::TRANSLATE);
+			}
 
 			if (selected)
 				ImGui::PopStyleColor();
@@ -276,7 +284,10 @@ namespace Maple
 
 			ImGui::SameLine();
 			if (ImGui::Button(ICON_MDI_ROTATE_ORBIT))
+			{
+				clicked = true;
 				editor.setImGuizmoOperation(ImGuizmo::ROTATE);
+			}
 
 			if (selected)
 				ImGui::PopStyleColor();
@@ -290,7 +301,10 @@ namespace Maple
 
 			ImGui::SameLine();
 			if (ImGui::Button(ICON_MDI_ARROW_EXPAND_ALL))
+			{
+				clicked = true;
 				editor.setImGuizmoOperation(ImGuizmo::SCALE);
+			}
 
 			if (selected)
 				ImGui::PopStyleColor();
@@ -308,7 +322,10 @@ namespace Maple
 
 			ImGui::SameLine();
 			if (ImGui::Button(ICON_MDI_BORDER_NONE))
+			{
+				clicked = true;
 				editor.setImGuizmoOperation(ImGuizmo::BOUNDS);
+			}
 
 			if (selected)
 				ImGui::PopStyleColor();
@@ -328,6 +345,7 @@ namespace Maple
 			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 0.4, 0.4, 1.f));
 		if (ImGui::Button(ICON_MDI_AXIS_ARROW " 3D"))
 		{
+			clicked = true;
 			if (ortho)
 			{
 				camera->setOrthographic(false);
@@ -343,6 +361,7 @@ namespace Maple
 			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 0.4, 0.4, 1.f));
 		if (ImGui::Button(ICON_MDI_ANGLE_RIGHT "2D"))
 		{
+			clicked = true;
 			if (!ortho)
 			{
 				camera->setOrthographic(true);
@@ -356,6 +375,8 @@ namespace Maple
 
 		ImGui::PopStyleColor();
 		ImGui::Unindent();
+
+		return clicked;
 	}
 
 };        // namespace Maple

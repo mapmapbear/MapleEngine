@@ -710,9 +710,10 @@ namespace Maple
 			auto &data     = previewData->commandQueue.emplace_back();
 			data.mesh      = mesh.getMesh().get();
 			data.transform = transform.getWorldMatrix();
-			data.material  = previewData->defaultMaterial.get();
+			data.material  = mesh.getMesh()->getMaterial() == nullptr ? previewData->defaultMaterial.get() : mesh.getMesh()->getMaterial().get();
 
-			//mesh.getMesh()->getMaterial() == nullptr ? previewData->defaultMaterial.get() : mesh.getMesh()->getMaterial().get();
+			if (data.material->getShader() == nullptr)
+				data.material->setShader(previewData->shader);
 
 			data.material->bind();
 			pipelineInfo.cullMode            = data.material->isFlagOf(Material::RenderFlags::TwoSided) ? CullMode::None : CullMode::Back;

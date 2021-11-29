@@ -49,6 +49,11 @@ namespace Maple
 			return format;
 		}
 
+		inline auto getPath() const -> std::string override
+		{
+			return fileName;
+		}
+
 	  private:
 		auto               load(const void *data) -> void;
 		bool               isHDR  = false;

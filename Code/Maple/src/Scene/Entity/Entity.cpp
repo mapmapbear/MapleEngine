@@ -19,9 +19,9 @@ namespace Maple
 		getOrAddComponent<ActiveComponent>().active = isActive;
 	}
 
-	auto Entity::setParent(const Entity& entity) -> void
+	auto Entity::setParent(const Entity &entity) -> void
 	{
-		bool acceptable = false;
+		bool acceptable         = false;
 		auto hierarchyComponent = tryGetComponent<Hierarchy>();
 		if (hierarchyComponent != nullptr)
 		{
@@ -41,14 +41,15 @@ namespace Maple
 		}
 	}
 
-	Entity Entity::findByPath(const std::string& path)
+	Entity Entity::findByPath(const std::string &path)
 	{
-		if (path == "") {
+		if (path == "")
+		{
 			return {};
 		}
-		Entity ent = {};
-		auto layers = StringUtils::split(path,"/");
-		auto children = getChildren();
+		Entity ent      = {};
+		auto   layers   = StringUtils::split(path, "/");
+		auto   children = getChildren();
 
 		for (int32_t i = 0; i < layers.size(); ++i)
 		{
@@ -62,10 +63,10 @@ namespace Maple
 			{
 				for (auto entt : children)
 				{
-					auto & nameComp = entt.getComponent<NameComponent>();
-					if (layers[i] == nameComp.name) 
+					auto &nameComp = entt.getComponent<NameComponent>();
+					if (layers[i] == nameComp.name)
 					{
-						ent = entt;
+						ent      = entt;
 						children = ent.getChildren();
 						break;
 					}
@@ -75,18 +76,19 @@ namespace Maple
 		return ent;
 	}
 
-	Entity Entity::getChildInChildren(const std::string& name)
+	Entity Entity::getChildInChildren(const std::string &name)
 	{
 		auto children = getChildren();
 		for (auto entt : children)
 		{
-			auto& nameComp = entt.getComponent<NameComponent>();
+			auto &nameComp = entt.getComponent<NameComponent>();
 			if (name == nameComp.name)
 			{
 				return entt;
 			}
-			auto ret =  entt.getChildInChildren(name);
-			if (ret.valid()) {
+			auto ret = entt.getChildInChildren(name);
+			if (ret.valid())
+			{
 				return ret;
 			}
 		}
@@ -105,7 +107,7 @@ namespace Maple
 	std::vector<Entity> Entity::getChildren()
 	{
 		std::vector<Entity> children;
-		auto hierarchyComponent = tryGetComponent<Hierarchy>();
+		auto                hierarchyComponent = tryGetComponent<Hierarchy>();
 		if (hierarchyComponent)
 		{
 			entt::entity child = hierarchyComponent->getFirst();
@@ -120,7 +122,12 @@ namespace Maple
 		return children;
 	}
 
-	bool Entity::isParent(const Entity & potentialParent) const 
+	auto Entity::removeAllChildren() -> void
+	{
+		scene->removeAllChildren(entityHandle);
+	}
+
+	bool Entity::isParent(const Entity &potentialParent) const
 	{
 		auto nodeHierarchyComponent = scene->getRegistry().try_get<Hierarchy>(entityHandle);
 		if (nodeHierarchyComponent)
@@ -135,21 +142,21 @@ namespace Maple
 				else
 				{
 					nodeHierarchyComponent = scene->getRegistry().try_get<Hierarchy>(parent);
-					parent = nodeHierarchyComponent ? nodeHierarchyComponent->getParent() : entt::null;
+					parent                 = nodeHierarchyComponent ? nodeHierarchyComponent->getParent() : entt::null;
 				}
 			}
 		}
 		return false;
 	}
 
-	void Entity::destroy()
+	auto Entity::destroy() -> void
 	{
 		scene->getRegistry().destroy(entityHandle);
 	}
 
-	bool Entity::valid()
+	auto Entity::valid() -> bool
 	{
 		return scene && scene->getRegistry().valid(entityHandle);
 	}
 
-};
+};        // namespace Maple

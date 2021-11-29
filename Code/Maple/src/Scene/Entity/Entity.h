@@ -99,7 +99,9 @@ namespace Maple
 		auto getChildInChildren(const std::string& name)->Entity;
 		auto getParent()->Entity;
 		auto getChildren() ->std::vector<Entity>;
-		bool isParent(const Entity& potentialParent) const;
+		auto removeAllChildren() -> void;
+
+		auto isParent(const Entity &potentialParent) const -> bool;
 
 		inline operator entt::entity() const { return entityHandle; }
 		inline operator uint32_t() const { return (uint32_t)entityHandle; }

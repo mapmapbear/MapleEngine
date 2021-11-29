@@ -5,14 +5,10 @@
 #include <memory>
 #include <string>
 #include "Image.h"
-#include "Resources/Resources.h"
+#include "Resources/Cache.h"
 
 namespace Maple
 {
-    class ImageCache : public Resources<Image> 
-    {
-        
-    };
 
     class ImageLoader final 
     {

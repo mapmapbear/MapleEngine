@@ -13,6 +13,10 @@
 #include "Engine/Profiler.h"
 #include "Others/Console.h"
 #include "Others/Serialization.h"
+#include "Others/StringUtils.h"
+
+#include "Application.h"
+
 
 namespace Maple
 {
@@ -38,11 +42,11 @@ namespace Maple
 	{
 		PROFILE_FUNCTION();
 		Serialization::loadMaterial(this, materialId);
+		setRenderFlag(RenderFlags::DepthTest);
 	}
 
 	Material::~Material()
 	{
-
 	}
 
 	auto Material::loadPBRMaterial(const std::string &name, const std::string &path, const std::string &extension) -> void
@@ -279,7 +283,10 @@ namespace Maple
 	auto Material::setShader(const std::string &path) -> void
 	{
 		PROFILE_FUNCTION();
-		shader = Shader::create(path);
+		if (!StringUtils::endWith(path, "ForwardPreview.shader"))
+		{
+			shader = Shader::create(path);
+		}
 	}
 
 	auto Material::setShader(const std::shared_ptr<Shader> &shader) -> void
@@ -292,4 +299,10 @@ namespace Maple
 	{
 		return shader ? shader->getFilePath() : "";
 	}
+
+	auto Material::create(const std::string &materialId) -> std::shared_ptr<Material>
+	{
+		return Application::getCache()->emplace<Material>(materialId);
+	}
+
 };        // namespace Maple

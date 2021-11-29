@@ -79,7 +79,7 @@ namespace Maple
 	};
 
 	GLShader::GLShader(const std::string &filePath, bool loadSPV) :
-	    loadSPV(loadSPV), name(StringUtils::getFileName(filePath))
+	    loadSPV(loadSPV), name(StringUtils::getFileName(filePath)), filePath(filePath)
 	{
 		auto bytes = File::read(filePath);
 		source     = {bytes->begin(), bytes->end()};
