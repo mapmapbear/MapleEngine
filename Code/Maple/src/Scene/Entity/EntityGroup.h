@@ -84,7 +84,7 @@ namespace Maple
 	public:
 		EntityGroup(Scene* scene)
 			: scene(scene)
-			, group(scene->GetRegistry().group<Components...>())
+			, group(scene->getRegistry().group<Components...>())
 		{
 		}
 

@@ -172,6 +172,7 @@ endif()
 		${ENGINE_LIB_SRC_DIR}/tracy
 		${ENGINE_LIB_SRC_DIR}/glad/include
 		${ENGINE_LIB_SRC_DIR}/nativefiledialog/include
+		${ENGINE_LIB_SRC_DIR}/ecs
 	)
 
 	target_link_libraries(MapleEngine 

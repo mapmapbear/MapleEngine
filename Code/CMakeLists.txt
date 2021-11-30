@@ -128,6 +128,7 @@ target_include_directories(Editor PUBLIC
 	${LIB_SRC_DIR}/cereal/include
 	${LIB_SRC_DIR}/glad/include
 	${LIB_SRC_DIR}/imGuIZMO/
+	${LIB_SRC_DIR}/ecs
 )
 
 
@@ -146,6 +147,7 @@ target_include_directories(Game PUBLIC
 	${LIB_SRC_DIR}/ktx/other_include
 	${LIB_SRC_DIR}/cereal/include
 	${LIB_SRC_DIR}/glad/include
+	${LIB_SRC_DIR}/ecs
 )
 
 target_link_libraries(

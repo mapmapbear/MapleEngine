@@ -18,8 +18,12 @@
 #include "Application.h"
 #include <imGuIZMOquat.h>
 
+#include <ecs/ComponentChain.h>
+
 namespace Maple
 {
+
+
 	PreviewWindow::PreviewWindow()
 	{
 		title = "Preview";
@@ -29,13 +33,14 @@ namespace Maple
 		auto entity = scene->createEntity("Light");
 		entity.addComponent<Light>();
 
+
 		auto &transform = entity.getComponent<Transform>();
 		transform.setLocalOrientation(glm::radians(glm::vec3(45.0, 15.0, 45.0)));
 
 		auto controller = scene->createEntity("CameraController");
 		controller.addComponent<EditorCameraController>();
 
-		auto meshRoot     = scene->createEntity("MeshRoot");
+		auto meshRoot = scene->createEntity("MeshRoot");
 		meshRoot.addComponent<Transform>();
 
 		scene->setUseSceneCamera(true);
@@ -44,7 +49,6 @@ namespace Maple
 
 	PreviewWindow::~PreviewWindow()
 	{
-
 	}
 
 	auto PreviewWindow::onImGui() -> void
@@ -132,7 +136,7 @@ namespace Maple
 		auto entity = scene->getEntityManager()->getEntityByName("MeshRoot");
 		if (Input::getInput()->isMouseHeld(KeyCode::MouseKey::ButtonLeft) && entity)
 		{
-			auto &transform = entity.getComponent<Transform>();
+			auto &transform        = entity.getComponent<Transform>();
 			float mouseSensitivity = 0.02f;
 			rotateVelocity         = rotateVelocity + (pos - previousCurserPos) * mouseSensitivity;
 			glm::vec3 euler        = glm::degrees(transform.getLocalOrientation());
