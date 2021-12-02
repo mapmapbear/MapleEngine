@@ -25,7 +25,7 @@
 #include "Thread/ThreadPool.h"
 #include "Window/NativeWindow.h"
 
-namespace Maple
+namespace maple
 {
 	class MonoVirtualMachine;
 
@@ -189,4 +189,4 @@ namespace Maple
 		std::queue<std::pair<std::promise<bool>, std::function<bool()>>> executeQueue;
 	};
 
-};        // namespace Maple
+};        // namespace maple

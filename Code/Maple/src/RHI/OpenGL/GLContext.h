@@ -2,7 +2,7 @@
 
 #include "RHI/GraphicsContext.h"
 
-namespace Maple
+namespace maple
 {
 	class MAPLE_EXPORT GLContext : public GraphicsContext
 	{
@@ -36,4 +36,4 @@ namespace Maple
 			return true;
 		}
 	};
-}        // namespace Maple
+}        // namespace maple

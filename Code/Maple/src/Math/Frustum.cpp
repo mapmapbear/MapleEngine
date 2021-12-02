@@ -4,7 +4,7 @@
 #include "Frustum.h"
 
 
-namespace Maple
+namespace maple
 {
 
 	auto Frustum::from(const glm::mat4& projection) -> void

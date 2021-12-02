@@ -10,7 +10,7 @@
 #define MAX_KEYS	1024
 #define MAX_BUTTONS	32
 
-namespace Maple
+namespace maple
 {
 	class Event;
 

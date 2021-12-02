@@ -24,7 +24,7 @@ namespace Maple
 
 
 
-Maple::Application* createApplication()
+maple::Application* createApplication()
 {
-	return new Maple::Game();
+	return new maple::Game();
 }

@@ -18,7 +18,7 @@
 #include "Others/StringUtils.h"
 #include "RHI/Definitions.h"
 
-namespace Maple
+namespace maple
 {
 	auto ImageLoader::loadAsset(const std::string &name, bool mipmaps) -> std::unique_ptr<Image>
 	{
@@ -59,4 +59,4 @@ namespace Maple
 		image->setSize(imageSize);
 	}
 
-}        // namespace Maple
+}        // namespace maple

@@ -8,7 +8,7 @@
 #include <unordered_map>
 #include "Engine/Core.h"
 
-namespace Maple
+namespace maple
 {
 	class Scene;
 

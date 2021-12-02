@@ -7,7 +7,7 @@
 
 #include "RHI/BufferUsage.h"
 
-namespace Maple
+namespace maple
 {
 	namespace
 	{

@@ -9,7 +9,7 @@
 #include <unordered_map>
 #include <memory>
 
-namespace Maple 
+namespace maple 
 {
 	class Scene;
 	class MonoComponent;

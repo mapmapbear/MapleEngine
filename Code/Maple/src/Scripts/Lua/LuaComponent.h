@@ -16,7 +16,7 @@ extern "C" {
 #include "MetaFile.h"
 #include "Scene/Component/Component.h"
 
-namespace Maple
+namespace maple
 {
 	class Scene;
 	class LuaComponent : public Component

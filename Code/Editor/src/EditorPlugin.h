@@ -6,7 +6,7 @@
 #include <functional>
 
 
-namespace Maple
+namespace maple
 {
 	class Editor;
 

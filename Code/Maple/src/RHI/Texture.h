@@ -6,7 +6,7 @@
 #include "FileSystem/IResource.h"
 #include <string>
 
-namespace Maple
+namespace maple
 {
 	class MAPLE_EXPORT Texture : public IResource
 	{
@@ -154,4 +154,4 @@ namespace Maple
 			return getHandle();
 		};
 	};
-}        // namespace Maple
+}        // namespace maple

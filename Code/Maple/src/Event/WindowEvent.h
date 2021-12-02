@@ -4,7 +4,7 @@
 #pragma once
 #include "Event.h"
 
-namespace Maple
+namespace maple
 {
 	class WindowResizeEvent : public Event
 	{

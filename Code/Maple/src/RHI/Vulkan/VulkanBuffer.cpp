@@ -5,7 +5,7 @@
 #include "VulkanDevice.h"
 #include "VulkanHelper.h"
 #include "Others/Console.h"
-namespace Maple
+namespace maple
 {
 	VulkanBuffer::VulkanBuffer()
 	{

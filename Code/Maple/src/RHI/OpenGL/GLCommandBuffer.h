@@ -2,7 +2,7 @@
 
 #include "RHI/CommandBuffer.h"
 
-namespace Maple
+namespace maple
 {
 	class GLCommandBuffer : public CommandBuffer
 	{
@@ -26,4 +26,4 @@ namespace Maple
 		Pipeline * currentPipeline = nullptr;
 
 	};
-}        // namespace Maple
+}        // namespace maple

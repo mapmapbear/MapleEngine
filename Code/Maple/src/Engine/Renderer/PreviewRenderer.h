@@ -5,7 +5,7 @@
 #pragma once
 #include "Renderer.h"
 
-namespace Maple
+namespace maple
 {
 
-};        // namespace Maple
+};        // namespace maple

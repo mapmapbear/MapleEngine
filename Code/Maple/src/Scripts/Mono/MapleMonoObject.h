@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-namespace Maple
+namespace maple
 {
 	class MAPLE_EXPORT MapleMonoObject
 	{

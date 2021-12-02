@@ -2,57 +2,54 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #include <string>
-#include "EntityGroup.h"
+#include "Entity.h"
 
-namespace Maple
+namespace maple
 {
 	class Scene;
 
 	class MAPLE_EXPORT EntityManager final
 	{
-	public:
-		EntityManager(Scene* initScene) : scene(initScene)
-		{
-		};
+	  public:
+		EntityManager(Scene *initScene) :
+		    scene(initScene){};
 
 		auto create() -> Entity;
-		auto create(const std::string& name)->Entity;
+		auto create(const std::string &name) -> Entity;
 
-		template<typename... Components>
-		auto getEntitiesWithTypes()
+		template <typename... Components>
+		inline auto getEntitiesWithTypes()
 		{
-			return registry.group<Components...>();
+			if constexpr (sizeof...(Components) == 1)
+			{
+				return registry.view<Components...>();
+			}
+			else
+			{
+				return registry.group<Components...>();
+			}
 		}
 
-		template<typename Component>
-		auto getEntitiesWithType() -> EntityView<Component>
+		auto getEntityByName(const std::string &name) -> Entity;
+
+		template <typename R, typename T>
+		inline auto addDependency() -> void
 		{
-			return EntityView<Component>(scene);
+			registry.on_construct<R>().connect<&entt::registry::get_or_emplace<T>>();
 		}
 
-		auto getEntityByName(const std::string& name) ->Entity;
-
-		template<typename R, typename T>
-		auto addDependency() -> void;
-		inline auto& getRegistry(){ return registry; }
+		inline auto &getRegistry()
+		{
+			return registry;
+		}
 
 		auto clear() -> void;
 
-
 		auto removeAllChildren(entt::entity entity, bool root = true) -> void;
 		auto removeEntity(entt::entity entity) -> void;
-	
 
-
-	private:
-		Scene* scene = nullptr;
+	  private:
+		Scene *        scene = nullptr;
 		entt::registry registry;
 	};
-
-	template<typename R, typename T>
-	auto EntityManager::addDependency() -> void
-	{
-		registry.on_construct<R>().connect<&entt::registry::get_or_emplace<T>>();
-	}
-
-};
+};        // namespace maple

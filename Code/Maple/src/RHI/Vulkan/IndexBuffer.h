@@ -5,7 +5,7 @@
 #include "VulkanBuffer.h"
 #include <memory>
 
-namespace Maple
+namespace maple
 {
 	class CommandBuffer;
 
@@ -35,4 +35,4 @@ namespace Maple
 	  private:
 		uint32_t count;
 	};
-};        // namespace Maple
+};        // namespace maple

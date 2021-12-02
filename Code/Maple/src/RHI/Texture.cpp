@@ -5,7 +5,7 @@
 #include "Others/Console.h"
 #include "RHI/OpenGL/GLTexture.h"
 
-namespace Maple
+namespace maple
 {
 	auto Texture::getStrideFromFormat(TextureFormat format) -> uint8_t
 	{
@@ -118,4 +118,4 @@ namespace Maple
 		return std::make_shared<GLTextureDepthArray>(width, height, count);
 	}
 
-}        // namespace Maple
+}        // namespace maple

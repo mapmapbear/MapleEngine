@@ -10,7 +10,7 @@
 #include <iostream>
 #include <sstream>
 
-namespace Maple::MonoHelper 
+namespace maple::MonoHelper 
 {
 	auto executeCommand(const std::string & cmd)->std::string
 	{

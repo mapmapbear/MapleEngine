@@ -8,7 +8,7 @@
 #include <glm/glm.hpp>
 #include "Renderer.h"
 
-namespace Maple
+namespace maple
 {
 	class UniformBuffer;
 	class Mesh;

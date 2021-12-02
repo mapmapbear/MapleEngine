@@ -9,7 +9,7 @@
 #include <memory>
 #include <vector>
 
-namespace Maple
+namespace maple
 {
 	class Camera;
 	class Scene;
@@ -136,4 +136,4 @@ namespace Maple
 
 		Transform *transform = nullptr;
 	};
-};        // namespace Maple
+};        // namespace maple

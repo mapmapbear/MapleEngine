@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 
-namespace Maple
+namespace maple
 {
 	class MAPLE_EXPORT File
 	{
@@ -59,4 +59,4 @@ namespace Maple
 		int64_t     pos     = 0;
 		size_t      fileSize;
 	};
-};        // namespace Maple
+};        // namespace maple

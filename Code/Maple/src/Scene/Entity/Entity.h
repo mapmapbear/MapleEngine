@@ -7,8 +7,10 @@
 #include "Scene/Component/Component.h"
 #include "Scene/Scene.h"
 #include "Scene/SceneGraph.h"
+#include <ecs/ComponentChain.h>
+#include <ecs/Permission.h>
 
-namespace Maple
+namespace maple
 {
 	class MAPLE_EXPORT Entity
 	{
@@ -150,87 +152,5 @@ namespace Maple
 		friend class EntityManager;
 	};
 
-	template <typename TComponentChain>
-	class AccessEntity : public Entity
-	{
-	  public:
-		static constexpr auto ComponentTypes = TComponentChain::getComponentList();
+};        // namespace maple
 
-		AccessEntity() = default;
-
-		AccessEntity(entt::entity handle, Scene *s) :
-		    entityHandle(handle), scene(s)
-		{
-		}
-
-		AccessEntity(Entity entity)
-		{
-			this->scene        = entity.getScene();
-			this->entityHandle = entity.getHandle();
-		}
-
-		~AccessEntity()
-		{
-		}
-
-		template <typename Comp>
-		inline auto hasComponent() const -> bool
-		{
-			constexpr auto chain = TComponentChain();
-			constexpr auto index = chain.findByType<Comp>();
-
-			if constexpr (index >= 0)
-			{
-				constexpr auto entry = chain.getEntry(index);
-				return scene->getRegistry().has<Comp>(entityHandle);
-			}
-			return false;
-		}
-
-		template <typename Comp>
-		inline decltype(auto) getComponent() const
-		{
-			constexpr auto chain = TComponentChain();
-			constexpr auto Index = chain.findByType<Comp>();
-
-			if constexpr (Index >= 0)
-			{
-				return get<Index::value>();
-			}
-			else
-			{
-				static_cast(false, "Comp is not in access type");
-				return *static_cast<Comp *>(nullptr);
-			}
-		}
-
-		template <int32_t index>
-		inline decltype(auto) get() const
-		{
-			constexpr auto chain      = TComponentChain();
-			constexpr auto entry      = chain.getEntry(std::integral_constant<int32_t, index>());
-			constexpr auto returnType = entry.getReturnType();
-			using RPtr                = typename decltype(returnType)::value *;
-			return *const_cast<RPtr>(scene->getRegistry().try_get<typename decltype(entry)::Component>(entityHandle));
-		}
-	};
-};        // namespace Maple
-
-namespace std
-{
-	template <typename TComponentChain>
-	struct tuple_size<Maple::AccessEntity<TComponentChain>>
-	{
-		static constexpr auto   chain = TComponentChain();
-		static constexpr size_t value = chain.Size;
-	};
-
-	template <size_t i, typename TComponentChain>
-	struct tuple_element<i, Maple::AccessEntity<TComponentChain>>
-	{
-		static constexpr auto chain      = TComponentChain();
-		static constexpr auto entry      = chain.getEntry(std::integral_constant<int32_t, i>());
-		static constexpr auto returnType = entry.getReturnType();
-		using type                       = typename decltype(returnType)::value &;
-	};
-};        // namespace std

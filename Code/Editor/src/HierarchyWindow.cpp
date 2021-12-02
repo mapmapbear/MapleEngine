@@ -24,7 +24,7 @@
 #include "Others/Console.h"
 constexpr size_t INPUT_BUFFER = 256;
 
-namespace Maple
+namespace maple
 {
 	HierarchyWindow::HierarchyWindow()
 	{

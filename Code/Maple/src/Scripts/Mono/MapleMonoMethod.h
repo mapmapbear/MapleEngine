@@ -8,7 +8,7 @@
 #include <vector>
 #include <tuple>
 #include <utility>
-namespace Maple
+namespace maple
 {
 	class MAPLE_EXPORT MapleMonoMethod
 	{

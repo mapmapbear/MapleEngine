@@ -5,7 +5,7 @@
 #include "Engine/CameraController.h"
 #include "Others/Console.h"
 
-namespace Maple 
+namespace maple 
 {
 	CameraControllerComponent::ControllerType CameraControllerComponent::stringToType(const std::string& type)
 	{

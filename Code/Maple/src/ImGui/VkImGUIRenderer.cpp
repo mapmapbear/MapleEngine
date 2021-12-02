@@ -16,7 +16,7 @@ static void checkVKResult(VkResult err)
 		abort();
 }
 
-namespace Maple
+namespace maple
 {
 	VkImGUIRenderer::VkImGUIRenderer(uint32_t width, uint32_t height, bool clearScreen)
 		:width(width), height(height), clearScreen(clearScreen)

@@ -4,7 +4,7 @@
 #include "Others/Console.h"
 #include "RHI/Texture.h"
 
-namespace Maple
+namespace maple
 {
 	GLFrameBuffer::GLFrameBuffer()
 	{
@@ -199,4 +199,4 @@ namespace Maple
 			MAPLE_ASSERT(false, "create FrameBuffer error.");
 		}
 	}
-}        // namespace Maple
+}        // namespace maple

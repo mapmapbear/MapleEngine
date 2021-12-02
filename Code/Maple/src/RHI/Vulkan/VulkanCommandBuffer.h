@@ -5,7 +5,7 @@
 #include "VulkanHelper.h"
 #include "Engine/Interface/CommandBuffer.h"
 
-namespace Maple
+namespace maple
 {
 	class VulkanCommandBuffer;
 	class VulkanRenderPass;

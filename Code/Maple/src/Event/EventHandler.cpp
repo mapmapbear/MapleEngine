@@ -6,7 +6,7 @@
 #include "EventDispatcher.h"
 
 
-namespace Maple 
+namespace maple 
 {
 	EventHandler::~EventHandler()
 	{

@@ -13,7 +13,7 @@
 #include <vector>
 #include "Engine/Core.h"
 
-namespace Maple 
+namespace maple 
 {
 	class MAPLE_EXPORT Thread
 	{

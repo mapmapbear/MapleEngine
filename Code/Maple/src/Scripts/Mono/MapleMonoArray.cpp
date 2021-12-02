@@ -7,7 +7,7 @@
 #include "MapleMonoClass.h"
 #include <cassert>
 
-namespace Maple
+namespace maple
 {
 
 	MapleMonoArray::MapleMonoArray(MonoArray* existingArray)

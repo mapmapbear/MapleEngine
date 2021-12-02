@@ -8,7 +8,7 @@
 #include "Component.h"
 #include <glm/glm.hpp>
 
-namespace Maple
+namespace maple
 {
 	class Texture2D;
 

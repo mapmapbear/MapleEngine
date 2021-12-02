@@ -4,7 +4,7 @@
 #pragma once
 #include "Engine/Core.h"
 #include "Engine/Timestep.h"
-namespace Maple
+namespace maple
 {
 	class CommandBuffer;
 
@@ -22,4 +22,4 @@ namespace Maple
 		virtual auto clear() -> void
 		{}
 	};
-}        // namespace Maple
+}        // namespace maple

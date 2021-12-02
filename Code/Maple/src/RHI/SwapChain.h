@@ -4,7 +4,7 @@
 #pragma once
 #include <memory>
 
-namespace Maple
+namespace maple
 {
 	class Window;
 	class Texture;
@@ -31,4 +31,4 @@ namespace Maple
 			return nullptr;
 		}
 	};
-}        // namespace Maple
+}        // namespace maple

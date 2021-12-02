@@ -7,7 +7,7 @@
 #include <glm/glm.hpp>
 #include <memory>
 
-namespace Maple
+namespace maple
 {
 	enum class TextureFormat;
 	enum GBufferTextures
@@ -62,4 +62,4 @@ namespace Maple
 		uint32_t width;
 		uint32_t height;
 	};
-}        // namespace Maple
+}        // namespace maple

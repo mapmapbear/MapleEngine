@@ -10,7 +10,7 @@
 #include "Engine/Core.h"
 struct lua_State;
 
-namespace Maple 
+namespace maple 
 {
 	namespace LogExport
 	{
@@ -27,11 +27,11 @@ namespace Maple
 	};
 };
 
-#define LOGV(...)      Maple::Console::getLogger()->trace(__VA_ARGS__)
-#define LOGI(...)      Maple::Console::getLogger()->info(__VA_ARGS__)
-#define LOGW(...)      Maple::Console::getLogger()->warn(__VA_ARGS__)
-#define LOGE(...)      Maple::Console::getLogger()->error(__VA_ARGS__)
-#define LOGC(...)      Maple::Console::getLogger()->critical(__VA_ARGS__)
+#define LOGV(...)      maple::Console::getLogger()->trace(__VA_ARGS__)
+#define LOGI(...)      maple::Console::getLogger()->info(__VA_ARGS__)
+#define LOGW(...)      maple::Console::getLogger()->warn(__VA_ARGS__)
+#define LOGE(...)      maple::Console::getLogger()->error(__VA_ARGS__)
+#define LOGC(...)      maple::Console::getLogger()->critical(__VA_ARGS__)
 
 
 

@@ -5,7 +5,7 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
-namespace Maple
+namespace maple
 {
 	GLImGuiRenderer::GLImGuiRenderer(uint32_t width, uint32_t height, bool clearScreen) :
 	    clearScreen(clearScreen)
@@ -52,4 +52,4 @@ namespace Maple
 		ImGui_ImplOpenGL3_DestroyFontsTexture();
 		ImGui_ImplOpenGL3_CreateFontsTexture();
 	}
-}        // namespace Maple
+}        // namespace maple

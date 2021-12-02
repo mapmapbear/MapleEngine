@@ -11,7 +11,7 @@ extern "C" {
 }
 #include <LuaBridge/LuaBridge.h>
 
-namespace Maple 
+namespace maple 
 {
 	auto LogExport::exportLua(lua_State* L) -> void
 	{

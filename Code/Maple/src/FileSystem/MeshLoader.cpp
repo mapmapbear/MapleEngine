@@ -10,7 +10,7 @@
 #include "Engine/Profiler.h"
 #include "Others/StringUtils.h"
 #include "RHI/Texture.h"
-namespace Maple
+namespace maple
 {
 	namespace MeshLoader
 	{
@@ -148,4 +148,4 @@ namespace Maple
 		}
 
 	};        // namespace MeshLoader
-};            // namespace Maple
+};            // namespace maple

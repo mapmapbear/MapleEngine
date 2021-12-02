@@ -6,7 +6,7 @@
 #include "Scene/Component/Component.h"
 #include <unordered_map>
 
-namespace Maple
+namespace maple
 {
 	class MonoScript;
 	class MonoSystem;

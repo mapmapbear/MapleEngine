@@ -6,7 +6,7 @@
 #include <cstdint>
 #include <vector>
 
-namespace Maple 
+namespace maple 
 {
 	namespace Interpolation
 	{

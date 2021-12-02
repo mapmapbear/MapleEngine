@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <iostream>
 
-namespace Maple 
+namespace maple 
 {
 	namespace KeyCode
 	{
@@ -155,7 +155,7 @@ namespace Maple
 	};
 };
 
-inline std::ostream& operator<<(std::ostream& os, Maple::KeyCode::Id keyCode)
+inline std::ostream& operator<<(std::ostream& os, maple::KeyCode::Id keyCode)
 {
 	os << static_cast<int32_t>(keyCode);
 	return os;

@@ -8,7 +8,7 @@
 #include <memory>
 #include <vector>
 
-namespace Maple
+namespace maple
 {
 	class Mesh;
 	class Texture;
@@ -76,4 +76,4 @@ namespace Maple
 		std::shared_ptr<Mesh> cube;
 		Environment *         envComponent = nullptr;
 	};
-};        // namespace Maple
+};        // namespace maple

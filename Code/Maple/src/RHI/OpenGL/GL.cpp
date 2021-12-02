@@ -1,7 +1,7 @@
 #include "GL.h"
 #include "Others/Console.h"
 
-namespace Maple
+namespace maple
 {
 	auto logCall(const char *function, const char *file, const int32_t line) -> bool
 	{
@@ -37,4 +37,4 @@ namespace Maple
 		while (glGetError() != GL_NO_ERROR)
 			;
 	}
-}        // namespace Maple
+}        // namespace maple

@@ -6,7 +6,7 @@
 #include "Engine/Camera.h"
 #include <imgui.h>
 
-namespace Maple 
+namespace maple 
 {
 	static const float	ACTIVE_SCALE = 16.0f;
 	static const int	MAX_LENGTH = 4097;

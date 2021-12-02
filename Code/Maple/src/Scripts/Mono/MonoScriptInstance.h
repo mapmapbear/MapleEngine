@@ -9,7 +9,7 @@
 #include <tuple>
 #include <string>
 
-namespace Maple 
+namespace maple 
 {
 	struct MonoScriptInstance 
 	{

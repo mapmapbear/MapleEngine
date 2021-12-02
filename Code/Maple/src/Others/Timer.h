@@ -6,7 +6,7 @@
 #include <chrono>
 #include <cstdint>
 
-namespace Maple
+namespace maple
 {
 	// Small class for measuring elapsed time between game loops.
 	class Timer
@@ -76,4 +76,4 @@ namespace Maple
 		std::chrono::high_resolution_clock::time_point prev;
 	};
 
-};        // namespace Maple
+};        // namespace maple

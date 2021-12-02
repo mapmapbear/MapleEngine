@@ -5,7 +5,7 @@
 #include <glm/glm.hpp>
 #include <cstdint>
 #include "Engine/Core.h"
-namespace Maple
+namespace maple
 {
 
 	class BoundingBox;

@@ -4,7 +4,7 @@
 #include "Entity.h"
 #include "Others/StringUtils.h"
 
-namespace Maple
+namespace maple
 {
 	auto Entity::isActive() -> bool
 	{
@@ -159,4 +159,4 @@ namespace Maple
 		return scene && scene->getRegistry().valid(entityHandle);
 	}
 
-};        // namespace Maple
+};        // namespace maple

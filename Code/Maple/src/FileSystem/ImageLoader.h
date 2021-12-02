@@ -7,7 +7,7 @@
 #include "Image.h"
 #include "Resources/Cache.h"
 
-namespace Maple
+namespace maple
 {
 
     class ImageLoader final 

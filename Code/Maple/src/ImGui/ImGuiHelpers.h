@@ -11,7 +11,7 @@
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui_internal.h>
 
-namespace Maple
+namespace maple
 {
 	class Texture;
 
@@ -38,4 +38,4 @@ namespace Maple
 		MAPLE_EXPORT auto inputFloat(const std::string &name, float &value, float min = -1.0f, float max = 1.0f) -> bool;
 		MAPLE_EXPORT auto image(const Texture *texture, const glm::vec2 &size) -> void;
 	};        // namespace ImGuiHelper
-};        // namespace Maple
+};        // namespace maple

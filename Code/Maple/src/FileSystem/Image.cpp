@@ -4,7 +4,7 @@
 #include "Image.h"
 #include "ImageLoader.h"
 
-namespace Maple
+namespace maple
 {
 	Image::Image(const std::string& fileName)
 		:fileName(fileName)

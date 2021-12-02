@@ -5,7 +5,7 @@
 #pragma once
 #include <string>
 
-namespace Maple
+namespace maple
 {
 	class LuaComponent;
 	class Scene;

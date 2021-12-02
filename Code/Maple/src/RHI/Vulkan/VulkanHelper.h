@@ -28,7 +28,7 @@
 			assert(res == VK_SUCCESS);                                                                                            \
 		}                                                                                                                         \
 	}
-namespace Maple
+namespace maple
 {
 	class VulkanDevice;
 	class VulkanBuffer;
@@ -259,4 +259,4 @@ namespace Maple
 		auto descriptorTypeToVK(DescriptorType type) -> VkDescriptorType;
 		auto shaderTypeToVK(const ShaderType &shaderName) -> VkShaderStageFlagBits;
 	};        // namespace VkConverter
-};            // namespace Maple
+};            // namespace maple

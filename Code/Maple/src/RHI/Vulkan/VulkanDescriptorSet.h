@@ -6,7 +6,7 @@
 #include "Engine/Renderer/RenderParam.h"
 #include "Engine/Interface/DescriptorSet.h"
 
-namespace Maple
+namespace maple
 {
 
 	class VulkanShader;

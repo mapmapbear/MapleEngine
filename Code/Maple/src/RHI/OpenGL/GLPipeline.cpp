@@ -8,7 +8,7 @@
 #include "GLShader.h"
 #include "GLSwapChain.h"
 
-namespace Maple
+namespace maple
 {
 	namespace
 	{
@@ -303,4 +303,4 @@ namespace Maple
 			GLRenderDevice::clear(RendererBufferColor | RendererBufferDepth | RendererBufferStencil);
 		}
 	}
-}        // namespace Maple
+}        // namespace maple

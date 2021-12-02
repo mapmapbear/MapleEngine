@@ -17,7 +17,7 @@ extern "C" {
 #include "ComponentExport.h"
 #include <filesystem>
 
-namespace Maple
+namespace maple
 {
 	LuaVirtualMachine::LuaVirtualMachine()
 	{

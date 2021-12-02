@@ -24,7 +24,7 @@
 #include "Resources/MeshResource.h"
 #include "Window/NativeWindow.h"
 
-namespace Maple
+namespace maple
 {
 #ifdef _WIN32
 	std::string AssetsWindow::delimiter = "\\";
@@ -565,4 +565,4 @@ namespace Maple
 		return file + filename;
 	}
 
-};        // namespace Maple
+};        // namespace maple

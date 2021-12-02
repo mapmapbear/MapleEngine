@@ -8,7 +8,7 @@
 
 #include "FileSystem/ImageLoader.h"
 
-namespace Maple
+namespace maple
 {
 	namespace
 	{
@@ -601,4 +601,4 @@ namespace Maple
 		GLCall(glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL));
 		GLCall(glBindTexture(GL_TEXTURE_2D_ARRAY, 0));
 	}
-}        // namespace Maple
+}        // namespace maple

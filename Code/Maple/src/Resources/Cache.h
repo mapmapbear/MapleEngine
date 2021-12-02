@@ -9,7 +9,7 @@
 #include <string>
 #include <unordered_map>
 
-namespace Maple
+namespace maple
 {
 	class Cache
 	{
@@ -38,4 +38,4 @@ namespace Maple
 		std::unordered_map<size_t, std::shared_ptr<IResource>> cache;
 	};
 
-};        // namespace Maple
+};        // namespace maple

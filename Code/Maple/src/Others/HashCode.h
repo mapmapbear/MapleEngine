@@ -9,7 +9,7 @@
 #include <tuple>
 #include <vector>
 
-namespace Maple
+namespace maple
 {
 	namespace HashCode
 	{
@@ -26,7 +26,7 @@ namespace Maple
 			(hashCode(seed, rest), ...);
 		}
 	};        // namespace HashCode
-};            // namespace Maple
+};            // namespace maple
 
 namespace std
 {

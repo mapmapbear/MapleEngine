@@ -8,7 +8,7 @@
 #include <memory>
 #include "Engine/Interface/FrameBuffer.h"
 #include "VulkanHelper.h"
-namespace Maple
+namespace maple
 {
 	
 	class VulkanFrameBuffer : public FrameBuffer

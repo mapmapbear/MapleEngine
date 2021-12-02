@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-namespace Maple
+namespace maple
 {
 	class Image 
 	{
@@ -111,4 +111,4 @@ namespace Maple
 		bool          HDR         = false;
 		std::string   fileName;
 	};
-}        // namespace Maple
+}        // namespace maple

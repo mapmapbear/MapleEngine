@@ -9,7 +9,7 @@
 #include "Engine/Core.h"
 
 struct GLFWwindow;
-namespace Maple
+namespace maple
 {
 	class SwapChain;
 

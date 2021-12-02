@@ -17,7 +17,7 @@
 								virtual auto getType() const  -> EventType  override { return getEventType(); } \
 								virtual auto getName() const -> const char * override { return #type; }
 
-namespace Maple
+namespace maple
 {
 	class Scene;
 	enum class EventType 

@@ -8,7 +8,7 @@
 #include "Terrain/QuadCollapseMesh.h"
 
 
-namespace Maple 
+namespace maple 
 {
 	class TerrainBuilder 
 	{

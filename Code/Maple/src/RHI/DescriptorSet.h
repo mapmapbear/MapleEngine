@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-namespace Maple
+namespace maple
 {
 	class Pipeline;
 	class Shader;
@@ -142,4 +142,4 @@ namespace Maple
 		virtual auto setUniform(const std::string &bufferName, const std::string &uniformName, const void *data, uint32_t size) -> void = 0;
 		virtual auto setUniformBufferData(const std::string &bufferName, const void *data) -> void                                      = 0;
 	};
-}        // namespace Maple
+}        // namespace maple

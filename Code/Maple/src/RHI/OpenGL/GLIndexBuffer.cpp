@@ -3,7 +3,7 @@
 #include "GL.h"
 #include "Others/Console.h"
 
-namespace Maple
+namespace maple
 {
 	static auto bufferUsageToOpenGL(const BufferUsage &usage) -> uint32_t
 	{
@@ -86,4 +86,4 @@ namespace Maple
 			mapped = false;
 		}
 	}
-}        // namespace Maple
+}        // namespace maple

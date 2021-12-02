@@ -12,7 +12,7 @@
 #include "Others/StringUtils.h"
 #include "Scene/Scene.h"
 #include "Scripts/Mono/MonoSystem.h"
-namespace Maple
+namespace maple
 {
 	auto SceneManager::switchScene(const std::string &name) -> void
 	{
@@ -89,7 +89,7 @@ namespace Maple
 	auto SceneManager::addScene(const std::string &name, Scene *scene) -> void
 	{
 		allScenes[name] = std::shared_ptr<Scene>(scene);
-		auto cameras    = scene->getEntityManager()->getEntitiesWithType<Camera>();
+		auto cameras    = scene->getEntityManager()->getEntitiesWithTypes<Camera>();
 		if (cameras.empty())
 		{
 			auto  entity = scene->createEntity("Main Camera");
@@ -100,4 +100,4 @@ namespace Maple
 			camera.setAspectRatio(4 / 3.f);
 		}
 	}
-};        // namespace Maple
+};        // namespace maple

@@ -18,7 +18,7 @@
 #include "Application.h"
 
 
-namespace Maple
+namespace maple
 {
 	Material::Material(const std::shared_ptr<Shader> &shader, const MaterialProperties &properties, const PBRMataterialTextures &textures) :
 	    pbrMaterialTextures(textures), shader(shader)
@@ -305,4 +305,4 @@ namespace Maple
 		return Application::getCache()->emplace<Material>(materialId);
 	}
 
-};        // namespace Maple
+};        // namespace maple

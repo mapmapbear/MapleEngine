@@ -6,7 +6,7 @@
 #include <glm/glm.hpp>
 #include <cstdint>
 #include "Engine/Core.h"
-namespace Maple
+namespace maple
 {
 	class MAPLE_EXPORT Rect2D final
 	{

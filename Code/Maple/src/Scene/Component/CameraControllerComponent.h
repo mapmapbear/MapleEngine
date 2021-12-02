@@ -7,7 +7,7 @@
 #include <memory>
 #include "Component.h"
 
-namespace Maple
+namespace maple
 {
 	class CameraController;
 

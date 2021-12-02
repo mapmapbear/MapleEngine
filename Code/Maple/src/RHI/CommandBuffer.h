@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <memory>
 
-namespace Maple
+namespace maple
 {
 	class RenderPass;
 	class FrameBuffer;
@@ -32,4 +32,4 @@ namespace Maple
 		virtual auto bindPipeline(Pipeline *pipeline) -> void = 0;
 		virtual auto unbindPipeline() -> void                 = 0;
 	};
-}        // namespace Maple
+}        // namespace maple

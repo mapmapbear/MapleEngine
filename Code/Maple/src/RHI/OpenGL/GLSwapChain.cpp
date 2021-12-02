@@ -10,7 +10,7 @@
 #endif
 
 
-namespace Maple
+namespace maple
 {
 	namespace
 	{
@@ -161,4 +161,4 @@ namespace Maple
 	{
 		return 1;
 	}
-}        // namespace Maple
+}        // namespace maple

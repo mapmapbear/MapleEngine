@@ -6,7 +6,7 @@
 #include <glm/glm.hpp>
 #include <algorithm>
 #include "Engine/Core.h"
-namespace Maple
+namespace maple
 {
 
 	class MAPLE_EXPORT Frustum

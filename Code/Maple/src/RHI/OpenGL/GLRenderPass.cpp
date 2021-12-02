@@ -2,7 +2,7 @@
 #include "GLFrameBuffer.h"
 #include "GLRenderDevice.h"
 
-namespace Maple
+namespace maple
 {
 	GLRenderPass::GLRenderPass(const RenderPassInfo &renderPassDesc)
 	{
@@ -38,4 +38,4 @@ namespace Maple
 	{
 		GLCall(glBindFramebuffer(GL_FRAMEBUFFER, 0));
 	}
-}        // namespace Maple
+}        // namespace maple

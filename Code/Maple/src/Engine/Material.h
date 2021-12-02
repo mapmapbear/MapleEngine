@@ -9,7 +9,7 @@
 #include <string>
 #include <unordered_map>
 
-namespace Maple
+namespace maple
 {
 	class Texture2D;
 	class Shader;
@@ -274,4 +274,4 @@ namespace Maple
 
 		bool texturesUpdated = false;
 	};
-}        // namespace Maple
+}        // namespace maple

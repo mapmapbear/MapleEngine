@@ -32,7 +32,7 @@
 	                   Material,                  \
 	                   Environment
 
-namespace Maple
+namespace maple
 {
 	auto Serialization::serialize(Scene *scene) -> void
 	{
@@ -89,4 +89,4 @@ namespace Maple
 		File file(outPath, true);
 		file.write(storage.str());
 	}
-};        // namespace Maple
+};        // namespace maple

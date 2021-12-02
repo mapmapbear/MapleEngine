@@ -17,7 +17,7 @@
 
 #include "Application.h"
 
-namespace Maple
+namespace maple
 {
 	auto GraphicsContext::create() -> std::shared_ptr<GraphicsContext>
 	{
@@ -198,4 +198,4 @@ namespace Maple
 		return std::make_shared<GLVertexBuffer>(usage);
 	}
 
-}        // namespace Maple
+}        // namespace maple

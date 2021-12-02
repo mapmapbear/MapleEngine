@@ -6,7 +6,7 @@
 #include <cstdint>
 #include <string>
 
-namespace Maple
+namespace maple
 {
 	class UniformBuffer
 	{

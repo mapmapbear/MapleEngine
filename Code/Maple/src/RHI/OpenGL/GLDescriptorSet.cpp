@@ -7,7 +7,7 @@
 #include "RHI/Texture.h"
 #include "RHI/UniformBuffer.h"
 
-namespace Maple
+namespace maple
 {
 	GLDescriptorSet::GLDescriptorSet(const DescriptorInfo &descriptorDesc)
 	{
@@ -248,4 +248,4 @@ namespace Maple
 			}
 		}
 	}
-};        // namespace Maple
+};        // namespace maple

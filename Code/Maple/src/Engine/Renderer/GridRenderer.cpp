@@ -28,7 +28,7 @@
 #include "Engine/Profiler.h"
 
 #include <glm/gtc/type_ptr.hpp>
-namespace Maple
+namespace maple
 {
 	GridRenderer::GridRenderer(uint32_t width, uint32_t height)
 	{
@@ -44,7 +44,7 @@ namespace Maple
 	{
 		this->gbuffer = buffer;
 		gridShader    = Shader::create("shaders/Grid.shader");
-		quad          = Mesh::createPlane(500, 500, Maple::UP);
+		quad          = Mesh::createPlane(500, 500, maple::UP);
 		descriptorSet = DescriptorSet::create({0, gridShader.get()});
 	}
 
@@ -116,4 +116,4 @@ namespace Maple
 		pipeInfo.blendMode           = BlendMode::SrcAlphaOneMinusSrcAlpha;
 		pipeline                     = Pipeline::get(pipeInfo);
 	}
-};        // namespace Maple
+};        // namespace maple

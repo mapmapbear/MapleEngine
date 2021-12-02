@@ -7,7 +7,7 @@
 #include "Scripts/Mono/MapleMonoAssembly.h"
 #include "Scripts/Mono/MapleMonoClass.h"
 #include "Scripts/Mono/MapleMonoMethod.h"
-namespace Maple
+namespace maple
 {
 	PluginWindow::PluginWindow()
 	{

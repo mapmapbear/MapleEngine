@@ -3,7 +3,7 @@
 #include "GL.h"
 #include "GLShader.h"
 
-namespace Maple
+namespace maple
 {
 	GLUniformBuffer::GLUniformBuffer()
 	{
@@ -87,4 +87,4 @@ namespace Maple
 		GLCall(glBindBufferBase(GL_UNIFORM_BUFFER, slot, handle));
 		shader->bindUniformBuffer(this, slot, name);
 	}
-}        // namespace Maple
+}        // namespace maple

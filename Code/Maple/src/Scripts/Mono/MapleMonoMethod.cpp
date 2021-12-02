@@ -9,7 +9,7 @@
 #include "MonoVirtualMachine.h"
 #include "MapleMonoField.h"
 
-namespace Maple
+namespace maple
 {
 	MapleMonoMethod::MapleMonoMethod(MonoMethod* method)
 		:method(method)

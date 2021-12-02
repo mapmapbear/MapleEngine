@@ -12,7 +12,7 @@
 #include "EditorWindow.h"
 #include "FileSystem/File.h"
 
-namespace Maple
+namespace maple
 {
 	struct FileInfo
 	{
@@ -93,4 +93,4 @@ namespace Maple
 		FileInfo *               currentDir = nullptr;
 		FileInfo *               lastDir    = nullptr;
 	};
-};        // namespace Maple
+};        // namespace maple

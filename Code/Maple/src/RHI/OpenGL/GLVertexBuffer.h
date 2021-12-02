@@ -2,7 +2,7 @@
 
 #include "RHI/VertexBuffer.h"
 
-namespace Maple
+namespace maple
 {
 	class GLVertexBuffer : public VertexBuffer
 	{

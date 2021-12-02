@@ -4,7 +4,7 @@
 #pragma once
 #include <string>
 
-namespace Maple
+namespace maple
 {
 	class Scene;
 
@@ -49,4 +49,4 @@ namespace Maple
 		bool        active  = false;
 		bool        focused = false;
 	};
-};        // namespace Maple
+};        // namespace maple

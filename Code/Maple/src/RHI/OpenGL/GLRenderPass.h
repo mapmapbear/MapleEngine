@@ -2,7 +2,7 @@
 
 #include "RHI/RenderPass.h"
 
-namespace Maple
+namespace maple
 {
 	class GLRenderPass : public RenderPass
 	{
@@ -21,4 +21,4 @@ namespace Maple
 		bool    clear      = true;
 		int32_t clearCount = 0;
 	};
-}        // namespace Maple
+}        // namespace maple

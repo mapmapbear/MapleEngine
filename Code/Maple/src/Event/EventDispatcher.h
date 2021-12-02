@@ -11,7 +11,7 @@
 #include "EventHandler.h"
 #include "Engine/Core.h"
 
-namespace Maple 
+namespace maple 
 {
 	class MAPLE_EXPORT EventDispatcher final
 	{

@@ -4,7 +4,7 @@
 #include "VulkanCommandPool.h"
 #include "VulkanDevice.h"
 #include "Others/Console.h"
-namespace Maple
+namespace maple
 {
 	VulkanCommandPool::VulkanCommandPool()
 	{

@@ -9,7 +9,7 @@
 
 #include "Application.h"
 
-namespace Maple
+namespace maple
 {
 	RenderCapture::RenderCapture()
 	{
@@ -32,4 +32,4 @@ namespace Maple
 		}
 		ImGui::End();
 	}
-}        // namespace Maple
+}        // namespace maple

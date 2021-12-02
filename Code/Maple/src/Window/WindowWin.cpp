@@ -24,7 +24,7 @@
 
 #define CAST_TO_WIN(x) static_cast<WindowWin *>(glfwGetWindowUserPointer(x))
 
-namespace Maple
+namespace maple
 {
 	WindowWin::WindowWin(const WindowInitData &initData) :
 	    data(initData)
@@ -184,4 +184,4 @@ namespace Maple
 	{
 		return glfwGetWin32Window(nativeInterface);
 	}
-};        // namespace Maple
+};        // namespace maple

@@ -13,7 +13,7 @@
 
 #include <imgui.h>
 
-namespace Maple
+namespace maple
 {
 	MeshRenderer::MeshRenderer(const std::shared_ptr<Mesh> &mesh) :
 	    mesh(mesh)
@@ -72,4 +72,4 @@ namespace Maple
 		}
 	}
 
-};        // namespace Maple
+};        // namespace maple

@@ -9,7 +9,7 @@
 #include <memory>
 #include <string>
 
-namespace Maple
+namespace maple
 {
 	class EntityManager;
 	class Entity;
@@ -143,4 +143,4 @@ namespace Maple
 
 		std::function<void(Entity)> onEntityAdd;
 	};
-};        // namespace Maple
+};        // namespace maple

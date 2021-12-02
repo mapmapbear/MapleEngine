@@ -7,7 +7,7 @@
 struct lua_State;
 
 
-namespace Maple
+namespace maple
 {
 	namespace InputExport 
 	{

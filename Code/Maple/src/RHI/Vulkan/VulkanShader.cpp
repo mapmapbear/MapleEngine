@@ -10,7 +10,7 @@
 #include "Others/Console.h"
 #include <spirv_cross.hpp>
 
-namespace Maple
+namespace maple
 {
 	uint32_t getStrideFromVulkanFormat(VkFormat format)
 	{

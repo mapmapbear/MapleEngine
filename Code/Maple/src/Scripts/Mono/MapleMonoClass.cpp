@@ -12,7 +12,7 @@
 #include "Others/Console.h"
 #include "Others/HashCode.h"
 
-namespace Maple 
+namespace maple 
 {
 	MapleMonoClass::MapleMonoClass(const std::string& nameSpace, const std::string& type, MonoClass* monoClass, const MapleMonoAssembly* parentAssembly)
 		: parentAssembly(parentAssembly), clazz(monoClass), nameSpace(nameSpace), typeName(type), hasCachedFields(false)

@@ -4,7 +4,7 @@
 #include "Quad2D.h"
 #include "RHI/Texture.h"
 
-namespace Maple
+namespace maple
 {
 	auto Quad2D::getDefaultTexCoords() -> const std::array<glm::vec2, 4> &
 	{
@@ -45,6 +45,6 @@ namespace Maple
 		texCoords[3] = {x / (float) texture->getWidth(), y / (float) texture->getHeight()};
 	}
 
-	Maple::Quad2D Quad2D::nullQuad;
+	maple::Quad2D Quad2D::nullQuad;
 
-};        // namespace Maple
+};        // namespace maple

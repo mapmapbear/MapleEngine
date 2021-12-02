@@ -10,7 +10,7 @@
 #include "EditorWindow.h"
 
 //Extension to C#
-namespace Maple
+namespace maple
 {
 	class MapleMonoMethod;
 

@@ -2,6 +2,6 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #include "Vertex.h"
-namespace Maple
+namespace maple
 {
 };

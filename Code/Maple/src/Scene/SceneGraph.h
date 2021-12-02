@@ -7,7 +7,7 @@
 
 #include <entt/entity/fwd.hpp>
 
-namespace Maple
+namespace maple
 {
 	class MAPLE_EXPORT SceneGraph final
 	{

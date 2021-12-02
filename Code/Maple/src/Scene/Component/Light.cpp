@@ -6,7 +6,7 @@
 #include <imgui.h>
 #include "ImGui/ImGuiHelpers.h"
 
-namespace Maple
+namespace maple
 {
 
 	std::string lightTypeToString(LightType type)

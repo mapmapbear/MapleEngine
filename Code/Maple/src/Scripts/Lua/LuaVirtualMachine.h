@@ -9,7 +9,7 @@
 
 struct lua_State;
 
-namespace Maple 
+namespace maple 
 {
 	class MAPLE_EXPORT LuaVirtualMachine final
 	{

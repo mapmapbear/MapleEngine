@@ -5,7 +5,7 @@
 #include "BufferUsage.h"
 #include "Engine/Core.h"
 
-namespace Maple
+namespace maple
 {
 	class CommandBuffer;
 
@@ -41,4 +41,4 @@ namespace Maple
 			return nullptr;
 		}
 	};
-}        // namespace Maple
+}        // namespace maple

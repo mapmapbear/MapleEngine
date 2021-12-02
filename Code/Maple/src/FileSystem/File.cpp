@@ -17,7 +17,7 @@
 
 #include <nfd.h>
 
-namespace Maple
+namespace maple
 {
 	// 128 MB.
 	const size_t CHUNK_SIZE = 134217728;
@@ -219,4 +219,4 @@ namespace Maple
 		return file.substr(pos + 1);
 	}
 
-};        // namespace Maple
+};        // namespace maple

@@ -10,7 +10,7 @@
 
 #include "Mono.h"
 
-namespace Maple
+namespace maple
 {
 	class MAPLE_EXPORT  MapleMonoAssembly
 	{

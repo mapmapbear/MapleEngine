@@ -9,7 +9,7 @@
 #include "Engine/Interface/Shader.h"
 #include "Engine/Interface/DescriptorSet.h"
 
-namespace Maple
+namespace maple
 {
 	class VulkanShader : public Shader
 	{

@@ -6,7 +6,7 @@
 
 #include "RHI/OpenGL/GLRenderDevice.h"
 
-namespace Maple
+namespace maple
 {
 	auto RenderDevice::clear(uint32_t bufferMask) -> void
 	{
@@ -42,4 +42,4 @@ namespace Maple
 	{
 		return std::make_shared<GLRenderDevice>();
 	}
-}        // namespace Maple
+}        // namespace maple

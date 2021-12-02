@@ -11,7 +11,7 @@ extern "C" {
 #include <LuaBridge/LuaBridge.h>
 #include "Input.h"
 
-namespace Maple
+namespace maple
 {
 	namespace InputExport
 	{

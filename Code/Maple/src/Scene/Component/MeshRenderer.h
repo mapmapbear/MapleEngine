@@ -10,7 +10,7 @@
 #include <memory>
 #include <vector>
 
-namespace Maple
+namespace maple
 {
 	class Mesh;
 	class MeshResource;
@@ -91,4 +91,4 @@ namespace Maple
 		std::string               meshName;
 		std::shared_ptr<Material> material;
 	};
-};        // namespace Maple
+};        // namespace maple

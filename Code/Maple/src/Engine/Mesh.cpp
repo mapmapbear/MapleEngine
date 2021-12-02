@@ -12,7 +12,7 @@
 #include "Math/BoundingBox.h"
 #include <math.h>
 
-namespace Maple
+namespace maple
 {
 	Mesh::Mesh(const std::shared_ptr<VertexBuffer> &vertexBuffer, const std::shared_ptr<IndexBuffer> &indexBuffer) :
 	    vertexBuffer(vertexBuffer), indexBuffer(indexBuffer)
@@ -380,4 +380,4 @@ namespace Maple
 		const float     factor  = 1.0f / (coord1.x * coord2.y - coord2.x * coord1.y);
 		return axis * factor;
 	}
-};        // namespace Maple
+};        // namespace maple

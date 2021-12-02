@@ -8,7 +8,7 @@
 #include "Application.h"
 #include "Engine/Profiler.h"
 
-namespace Maple
+namespace maple
 {
 	EventDispatcher::EventDispatcher()
 	{

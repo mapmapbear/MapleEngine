@@ -6,7 +6,7 @@
 #include "VulkanHelper.h"
 #include "Engine/Interface/SwapChain.h"
 
-namespace Maple
+namespace maple
 {
 #define MAX_SWAPCHAIN_BUFFERS 3
 

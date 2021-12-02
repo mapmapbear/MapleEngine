@@ -6,7 +6,7 @@
 #include <string>
 #include <unordered_map>
 
-namespace Maple
+namespace maple
 {
 	enum class FileType : int32_t
 	{
@@ -62,4 +62,4 @@ namespace Maple
 		virtual auto getPath() const -> std::string      = 0;
 
 	};
-};        // namespace Maple
+};        // namespace maple

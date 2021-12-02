@@ -5,7 +5,7 @@
 #pragma once
 #include "Scene/System/ISystem.h"
 
-namespace Maple 
+namespace maple 
 {
 	class Scene;
 	class MAPLE_EXPORT LuaSystem final : public ISystem

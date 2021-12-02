@@ -5,7 +5,7 @@
 #define STB_PERLIN_IMPLEMENTATION
 #include <stb_perlin.h>
 
-namespace Maple
+namespace maple
 {
 	namespace Noise
 	{

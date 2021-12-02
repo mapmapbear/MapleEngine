@@ -9,7 +9,7 @@
 #include <cassert>
 
 
-namespace Maple
+namespace maple
 {
 
 	auto MapleMonoField::getType() ->std::shared_ptr<MapleMonoClass>

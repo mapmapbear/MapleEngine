@@ -7,7 +7,7 @@
 #include "QuadTree.h"
 #include "RHI/Texture.h"
 
-namespace Maple
+namespace maple
 {
 	class Texture;
 	class MAPLE_EXPORT TextureAtlas
@@ -42,4 +42,4 @@ namespace Maple
 		std::pair<int16_t, int16_t> border;
 		std::pair<int16_t, int16_t> yRange;
 	};
-};        // namespace Maple
+};        // namespace maple

@@ -4,9 +4,9 @@
 #include "Input.h"
 #include "Application.h"
 
-namespace Maple
+namespace maple
 {
-	std::unique_ptr<Maple::Input> Input::input;
+	std::unique_ptr<maple::Input> Input::input;
 
 	auto Input::create() -> void
 	{

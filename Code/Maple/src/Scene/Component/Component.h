@@ -6,7 +6,7 @@
 #include <entt/entt.hpp>
 #include <string>
 
-namespace Maple
+namespace maple
 {
 	//TODO serialize function is not implementation
 	class Entity;
@@ -217,4 +217,4 @@ namespace Maple
 		}
 	};
 
-};        // namespace Maple
+};        // namespace maple

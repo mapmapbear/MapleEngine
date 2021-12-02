@@ -3,7 +3,7 @@
 //////////////////////////////////////////////////////////////////////////////
 #include "TexturePool.h"
 
-namespace Maple
+namespace maple
 {
     auto TexturePool::addSprite(const std::string& file) -> Quad2D*
     {

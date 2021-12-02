@@ -5,7 +5,7 @@
 #include <string>
 #include "Engine/Core.h"
 
-namespace Maple 
+namespace maple 
 {
 	class LoadingDialog 
 	{

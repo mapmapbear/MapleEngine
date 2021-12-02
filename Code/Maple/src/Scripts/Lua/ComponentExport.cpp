@@ -23,7 +23,7 @@ extern "C" {
 #include "Scene/Entity/EntityManager.h"
 
 
-namespace Maple
+namespace maple
 {
 #define EXPORT_COMPONENTS(Comp) \
 		 addFunction("add" #Comp,&Entity::addComponent<Comp>) \

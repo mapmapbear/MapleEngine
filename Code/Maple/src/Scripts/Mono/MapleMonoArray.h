@@ -7,7 +7,7 @@
 #include <string>
 #include "MonoHelper.h"
 
-namespace Maple
+namespace maple
 {
 	class MAPLE_EXPORT MapleMonoArray
 	{

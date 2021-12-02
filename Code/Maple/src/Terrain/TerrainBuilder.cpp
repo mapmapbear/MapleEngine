@@ -5,7 +5,7 @@
 #include "FileSystem/ImageLoader.h"
 #include <cmath>
 
-namespace Maple 
+namespace maple 
 {
 	struct color8888
 	{

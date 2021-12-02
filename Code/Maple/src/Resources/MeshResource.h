@@ -8,7 +8,7 @@
 #include <string>
 #include <unordered_map>
 
-namespace Maple
+namespace maple
 {
 	class Mesh;
 
@@ -37,4 +37,4 @@ namespace Maple
 		std::unordered_map<std::string, std::shared_ptr<Mesh>> meshes;
 		std::string                                            name;
 	};
-};        // namespace Maple
+};        // namespace maple

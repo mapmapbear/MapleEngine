@@ -7,7 +7,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-namespace Maple
+namespace maple
 {
 	class Mesh;
 
@@ -144,4 +144,4 @@ namespace Maple
 		std::vector<uint32_t> indices;
 	};
 
-};        // namespace Maple
+};        // namespace maple

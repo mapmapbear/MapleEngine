@@ -13,7 +13,7 @@
 #include "Others/StringUtils.h"
 #include <stack>
 
-namespace Maple 
+namespace maple 
 {
 
 	MapleMonoAssembly::~MapleMonoAssembly()

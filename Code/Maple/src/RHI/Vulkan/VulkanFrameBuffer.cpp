@@ -9,7 +9,7 @@
 #include "VulkanTexture.h"
 #include "Others/Console.h"
 
-namespace Maple
+namespace maple
 {
 	VulkanFrameBuffer::VulkanFrameBuffer(const FrameBufferInfo& info)
 		:info(info)

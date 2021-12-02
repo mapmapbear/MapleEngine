@@ -8,7 +8,7 @@
 
 #include "EditorWindow.h"
 
-namespace Maple 
+namespace maple 
 {
 	class Texture2D;
 	class GizmoWindow : public EditorWindow

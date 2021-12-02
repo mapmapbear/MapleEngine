@@ -9,7 +9,7 @@
 #include <memory>
 #include <functional>
 
-namespace Maple
+namespace maple
 {
 
 	class Shader;

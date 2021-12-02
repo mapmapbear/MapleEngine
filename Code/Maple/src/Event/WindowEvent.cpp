@@ -4,7 +4,7 @@
 #pragma once
 #include "WindowEvent.h"
 
-namespace Maple
+namespace maple
 {
 	
 	WindowResizeEvent::WindowResizeEvent(int32_t initWidth, int32_t initHeight)

@@ -5,7 +5,7 @@
 #include <memory>
 #include <vector>
 
-namespace Maple
+namespace maple
 {
 	class GLShader;
 
@@ -49,4 +49,4 @@ namespace Maple
 		};
 		std::unordered_map<std::string, UniformBufferInfo> uniformBuffers;
 	};
-}        // namespace Maple
+}        // namespace maple

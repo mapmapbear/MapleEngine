@@ -12,7 +12,7 @@
 struct GLFWwindow;
 
 
-namespace Maple
+namespace maple
 {
 	class WindowWin : public NativeWindow
 	{
@@ -57,5 +57,5 @@ namespace Maple
 
 	};
 
-};            // namespace Maple
+};            // namespace maple
 #endif        // PLATFORM_DESKTOP

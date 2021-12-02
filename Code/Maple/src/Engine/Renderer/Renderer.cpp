@@ -5,7 +5,7 @@
 #include "Application.h"
 #include "Engine/Mesh.h"
 
-namespace Maple
+namespace maple
 {
 	auto Renderer::bindDescriptorSets(Pipeline *pipeline, CommandBuffer *cmdBuffer, uint32_t dynamicOffset, const std::vector<std::shared_ptr<DescriptorSet>> &descriptorSets) -> void
 	{
@@ -30,4 +30,4 @@ namespace Maple
 		mesh->getVertexBuffer()->unbind();
 		mesh->getIndexBuffer()->unbind();
 	}
-};        // namespace Maple
+};        // namespace maple

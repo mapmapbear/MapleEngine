@@ -53,7 +53,7 @@
 #include "Math/Ray.h"
 #include "Scripts/Mono/MonoComponent.h"
 
-namespace Maple
+namespace maple
 {
 	Editor::Editor(AppDelegate *appDelegate) :
 	    Application(appDelegate)
@@ -641,15 +641,15 @@ namespace Maple
 			auto fileType = File::getFileType(filePath);
 			switch (fileType)
 			{
-				case Maple::FileType::Normal:
+				case maple::FileType::Normal:
 					break;
-				case Maple::FileType::Folder:
+				case maple::FileType::Folder:
 					break;
-				case Maple::FileType::Texture:
+				case maple::FileType::Texture:
 					break;
-				case Maple::FileType::Model:
-				case Maple::FileType::FBX:
-				case Maple::FileType::OBJ: {
+				case maple::FileType::Model:
+				case maple::FileType::FBX:
+				case maple::FileType::OBJ: {
 					if (meshRoot)
 					{
 						auto  name        = StringUtils::getFileNameWithoutExtension(filePath);
@@ -673,32 +673,32 @@ namespace Maple
 					}
 				}
 				break;
-				case Maple::FileType::Text:
+				case maple::FileType::Text:
 					break;
-				case Maple::FileType::Script:
+				case maple::FileType::Script:
 					break;
-				case Maple::FileType::Dll:
+				case maple::FileType::Dll:
 					break;
-				case Maple::FileType::Scene: {
+				case maple::FileType::Scene: {
 					sceneManager->addSceneFromFile(filePath);
 					sceneManager->switchScene(filePath);
 				}
 				break;
-				case Maple::FileType::MP3:
+				case maple::FileType::MP3:
 					break;
-				case Maple::FileType::OGG:
+				case maple::FileType::OGG:
 					break;
-				case Maple::FileType::AAC:
+				case maple::FileType::AAC:
 					break;
-				case Maple::FileType::WAV:
+				case maple::FileType::WAV:
 					break;
-				case Maple::FileType::TTF:
+				case maple::FileType::TTF:
 					break;
-				case Maple::FileType::C_SHARP:
+				case maple::FileType::C_SHARP:
 					break;
-				case Maple::FileType::Shader:
+				case maple::FileType::Shader:
 					break;
-				case Maple::FileType::Material: {
+				case maple::FileType::Material: {
 					auto entity                       = scene->createEntity("Sphere");
 					entity.addComponent<Model>().type = PrimitiveType::Sphere;
 					auto mesh = Mesh::createSphere();
@@ -707,7 +707,7 @@ namespace Maple
 					entity.setParent(meshRoot);
 				}
 				break;
-				case Maple::FileType::Length:
+				case maple::FileType::Length:
 					break;
 				default:
 					break;
@@ -968,11 +968,11 @@ namespace Maple
 		return camera->sendRay(screenX, screenY, glm::inverse(editorCameraTransform.getWorldMatrix()), flipY);
 	}
 
-}        // namespace Maple
+}        // namespace maple
 
 #if !defined(EDITOR_STATIC)
-Maple::Application *createApplication()
+maple::Application *createApplication()
 {
-	return new Maple::Editor(new Maple::DefaultDelegate());
+	return new maple::Editor(new maple::DefaultDelegate());
 }
 #endif

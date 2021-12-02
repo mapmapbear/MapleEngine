@@ -9,7 +9,7 @@
 #include <memory>
 #include <vector>
 
-namespace Maple
+namespace maple
 {
 	class Texture;
 	class Scene;
@@ -78,4 +78,4 @@ namespace Maple
 		std::shared_ptr<RenderData>   renderData;
 		Transform *                   transform = nullptr;
 	};
-};        // namespace Maple
+};        // namespace maple

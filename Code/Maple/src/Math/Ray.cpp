@@ -6,7 +6,7 @@
 #include "MathUtils.h"
 #include "BoundingBox.h"
 
-namespace Maple 
+namespace maple 
 {
 	auto Ray::getClosestPoint(const Ray& ray) const ->glm::vec3
 	{

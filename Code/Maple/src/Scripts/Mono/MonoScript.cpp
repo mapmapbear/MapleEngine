@@ -15,7 +15,7 @@
 #include "IconsMaterialDesignIcons.h"
 
 
-namespace Maple
+namespace maple
 {
 
 	MonoScript::MonoScript(const std::string& name, MonoComponent* component, MonoSystem* system):

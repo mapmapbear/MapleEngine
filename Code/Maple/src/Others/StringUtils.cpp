@@ -23,7 +23,7 @@
 
 
 
-namespace Maple 
+namespace maple 
 {
 	auto StringUtils::getExtension(const std::string& fileName) -> std::string
 	{

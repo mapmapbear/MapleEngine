@@ -8,7 +8,7 @@
 
 #include "EditorWindow.h"
 
-namespace Maple
+namespace maple
 {
 	class RenderCapture : public EditorWindow
 	{
@@ -17,4 +17,4 @@ namespace Maple
 		virtual auto onImGui() -> void;
 	  private:
 	};
-};        // namespace Maple
+};        // namespace maple

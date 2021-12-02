@@ -16,7 +16,7 @@
 #define MAX_IMAGE_INFOS 16
 #define MAX_WRITE_DESCTIPTORS 16
 
-namespace Maple
+namespace maple
 {
 
 	VulkanDescriptorSet::VulkanDescriptorSet(const DescriptorCreateInfo& info)

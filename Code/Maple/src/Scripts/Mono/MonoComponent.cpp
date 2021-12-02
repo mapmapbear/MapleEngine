@@ -8,7 +8,7 @@
 
 
 
-namespace Maple 
+namespace maple 
 {
 	auto MonoComponent::addScript(const std::string& name, MonoSystem* system) -> void
 	{

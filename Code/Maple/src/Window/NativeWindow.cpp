@@ -4,7 +4,7 @@
 #include "NativeWindow.h"
 #include "WindowWin.h"
 
-namespace Maple 
+namespace maple 
 {
 
 	auto getNativeWindow() -> void* { return nullptr; }

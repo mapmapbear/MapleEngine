@@ -6,7 +6,7 @@
 #include "MapleMonoClass.h"
 #include "Others/Console.h"
 
-namespace Maple 
+namespace maple 
 {
 	MapleMonoObject::MapleMonoObject(MonoObject* rawPtr, MapleMonoClass* clazz)
 		:rawPtr(rawPtr), clazz(clazz)

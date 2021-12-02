@@ -9,7 +9,7 @@
 #include <memory>
 #include <vector>
 
-namespace Maple
+namespace maple
 {
 	class Scene;
 	class GBuffer;
@@ -52,4 +52,4 @@ namespace Maple
 		std::shared_ptr<Texture> renderTexture;
 		std::shared_ptr<GBuffer> gbuffer;
 	};
-};        // namespace Maple
+};        // namespace maple

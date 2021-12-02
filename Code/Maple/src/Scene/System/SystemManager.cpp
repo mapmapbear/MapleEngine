@@ -4,7 +4,7 @@
 
 #include "SystemManager.h"
 
-namespace Maple 
+namespace maple 
 {
 	auto SystemManager::onUpdate(float dt, Scene* scene) -> void
 	{

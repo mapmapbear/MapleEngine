@@ -12,7 +12,7 @@
 #endif
 #include <cstdint>
 
-namespace Maple
+namespace maple
 {
 #ifdef MAPLE_DEBUG
 #	ifdef glDebugMessageCallback
@@ -25,15 +25,15 @@ namespace Maple
 	auto logCall(const char *function, const char *file, const int32_t line) -> bool;
 	auto clearError() -> void;
 
-};        // namespace Maple
+};        // namespace maple
 
 #define GL_DEBUG 1
 
 #if GL_DEBUG
 #	define GLCall(x)                                \
-		Maple::clearError();                         \
+		maple::clearError();                         \
 		x;                                           \
-		if (!Maple::logCall(#x, __FILE__, __LINE__)) \
+		if (!maple::logCall(#x, __FILE__, __LINE__)) \
 		{}//	__debugbreak();
 #else
 #	define GLCall(x) x

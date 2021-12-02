@@ -4,7 +4,7 @@
 
 #include "GBuffer.h"
 
-namespace Maple
+namespace maple
 {
 	GBuffer::GBuffer(uint32_t width, uint32_t height) :
 	    width(width), height(height)
@@ -60,4 +60,4 @@ namespace Maple
 		}
 	}
 
-}        // namespace Maple
+}        // namespace maple

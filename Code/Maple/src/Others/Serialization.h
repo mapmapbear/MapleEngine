@@ -33,7 +33,7 @@ namespace glm
 	template<class Archive> void serialize(Archive& archive, dquat& q) { archive(q.x, q.y, q.z, q.w); }
 
 };
-namespace Maple
+namespace maple
 {
 	class Scene;
 	class Material;

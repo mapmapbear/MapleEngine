@@ -13,7 +13,7 @@
 #endif
 
 #include "VulkanSwapChain.h"
-namespace Maple
+namespace maple
 {
 
 	VulkanContext::VulkanContext(bool validation)

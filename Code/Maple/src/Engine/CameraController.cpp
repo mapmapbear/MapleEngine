@@ -6,12 +6,12 @@
 #include "Devices/Input.h"
 #include "Math/MathUtils.h"
 
-namespace Maple 
+namespace maple 
 {
 
 	EditorCameraController::EditorCameraController()
 	{
-		focalPoint = Maple::ZERO;
+		focalPoint = maple::ZERO;
 		velocity = glm::vec3(0.0f);
 		mouseSensitivity = 0.00001f;
 		zoomDampeningFactor = 0.00001f;
@@ -144,7 +144,7 @@ namespace Maple
 				}
 			}
 
-			if (!MathUtils::equals(velocity, Maple::ZERO))
+			if (!MathUtils::equals(velocity, maple::ZERO))
 			{
 				glm::vec3 position = transform.getLocalPosition();
 				position += velocity * dt;

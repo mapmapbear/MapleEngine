@@ -6,7 +6,7 @@
 #include "Application.h"
 #include "Engine/Profiler.h"
 
-namespace Maple
+namespace maple
 {
 	auto Thread::sleep(int64_t ms) -> void
 	{

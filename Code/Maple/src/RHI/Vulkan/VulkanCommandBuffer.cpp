@@ -9,7 +9,7 @@
 #include "VulkanRenderPass.h"
 #include "Others/Console.h"
 
-namespace Maple
+namespace maple
 {
 	VulkanCommandBuffer::VulkanCommandBuffer(bool primary)
 	{

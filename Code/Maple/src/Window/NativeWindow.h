@@ -9,7 +9,7 @@
 
 #include "RHI/SwapChain.h"
 
-namespace Maple
+namespace maple
 {
 	struct WindowInitData
 	{
@@ -57,4 +57,4 @@ namespace Maple
 		std::vector<const char *>  extensions;
 		float                      scale = 1.f;
 	};
-};        // namespace Maple
+};        // namespace maple

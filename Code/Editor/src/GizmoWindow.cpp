@@ -4,7 +4,7 @@
 #include "GizmoWindow.h"
 
 
-namespace Maple
+namespace maple
 {
 	const ImVec4 SelectedColor(0.28f, 0.56f, 0.9f, 1.0f);
 	GizmoWindow::GizmoWindow()
@@ -17,4 +17,4 @@ namespace Maple
 	}
 
 
-};        // namespace Maple
+};        // namespace maple

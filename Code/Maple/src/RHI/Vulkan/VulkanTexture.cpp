@@ -19,7 +19,7 @@
 
 
 
-namespace Maple
+namespace maple
 {
 	auto generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels) -> void
 	{
@@ -360,7 +360,7 @@ namespace Maple
 	{
 		auto imageSize = 0;
 		const uint8_t* pixel = nullptr;
-		std::unique_ptr<Maple::Image> image;
+		std::unique_ptr<maple::Image> image;
 		if (data != nullptr)
 		{
 			parameters.format = TextureFormat::RGBA8;
@@ -369,7 +369,7 @@ namespace Maple
 		}
 		else
 		{
-			image = Maple::ImageLoader::loadAsset(fileName);
+			image = maple::ImageLoader::loadAsset(fileName);
 			width = image->getWidth();
 			height = image->getHeight();
 			imageSize = image->getImageSize();

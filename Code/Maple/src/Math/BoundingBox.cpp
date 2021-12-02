@@ -3,7 +3,7 @@
 //////////////////////////////////////////////////////////////////////////////
 #include "BoundingBox.h"
 
-namespace Maple 
+namespace maple 
 {
 	auto BoundingBox::transform(const glm::mat4& transform) -> BoundingBox
 	{

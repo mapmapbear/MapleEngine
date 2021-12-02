@@ -5,7 +5,7 @@
 
 #include <cstdint>
 
-namespace Maple
+namespace maple
 {
 	namespace Noise
 	{

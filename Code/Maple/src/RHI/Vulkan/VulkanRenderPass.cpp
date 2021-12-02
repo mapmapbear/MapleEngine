@@ -9,7 +9,7 @@
 #include "VulkanCommandBuffer.h"
 #include "VulkanFrameBuffer.h"
 
-namespace Maple
+namespace maple
 {
 	VkSubpassContents subPassContentsToVK(SubPassContents contents)
 	{

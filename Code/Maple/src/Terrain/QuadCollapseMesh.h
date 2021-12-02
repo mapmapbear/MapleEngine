@@ -11,7 +11,7 @@
 
 
 
-namespace Maple 
+namespace maple 
 {
 
 	struct VertNode;

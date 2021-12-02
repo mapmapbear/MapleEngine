@@ -2,7 +2,7 @@
 #include "RHI/Texture.h"
 #include <array>
 
-namespace Maple
+namespace maple
 {
 	class GLTexture2D : public Texture2D
 	{
@@ -250,4 +250,4 @@ namespace Maple
 		uint32_t      count  = 0;
 		TextureFormat format;
 	};
-}        // namespace Maple
+}        // namespace maple

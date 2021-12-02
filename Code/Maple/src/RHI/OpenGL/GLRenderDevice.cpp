@@ -14,7 +14,7 @@
 
 #include "Application.h"
 
-namespace Maple
+namespace maple
 {
 	namespace
 	{
@@ -344,4 +344,4 @@ namespace Maple
 		clear(RendererBufferColor | RendererBufferDepth | RendererBufferStencil);
 	}
 
-}        // namespace Maple
+}        // namespace maple

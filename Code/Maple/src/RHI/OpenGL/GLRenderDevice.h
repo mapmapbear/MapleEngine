@@ -4,7 +4,7 @@
 #include "RHI/Pipeline.h"
 #include "RHI/RenderDevice.h"
 
-namespace Maple
+namespace maple
 {
 	class Window;
 	class GLContext;
@@ -47,4 +47,4 @@ namespace Maple
 	  protected:
 		const std::string rendererName = "OpenGL-Renderer";
 	};
-}        // namespace Maple
+}        // namespace maple

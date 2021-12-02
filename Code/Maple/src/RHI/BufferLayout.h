@@ -8,7 +8,7 @@
 #include <glm/glm.hpp>
 #include <string>
 
-namespace Maple
+namespace maple
 {
 	struct MAPLE_EXPORT BufferElement
 	{
@@ -64,4 +64,4 @@ namespace Maple
 	template <>
 	auto MAPLE_EXPORT BufferLayout::push<glm::ivec4>(const std::string &name, bool normalized) -> void;
 
-}        // namespace Maple
+}        // namespace maple

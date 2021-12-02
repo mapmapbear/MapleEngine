@@ -7,7 +7,7 @@
 
 #include "GLFunc.inl"
 
-namespace Maple
+namespace maple
 {
 	namespace
 	{
@@ -232,29 +232,29 @@ namespace Maple
 			switch (type)
 			{
 				case ShaderDataType::Float32:
-					Maple::setUniform1f(location, *reinterpret_cast<const float *>(&data[offset]));
+					maple::setUniform1f(location, *reinterpret_cast<const float *>(&data[offset]));
 					break;
 				case ShaderDataType::Int:
 				case ShaderDataType::Int32:
-					Maple::setUniform1i(location, *reinterpret_cast<const int32_t *>(&data[offset]));
+					maple::setUniform1i(location, *reinterpret_cast<const int32_t *>(&data[offset]));
 					break;
 				case ShaderDataType::UInt:
-					Maple::setUniform1ui(location, *reinterpret_cast<const uint32_t *>(&data[offset]));
+					maple::setUniform1ui(location, *reinterpret_cast<const uint32_t *>(&data[offset]));
 					break;
 				case ShaderDataType::Vec2:
-					Maple::setUniform2f(location, *reinterpret_cast<const glm::vec2 *>(&data[offset]));
+					maple::setUniform2f(location, *reinterpret_cast<const glm::vec2 *>(&data[offset]));
 					break;
 				case ShaderDataType::Vec3:
-					Maple::setUniform3f(location, *reinterpret_cast<const glm::vec3 *>(&data[offset]));
+					maple::setUniform3f(location, *reinterpret_cast<const glm::vec3 *>(&data[offset]));
 					break;
 				case ShaderDataType::Vec4:
-					Maple::setUniform4f(location, *reinterpret_cast<const glm::vec4 *>(&data[offset]));
+					maple::setUniform4f(location, *reinterpret_cast<const glm::vec4 *>(&data[offset]));
 					break;
 				case ShaderDataType::Mat3:
-					Maple::setUniformMat3(location, *reinterpret_cast<const glm::mat3 *>(&data[offset]));
+					maple::setUniformMat3(location, *reinterpret_cast<const glm::mat3 *>(&data[offset]));
 					break;
 				case ShaderDataType::Mat4:
-					Maple::setUniformMat4(location, *reinterpret_cast<const glm::mat4 *>(&data[offset]));
+					maple::setUniformMat4(location, *reinterpret_cast<const glm::mat4 *>(&data[offset]));
 					break;
 				default:
 					MAPLE_ASSERT(false, "Unknown type!");
@@ -284,47 +284,47 @@ namespace Maple
 	auto GLShader::setUniform1f(const std::string &name, float value) -> void
 	{
 		PROFILE_FUNCTION();
-		Maple::setUniform1f(getUniformLocation(name), value);
+		maple::setUniform1f(getUniformLocation(name), value);
 	}
 	auto GLShader::setUniform1fv(const std::string &name, float *value, int32_t count) -> void
 	{
 		PROFILE_FUNCTION();
-		Maple::setUniform1fv(getUniformLocation(name), value, count);
+		maple::setUniform1fv(getUniformLocation(name), value, count);
 	}
 	auto GLShader::setUniform1i(const std::string &name, int32_t value) -> void
 	{
 		PROFILE_FUNCTION();
-		Maple::setUniform1i(getUniformLocation(name), value);
+		maple::setUniform1i(getUniformLocation(name), value);
 	}
 	auto GLShader::setUniform1ui(const std::string &name, uint32_t value) -> void
 	{
 		PROFILE_FUNCTION();
-		Maple::setUniform1ui(getUniformLocation(name), value);
+		maple::setUniform1ui(getUniformLocation(name), value);
 	}
 	auto GLShader::setUniform1iv(const std::string &name, int32_t *value, int32_t count) -> void
 	{
 		PROFILE_FUNCTION();
-		Maple::setUniform1iv(getUniformLocation(name), value, count);
+		maple::setUniform1iv(getUniformLocation(name), value, count);
 	}
 	auto GLShader::setUniform2f(const std::string &name, const glm::vec2 &value) -> void
 	{
 		PROFILE_FUNCTION();
-		Maple::setUniform2f(getUniformLocation(name), value);
+		maple::setUniform2f(getUniformLocation(name), value);
 	}
 	auto GLShader::setUniform3f(const std::string &name, const glm::vec3 &value) -> void
 	{
 		PROFILE_FUNCTION();
-		Maple::setUniform3f(getUniformLocation(name), value);
+		maple::setUniform3f(getUniformLocation(name), value);
 	}
 	auto GLShader::setUniform4f(const std::string &name, const glm::vec4 &value) -> void
 	{
 		PROFILE_FUNCTION();
-		Maple::setUniform4f(getUniformLocation(name), value);
+		maple::setUniform4f(getUniformLocation(name), value);
 	}
 	auto GLShader::setUniformMat4(const std::string &name, const glm::mat4 &value) -> void
 	{
 		PROFILE_FUNCTION();
-		Maple::setUniformMat4(getUniformLocation(name), value);
+		maple::setUniformMat4(getUniformLocation(name), value);
 	}
 
 	auto GLShader::bindUniformBuffer(const GLUniformBuffer *buffer, uint32_t slot, const std::string &name) -> void
@@ -525,4 +525,4 @@ namespace Maple
 		return shader;
 	}
 
-}        // namespace Maple
+}        // namespace maple

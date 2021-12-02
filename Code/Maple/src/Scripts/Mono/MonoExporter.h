@@ -4,7 +4,7 @@
 
 #pragma once
 #include "Engine/Core.h"
-namespace Maple::MonoExporter
+namespace maple::MonoExporter
 {
 	MAPLE_EXPORT auto exportMono() -> void;
 };

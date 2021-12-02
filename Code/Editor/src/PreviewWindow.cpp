@@ -20,7 +20,7 @@
 
 #include <ecs/ComponentChain.h>
 
-namespace Maple
+namespace maple
 {
 
 
@@ -146,4 +146,4 @@ namespace Maple
 		}
 	}
 
-};        // namespace Maple
+};        // namespace maple

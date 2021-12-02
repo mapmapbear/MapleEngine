@@ -25,7 +25,7 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-namespace Maple
+namespace maple
 {
 	const glm::mat4 captureViews[] =
 	    {
@@ -290,4 +290,4 @@ namespace Maple
 	auto PrefilterRenderer::createFrameBuffer() -> void
 	{
 	}
-};        // namespace Maple
+};        // namespace maple

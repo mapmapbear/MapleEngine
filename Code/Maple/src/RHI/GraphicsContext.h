@@ -6,7 +6,7 @@
 #include "Others/Console.h"
 #include <memory>
 
-namespace Maple
+namespace maple
 {
 	enum class GraphicsAPI : uint32_t
 	{
@@ -78,4 +78,4 @@ namespace Maple
 		std::unordered_map<std::size_t, std::shared_ptr<FrameBuffer>> frameBufferCache;
 		std::unordered_map<std::string, std::shared_ptr<Shader>>      shaderCache;
 	};
-}        // namespace Maple
+}        // namespace maple

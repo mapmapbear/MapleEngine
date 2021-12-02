@@ -3,7 +3,7 @@
 //////////////////////////////////////////////////////////////////////////////
 #include "EntityManager.h"
 
-namespace Maple
+namespace maple
 {
 	auto EntityManager::create() -> Entity
 	{
@@ -74,4 +74,4 @@ namespace Maple
 		return {entt::null, nullptr};
 	}
 
-};        // namespace Maple
+};        // namespace maple

@@ -8,7 +8,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/quaternion.hpp>
 
-namespace Maple
+namespace maple
 {
 	auto Transform::getForwardDirection() const -> glm::vec3
 	{
@@ -159,4 +159,4 @@ namespace Maple
 		localOrientation = initLocalOrientation;
 	}
 
-};        // namespace Maple
+};        // namespace maple

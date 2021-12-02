@@ -11,7 +11,7 @@
 #include <glm/gtx/hash.hpp>
 #include <array>
 #include <vulkan/vulkan.h>
-namespace Maple
+namespace maple
 {
 	struct Vertex 
 	{
@@ -92,8 +92,8 @@ namespace Maple
 	};
 };
 namespace std {
-	template<> struct hash<Maple::Vertex> {
-		size_t operator()(const Maple::Vertex& vertex) const {
+	template<> struct hash<maple::Vertex> {
+		size_t operator()(const maple::Vertex& vertex) const {
 			return
 					((hash<glm::vec3>()(vertex.pos) ^
 					(hash<glm::vec2>()(vertex.texCoord) << 1) ^

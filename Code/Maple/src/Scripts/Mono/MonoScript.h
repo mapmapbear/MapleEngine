@@ -8,7 +8,7 @@
 #include <memory>
 #include "Engine/Core.h"
 
-namespace Maple 
+namespace maple 
 {
 	class MonoSystem;
 	class MonoComponent;

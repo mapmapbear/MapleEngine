@@ -12,7 +12,7 @@ namespace spirv_cross
 	struct SPIRType;
 }
 
-namespace Maple
+namespace maple
 {
 	enum class ShaderType : int32_t
 	{
@@ -31,7 +31,7 @@ namespace Maple
 		switch (type)
 		{
 #define STR(r)                 \
-	case Maple::ShaderType::r: \
+	case maple::ShaderType::r: \
 		return #r
 			STR(Vertex);
 			STR(Fragment);
@@ -120,4 +120,4 @@ namespace Maple
 		static auto create(const std::string &filepath) -> std::shared_ptr<Shader>;
 		static auto create(const std::vector<uint32_t> &vertData, const std::vector<uint32_t> &fragData) -> std::shared_ptr<Shader>;
 	};
-}        // namespace Maple
+}        // namespace maple

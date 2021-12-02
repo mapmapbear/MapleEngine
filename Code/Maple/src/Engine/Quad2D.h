@@ -6,7 +6,7 @@
 #include <memory>
 #include <array>
 #include "Engine/Core.h"
-namespace Maple 
+namespace maple 
 {
 	class Texture2D;
 

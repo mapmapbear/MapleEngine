@@ -12,7 +12,7 @@
 #include "Renderer.h"
 #include "RHI/DescriptorSet.h"
 
-namespace Maple
+namespace maple
 {
 	/*class UniformBuffer;
 	class Texture2D;
@@ -50,4 +50,4 @@ namespace Maple
 		glm::mat4     transform;
 	};*/
 
-};        // namespace Maple
+};        // namespace maple

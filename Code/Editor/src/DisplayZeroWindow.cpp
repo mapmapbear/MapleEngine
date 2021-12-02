@@ -22,7 +22,7 @@
 #include <ImGuizmo.h>
 #include <glm/gtc/type_ptr.hpp>
 
-namespace Maple
+namespace maple
 {
 	const ImVec4 SelectedColor(0.28f, 0.56f, 0.9f, 1.0f);
 	DisplayZeroWindow::DisplayZeroWindow()
@@ -237,4 +237,4 @@ namespace Maple
 		ImGui::Unindent();
 	}
 
-};        // namespace Maple
+};        // namespace maple

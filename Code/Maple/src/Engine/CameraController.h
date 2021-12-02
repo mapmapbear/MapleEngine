@@ -5,7 +5,7 @@
 #include <glm/glm.hpp>
 #include "Scene/Component/Transform.h"
 
-namespace Maple
+namespace maple
 {
 	class Camera;
 
@@ -54,7 +54,7 @@ namespace Maple
 		auto handleKeyboard(Transform& transform, float dt)->void override ;
 		auto updateScroll(Transform& transform, float offset, float dt)->void override;
 		inline auto setTwoDMode(bool _2d) { _2DMode = _2d; }
-		inline auto setCamera(Maple::Camera* val) { camera = val; }
+		inline auto setCamera(maple::Camera* val) { camera = val; }
 	private:
 		bool _2DMode = false;
 		Camera* camera = nullptr;

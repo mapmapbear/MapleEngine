@@ -9,7 +9,7 @@
 #include "Engine/Mesh.h"
 
 
-namespace Maple 
+namespace maple 
 {
 	namespace MeshLoader
 	{

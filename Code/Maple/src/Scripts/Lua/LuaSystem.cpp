@@ -7,7 +7,7 @@
 #include "LuaComponent.h"
 #include "Application.h"
 
-namespace Maple
+namespace maple
 {
 	auto LuaSystem::onInit() -> void
 	{

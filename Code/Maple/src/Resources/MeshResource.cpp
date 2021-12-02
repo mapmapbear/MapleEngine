@@ -4,7 +4,7 @@
 #include "MeshResource.h"
 #include "FileSystem/MeshLoader.h"
 
-namespace Maple 
+namespace maple 
 {
 	MeshResource::MeshResource(const std::string& name)
 		:name(name)

@@ -2,7 +2,7 @@
 
 #include "RHI/IndexBuffer.h"
 
-namespace Maple
+namespace maple
 {
 	class GLIndexBuffer : public IndexBuffer
 	{
@@ -29,4 +29,4 @@ namespace Maple
 		BufferUsage usage  = BufferUsage::Dynamic;
 		bool        mapped = false;
 	};
-}        // namespace Maple
+}        // namespace maple

@@ -5,13 +5,13 @@
 #include "Application.h"
 #include "Others/Console.h"
 
-extern Maple::Application *createApplication();
+extern maple::Application *createApplication();
 
 auto main() -> int32_t
 {
-	Maple::Console::init();
-	Maple::Application::app = createApplication();
-	auto retCode            = Maple::Application::app->start();
-	delete Maple::Application::app;
+	maple::Console::init();
+	maple::Application::app = createApplication();
+	auto retCode            = maple::Application::app->start();
+	delete maple::Application::app;
 	return retCode;
 }

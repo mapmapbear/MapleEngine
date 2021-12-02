@@ -4,7 +4,7 @@
 #include "Camera.h"
 #include <glm/gtc/matrix_transform.hpp>
 
-namespace Maple
+namespace maple
 {
 	Camera::Camera(float fov, float near, float far, float aspect) :
 	    aspectRatio(aspect), projectionDirty(true), fov(fov), near_(near), far_(far), orthographic(false)
@@ -73,4 +73,4 @@ namespace Maple
 			projMatrix = glm::perspective(glm::radians(fov), aspectRatio, near_, far_);
 	}
 
-};        // namespace Maple
+};        // namespace maple

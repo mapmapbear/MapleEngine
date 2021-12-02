@@ -8,7 +8,7 @@
 #include <memory>
 #include <string>
 
-namespace Maple
+namespace maple
 {
 	class Texture2D;
 	class TextureDepth;
@@ -35,4 +35,4 @@ namespace Maple
 		glm::vec2                     previousCurserPos = glm::vec2(0.0f, 0.0f);
 		glm::vec2                     rotateVelocity    = glm::vec2(0.0f, 0.0f);
 	};
-};        // namespace Maple
+};        // namespace maple

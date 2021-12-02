@@ -2,7 +2,7 @@
 
 #include "RHI/ImGuiRenderer.h"
 
-namespace Maple
+namespace maple
 {
 	class GLImGuiRenderer : public ImGuiRenderer
 	{
@@ -20,4 +20,4 @@ namespace Maple
 		void *windowHandle = nullptr;
 		bool  clearScreen  = false;
 	};
-}        // namespace Maple
+}        // namespace maple

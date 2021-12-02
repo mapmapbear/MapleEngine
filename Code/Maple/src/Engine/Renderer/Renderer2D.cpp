@@ -32,7 +32,7 @@
 
 #include <imgui.h>
 
-namespace Maple
+namespace maple
 {
 	/*Renderer2D::Renderer2D(uint32_t width, uint32_t height, bool enableDepth) :
 	    enableDepth(enableDepth)
@@ -404,4 +404,4 @@ namespace Maple
 			}
 		}* /
 	}*/
-};        // namespace Maple
+};        // namespace maple

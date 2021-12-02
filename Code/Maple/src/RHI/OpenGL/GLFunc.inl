@@ -2,7 +2,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-namespace Maple
+namespace maple
 {
 	inline auto setUniform1f(uint32_t location, float value) -> void
 	{
@@ -59,4 +59,4 @@ namespace Maple
 	{
 		//GLCall(glUniformMatrix4fv(location, matrix.size(), GL_FALSE, (uint8_t*)matrix.data());
 	}
-};        // namespace Maple
+};        // namespace maple

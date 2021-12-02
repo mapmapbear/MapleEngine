@@ -5,7 +5,7 @@
 #include "LoadingDialog.h"
 #include "imgui_widgets_user.h"
 
-namespace Maple
+namespace maple
 {
 	auto LoadingDialog::show(const std::string& name) -> void
 	{

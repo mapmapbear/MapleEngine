@@ -26,7 +26,7 @@
 
 #include "PrefilterRenderer.h"
 
-namespace Maple
+namespace maple
 {
 #ifdef MAPLE_OPENGL
 	constexpr glm::mat4 BIAS_MATRIX = {
@@ -482,7 +482,7 @@ namespace Maple
 				{
 					const auto &[light, trans] = group.get<Light, Transform>(lightEntity);
 					light.lightData.position   = {trans.getWorldPosition(), 1.f};
-					light.lightData.direction  = {glm::normalize(trans.getWorldOrientation() * Maple::FORWARD), 1.f};
+					light.lightData.direction  = {glm::normalize(trans.getWorldOrientation() * maple::FORWARD), 1.f};
 
 					if (static_cast<LightType>(light.lightData.type) == LightType::DirectionalLight)
 						directionaLight = &light;
@@ -681,7 +681,7 @@ namespace Maple
 		{
 			const auto &[light, trans] = group.get<Light, Transform>(lightEntity);
 			light.lightData.position   = {trans.getWorldPosition(), 1.f};
-			light.lightData.direction  = {glm::normalize(trans.getWorldOrientation() * Maple::FORWARD), 1.f};
+			light.lightData.direction  = {glm::normalize(trans.getWorldOrientation() * maple::FORWARD), 1.f};
 
 			if (static_cast<LightType>(light.lightData.type) == LightType::DirectionalLight)
 				directionaLight = &light;
@@ -1132,7 +1132,7 @@ namespace Maple
 			glm::vec3 minExtents = -maxExtents;
 
 			glm::vec3 lightDir         = glm::normalize(glm::vec3(light->lightData.direction) * -1.f);
-			glm::mat4 lightViewMatrix  = glm::lookAt(frustumCenter - lightDir * -minExtents.z, frustumCenter, Maple::UP);
+			glm::mat4 lightViewMatrix  = glm::lookAt(frustumCenter - lightDir * -minExtents.z, frustumCenter, maple::UP);
 			glm::mat4 lightOrthoMatrix = glm::ortho(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, 0.0f, maxExtents.z - minExtents.z);
 
 			shadowData->splitDepth[i]     = glm::vec4(camera.first->getNear() + splitDist * clipRange) * -1.f;
@@ -1200,4 +1200,4 @@ namespace Maple
 		pipeline->end(getCommandBuffer());
 	}
 
-};        // namespace Maple
+};        // namespace maple

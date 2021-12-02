@@ -27,7 +27,7 @@
 
 #include "Application.h"
 
-namespace Maple
+namespace maple
 {
 	Scene::Scene(const std::string &initName) :
 	    name(initName)
@@ -40,7 +40,6 @@ namespace Maple
 		entityManager->addDependency<Model, Transform>();
 		entityManager->addDependency<Sprite, Transform>();
 		entityManager->addDependency<AnimatedSprite, Transform>();
-
 		sceneGraph = std::make_shared<SceneGraph>();
 		sceneGraph->init(entityManager->getRegistry());
 	}
@@ -136,11 +135,12 @@ namespace Maple
 
 	auto Scene::getCamera() -> std::pair<Camera *, Transform *>
 	{
-		auto camsEttView = entityManager->getEntitiesWithType<Camera>();
+		auto camsEttView = entityManager->getEntitiesWithTypes<Camera, Transform>();
 		if (!camsEttView.empty() && useSceneCamera)
 		{
-			Camera &   sceneCam   = camsEttView.front().getComponent<Camera>();
-			Transform &sceneCamTr = camsEttView.front().getComponent<Transform>();
+			Entity entity(camsEttView.front(), this);
+			Camera &   sceneCam   = entity.getComponent<Camera>();
+			Transform &sceneCamTr = entity.getComponent<Transform>();
 			return {&sceneCam, &sceneCamTr};
 		}
 		return {overrideCamera, overrideTransform};
@@ -192,7 +192,7 @@ namespace Maple
 		PROFILE_FUNCTION();
 		updateCameraController(dt);
 		sceneGraph->update(entityManager->getRegistry());
-		auto view = entityManager->getRegistry().group<AnimatedSprite>(entt::get<Transform>);
+		auto view = entityManager->getRegistry().view<AnimatedSprite, Transform>();
 		for (auto entity : view)
 		{
 			const auto &[anim, trans] = view.get<AnimatedSprite, Transform>(entity);
@@ -200,4 +200,4 @@ namespace Maple
 		}
 	}
 
-};        // namespace Maple
+};        // namespace maple

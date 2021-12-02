@@ -18,7 +18,7 @@
 #include "Application.h"
 
 
-namespace Maple
+namespace maple
 {
 	auto MonoSystem::onInit() -> void
 	{

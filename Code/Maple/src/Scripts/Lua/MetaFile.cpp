@@ -10,7 +10,7 @@
 #include "Others/Serialization.h"
 #include "Others/Console.h"
 
-namespace Maple
+namespace maple
 {
 	auto MetaFile::save(const LuaComponent* comp, const std::string & fileName) const -> void
 	{

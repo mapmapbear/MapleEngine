@@ -9,7 +9,7 @@
 #include <assert.h>
 #include <memory>
 
-namespace Maple
+namespace maple
 {
 	class VulkanCommandPool;
 

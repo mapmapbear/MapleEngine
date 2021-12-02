@@ -2,7 +2,7 @@
 
 #include "RHI/Pipeline.h"
 
-namespace Maple
+namespace maple
 {
 	class GLRenderPass;
 	class CommandBuffer;
@@ -41,4 +41,4 @@ namespace Maple
 		CullMode     cullMode;
 		BlendMode    blendMode;
 	};
-}        // namespace Maple
+}        // namespace maple

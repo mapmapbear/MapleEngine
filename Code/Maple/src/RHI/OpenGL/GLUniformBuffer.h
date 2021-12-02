@@ -1,7 +1,7 @@
 #pragma once
 #include "RHI/UniformBuffer.h"
 
-namespace Maple
+namespace maple
 {
 	class GLShader;
 
@@ -52,4 +52,4 @@ namespace Maple
 		uint32_t handle          = 0;
 		uint32_t index           = 0;
 	};
-}        // namespace Maple
+}        // namespace maple

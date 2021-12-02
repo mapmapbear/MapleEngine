@@ -10,7 +10,7 @@
 #include "Event.h"
 
 
-namespace Maple
+namespace maple
 {
 	class EventDispatcher;
 

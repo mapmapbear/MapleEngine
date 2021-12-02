@@ -7,7 +7,7 @@
 #include "MapleMonoMethod.h"
 #include "MonoVirtualMachine.h"
 
-namespace Maple
+namespace maple
 {
 	auto MapleMonoProperty::get(MonoObject* instance) const -> MonoObject*
 	{

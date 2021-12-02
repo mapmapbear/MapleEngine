@@ -7,7 +7,7 @@
 #include "Scene/System/ISystem.h"
 #include <memory>
 
-namespace Maple
+namespace maple
 {
 	class ImGuiRenderer;
 	class Scene;

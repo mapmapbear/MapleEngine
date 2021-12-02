@@ -14,7 +14,7 @@
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 
-namespace Maple
+namespace maple
 {
 	ImGuiSystem::ImGuiSystem(bool clearScreen) :
 	    clearScreen(clearScreen)
@@ -128,4 +128,4 @@ namespace Maple
 	{
 	}
 
-};        // namespace Maple
+};        // namespace maple

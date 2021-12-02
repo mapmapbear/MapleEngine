@@ -7,7 +7,7 @@
 #include <cstdint>
 #include <memory>
 
-namespace Maple
+namespace maple
 {
 	struct Buffer
 	{
@@ -107,4 +107,4 @@ namespace Maple
 		}
 	};
 
-}        // namespace Maple
+}        // namespace maple

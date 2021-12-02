@@ -8,7 +8,7 @@
 #include "Scene/Component/Transform.h"
 #include "Devices/Input.h"
 
-namespace Maple::MonoExporter
+namespace maple::MonoExporter
 {
 	struct ExportVector2 { float x, y; };
 	struct ExportVector3 { float x, y, z; };

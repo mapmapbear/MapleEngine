@@ -5,7 +5,7 @@
 #include "TextureAtlas.h"
 #include "FileSystem/ImageLoader.h"
 
-namespace Maple
+namespace maple
 {
 
 	TextureAtlas::TextureAtlas(uint32_t w, uint32_t h)

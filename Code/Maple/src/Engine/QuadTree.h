@@ -7,7 +7,7 @@
 #include <vector>
 #include <unordered_map>
 
-namespace Maple 
+namespace maple 
 {
 	struct LeftOver
 	{

@@ -16,7 +16,7 @@
 
 #include <memory>
 
-namespace Maple
+namespace maple
 {
 	VulkanPipeline::VulkanPipeline(const PipelineInfo& info)
 	{

@@ -6,7 +6,7 @@
 #include "Others/StringUtils.h"
 #include "Others/Console.h"
 
-namespace Maple
+namespace maple
 {
 	namespace
 	{
@@ -93,4 +93,4 @@ namespace Maple
 		}
 	}
 
-}        // namespace Maple
+}        // namespace maple

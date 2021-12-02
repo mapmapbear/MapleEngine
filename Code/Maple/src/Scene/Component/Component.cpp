@@ -9,7 +9,7 @@
 
 #include "Application.h"
 
-namespace Maple
+namespace maple
 {
 	Hierarchy::Hierarchy(entt::entity p) :
 	    parent(p)
@@ -18,10 +18,12 @@ namespace Maple
 		next  = entt::null;
 		prev  = entt::null;
 	}
+
 	Hierarchy::Hierarchy()
 	{
 	}
-	bool Hierarchy::compare(const entt::registry &registry, entt::entity rhs) const
+
+	auto Hierarchy::compare(const entt::registry &registry, entt::entity rhs) const -> bool
 	{
 		if (rhs == entt::null || rhs == parent || rhs == prev)
 		{
@@ -37,14 +39,12 @@ namespace Maple
 			auto &thisParent = registry.get<Hierarchy>(parent);
 			auto &rhsParent  = registry.get<Hierarchy>(rhs).parent;
 			if (thisParent.compare(registry, parent))
-			{
 				return true;
-			}
 		}
 		return false;
 	}
 
-	void Hierarchy::reset()
+	auto Hierarchy::reset() -> void
 	{
 		parent = entt::null;
 		first  = entt::null;
@@ -52,7 +52,7 @@ namespace Maple
 		prev   = entt::null;
 	}
 
-	void Hierarchy::onConstruct(entt::registry &registry, entt::entity entity)
+	auto Hierarchy::onConstruct(entt::registry &registry, entt::entity entity) -> void
 	{
 		auto &hierarchy = registry.get<Hierarchy>(entity);
 		if (hierarchy.parent != entt::null)
@@ -79,7 +79,7 @@ namespace Maple
 		}
 	}
 
-	void Hierarchy::onDestroy(entt::registry &registry, entt::entity entity)
+	auto Hierarchy::onDestroy(entt::registry &registry, entt::entity entity) -> void
 	{
 		auto &hierarchy = registry.get<Hierarchy>(entity);
 		if (hierarchy.prev == entt::null || !registry.valid(hierarchy.prev))
@@ -119,8 +119,8 @@ namespace Maple
 		}
 	}
 
-	void Hierarchy::onUpdate(entt::registry &registry, entt::entity entity)
-	{
+	auto Hierarchy::onUpdate(entt::registry &registry, entt::entity entity) -> void
+	{ 
 		auto &hierarchy = registry.get<Hierarchy>(entity);
 		// if is the first child
 		if (hierarchy.prev == entt::null)
@@ -160,7 +160,7 @@ namespace Maple
 		}
 	}
 
-	void Hierarchy::reparent(entt::entity ent, entt::entity parent, entt::registry &registry, Hierarchy &hierarchy)
+	auto Hierarchy::reparent(entt::entity ent, entt::entity parent, entt::registry &registry, Hierarchy &hierarchy) -> void
 	{
 		Hierarchy::onDestroy(registry, ent);
 
@@ -175,7 +175,7 @@ namespace Maple
 		}
 	}
 
-	Maple::Entity Component::getEntity()
+	auto Component::getEntity() -> maple::Entity
 	{
 		return {entity, Application::get()->getSceneManager()->getCurrentScene()};
 	}
@@ -201,12 +201,12 @@ namespace Maple
 		{
 			TextureLoadOptions options(false, false, true);
 			TextureParameters  parameters(TextureFormat::RGBA32, TextureWrap::ClampToEdge);
-			equirectangularMap = Texture2D::create(filePath, filePath, parameters, options);
-			width              = equirectangularMap->getWidth();
-			height             = equirectangularMap->getHeight();
-			numMips            = equirectangularMap->getMipMapLevels();
+			equirectangularMap     = Texture2D::create(filePath, filePath, parameters, options);
+			width                  = equirectangularMap->getWidth();
+			height                 = equirectangularMap->getHeight();
+			numMips                = equirectangularMap->getMipMapLevels();
 			irradianceMap          = TextureCube::create(IrradianceMapSize, TextureFormat::RGBA32, 0);
 			prefilteredEnvironment = TextureCube::create(PrefilterMapSize, TextureFormat::RGBA32, 5);
 		}
 	}
-}        // namespace Maple
+}        // namespace maple

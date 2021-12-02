@@ -21,7 +21,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <imGuIZMOquat.h>
 
-namespace Maple
+namespace maple
 {
 	const ImVec4 SelectedColor(0.28f, 0.56f, 0.9f, 1.0f);
 	SceneWindow::SceneWindow()
@@ -379,4 +379,4 @@ namespace Maple
 		return clicked;
 	}
 
-};        // namespace Maple
+};        // namespace maple

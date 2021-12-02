@@ -1,7 +1,7 @@
 #include "GLCommandBuffer.h"
 #include "RHI/Pipeline.h"
 
-namespace Maple
+namespace maple
 {
 	GLCommandBuffer::GLCommandBuffer()
 	{
@@ -51,4 +51,4 @@ namespace Maple
 			currentPipeline->end(this);
 		currentPipeline = nullptr;
 	}
-}        // namespace Maple
+}        // namespace maple

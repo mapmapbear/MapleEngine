@@ -9,7 +9,7 @@
 #include <string>
 #include <unordered_map>
 
-namespace Maple
+namespace maple
 {
 	class GLUniformBuffer;
 
@@ -112,4 +112,4 @@ namespace Maple
 		std::vector<PushConstant> pushConstants;
 		const std::string         filePath;
 	};
-}        // namespace Maple
+}        // namespace maple

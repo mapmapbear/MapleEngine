@@ -6,7 +6,7 @@
 #include "Component/Component.h"
 #include "Component/Transform.h"
 #include "Engine/Profiler.h"
-namespace Maple 
+namespace maple 
 {
 	auto SceneGraph::init(entt::registry& registry) -> void
 	{

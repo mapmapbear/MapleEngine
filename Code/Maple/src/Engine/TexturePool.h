@@ -5,7 +5,7 @@
 #include "TextureAtlas.h"
 #include <unordered_map>
 
-namespace Maple
+namespace maple
 {
 	class MAPLE_EXPORT TexturePool final
 	{

@@ -6,7 +6,7 @@
 #include "VulkanHelper.h"
 #include "Engine/Interface/Texture.h"
 
-namespace Maple
+namespace maple
 {
 
 	class VulkanTexture2D : public Texture2D

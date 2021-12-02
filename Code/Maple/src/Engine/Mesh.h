@@ -13,7 +13,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-namespace Maple
+namespace maple
 {
 	enum class MeshType
 	{
@@ -118,4 +118,4 @@ namespace Maple
 		bool        active = true;
 		std::string name;
 	};
-};        // namespace Maple
+};        // namespace maple

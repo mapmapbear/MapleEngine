@@ -8,7 +8,7 @@
 #include <memory>
 #include <vector>
 
-namespace Maple
+namespace maple
 {
 	class Shader;
 	class RenderPass;
@@ -271,4 +271,4 @@ namespace Maple
 		std::shared_ptr<Pipeline> pipeline;
 		glm::mat4                 transform;
 	};
-}        // namespace Maple
+}        // namespace maple

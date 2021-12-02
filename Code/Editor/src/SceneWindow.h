@@ -10,7 +10,7 @@
 #include "Engine/CameraController.h"
 #include "Scene/Component/Transform.h"
 
-namespace Maple
+namespace maple
 {
 	class Texture2D;
 	class SceneWindow : public EditorWindow
@@ -40,4 +40,4 @@ namespace Maple
 		std::shared_ptr<Texture2D> previewTexture;
 
 	};
-};        // namespace Maple
+};        // namespace maple

@@ -5,7 +5,7 @@
 #include "GraphicsContext.h"
 
 
-namespace Maple
+namespace maple
 {
 	BufferLayout::BufferLayout()
 	{
@@ -62,4 +62,4 @@ namespace Maple
 	{
 		push(name, Format::R32G32B32A32_INT, sizeof(glm::ivec4), normalized);
 	}
-}        // namespace Maple
+}        // namespace maple

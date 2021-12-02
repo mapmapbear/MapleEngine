@@ -8,7 +8,7 @@
 
 #include <imgui_impl_vulkan.h>
 
-namespace Maple
+namespace maple
 {
 	namespace ImGuiHelper
 	{
@@ -259,4 +259,4 @@ namespace Maple
 		}
 
 	};        // namespace ImGuiHelper
-};            // namespace Maple
+};            // namespace maple

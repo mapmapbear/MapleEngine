@@ -6,7 +6,7 @@
 #include "Engine/TextureFormat.h"
 #include "Engine/Interface/RenderPass.h"
 
-namespace Maple
+namespace maple
 {
 
 	class VulkanRenderPass : public RenderPass

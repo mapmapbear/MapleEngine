@@ -17,7 +17,7 @@
 
 #include "Application.h"
 
-namespace Maple
+namespace maple
 {
 	namespace
 	{
@@ -330,4 +330,4 @@ namespace Maple
 		}
 	}
 
-};        // namespace Maple
+};        // namespace maple

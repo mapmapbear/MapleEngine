@@ -6,7 +6,7 @@
 #include "Engine/Core.h"
 #include <memory>
 
-namespace Maple
+namespace maple
 {
 	class CommandBuffer;
 	class Pipeline;
@@ -38,4 +38,4 @@ namespace Maple
 	  public:
 		static auto create(const BufferUsage &usage = BufferUsage::Static) -> std::shared_ptr<VertexBuffer>;
 	};
-}        // namespace Maple
+}        // namespace maple

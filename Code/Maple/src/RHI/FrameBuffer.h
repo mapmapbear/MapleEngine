@@ -5,7 +5,7 @@
 #include "Definitions.h"
 #include <glm/vec4.hpp>
 
-namespace Maple
+namespace maple
 {
 	enum class CubeFace : int32_t
 	{
@@ -51,4 +51,4 @@ namespace Maple
 		virtual auto setClearColor(const glm::vec4 &color) -> void                                                                      = 0;
 		virtual auto getColorAttachment(int32_t id = 0) const -> std::shared_ptr<Texture>                                               = 0;
 	};
-}        // namespace Maple
+}        // namespace maple

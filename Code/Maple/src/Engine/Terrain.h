@@ -5,7 +5,7 @@
 #include "Mesh.h"
 
 
-namespace Maple 
+namespace maple 
 {
 	class Terrain : public Mesh
 	{

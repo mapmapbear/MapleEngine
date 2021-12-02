@@ -19,15 +19,29 @@
 #include "Scene/Scene.h"
 #include "Scene/SceneManager.h"
 #include "Terrain/TerrainBuilder.h"
-
-#include <imgui.h>
-
+#include "Scene/System/AccessSystem.h"
 #include "Scripts/Mono/MonoVirtualMachine.h"
+#include <imgui.h>
+#include <ecs/ecs.h>
 
-//Maple::Application* app;
+//maple::Application* app;
 
-namespace Maple
+namespace maple
 {
+	namespace test
+	{
+		using TEntity = ecs::Chain
+			::Read<Camera>
+			::To<ecs::Entity>;
+
+		auto system(TEntity en)
+		{
+			auto [camera] = en;
+			
+			LOGI("xxx");
+		}
+	}        // namespace test
+
 	Application::Application(AppDelegate *app)
 	{
 		appDelegate     = std::shared_ptr<AppDelegate>(app);
@@ -63,6 +77,11 @@ namespace Maple
 
 		systemManager->addSystem<LuaSystem>()->onInit();
 		systemManager->addSystem<MonoSystem>()->onInit();
+
+		auto access = systemManager->addSystem<AccessSystem>();
+
+		access->registerSystem<test::system>();
+
 		imGuiManager = systemManager->addSystem<ImGuiSystem>(false);
 		imGuiManager->onInit();
 	}
@@ -207,7 +226,6 @@ namespace Maple
 		}
 	}
 
+	maple::Application *Application::app = nullptr;
 
-	Maple::Application *Application::app = nullptr;
-
-};        // namespace Maple
+};        // namespace maple

@@ -2,7 +2,7 @@
 #include "RHI/SwapChain.h"
 #include <vector>
 
-namespace Maple
+namespace maple
 {
 	class GLTexture2D;
 
@@ -52,4 +52,4 @@ namespace Maple
 		uint32_t width         = 0;
 		uint32_t height        = 0;
 	};
-}        // namespace Maple
+}        // namespace maple

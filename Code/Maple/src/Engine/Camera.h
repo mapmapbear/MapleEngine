@@ -9,7 +9,7 @@
 #include "Scene/Component/Transform.h"
 #include <glm/glm.hpp>
 
-namespace Maple
+namespace maple
 {
 	class MAPLE_EXPORT Camera : public Component
 	{
@@ -117,4 +117,4 @@ namespace Maple
 		Frustum frustum;
 	};
 
-};        // namespace Maple
+};        // namespace maple

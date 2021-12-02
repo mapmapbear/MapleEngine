@@ -4,7 +4,7 @@
 #include "RHI/SwapChain.h"
 #include <imgui/imgui.h>
 
-namespace Maple
+namespace maple
 {
 	GLContext::GLContext()
 	{
@@ -28,4 +28,4 @@ namespace Maple
 		auto &window = Application::getWindow();
 		swapChain    = SwapChain::create(window->getWidth(),window->getHeight());
 	}
-}        // namespace Maple
+}        // namespace maple

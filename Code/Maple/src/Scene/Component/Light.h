@@ -4,7 +4,7 @@
 #pragma once
 #include "Component.h"
 #include <glm/glm.hpp>
-namespace Maple
+namespace maple
 {
 	enum class LightType
 	{
@@ -49,4 +49,4 @@ namespace Maple
 			    entity);
 		}
 	};
-};        // namespace Maple
+};        // namespace maple

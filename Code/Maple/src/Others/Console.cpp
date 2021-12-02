@@ -7,7 +7,7 @@
 #include <spdlog/sinks/basic_file_sink.h>
 
 
-namespace Maple 
+namespace maple 
 {
 	auto Console::init() -> void
 	{

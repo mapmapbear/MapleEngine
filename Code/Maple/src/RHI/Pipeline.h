@@ -8,7 +8,7 @@
 #include <array>
 #include <memory>
 
-namespace Maple
+namespace maple
 {
 	struct PipelineInfo
 	{
@@ -49,4 +49,4 @@ namespace Maple
 	  protected:
 		PipelineInfo description;
 	};
-}        // namespace Maple
+}        // namespace maple

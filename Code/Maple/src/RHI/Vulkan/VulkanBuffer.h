@@ -3,7 +3,7 @@
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "vulkan/vulkan.h"
-namespace Maple
+namespace maple
 {
 	class VulkanBuffer
 	{

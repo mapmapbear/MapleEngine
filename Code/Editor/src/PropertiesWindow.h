@@ -10,7 +10,7 @@
 #include <ImGuiEnttEditor.hpp>
 
 
-namespace Maple 
+namespace maple 
 {
 	
 	class PropertiesWindow : public EditorWindow

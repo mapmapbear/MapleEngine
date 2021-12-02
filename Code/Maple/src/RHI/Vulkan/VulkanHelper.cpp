@@ -15,7 +15,7 @@
 #include <GLFW/glfw3native.h>
 
 
-namespace Maple
+namespace maple
 {
 	auto VulkanHelper::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) ->uint32_t
 	{

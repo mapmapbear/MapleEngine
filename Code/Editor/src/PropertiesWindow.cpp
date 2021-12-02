@@ -28,7 +28,7 @@
 
 namespace MM
 {
-	using namespace Maple;
+	using namespace maple;
 
 	template <>
 	void ComponentEditorWidget<Transform>(entt::registry &reg, entt::registry::entity_type e)
@@ -553,7 +553,7 @@ namespace MM
 
 };        // namespace MM
 
-namespace Maple
+namespace maple
 {
 	constexpr size_t INPUT_BUFFER = 256;
 	PropertiesWindow::PropertiesWindow()
@@ -753,4 +753,4 @@ namespace Maple
 		}
 	}
 
-};        // namespace Maple
+};        // namespace maple

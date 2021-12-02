@@ -16,7 +16,7 @@
 #include "FileSystem/File.h"
 #include "Application.h"
 
-namespace Maple
+namespace maple
 {
 	void monoLogCallback(const char* logDomain, const char* logLevel, const char* message, mono_bool fatal, void* userData)
 	{

@@ -7,7 +7,7 @@
 #include "Mono.h"
 #include <vector>
 
-namespace Maple::MonoHelper 
+namespace maple::MonoHelper 
 {
 	auto executeCommand(const std::string & cmd)->std::string;
 	auto compileScript(const std::string& script, const std::string& dllReference = "") -> bool;

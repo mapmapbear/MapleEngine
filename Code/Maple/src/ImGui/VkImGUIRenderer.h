@@ -7,7 +7,7 @@
 #include "RHI/Vulkan/VulkanHelper.h"
 
 struct ImGui_ImplVulkanH_Window;
-namespace Maple 
+namespace maple 
 {
 
 	class VulkanCommandBuffer;

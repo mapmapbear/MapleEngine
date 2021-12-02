@@ -8,7 +8,7 @@
 #include <entt/entt.hpp>
 #include "EditorWindow.h"
 
-namespace Maple 
+namespace maple 
 {
 	class HierarchyWindow : public EditorWindow
 	{

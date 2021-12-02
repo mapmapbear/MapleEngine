@@ -3,7 +3,7 @@
 #include "RHI/FrameBuffer.h"
 #include "RHI/OpenGL/GL.h"
 
-namespace Maple
+namespace maple
 {
 	enum class Format;
 
@@ -74,4 +74,4 @@ namespace Maple
 
 		std::vector<std::shared_ptr<Texture>> attachments;
 	};
-}        // namespace Maple
+}        // namespace maple

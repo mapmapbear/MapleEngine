@@ -12,7 +12,7 @@
 #include <entt/entt.hpp>
 #include <glm/glm.hpp>
 #include <memory>
-namespace Maple
+namespace maple
 {
 	class EditorPlugin;
 	class Texture2D;
@@ -195,4 +195,4 @@ namespace Maple
 	{
 		editorWindows.emplace(typeid(T).hash_code(), std::make_shared<T>());
 	}
-};        // namespace Maple
+};        // namespace maple

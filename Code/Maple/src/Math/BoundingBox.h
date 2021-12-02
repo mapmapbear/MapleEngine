@@ -8,7 +8,7 @@
 #include "Rect2D.h"
 #include "Engine/Core.h"
 
-namespace Maple
+namespace maple
 {
 
 	class MAPLE_EXPORT BoundingBox

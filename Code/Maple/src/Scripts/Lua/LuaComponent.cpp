@@ -20,7 +20,7 @@
 #include "Scene/Component/Component.h"
 #include "Application.h"
 
-namespace Maple 
+namespace maple 
 {
 	LuaComponent::LuaComponent( const std::string& file, Scene* initScene)
 		:scene(initScene),file(file)

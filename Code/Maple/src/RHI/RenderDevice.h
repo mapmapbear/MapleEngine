@@ -8,7 +8,7 @@
 #include <glm/glm.hpp>
 #include <memory>
 
-namespace Maple
+namespace maple
 {
 	class Texture;
 	class CommandBuffer;
@@ -44,4 +44,4 @@ namespace Maple
 		static auto drawIndexed(CommandBuffer *commandBuffer, DrawType type, uint32_t count, uint32_t start = 0) -> void;
 		static auto create() -> std::shared_ptr<RenderDevice>;
 	};
-};        // namespace Maple
+};        // namespace maple

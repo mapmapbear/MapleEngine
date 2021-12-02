@@ -53,7 +53,7 @@ enum class MonoMemberVisibility
 	Public
 };
 
-namespace Maple {
+namespace maple {
 	class MapleMonoMethod;
 	class MapleMonoField;
 	class MapleMonoProperty;
