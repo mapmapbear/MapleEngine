@@ -12,6 +12,7 @@
 #include "Engine/Vertex.h"
 
 #include "RHI/CommandBuffer.h"
+#include "RHI/GPUProfile.h"
 #include "RHI/IndexBuffer.h"
 #include "RHI/Pipeline.h"
 #include "RHI/VertexBuffer.h"
@@ -26,8 +27,44 @@
 
 #include "PrefilterRenderer.h"
 
+#include <imgui/imgui.h>
+
 namespace maple
 {
+	namespace
+	{
+		auto renderOutputMode(int32_t mode) -> const std::string
+		{
+			switch (mode)
+			{
+				case 0:
+					return "Lighting";
+				case 1:
+					return "Color";
+				case 2:
+					return "Metallic";
+				case 3:
+					return "Roughness";
+				case 4:
+					return "AO";
+				case 5:
+					return "Emissive";
+				case 6:
+					return "Normal";
+				case 7:
+					return "Shadow Cascades";
+				case 8:
+					return "Depth";
+				case 9:
+					return "Position";
+				case 10:
+					return "PBR Sampler";
+				default:
+					return "Lighting";
+			}
+		}
+	}        // namespace
+
 #ifdef MAPLE_OPENGL
 	constexpr glm::mat4 BIAS_MATRIX = {
 	    0.5, 0.0, 0.0, 0.0,
@@ -70,7 +107,7 @@ namespace maple
 
 	struct RenderGraph::ShadowData
 	{
-		float                                       cascadeSplitLambda            = 0.92f;
+		float                                       cascadeSplitLambda            = 0.995f;
 		float                                       sceneRadiusMultiplier         = 1.4f;
 		float                                       lightSize                     = 1.5f;
 		float                                       maxShadowDistance             = 400.0f;
@@ -751,8 +788,8 @@ namespace maple
 			Application::getRenderDevice()->clearRenderTarget(gBuffer->getDepthBuffer(), getCommandBuffer());
 		}
 
-		//if (settings.renderShadow)
-		//	executeShadowPass();
+		if (settings.renderShadow)
+			executeShadowPass();
 
 		if (settings.render3D)
 		{
@@ -806,7 +843,6 @@ namespace maple
 
 	auto RenderGraph::executePreviewPasss() -> void
 	{
-		
 		PROFILE_FUNCTION();
 		previewData->descriporSets[2]->update();
 
@@ -881,12 +917,73 @@ namespace maple
 	auto RenderGraph::onImGui() -> void
 	{
 		PROFILE_FUNCTION();
+
+		ImGui::TextUnformatted("Shadow Renderer");
+
+		ImGui::DragFloat("Initial Bias", &shadowData->initialBias, 0.00005f, 0.0f, 1.0f, "%.6f");
+		ImGui::DragFloat("Light Size", &shadowData->lightSize, 0.00005f, 0.0f, 10.0f);
+		ImGui::DragFloat("Max Shadow Distance", &shadowData->maxShadowDistance, 0.05f, 0.0f, 10000.0f);
+		ImGui::DragFloat("Shadow Fade", &shadowData->shadowFade, 0.0005f, 0.0f, 500.0f);
+		ImGui::DragFloat("Cascade Transition Fade", &shadowData->cascadeTransitionFade, 0.0005f, 0.0f, 5.0f);
+		ImGui::DragFloat("Cascade Split Lambda", &shadowData->cascadeSplitLambda, 0.005f, 0.0f, 3.0f);
+		//ImGui::DragFloat("Scene Radius Multiplier", &shadowData->sceneRadiusMultiplier, 0.005f, 0.0f, 5.0f);
+
+		ImGui::Separator();
+
+		ImGui::TextUnformatted("Deferred Renderer");
+
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
+		ImGui::Columns(2);
+		ImGui::Separator();
+
+		ImGui::AlignTextToFramePadding();
+		ImGui::TextUnformatted("Deferred Queue Size");
+		ImGui::NextColumn();
+		ImGui::PushItemWidth(-1);
+		ImGui::Text("%5.2lu", deferredData->commandQueue.size());
+		ImGui::PopItemWidth();
+		ImGui::NextColumn();
+
+		ImGui::AlignTextToFramePadding();
+		ImGui::TextUnformatted("Render Mode");
+		ImGui::NextColumn();
+		ImGui::PushItemWidth(-1);
+		if (ImGui::BeginMenu(renderOutputMode(forwardData->renderMode).c_str()))
+		{
+			constexpr int32_t numRenderModes = 11;
+
+			for (int32_t i = 0; i < numRenderModes; i++)
+			{
+				if (ImGui::MenuItem(renderOutputMode(i).c_str(), "", forwardData->renderMode == i, true))
+				{
+					forwardData->renderMode = i;
+				}
+			}
+			ImGui::EndMenu();
+		}
+		ImGui::PopItemWidth();
+		ImGui::NextColumn();
+
+		ImGui::Columns(1);
+
+		/*ImGui::TextUnformatted("2D renderer");
+		ImGui::Columns(2);
+
+		ImGuiHelpers::Property("Number of draw calls", (int &) m_Renderer2DData.m_BatchDrawCallIndex, ImGuiHelpers::PropertyFlag::ReadOnly);
+		ImGuiHelpers::Property("Max textures Per draw call", (int &) m_Renderer2DData.m_Limits.MaxTextures, 1, 16);
+		ImGuiHelpers::Property("ToneMap Index", m_ToneMapIndex);
+		ImGuiHelpers::Property("Exposure", m_Exposure);
+
+		ImGui::Columns(1);*/
+
+		ImGui::Separator();
+		ImGui::PopStyleVar();
 	}
 
 	auto RenderGraph::executeForwardPass() -> void
 	{
 		PROFILE_FUNCTION();
-		//GPUProfile("Forward Pass");
+		GPUProfile("Forward Pass");
 		forwardData->descriptorSet[2]->update();
 
 		auto commandBuffer = getCommandBuffer();
@@ -974,7 +1071,7 @@ namespace maple
 	auto RenderGraph::executeSkyboxPass() -> void
 	{
 		PROFILE_FUNCTION();
-		//GPUProfile("SkyBox Pass");
+		GPUProfile("SkyBox Pass");
 		if (forwardData->skybox == nullptr)
 		{
 			return;
@@ -1095,7 +1192,7 @@ namespace maple
 			cascadeSplits[i] = (d - nearClip) / clipRange;
 		}
 
-		cascadeSplits[3] = 0.35f;
+		//cascadeSplits[3] = 0.35f;
 
 		for (uint32_t i = 0; i < shadowData->shadowMapNum; i++)
 		{
@@ -1103,7 +1200,8 @@ namespace maple
 			float splitDist     = cascadeSplits[i];
 			float lastSplitDist = i == 0 ? 0.0f : cascadeSplits[i - 1];
 
-			auto       frum           = camera.first->getFrustum(glm::inverse(camera.second->getWorldMatrixInverse()));
+			auto frum = camera.first->getFrustum(glm::inverse(camera.second->getWorldMatrixInverse()));
+
 			glm::vec3 *frustumCorners = frum.vertices;
 
 			for (uint32_t i = 0; i < 4; i++)

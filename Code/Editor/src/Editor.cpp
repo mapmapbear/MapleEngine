@@ -219,8 +219,7 @@ namespace maple
 		auto &registry = getSceneManager()->getCurrentScene()->getRegistry();
 		if (cameraSelected || camera->isOrthographic())
 		{
-			auto view = registry.group<Camera>(entt::get<Transform>);
-
+			auto view = registry.group<Camera, Transform>();
 			for (auto v : view)
 			{
 				auto &[camera, trans] = registry.get<Camera, Transform>(v);

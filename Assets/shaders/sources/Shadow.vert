@@ -26,21 +26,5 @@ layout(location = 4) in vec3 inTangent;
 
 void main()
 {
-    mat4 proj;
-    switch(pushConsts.cascadeIndex)
-    {
-        case 0 : 
-            proj = ubo.projView[0];
-            break;
-        case 1 : 
-            proj = ubo.projView[1];
-            break;
-        case 2 : 
-            proj = ubo.projView[2];
-            break;
-        default : 
-            proj = ubo.projView[3];
-            break;
-    }
     gl_Position = ubo.projView[pushConsts.cascadeIndex] * pushConsts.transform *  vec4(inPosition, 1.0); 
 }

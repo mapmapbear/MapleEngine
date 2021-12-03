@@ -25,6 +25,8 @@
 #include "Thread/ThreadPool.h"
 #include "Window/NativeWindow.h"
 
+#include "Scene/System/AccessSystem.h"
+
 namespace maple
 {
 	class MonoVirtualMachine;
@@ -160,6 +162,11 @@ namespace maple
 			return get()->cache;
 		}
 
+		inline static auto getAccessSystem()
+		{
+			return get()->accessSystem;
+		}
+
 		static Application *app;
 
 	  protected:
@@ -177,6 +184,7 @@ namespace maple
 		std::shared_ptr<GraphicsContext>    graphicsContext;
 		std::shared_ptr<RenderGraph>        renderGraph;
 		std::shared_ptr<Cache>              cache;
+		std::shared_ptr<AccessSystem>       accessSystem;
 
 		EventDispatcher                                                  dispatcher;
 		Timer                                                            timer;

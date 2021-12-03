@@ -28,20 +28,6 @@
 
 namespace maple
 {
-	namespace test
-	{
-		using TEntity = ecs::Chain
-			::Read<Camera>
-			::To<ecs::Entity>;
-
-		auto system(TEntity en)
-		{
-			auto [camera] = en;
-			
-			LOGI("xxx");
-		}
-	}        // namespace test
-
 	Application::Application(AppDelegate *app)
 	{
 		appDelegate     = std::shared_ptr<AppDelegate>(app);
@@ -79,8 +65,6 @@ namespace maple
 		systemManager->addSystem<MonoSystem>()->onInit();
 
 		auto access = systemManager->addSystem<AccessSystem>();
-
-		access->registerSystem<test::system>();
 
 		imGuiManager = systemManager->addSystem<ImGuiSystem>(false);
 		imGuiManager->onInit();
@@ -154,7 +138,6 @@ namespace maple
 	auto Application::onImGui() -> void
 	{
 		PROFILE_FUNCTION();
-		renderGraph->onImGui();
 	}
 
 	auto Application::setSceneActive(bool active) -> void
