@@ -16,6 +16,7 @@
 
 #include "Devices/Input.h"
 #include "ImGui/ImGuiSystem.h"
+#include "ImGui/ImNotification.h"
 #include "Scene/Scene.h"
 #include "Scene/SceneManager.h"
 #include "Terrain/TerrainBuilder.h"
@@ -111,6 +112,7 @@ namespace maple
 		auto scene = sceneManager->getCurrentScene();
 		scene->onUpdate(delta);
 		onImGui();
+		ImNotification::onImGui();
 		systemManager->onUpdate(delta, scene);
 		window->onUpdate();
 		dispatcher.dispatchEvents();

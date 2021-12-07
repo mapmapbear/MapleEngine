@@ -8,10 +8,13 @@
 #include "Engine/Profiler.h"
 #include "ImGuiHelpers.h"
 #include "RHI/ImGuiRenderer.h"
+
+#include <imgui.h>
+#include <imgui_notify.h>
+#include <tahoma.h>
 #include <IconsMaterialDesignIcons.h>
 #include <MaterialDesign.inl>
 #include <RobotoRegular.inl>
-#include <imgui.h>
 #include <imgui_impl_glfw.h>
 
 namespace maple
@@ -116,6 +119,14 @@ namespace maple
 		    MaterialDesign_compressed_data,
 		    MaterialDesign_compressed_size, 16 * Application::get()->getWindow()->getScale(),
 		    &iconsConfig, icons_ranges);
+
+
+		ImFontConfig font_cfg;
+		font_cfg.FontDataOwnedByAtlas = false;
+		io.Fonts->AddFontFromMemoryTTF((void *) tahoma, sizeof(tahoma), 17.f, &font_cfg);
+
+		// Initialize notify
+		ImGui::MergeIconsWithLatestFont(16.f, false);
 	}
 
 	auto ImGuiSystem::onResize(uint32_t w, uint32_t h) -> void

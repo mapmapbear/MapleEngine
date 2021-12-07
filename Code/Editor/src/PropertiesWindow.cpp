@@ -26,6 +26,8 @@
 #include "Others/StringUtils.h"
 #include "Others/Serialization.h"
 
+#include "ImGui/ImNotification.h"
+
 namespace MM
 {
 	using namespace maple;
@@ -748,6 +750,7 @@ namespace maple
 			if (ImGui::Button("Save Material"))
 			{
 				Serialization::serialize(material.get());
+				ImNotification::makeNotification("Tips", "save success", ImNotification::Type::Success);
 			}
 			ImGui::PopStyleVar();
 		}

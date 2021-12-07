@@ -173,6 +173,7 @@ endif()
 		${ENGINE_LIB_SRC_DIR}/glad/include
 		${ENGINE_LIB_SRC_DIR}/nativefiledialog/include
 		${ENGINE_LIB_SRC_DIR}/ecs
+		${ENGINE_LIB_SRC_DIR}/imgui-notify
 	)
 
 	target_link_libraries(MapleEngine 
