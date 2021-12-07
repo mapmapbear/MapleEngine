@@ -26,16 +26,7 @@ namespace maple
 
 	auto GraphicsContext::clearUnused() -> void
 	{
-		for (auto iter = shaderCache.begin(); iter != shaderCache.end();)
-		{
-			if (iter->second.use_count() == 1)
-			{
-				iter = shaderCache.erase(iter);
-				continue;
-			}
-			iter++;
-		}
-
+	
 		for (auto iter = pipelineCache.begin(); iter != pipelineCache.end();)
 		{
 			if (iter->second.use_count() == 1)

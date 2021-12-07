@@ -38,17 +38,17 @@ namespace maple
 			return getHandle();
 		}
 
-		static auto isDepthStencilFormat(TextureFormat format)
+		inline static auto isDepthStencilFormat(TextureFormat format)
 		{
 			return format == TextureFormat::DEPTH_STENCIL;
 		}
 
-		static auto isDepthFormat(TextureFormat format)
+		inline static auto isDepthFormat(TextureFormat format)
 		{
 			return format == TextureFormat::DEPTH;
 		}
 
-		static bool isStencilFormat(TextureFormat format)
+		inline static bool isStencilFormat(TextureFormat format)
 		{
 			return format == TextureFormat::STENCIL;
 		}
@@ -137,7 +137,7 @@ namespace maple
 	class MAPLE_EXPORT TextureDepth : public Texture
 	{
 	  public:
-		static auto create(uint32_t width, uint32_t height) -> std::shared_ptr<TextureDepth>;
+		static auto create(uint32_t width, uint32_t height, bool stencil = false) -> std::shared_ptr<TextureDepth>;
 
 		virtual auto resize(uint32_t width, uint32_t height) -> void = 0;
 	};

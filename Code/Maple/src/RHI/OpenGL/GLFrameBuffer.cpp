@@ -40,10 +40,8 @@ namespace maple
 				switch (attachment->getType())
 				{
 					case TextureType::Color:
-						addTextureAttachment(attachment->getFormat(), frameBufferDesc.attachments[i]);
-						break;
 					case TextureType::Depth:
-						addTextureAttachment(TextureFormat::DEPTH, frameBufferDesc.attachments[i]);
+						addTextureAttachment(attachment->getFormat(), frameBufferDesc.attachments[i]);
 						break;
 					case TextureType::DepthArray:
 						addTextureLayer(frameBufferDesc.layer, frameBufferDesc.attachments[i]);

@@ -145,7 +145,7 @@ namespace maple
 	class GLTextureDepth : public TextureDepth
 	{
 	  public:
-		GLTextureDepth(uint32_t width, uint32_t height);
+		GLTextureDepth(uint32_t width, uint32_t height, bool stencil = false);
 		~GLTextureDepth();
 
 		auto bind(uint32_t slot = 0) const -> void override;
@@ -185,6 +185,7 @@ namespace maple
 	  protected:
 		auto init() -> void;
 
+		bool     stencil = false;
 		uint32_t handle = 0;
 		uint32_t width  = 0;
 		uint32_t height = 0;

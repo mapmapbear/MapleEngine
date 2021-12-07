@@ -65,17 +65,11 @@ namespace maple
 			return frameBufferCache;
 		}
 
-		inline auto &getShaderCache()
-		{
-			return shaderCache;
-		}
-
 		auto clearUnused() -> void;
 
 	  protected:
 		std::shared_ptr<SwapChain>                                    swapChain;
 		std::unordered_map<std::size_t, std::shared_ptr<Pipeline>>    pipelineCache;
 		std::unordered_map<std::size_t, std::shared_ptr<FrameBuffer>> frameBufferCache;
-		std::unordered_map<std::string, std::shared_ptr<Shader>>      shaderCache;
 	};
 }        // namespace maple

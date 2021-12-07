@@ -38,6 +38,7 @@ namespace maple
 		auto setBlendFunctionInternal(RendererBlendFunction source, RendererBlendFunction destination) -> void;
 		auto setBlendEquationInternal(RendererBlendFunction blendEquation) -> void;
 		auto setStencilFunctionInternal(StencilType type, uint32_t ref, uint32_t mask) -> void;
+
 		auto setStencilOpInternal(StencilType fail, StencilType zfail, StencilType zpass) -> void;
 
 		auto clearRenderTarget(const std::shared_ptr<Texture> &texture, CommandBuffer *commandBuffer, const glm::vec4 &clearColor) -> void override;

@@ -38,7 +38,5 @@ namespace maple
 		bool         transparencyEnabled = false;
 		uint32_t     vertexArray         = -1;
 		BufferLayout vertexBufferLayout;
-		CullMode     cullMode;
-		BlendMode    blendMode;
 	};
 }        // namespace maple

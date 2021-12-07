@@ -204,6 +204,7 @@ namespace maple
 			GLCall(glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE, GL_INTENSITY));
 #endif
 		}
+
 		GLCall(glTexImage2D(GL_TEXTURE_2D, 0, glFormat, width, height, 0, glFormat2, depth ? GL_UNSIGNED_BYTE : GL_FLOAT, nullptr));
 
 		if (mipmap)
@@ -492,8 +493,8 @@ namespace maple
 		return result;
 	}
 
-	GLTextureDepth::GLTextureDepth(uint32_t width, uint32_t height) :
-	    width(width), height(height)
+	GLTextureDepth::GLTextureDepth(uint32_t width, uint32_t height, bool stencil) :
+	    width(width), height(height), stencil(stencil)
 	{
 		GLCall(glGenTextures(1, &handle));
 		format = TextureFormat::DEPTH;
@@ -521,15 +522,21 @@ namespace maple
 	{
 		this->width  = width;
 		this->height = height;
-		this->format = TextureFormat::DEPTH;
+		this->format = stencil ? TextureFormat::DEPTH_STENCIL : TextureFormat::DEPTH;
 		init();
 	}
 
 	auto GLTextureDepth::init() -> void
 	{
 		GLCall(glBindTexture(GL_TEXTURE_2D, handle));
-
-		GLCall(glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL));
+		if (format == TextureFormat::DEPTH_STENCIL)
+		{
+			GLCall(glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH24_STENCIL8, width, height, 0, GL_DEPTH_STENCIL, GL_UNSIGNED_INT_24_8, NULL));
+		}
+		else
+		{
+			GLCall(glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL));
+		}
 		GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
 		GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
 		GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));

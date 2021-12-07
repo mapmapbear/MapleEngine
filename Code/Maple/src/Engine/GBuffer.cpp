@@ -27,7 +27,7 @@ namespace maple
 			{
 				screenTextures[i] = Texture2D::create();
 			}
-			depthBuffer = TextureDepth::create(width, height);
+			depthBuffer = TextureDepth::create(width, height, true);
 		}
 
 		formats[COLOR]    = TextureFormat::RGBA8;

@@ -71,14 +71,9 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 		transparencyEnabled = pipelineDesc.transparencyEnabled;
-		cullMode            = pipelineDesc.cullMode;
 		description         = pipelineDesc;
-
+		shader              = description.shader;
 		GLCall(glGenVertexArrays(1, &vertexArray));
-
-		shader    = pipelineDesc.shader;
-		blendMode = pipelineDesc.blendMode;
-
 		createFrameBuffers();
 		return true;
 	}
@@ -215,7 +210,7 @@ namespace maple
 		return 0;
 	}
 
-	auto GLPipeline::bind(CommandBuffer *commandBuffer, uint32_t layer, int32_t cubeFace,int32_t mipMapLevel) -> void
+	auto GLPipeline::bind(CommandBuffer *commandBuffer, uint32_t layer, int32_t cubeFace, int32_t mipMapLevel) -> void
 	{
 		PROFILE_FUNCTION();
 		std::shared_ptr<FrameBuffer> frameBuffer;
@@ -238,7 +233,16 @@ namespace maple
 
 		renderPass->beginRenderPass(commandBuffer, description.clearColor, frameBuffer.get(), SubPassContents::Inline, getWidth() * mipScale, getHeight() * mipScale, cubeFace, mipMapLevel);
 
-		shader->bind();
+		description.shader->bind();
+
+		if (description.stencilTest)
+		{
+			RenderDevice::setStencilOp(description.stencilFail, description.stencilDepthFail, description.stencilDepthPass);
+		}
+		else
+		{
+			RenderDevice::setStencilOp(StencilType::Keep, StencilType::Keep, StencilType::Keep);
+		}
 
 		if (transparencyEnabled)
 		{
@@ -246,15 +250,15 @@ namespace maple
 
 			GLCall(glBlendEquation(GL_FUNC_ADD));
 
-			if (blendMode == BlendMode::SrcAlphaOneMinusSrcAlpha)
+			if (description.blendMode == BlendMode::SrcAlphaOneMinusSrcAlpha)
 			{
 				GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 			}
-			else if (blendMode == BlendMode::ZeroSrcColor)
+			else if (description.blendMode == BlendMode::ZeroSrcColor)
 			{
 				GLCall(glBlendFunc(GL_ZERO, GL_SRC_COLOR));
 			}
-			else if (blendMode == BlendMode::OneZero)
+			else if (description.blendMode == BlendMode::OneZero)
 			{
 				GLCall(glBlendFunc(GL_ONE, GL_ZERO));
 			}
@@ -268,7 +272,7 @@ namespace maple
 
 		glEnable(GL_CULL_FACE);
 
-		switch (cullMode)
+		switch (description.cullMode)
 		{
 			case CullMode::Back:
 				glCullFace(GL_BACK);

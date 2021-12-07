@@ -18,6 +18,11 @@ namespace maple
 		bool depthBiasEnabled    = false;
 		bool swapChainTarget     = false;
 		bool clearTargets        = false;
+		bool stencilTest         = false;
+
+		StencilType stencilFail      = StencilType::Keep;
+		StencilType stencilDepthFail = StencilType::Keep;
+		StencilType stencilDepthPass = StencilType::Replace;
 
 		CullMode    cullMode    = CullMode::Back;
 		PolygonMode polygonMode = PolygonMode::Fill;
@@ -39,9 +44,9 @@ namespace maple
 
 		virtual ~Pipeline() = default;
 
-		virtual auto getWidth() -> uint32_t                                         = 0;
-		virtual auto getHeight() -> uint32_t                                        = 0;
-		virtual auto getShader() const -> std::shared_ptr<Shader>                   = 0;
+		virtual auto getWidth() -> uint32_t                                                                                         = 0;
+		virtual auto getHeight() -> uint32_t                                                                                        = 0;
+		virtual auto getShader() const -> std::shared_ptr<Shader>                                                                   = 0;
 		virtual auto bind(CommandBuffer *commandBuffer, uint32_t layer = 0, int32_t cubeFace = -1, int32_t mipMapLevel = 0) -> void = 0;
 		virtual auto end(CommandBuffer *commandBuffer) -> void{};
 		virtual auto clearRenderTargets(CommandBuffer *commandBuffer) -> void{};

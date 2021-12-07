@@ -82,9 +82,9 @@ namespace maple
 	}
 	//###################################################
 
-	auto TextureDepth::create(uint32_t width, uint32_t height) -> std::shared_ptr<TextureDepth>
+	auto TextureDepth::create(uint32_t width, uint32_t height, bool stencil) -> std::shared_ptr<TextureDepth>
 	{
-		return std::make_shared<GLTextureDepth>(width, height);
+		return std::make_shared<GLTextureDepth>(width, height, stencil);
 	}
 	///#####################################################################################
 	auto TextureCube::create(uint32_t size) -> std::shared_ptr<TextureCube>

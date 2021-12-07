@@ -261,8 +261,8 @@ namespace maple
 
 		static auto create(const std::string &materialId) -> std::shared_ptr<Material>;
 		Material(const std::string &materialId);
+
 	  private:
-	
 		PBRMataterialTextures pbrMaterialTextures;
 		MaterialProperties    materialProperties;
 

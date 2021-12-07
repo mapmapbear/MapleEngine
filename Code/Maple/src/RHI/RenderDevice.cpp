@@ -38,6 +38,11 @@ namespace maple
 		Application::getRenderDevice()->drawIndexedInternal(commandBuffer, type, count, start);
 	}
 
+	auto RenderDevice::setStencilOp(StencilType fail, StencilType zfail, StencilType zpass) -> void
+	{
+		Application::getRenderDevice()->setStencilOpInternal(fail, zfail,zpass);
+	}
+
 	auto RenderDevice::create() -> std::shared_ptr<RenderDevice>
 	{
 		return std::make_shared<GLRenderDevice>();
