@@ -152,6 +152,7 @@ namespace maple
 		auto endDockSpace() -> void;
 		auto loadCachedScene() -> void;
 		auto cacheScene() -> void;
+		auto checkStencil(const entt::entity &selectedNode, bool enable) -> void;
 
 		std::unordered_map<size_t, std::shared_ptr<EditorWindow>> editorWindows;
 

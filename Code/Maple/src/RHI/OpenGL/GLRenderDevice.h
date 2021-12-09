@@ -29,7 +29,9 @@ namespace maple
 		auto setRenderModeInternal(RenderMode mode) -> void;
 		auto setDepthTestingInternal(bool enabled) -> void;
 		auto setBlendInternal(bool enabled) -> void;
-		auto setStencilTestInternal(bool enabled) -> void;
+
+		auto setStencilTestInternal(bool enabled) -> void override;
+		
 		auto setCullingInternal(bool enabled, bool front) -> void;
 		auto setDepthMaskInternal(bool enabled) -> void;
 		auto setViewportInternal(uint32_t x, uint32_t y, uint32_t width, uint32_t height) -> void;
@@ -37,9 +39,10 @@ namespace maple
 		auto setColorMaskInternal(bool r, bool g, bool b, bool a) -> void;
 		auto setBlendFunctionInternal(RendererBlendFunction source, RendererBlendFunction destination) -> void;
 		auto setBlendEquationInternal(RendererBlendFunction blendEquation) -> void;
-		auto setStencilFunctionInternal(StencilType type, uint32_t ref, uint32_t mask) -> void;
 
-		auto setStencilOpInternal(StencilType fail, StencilType zfail, StencilType zpass) -> void;
+		auto setStencilMaskInternal(uint32_t mask) -> void override;
+		auto setStencilFunctionInternal(StencilType type, uint32_t ref, uint32_t mask) -> void override;
+		auto setStencilOpInternal(StencilType fail, StencilType zfail, StencilType zpass) -> void override;
 
 		auto clearRenderTarget(const std::shared_ptr<Texture> &texture, CommandBuffer *commandBuffer, const glm::vec4 &clearColor) -> void override;
 

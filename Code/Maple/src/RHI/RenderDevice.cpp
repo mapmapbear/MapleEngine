@@ -40,7 +40,27 @@ namespace maple
 
 	auto RenderDevice::setStencilOp(StencilType fail, StencilType zfail, StencilType zpass) -> void
 	{
-		Application::getRenderDevice()->setStencilOpInternal(fail, zfail,zpass);
+		Application::getRenderDevice()->setStencilOpInternal(fail, zfail, zpass);
+	}
+
+	auto RenderDevice::setStencilFunction(StencilType type, uint32_t ref, uint32_t mask) -> void
+	{
+		Application::getRenderDevice()->setStencilFunctionInternal(type, ref, mask);
+	}
+
+	auto RenderDevice::setStencilMask(uint32_t mask) -> void
+	{
+		Application::getRenderDevice()->setStencilMaskInternal(mask);
+	}
+
+	auto RenderDevice::setStencilTest(bool enable) -> void
+	{
+		Application::getRenderDevice()->setStencilTestInternal(enable);
+	}
+
+	auto RenderDevice::setDepthTest(bool enable) -> void
+	{
+		Application::getRenderDevice()->setDepthTestingInternal(enable);
 	}
 
 	auto RenderDevice::create() -> std::shared_ptr<RenderDevice>

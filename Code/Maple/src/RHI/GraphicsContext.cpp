@@ -26,7 +26,6 @@ namespace maple
 
 	auto GraphicsContext::clearUnused() -> void
 	{
-	
 		for (auto iter = pipelineCache.begin(); iter != pipelineCache.end();)
 		{
 			if (iter->second.use_count() == 1)
@@ -115,6 +114,7 @@ namespace maple
 		size_t hash = 0;
 
 		HashCode::hashCode(hash, desc.shader, desc.cullMode, desc.depthBiasEnabled, desc.drawType, desc.polygonMode, desc.transparencyEnabled);
+		HashCode::hashCode(hash, desc.stencilMask, desc.stencilFunc, desc.stencilFail, desc.stencilDepthFail, desc.stencilDepthPass, desc.depthTest);
 
 		for (auto texture : desc.colorTargets)
 		{

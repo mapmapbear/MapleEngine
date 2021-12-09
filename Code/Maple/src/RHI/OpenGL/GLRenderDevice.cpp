@@ -162,7 +162,6 @@ namespace maple
 
 	auto GLRenderDevice::presentInternal() -> void
 	{
-
 	}
 
 	auto GLRenderDevice::presentInternal(CommandBuffer *commandBuffer) -> void
@@ -223,6 +222,11 @@ namespace maple
 
 	auto GLRenderDevice::setBlendEquationInternal(RendererBlendFunction blendEquation) -> void
 	{
+	}
+
+	auto GLRenderDevice::setStencilMaskInternal(uint32_t mask) -> void
+	{
+		glStencilMask(mask);
 	}
 
 	auto GLRenderDevice::setViewportInternal(uint32_t x, uint32_t y, uint32_t width, uint32_t height) -> void

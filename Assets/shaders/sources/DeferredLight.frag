@@ -386,11 +386,15 @@ void main()
 	if (albedo.a < 0.1) {
 		discard;
 	}
-
 	vec4 fragPosXyzw = texture(uPositionSampler, fragTexCoord);
 	vec4 normalTex	 = texture(uNormalSampler, fragTexCoord);
 	vec4 pbr		 = texture(uPBRSampler,fragTexCoord);
 
+	if(pbr.x == 1.0 && pbr.y == 1.0 && pbr.z == 1.0 && pbr.w == 1.0)
+	{
+		outColor = albedo;
+		return;
+	}
 
 	Material material;
     material.albedo			= albedo;

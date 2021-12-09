@@ -231,6 +231,10 @@ namespace maple
 
 		auto mipScale = std::pow(0.5, mipMapLevel);
 
+		RenderDevice::setStencilTest(description.stencilTest);
+		RenderDevice::setDepthTest(description.depthTest);
+		RenderDevice::setStencilMask(0xFF);
+
 		renderPass->beginRenderPass(commandBuffer, description.clearColor, frameBuffer.get(), SubPassContents::Inline, getWidth() * mipScale, getHeight() * mipScale, cubeFace, mipMapLevel);
 
 		description.shader->bind();
@@ -238,6 +242,8 @@ namespace maple
 		if (description.stencilTest)
 		{
 			RenderDevice::setStencilOp(description.stencilFail, description.stencilDepthFail, description.stencilDepthPass);
+			RenderDevice::setStencilFunction(description.stencilFunc, 1, 0xff);
+			RenderDevice::setStencilMask(description.stencilMask);
 		}
 		else
 		{

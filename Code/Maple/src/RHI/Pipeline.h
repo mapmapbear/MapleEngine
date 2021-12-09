@@ -19,6 +19,10 @@ namespace maple
 		bool swapChainTarget     = false;
 		bool clearTargets        = false;
 		bool stencilTest         = false;
+		bool depthTest           = true;
+
+		uint32_t    stencilMask = 0x00;
+		StencilType stencilFunc = StencilType::Always;
 
 		StencilType stencilFail      = StencilType::Keep;
 		StencilType stencilDepthFail = StencilType::Keep;

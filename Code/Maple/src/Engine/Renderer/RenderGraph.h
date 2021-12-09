@@ -42,6 +42,7 @@ namespace maple
 		auto executeShadowPass() -> void;
 		auto executeSkyboxPass() -> void;
 		auto executeRender2DPass() -> void;
+		auto executeStencilPass() -> void;
 
 		auto executeDeferredOffScreenPass() -> void;
 		auto executeDeferredLightPass() -> void;
@@ -126,6 +127,9 @@ namespace maple
 
 		std::shared_ptr<Shader>        finalShader;
 		std::shared_ptr<DescriptorSet> finalDescriptorSet;
+
+		std::shared_ptr<DescriptorSet> stencilDescriptorSet;
+		std::shared_ptr<Shader>        stencilShader;
 
 		std::shared_ptr<Pipeline> skyboxPipeline;
 

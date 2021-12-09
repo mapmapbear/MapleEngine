@@ -49,6 +49,12 @@ namespace maple
 		std::string name;
 	};
 
+	class MAPLE_EXPORT StencilComponent : public Component
+	{
+	  public:
+		StencilComponent() = default;
+	};
+
 	class MAPLE_EXPORT ActiveComponent : public Component
 	{
 	  public:

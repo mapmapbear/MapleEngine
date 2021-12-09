@@ -432,6 +432,14 @@ namespace maple
 			descriptorInfo.shader      = finalShader.get();
 			finalDescriptorSet         = DescriptorSet::create(descriptorInfo);
 		}
+		{
+			stencilShader = Shader::create("shaders/Outline.shader");
+			DescriptorInfo descriptorInfo{};
+			descriptorInfo.layoutIndex = 0;
+			descriptorInfo.shader      = stencilShader.get();
+			stencilDescriptorSet       = DescriptorSet::create(descriptorInfo);
+		}
+
 		prefilterRenderer = std::make_unique<PrefilterRenderer>();
 		prefilterRenderer->init();
 	}
@@ -465,6 +473,9 @@ namespace maple
 			auto descriptorSet = settings.deferredRender ? deferredData->descriptorColorSet[0] : forwardData->descriptorSet[0];
 			descriptorSet->setUniform("UniformBufferObject", "projView", &projView);
 			descriptorSet->update();
+
+			stencilDescriptorSet->setUniform("UniformBufferObject", "projView", &projView);
+			stencilDescriptorSet->update();
 		}
 
 		if (settings.renderSkybox || settings.render3D)
@@ -670,6 +681,27 @@ namespace maple
 						if (depthTest && cmd.material->isFlagOf(Material::RenderFlags::DepthTest))
 						{
 							pipelineInfo.depthTarget = gBuffer->getDepthBuffer();
+						}
+
+						if (registry.try_get<StencilComponent>(entity) != nullptr)
+						{
+							pipelineInfo.shader           = stencilShader;
+							pipelineInfo.stencilTest      = true;
+							pipelineInfo.stencilMask      = 0x00;
+							pipelineInfo.stencilFunc      = StencilType::Notequal;
+							pipelineInfo.stencilFail      = StencilType::Keep;
+							pipelineInfo.stencilDepthFail = StencilType::Keep;
+							pipelineInfo.stencilDepthPass = StencilType::Replace;
+							pipelineInfo.depthTest        = false;
+							cmd.stencilPipeline           = Pipeline::get(pipelineInfo);
+
+							pipelineInfo.shader           = settings.deferredRender ? deferredData->deferredColorShader : forwardData->shader;
+							pipelineInfo.stencilMask      = 0xFF;
+							pipelineInfo.stencilFunc      = StencilType::Always;
+							pipelineInfo.stencilFail      = StencilType::Replace;
+							pipelineInfo.stencilDepthFail = StencilType::Replace;
+							pipelineInfo.stencilDepthPass = StencilType::Replace;
+							pipelineInfo.depthTest        = true;
 						}
 						cmd.pipeline = Pipeline::get(pipelineInfo);
 					}
@@ -1106,6 +1138,11 @@ namespace maple
 		PROFILE_FUNCTION();
 	}
 
+	auto RenderGraph::executeStencilPass() -> void
+	{
+		PROFILE_FUNCTION();
+	}
+
 	auto RenderGraph::executeDeferredOffScreenPass() -> void
 	{
 		deferredData->descriptorColorSet[0]->update();
@@ -1124,6 +1161,18 @@ namespace maple
 			deferredData->deferredColorShader->bindPushConstants(commandBuffer, pipeline);
 			Renderer::bindDescriptorSets(pipeline, commandBuffer, 0, deferredData->descriptorColorSet);
 			Renderer::drawMesh(commandBuffer, pipeline, command.mesh);
+
+
+			if (command.stencilPipeline)
+			{
+				command.stencilPipeline->bind(commandBuffer);
+				auto &pushConstants = stencilShader->getPushConstants()[0];
+				pushConstants.setValue("transform", &command.transform);
+				stencilShader->bindPushConstants(commandBuffer, command.stencilPipeline.get());
+
+				Renderer::bindDescriptorSets(pipeline, commandBuffer, 0, {stencilDescriptorSet});
+				Renderer::drawMesh(commandBuffer, command.stencilPipeline.get(), command.mesh);
+			}
 		}
 
 		if (commandBuffer)

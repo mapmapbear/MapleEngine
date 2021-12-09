@@ -24,7 +24,11 @@ namespace maple
 		virtual auto onResize(uint32_t width, uint32_t height) -> void = 0;
 		virtual auto drawSplashScreen(const std::shared_ptr<Texture> &texture) -> void{};
 
+		virtual auto setDepthTestingInternal(bool enabled) -> void                                                                                                                     = 0;
+		virtual auto setStencilTestInternal(bool enabled) -> void                                                                                                                      = 0;
+		virtual auto setStencilMaskInternal(uint32_t mask) -> void                                                                                                                     = 0;
 		virtual auto setStencilOpInternal(StencilType fail, StencilType zfail, StencilType zpass) -> void                                                                              = 0;
+		virtual auto setStencilFunctionInternal(StencilType type, uint32_t ref, uint32_t mask) -> void                                                                                 = 0;
 		virtual auto presentInternal() -> void                                                                                                                                         = 0;
 		virtual auto presentInternal(CommandBuffer *commandBuffer) -> void                                                                                                             = 0;
 		virtual auto drawIndexedInternal(CommandBuffer *commandBuffer, DrawType type, uint32_t count, uint32_t start = 0) const -> void                                                = 0;
@@ -44,6 +48,10 @@ namespace maple
 		static auto draw(CommandBuffer *commandBuffer, DrawType type, uint32_t count, DataType datayType = DataType::UnsignedInt, const void *indices = nullptr) -> void;
 		static auto drawIndexed(CommandBuffer *commandBuffer, DrawType type, uint32_t count, uint32_t start = 0) -> void;
 		static auto setStencilOp(StencilType fail, StencilType zfail, StencilType zpass) -> void;
+		static auto setStencilFunction(StencilType type, uint32_t ref, uint32_t mask) -> void;
+		static auto setStencilMask(uint32_t mask) -> void;
+		static auto setStencilTest(bool enable) -> void;
+		static auto setDepthTest(bool enable) -> void;
 
 		static auto create() -> std::shared_ptr<RenderDevice>;
 	};

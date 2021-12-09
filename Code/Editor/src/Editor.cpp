@@ -37,7 +37,6 @@
 #include "Scene/Scene.h"
 #include "Scene/SceneManager.h"
 
-
 #include "FileSystem/File.h"
 #include "FileSystem/MeshLoader.h"
 #include "Others/StringUtils.h"
@@ -261,8 +260,10 @@ namespace maple
 	auto Editor::setSelected(const entt::entity &node) -> void
 	{
 		prevSelectedNode = selectedNode;
-		selectedNode     = node;
-		cameraSelected   = node != entt::null && getSceneManager()->getCurrentScene()->getRegistry().try_get<Camera>(selectedNode) != nullptr;
+		checkStencil(selectedNode, false);
+		checkStencil(node, true);
+		selectedNode   = node;
+		cameraSelected = node != entt::null && getSceneManager()->getCurrentScene()->getRegistry().try_get<Camera>(selectedNode) != nullptr;
 	}
 
 	auto Editor::setSelected(const std::string &selectResource) -> void
@@ -584,6 +585,25 @@ namespace maple
 	{
 	}
 
+	auto Editor::checkStencil(const entt::entity &selectedNode, bool enable) -> void
+	{
+		auto &registry = getSceneManager()->getCurrentScene()->getRegistry();
+
+		if (selectedNode == entt::null)
+		{
+			return;
+		}
+
+		if (enable)
+		{
+			registry.emplace_or_replace<StencilComponent>(selectedNode);
+		}
+		else
+		{	
+			registry.remove_if_exists<StencilComponent>(selectedNode);
+		}
+	}
+
 	auto Editor::onSceneCreated(Scene *scene) -> void
 	{
 		Application::onSceneCreated(scene);
@@ -634,7 +654,7 @@ namespace maple
 		if (scene && filePath != "")
 		{
 			auto meshRoot = scene->getEntityManager()->getEntityByName("MeshRoot");
-			LOGI("Open File in Preview Window {0}",filePath);
+			LOGI("Open File in Preview Window {0}", filePath);
 			meshRoot.removeAllChildren();
 
 			auto fileType = File::getFileType(filePath);
@@ -700,7 +720,7 @@ namespace maple
 				case maple::FileType::Material: {
 					auto entity                       = scene->createEntity("Sphere");
 					entity.addComponent<Model>().type = PrimitiveType::Sphere;
-					auto mesh = Mesh::createSphere();
+					auto  mesh                        = Mesh::createSphere();
 					auto &meshRender                  = entity.addComponent<MeshRenderer>(mesh);
 					mesh->setMaterial(Material::create(filePath));
 					entity.setParent(meshRoot);

@@ -266,9 +266,12 @@ namespace maple
 
 	struct RenderCommand
 	{
-		Mesh *                    mesh     = nullptr;
-		Material *                material = nullptr;
+		Mesh *    mesh     = nullptr;
+		Material *material = nullptr;
+
 		std::shared_ptr<Pipeline> pipeline;
-		glm::mat4                 transform;
+		std::shared_ptr<Pipeline> stencilPipeline;
+
+		glm::mat4 transform;
 	};
 }        // namespace maple

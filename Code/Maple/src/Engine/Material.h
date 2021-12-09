@@ -53,7 +53,7 @@ namespace maple
 	class MAPLE_EXPORT Material : public IResource
 	{
 	  public:
-		enum class RenderFlags
+		enum class RenderFlags : uint32_t
 		{
 			NONE                 = 0,
 			DepthTest            = BIT(0),
