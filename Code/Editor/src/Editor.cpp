@@ -244,16 +244,6 @@ namespace maple
 			GeometryRenderer::drawRect(pos.x, pos.y, w, h);
 		}
 
-		if (auto meshRender = registry.try_get<MeshRenderer>(selectedNode))
-		{
-			auto &transform = registry.get<Transform>(selectedNode);
-			if (auto mesh = meshRender->getMesh(); mesh != nullptr)
-			{
-				auto &worldTransform = transform.getWorldMatrix();
-				auto  bbCopy         = mesh->getBoundingBox()->transform(worldTransform);
-				GeometryRenderer::drawBox(bbCopy, {1, 1, 1, 1});
-			}
-		}
 		//drawGrid();
 	}
 
@@ -347,7 +337,8 @@ namespace maple
 			{
 				setEditorState(selected ? EditorState::Preview : EditorState::Play);
 
-				selectedNode = entt::null;
+				setSelected((entt::entity)entt::null);
+
 				if (selected)
 					loadCachedScene();
 				else
@@ -892,7 +883,7 @@ namespace maple
 			}
 
 			lastClick    = timer.current();
-			selectedNode = closestEntity;
+			setSelected(selectedNode);
 			setImGuizmoOperation(ImGuizmo::OPERATION::TRANSLATE);
 			return;
 		}
@@ -957,7 +948,8 @@ namespace maple
 		}
 
 		//if (closestEntity != entt::null)
-		selectedNode = closestEntity;
+		//selectedNode = closestEntity;
+		setSelected(closestEntity);
 	}
 
 	auto Editor::focusCamera(const glm::vec3 &point, float distance, float speed /*= 1.0f*/) -> void

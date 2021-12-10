@@ -34,7 +34,7 @@ layout(location = 4) out vec3 fragTangent;
 
 void main() 
 {
-    const float outlineWidth = 0.03;
+    const float outlineWidth = 0.02;
 	// Extrude along normal
     fragNormal = transpose(inverse(mat3(pushConsts.transform))) * normalize(inNormal);
     fragColor = inColor.xyz;

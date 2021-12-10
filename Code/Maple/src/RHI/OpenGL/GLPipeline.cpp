@@ -231,13 +231,14 @@ namespace maple
 
 		auto mipScale = std::pow(0.5, mipMapLevel);
 
-		RenderDevice::setStencilTest(description.stencilTest);
-		RenderDevice::setDepthTest(description.depthTest);
-		RenderDevice::setStencilMask(0xFF);
+	
 
 		renderPass->beginRenderPass(commandBuffer, description.clearColor, frameBuffer.get(), SubPassContents::Inline, getWidth() * mipScale, getHeight() * mipScale, cubeFace, mipMapLevel);
-
 		description.shader->bind();
+		
+		RenderDevice::setStencilTest(description.stencilTest);
+		RenderDevice::setDepthTest(description.depthTest);
+		//RenderDevice::setStencilMask(0xFF);
 
 		if (description.stencilTest)
 		{
@@ -247,8 +248,11 @@ namespace maple
 		}
 		else
 		{
+			RenderDevice::setStencilMask(0xFF);
 			RenderDevice::setStencilOp(StencilType::Keep, StencilType::Keep, StencilType::Keep);
 		}
+		
+	
 
 		if (transparencyEnabled)
 		{

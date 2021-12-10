@@ -692,14 +692,14 @@ namespace maple
 							pipelineInfo.stencilFail      = StencilType::Keep;
 							pipelineInfo.stencilDepthFail = StencilType::Keep;
 							pipelineInfo.stencilDepthPass = StencilType::Replace;
-							pipelineInfo.depthTest        = false;
+							pipelineInfo.depthTest        = true;
 							cmd.stencilPipeline           = Pipeline::get(pipelineInfo);
 
 							pipelineInfo.shader           = settings.deferredRender ? deferredData->deferredColorShader : forwardData->shader;
 							pipelineInfo.stencilMask      = 0xFF;
 							pipelineInfo.stencilFunc      = StencilType::Always;
-							pipelineInfo.stencilFail      = StencilType::Replace;
-							pipelineInfo.stencilDepthFail = StencilType::Replace;
+							pipelineInfo.stencilFail      = StencilType::Keep;
+							pipelineInfo.stencilDepthFail = StencilType::Keep;
 							pipelineInfo.stencilDepthPass = StencilType::Replace;
 							pipelineInfo.depthTest        = true;
 						}
@@ -1161,7 +1161,6 @@ namespace maple
 			deferredData->deferredColorShader->bindPushConstants(commandBuffer, pipeline);
 			Renderer::bindDescriptorSets(pipeline, commandBuffer, 0, deferredData->descriptorColorSet);
 			Renderer::drawMesh(commandBuffer, pipeline, command.mesh);
-
 
 			if (command.stencilPipeline)
 			{

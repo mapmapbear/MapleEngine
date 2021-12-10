@@ -390,12 +390,6 @@ void main()
 	vec4 normalTex	 = texture(uNormalSampler, fragTexCoord);
 	vec4 pbr		 = texture(uPBRSampler,fragTexCoord);
 
-	if(pbr.x == 1.0 && pbr.y == 1.0 && pbr.z == 1.0 && pbr.w == 1.0)
-	{
-		outColor = albedo;
-		return;
-	}
-
 	Material material;
     material.albedo			= albedo;
     material.metallic		= vec3(pbr.x);
@@ -427,7 +421,7 @@ void main()
 	
 	vec3 lightContribution = lighting(F0, wsPos, material);
 	vec3 iblContribution = IBL(F0, Lr, material) * 2.0;
-	vec3 finalColor = lightContribution + iblContribution;// + material.emissive;
+	vec3 finalColor = lightContribution + iblContribution + material.emissive;
 	outColor = vec4(finalColor, 1.0);
 	//ubo.mode = 1;
 	if(ubo.mode > 0)

@@ -14,8 +14,8 @@ layout(location = 3) out vec4 outPBR;
 
 void main() 
 {
- 	outColor    	=  vec4(vec3(1.0), 1.0); 
-	outPosition		= vec4(fragPosition.xyz,1);
-	outNormal   	= vec4(fragNormal,1);
-	outPBR      	= vec4(1,1,1,1);
+ 	outColor    = vec4(vec3(0.0), 1.0); 
+	outPosition	= vec4(fragPosition.xyz,1);
+	outNormal   = vec4(fragNormal,1);
+	outPBR      = vec4(0,0,0,1);
 }
