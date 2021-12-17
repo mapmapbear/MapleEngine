@@ -3,9 +3,9 @@
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-#include <cereal/cereal.hpp>
-#include "Engine/Quad2D.h"
 #include "Component.h"
+#include "Engine/Quad2D.h"
+#include <cereal/cereal.hpp>
 #include <glm/glm.hpp>
 
 namespace maple
@@ -14,107 +14,134 @@ namespace maple
 
 	class MAPLE_EXPORT Sprite : public Component
 	{
-	public:
+	  public:
 		Sprite();
-		Sprite(const std::string & uniqueName,const std::vector<uint8_t> & data,uint32_t width,uint32_t height);
+		Sprite(const std::string &uniqueName, const std::vector<uint8_t> &data, uint32_t width, uint32_t height);
 		virtual ~Sprite();
 
-		auto setTextureFromFile(const std::string& filePath) -> void;
+		auto setTextureFromFile(const std::string &filePath) -> void;
+		auto loadQuad(const std::string &path) -> void;
 
-		virtual auto getQuad() -> const Quad2D& { return quad; }
-
-		template <typename Archive>
-		auto save(Archive& archive) const -> void
+		virtual auto getQuad() -> const Quad2D &
 		{
-			std::string newPath = "";
-			archive(
-				cereal::make_nvp("TexturePath", getTexturePath()),
-			);
+			return quad;
 		}
 
 		template <typename Archive>
-		auto load(Archive& archive) -> void
+		auto save(Archive &archive) const -> void
+		{
+			std::string newPath = "";
+			archive(
+			    cereal::make_nvp("TexturePath", getTexturePath()), );
+		}
+
+		template <typename Archive>
+		auto load(Archive &archive) -> void
 		{
 			std::string textureFilePath;
 			archive(
-				cereal::make_nvp("TexturePath", textureFilePath)
-			);
+			    cereal::make_nvp("TexturePath", textureFilePath));
 
 			if (!textureFilePath.empty())
 				loadQuad(textureFilePath);
 		}
 
-		inline auto getWidth() const { return quad.getWidth(); }
-		inline auto getHeight() const { return quad.getHeight(); }
+		inline auto getWidth() const
+		{
+			return quad.getWidth();
+		}
+		inline auto getHeight() const
+		{
+			return quad.getHeight();
+		}
 
-		auto getTexturePath() const -> const std::string&;
-	protected:
-		auto loadQuad(const std::string& path) -> void;
+		auto getTexturePath() const -> const std::string &;
+
+	  protected:
 		Quad2D quad;
 	};
 
-
-
 	class MAPLE_EXPORT AnimatedSprite : public Sprite
 	{
-	public:
-		
+	  public:
 		struct AnimationFrame
 		{
-			uint32_t width;
-			uint32_t height;
-			float delay;
+			uint32_t    width;
+			uint32_t    height;
+			float       delay;
 			std::string uniqueKey;
-			Quad2D quad;
+			Quad2D      quad;
 		};
 
 		AnimatedSprite();
 		virtual ~AnimatedSprite() = default;
 
-		auto addFrame(const std::vector<uint8_t>& data, uint32_t width, uint32_t height, float delay, const std::string& uniqueKey,float xOffset,float yOffset,uint32_t color = UINT32_MAX) -> void;
+		auto addFrame(const std::vector<uint8_t> &data, uint32_t width, uint32_t height, float delay, const std::string &uniqueKey, float xOffset, float yOffset, uint32_t color = UINT32_MAX) -> void;
 		auto onUpdate(float dt) -> void;
-		auto getAnimatedUVs() -> const std::array<glm::vec2, 4>&;
-		auto getQuad()->const Quad2D & override;
-		
-		inline auto getCurrentFrame() const -> const AnimationFrame* {
-			if (currentFrame < animationFrames.size()) {
+		auto getAnimatedUVs() -> const std::array<glm::vec2, 4> &;
+		auto getQuad() -> const Quad2D & override;
+
+		inline auto getCurrentFrame() const -> const AnimationFrame *
+		{
+			if (currentFrame < animationFrames.size())
+			{
 				return &animationFrames[currentFrame];
-			} return nullptr;
+			}
+			return nullptr;
 		};
 
-		inline auto getCurrentId() const { return currentFrame; };
+		inline auto getCurrentId() const
+		{
+			return currentFrame;
+		};
 
-		inline auto getDelay() const {
+		inline auto getDelay() const
+		{
 			auto frame = getCurrentFrame();
 			return frame ? frame->delay : 0;
 		};
 
-		inline auto getTimer() const {
+		inline auto getTimer() const
+		{
 			return frameTimer;
 		};
 
-		inline auto setCurrentFrame(uint32_t frame) { currentFrame = frame; }
+		inline auto setCurrentFrame(uint32_t frame)
+		{
+			currentFrame = frame;
+		}
 
-		inline auto getFrames() const -> int32_t { return animationFrames.size(); };
+		inline auto getFrames() const -> int32_t
+		{
+			return animationFrames.size();
+		};
 
-		inline auto setLoop(bool val) { loop = val; }
-		inline auto isLoop() const { return loop; }
+		inline auto setLoop(bool val)
+		{
+			loop = val;
+		}
+		inline auto isLoop() const
+		{
+			return loop;
+		}
 
-		inline auto getWidth() const { 
+		inline auto getWidth() const
+		{
 			auto frame = getCurrentFrame();
 			return frame ? frame->width : 0;
 		}
 
-		inline auto getHeight() const { 
+		inline auto getHeight() const
+		{
 			auto frame = getCurrentFrame();
 			return frame ? frame->height : 0;
 		}
 
-	private:
-		uint32_t currentFrame = 0;
-		float frameTimer = 0.0f;
-		bool loop = true;
+	  private:
+		uint32_t                    currentFrame = 0;
+		float                       frameTimer   = 0.0f;
+		bool                        loop         = true;
 		std::vector<AnimationFrame> animationFrames;
 	};
 
-}
+}        // namespace maple

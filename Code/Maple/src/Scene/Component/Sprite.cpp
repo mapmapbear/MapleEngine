@@ -3,8 +3,8 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include "Sprite.h"
-#include "RHI/Texture.h"
 #include "Application.h"
+#include "RHI/Texture.h"
 
 namespace maple
 {
@@ -26,13 +26,13 @@ namespace maple
 
 	auto Sprite::setTextureFromFile(const std::string &filePath) -> void
 	{
-		//    quad->setTexture(Texture2D::create(filePath, filePath));
+		//quad.setTexture(Texture2D::create(filePath, filePath));
 	}
 
 	auto Sprite::getTexturePath() const -> const std::string &
 	{
 		static std::string nullstr = "";
-		return /*quad.getTexture() ? quad.getTexture()->getFilePath() :*/ nullstr;
+		return quad.getTexture() ? quad.getTexture()->getFilePath() : nullstr;
 	}
 
 	auto Sprite::loadQuad(const std::string &path) -> void

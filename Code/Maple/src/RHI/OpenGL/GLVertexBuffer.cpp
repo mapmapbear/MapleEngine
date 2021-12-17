@@ -67,6 +67,7 @@ namespace maple
     auto GLVertexBuffer::getPointerInternal() -> void*
     {
         PROFILE_FUNCTION();
+        
         void* result = nullptr;
         if(!mapped)
         {

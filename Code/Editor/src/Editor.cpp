@@ -63,8 +63,8 @@ namespace maple
 	{
 		Application::init();
 		//off-screen
-		renderGraph->addRender(std::make_shared<GridRenderer>(), static_cast<int32_t>(RenderId::GridRender));
-		renderGraph->addRender(std::make_shared<GeometryRenderer>(), static_cast<int32_t>(RenderId::Geometry));
+		renderGraph->addRender(std::make_shared<GridRenderer>(), RenderId::GridRender);
+		renderGraph->addRender(std::make_shared<GeometryRenderer>(), RenderId::Geometry);
 
 		addWindow(SceneWindow);
 		//addWindow(DisplayZeroWindow);
@@ -337,7 +337,7 @@ namespace maple
 			{
 				setEditorState(selected ? EditorState::Preview : EditorState::Play);
 
-				setSelected((entt::entity)entt::null);
+				setSelected((entt::entity) entt::null);
 
 				if (selected)
 					loadCachedScene();
@@ -590,7 +590,7 @@ namespace maple
 			registry.emplace_or_replace<StencilComponent>(selectedNode);
 		}
 		else
-		{	
+		{
 			registry.remove_if_exists<StencilComponent>(selectedNode);
 		}
 	}
@@ -882,7 +882,7 @@ namespace maple
 				closestEntity = entt::null;
 			}
 
-			lastClick    = timer.current();
+			lastClick = timer.current();
 			setSelected(selectedNode);
 			setImGuizmoOperation(ImGuizmo::OPERATION::TRANSLATE);
 			return;

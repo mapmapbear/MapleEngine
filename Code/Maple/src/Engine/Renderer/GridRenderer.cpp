@@ -63,7 +63,6 @@ namespace maple
 
 	auto GridRenderer::renderPreviewScene() -> void
 	{
-		
 	}
 
 	auto GridRenderer::beginScene(Scene *scene, const glm::mat4 &projView) -> void
@@ -83,15 +82,6 @@ namespace maple
 	auto GridRenderer::beginScenePreview(Scene *scene, const glm::mat4 &projView) -> void
 	{
 		PROFILE_FUNCTION();
-		auto camera = scene->getCamera();
-
-		if (camera.first == nullptr || camera.second == nullptr || pipeline == nullptr)
-		{
-			return;
-		}
-		descriptorSet->setUniformBufferData("UniformBufferObject", glm::value_ptr(projView));
-		systemBuffer.cameraPos = glm::vec4(camera.second->getWorldPosition(), 1.f);
-		descriptorSet->setUniformBufferData("UniformBuffer", &systemBuffer);
 	}
 
 	auto GridRenderer::onResize(uint32_t width, uint32_t height) -> void

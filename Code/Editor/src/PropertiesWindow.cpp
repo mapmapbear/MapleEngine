@@ -217,7 +217,7 @@ namespace MM
 
 			ImVec2 imageButtonSize(64, 64);
 
-			auto                callback = std::bind(&Sprite::setTextureFromFile, &sprite, std::placeholders::_1);
+			auto                callback = std::bind(&Sprite::loadQuad, &sprite, std::placeholders::_1);
 			const ImGuiPayload *payload  = ImGui::GetDragDropPayload();
 			auto                min      = ImGui::GetCursorPos();
 			auto                max      = min + imageButtonSize + ImGui::GetStyle().FramePadding;

@@ -59,8 +59,8 @@ namespace maple
 	struct Vertex2D
 	{
 		glm::vec3 vertex;
-		glm::vec3 uv;
 		glm::vec4 color;
+		glm::vec3 uv;
 		inline auto operator==(const Vertex2D &other) const -> bool
 		{
 			return vertex == other.vertex && uv == other.uv && color == other.color;

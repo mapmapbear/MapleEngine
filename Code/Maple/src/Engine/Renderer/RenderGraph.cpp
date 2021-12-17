@@ -26,6 +26,7 @@
 #include "Window/NativeWindow.h"
 
 #include "PrefilterRenderer.h"
+#include "Renderer2D.h"
 
 #include <imgui/imgui.h>
 
@@ -80,30 +81,6 @@ namespace maple
 	    0.0, 0.0, 1.0, 0.0,
 	    0.5, 0.5, 0.0, 1.0};
 #endif
-
-	struct Command2D
-	{
-		const Quad2D *quad;
-		glm::mat4     transform;
-	};
-
-	struct RenderGraph::Config2D
-	{
-		uint32_t vertexSize        = sizeof(Vertex2D);
-		uint32_t maxQuads          = 10000;
-		uint32_t quadsSize         = vertexSize * 4;
-		uint32_t bufferSize        = 10000 * vertexSize * 4;
-		uint32_t indiciesSize      = 10000 * 6;
-		uint32_t maxTextures       = 16;
-		uint32_t maxBatchDrawCalls = 100;
-
-		inline auto setMaxQuads(const uint32_t quads) -> void
-		{
-			maxQuads     = quads;
-			bufferSize   = maxQuads * quadsSize;
-			indiciesSize = maxQuads * 6;
-		}
-	};
 
 	struct RenderGraph::ShadowData
 	{
@@ -208,95 +185,6 @@ namespace maple
 		}
 	};
 
-	struct RenderGraph::Renderer2DData
-	{
-		std::vector<Command2D>                                  m_CommandQueue2D;
-		std::vector<std::vector<std::shared_ptr<VertexBuffer>>> vertexBuffers;
-
-		uint32_t batchDrawCallIndex = 0;
-		uint32_t indexCount         = 0;
-		Config2D config;
-
-		std::shared_ptr<IndexBuffer> indexBuffer;
-
-		Vertex *buffer = nullptr;
-
-		std::shared_ptr<Texture2D> textures[MAX_TEXTURES];
-
-		uint32_t  textureCount    = 0;
-		uint32_t  currentBufferID = 0;
-		glm::vec3 quadPositions[4];
-
-		bool clear                = false;
-		bool empty                = false;
-		bool renderToDepthTexture = true;
-
-		uint32_t                previousFrameTextureCount = 0;
-		std::shared_ptr<Shader> shader;
-
-		std::vector<std::shared_ptr<DescriptorSet>> descriptorSet;
-		std::vector<std::shared_ptr<DescriptorSet>> currentDescriptorSets;
-
-		inline auto init(bool triangleIndicies = false)
-		{
-			config.setMaxQuads(10000);
-			DescriptorInfo descriptorInfo{};
-			descriptorInfo.shader = shader.get();
-			descriptorSet.resize(2);
-			descriptorInfo.layoutIndex = 0;
-			descriptorSet[0]           = DescriptorSet::create(descriptorInfo);
-			descriptorInfo.layoutIndex = 1;
-			descriptorSet[1]           = DescriptorSet::create(descriptorInfo);
-
-			vertexBuffers.resize(3);
-
-			auto swapChain = Application::getGraphicsContext()->getSwapChain();
-			for (int32_t i = 0; i < swapChain->getSwapChainBufferCount(); i++)
-			{
-				vertexBuffers[i].resize(config.maxBatchDrawCalls);
-
-				for (int32_t j = 0; j < config.maxBatchDrawCalls; j++)
-				{
-					vertexBuffers[i][j] = VertexBuffer::create(BufferUsage::Dynamic);
-					vertexBuffers[i][j]->resize(config.bufferSize);
-				}
-			}
-
-			if (triangleIndicies)
-			{
-				std::vector<uint32_t> indices;
-				indices.resize(config.indiciesSize);
-
-				for (uint32_t i = 0; i < config.indiciesSize; i++)
-				{
-					indices[i] = i;
-				}
-				indexBuffer = IndexBuffer::create(indices.data(), indices.size());
-			}
-			else
-			{
-				std::vector<uint32_t> indices;
-				indices.resize(config.indiciesSize);
-
-				uint32_t offset = 0;
-				for (uint32_t i = 0; i < config.indiciesSize; i += 6)
-				{
-					indices[i]     = offset + 0;
-					indices[i + 1] = offset + 1;
-					indices[i + 2] = offset + 2;
-
-					indices[i + 3] = offset + 2;
-					indices[i + 4] = offset + 3;
-					indices[i + 5] = offset + 0;
-					offset += 4;
-				}
-
-				indexBuffer = IndexBuffer::create(indices.data(), indices.size());
-			}
-			currentDescriptorSets.resize(2);
-		}
-	};
-
 	struct RenderGraph::DeferredData
 	{
 		std::vector<RenderCommand>                  commandQueue;
@@ -388,13 +276,13 @@ namespace maple
 
 	RenderGraph::RenderGraph()
 	{
+		renderers.resize(static_cast<int32_t>(RenderId::Length));
 	}
 
 	RenderGraph::~RenderGraph()
 	{
 		delete shadowData;
 		delete forwardData;
-		delete renderer2DData;
 		delete previewData;
 	}
 
@@ -403,19 +291,11 @@ namespace maple
 		setScreenBufferSize(width, height);
 		gBuffer = std::make_shared<GBuffer>(width, height);
 		reset();
-
-		renderers.resize(static_cast<int32_t>(RenderId::Length));
-
 		shadowData   = new ShadowData();
 		forwardData  = new ForwardData();
 		deferredData = new DeferredData();
 		previewData  = new PreviewData();
 
-		{
-			renderer2DData         = new Renderer2DData();
-			renderer2DData->shader = Shader::create("shaders/Batch2D.shader");
-			renderer2DData->init();
-		}
 		{
 			skyboxShader = Shader::create("shaders/Skybox.shader");
 			skyboxMesh   = Mesh::createCube();
@@ -442,6 +322,15 @@ namespace maple
 
 		prefilterRenderer = std::make_unique<PrefilterRenderer>();
 		prefilterRenderer->init();
+		addRender(std::make_shared<Renderer2D>(), RenderId::Render2D);
+
+		for (auto renderer : renderers)
+		{
+			if (renderer)
+			{
+				renderer->init(gBuffer);
+			}
+		}
 	}
 
 	auto RenderGraph::beginScene(Scene *scene) -> void
@@ -465,8 +354,6 @@ namespace maple
 		auto        projView = proj * view;
 
 		auto &settings = scene->getSettings();
-
-		//		settings.deferredRender = false;
 
 		if (settings.render3D)
 		{
@@ -713,7 +600,6 @@ namespace maple
 		{
 			if (renderer)
 			{
-				//renderer->setRenderTarget(forwardData->renderTexture);
 				renderer->beginScene(scene, projView);
 			}
 		}
@@ -791,15 +677,6 @@ namespace maple
 			pipelineInfo.transparencyEnabled = data.material->isFlagOf(Material::RenderFlags::AlphaBlend);
 			data.pipeline                    = Pipeline::get(pipelineInfo);
 		}
-
-		for (auto &renderer : renderers)
-		{
-			if (renderer)
-			{
-				//renderer->setRenderTarget(previewData->renderTexture);
-				//renderer->beginScenePreview(scene, projView);
-			}
-		}
 	}
 
 	auto RenderGraph::onRender() -> void
@@ -838,18 +715,18 @@ namespace maple
 			}
 		}
 
+		for (auto &renderer : renderers)
+		{
+			if (renderer)
+			{
+				renderer->renderScene();
+			}
+		}
+
 		if (settings.renderSkybox)
 		{
 			prefilterRenderer->renderScene();
 			executeSkyboxPass();
-		}
-
-		if (settings.render2D)
-			executeRender2DPass();
-
-		for (auto &renderer : renderers)
-		{
-			renderer->renderScene();
 		}
 
 		transform = nullptr;
@@ -871,7 +748,7 @@ namespace maple
 
 		for (auto &renderer : renderers)
 		{
-			//renderer->renderPreviewScene();
+			renderer->renderPreviewScene();
 		}
 	}
 
@@ -1133,18 +1010,9 @@ namespace maple
 		skyboxPipeline->end(getCommandBuffer());
 	}
 
-	auto RenderGraph::executeRender2DPass() -> void
-	{
-		PROFILE_FUNCTION();
-	}
-
-	auto RenderGraph::executeStencilPass() -> void
-	{
-		PROFILE_FUNCTION();
-	}
-
 	auto RenderGraph::executeDeferredOffScreenPass() -> void
 	{
+		PROFILE_FUNCTION();
 		deferredData->descriptorColorSet[0]->update();
 		auto      commandBuffer = getCommandBuffer();
 		Pipeline *pipeline      = nullptr;
@@ -1180,6 +1048,7 @@ namespace maple
 
 	auto RenderGraph::executeDeferredLightPass() -> void
 	{
+		PROFILE_FUNCTION();
 		PipelineInfo pipeInfo;
 		pipeInfo.shader                     = deferredData->deferredLightShader;
 		pipeInfo.polygonMode                = PolygonMode::Fill;
@@ -1209,11 +1078,6 @@ namespace maple
 		deferredData->deferredLightPipeline->end(getCommandBuffer());
 	}
 
-	auto RenderGraph::submitTexture(Texture *texture) -> float
-	{
-		return 0.0f;
-	}
-
 	auto RenderGraph::updateCascades(Scene *scene, Light *light) -> void
 	{
 		PROFILE_FUNCTION();
@@ -1233,6 +1097,7 @@ namespace maple
 		float ratio = maxZ / minZ;
 		// Calculate split depths based on view camera frustum
 		// Based on method presented in https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch10.html
+#pragma omp parallel for
 		for (uint32_t i = 0; i < shadowData->shadowMapNum; i++)
 		{
 			float p          = static_cast<float>(i + 1) / static_cast<float>(shadowData->shadowMapNum);

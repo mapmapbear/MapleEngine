@@ -3,8 +3,6 @@
 //////////////////////////////////////////////////////////////////////////////
 #include "Renderer2D.h"
 #include "Engine/GBuffer.h"
-#include "Engine/Mesh.h"
-#include "Engine/Vertex.h"
 
 #include "RHI/CommandBuffer.h"
 #include "RHI/DescriptorSet.h"
@@ -19,78 +17,96 @@
 #include "RHI/VertexBuffer.h"
 
 #include "Engine/Camera.h"
-#include "Engine/Light.h"
-#include "Engine/Material.h"
 #include "Engine/Profiler.h"
 #include "Scene/Component/Sprite.h"
-#include "Terrain/QuadCollapseMesh.h"
 
 #include "Application.h"
 #include "FileSystem/File.h"
-#include "Scene/Component/Light.h"
 #include "Scene/Scene.h"
 
 #include <imgui.h>
 
 namespace maple
 {
-	/*Renderer2D::Renderer2D(uint32_t width, uint32_t height, bool enableDepth) :
-	    enableDepth(enableDepth)
+	namespace
 	{
-		this->width  = width;
-		this->height = height;
-		textures.resize(16);
+		auto getCommandBuffer() -> CommandBuffer *
+		{
+			return Application::getGraphicsContext()->getSwapChain()->getCurrentCommandBuffer();
+		}
+	}        // namespace
+
+	struct Config2D
+	{
+		uint32_t maxQuads          = 10000;
+		uint32_t quadsSize         = sizeof(Vertex2D) * 4;
+		uint32_t bufferSize        = 10000 * sizeof(Vertex2D) * 4;
+		uint32_t indiciesSize      = 10000 * 6;
+		uint32_t maxTextures       = 16;
+		uint32_t maxBatchDrawCalls = 10;
+	} config;
+
+	struct Command2D
+	{
+		const Quad2D *quad;
+		glm::mat4     transform;
+	};
+
+	struct Renderer2D::Renderer2DData
+	{
+		std::shared_ptr<Shader>        shader;
+		std::shared_ptr<Pipeline>      pipeline;
+		std::shared_ptr<DescriptorSet> descriptorSet;
+		std::shared_ptr<DescriptorSet> projViewSet;
+
+		std::vector<std::shared_ptr<Texture>> textures;
+
+		bool enableDepth = true;
+
+		std::vector<std::shared_ptr<VertexBuffer>> vertexBuffers;
+		std::shared_ptr<IndexBuffer>               indexBuffer;
+
+		std::vector<Command2D> commands;
+
+		struct UniformBufferObject
+		{
+			glm::mat4 projView;
+		} systemBuffer;
+
+		int32_t   textureCount       = 0;
+		int32_t   batchDrawCallIndex = 0;
+		int32_t   indexCount         = 0;
+		Vertex2D *buffer             = nullptr;
+	};
+
+	Renderer2D::Renderer2D(bool enableDepth)
+	{
+		data              = new Renderer2DData();
+		data->enableDepth = enableDepth;
+		data->textures.resize(16);
 	}
 
 	Renderer2D::~Renderer2D()
 	{
+		delete data;
 	}
 
 	auto Renderer2D::init(const std::shared_ptr<GBuffer> &buffer) -> void
 	{
-		/ *
-		this->gbuffer = buffer;
+		gbuffer             = buffer;
+		data->shader        = Shader::create("shaders/Batch2D.shader");
+		data->projViewSet   = DescriptorSet::create({0, data->shader.get()});
+		data->descriptorSet = DescriptorSet::create({1, data->shader.get()});
+		data->vertexBuffers.resize(config.maxBatchDrawCalls);
 
-		AttachmentInfo infos[] = {
-		    {TextureType::COLOR, TextureFormat::RGBA8},
-		    {TextureType::DEPTH, TextureFormat::DEPTH}};
-
-		RenderPassInfo info;
-		info.attachmentCount = enableDepth ? 2 : 1;
-		info.textureType     = infos;
-		info.clear           = false;
-		renderPass           = RenderPass::create(info);
-		shader               = Shader::create("shaders/Batch2D.shader");
-
-		PipelineInfo pipeInfo;
-		pipeInfo.renderPass          = renderPass;
-		pipeInfo.shader              = shader;
-		pipeInfo.cullMode            = CullMode::NONE;
-		pipeInfo.transparencyEnabled = true;
-		pipeInfo.depthBiasEnabled    = false;
-		pipeline                     = Pipeline::create(pipeInfo);
-
-		createFrameBuffers();
-
-		uniformBuffer = UniformBuffer::create(sizeof(UniformBufferObject), nullptr);
-
-		BufferInfo bufferInfo;
-		bufferInfo.buffer  = uniformBuffer;
-		bufferInfo.offset  = 0;
-		bufferInfo.binding = 0;
-		bufferInfo.size    = sizeof(UniformBufferObject);
-		bufferInfo.type    = DescriptorType::UNIFORM_BUFFER;
-		pipeline->getDescriptorSet()->update({bufferInfo});
-
-		vertexBuffers.resize(config.maxBatchDrawCalls);
 		for (int32_t i = 0; i < config.maxBatchDrawCalls; i++)
 		{
-			vertexBuffers[i] = VertexBuffer::create(BufferUsage::DYNAMIC);
-			vertexBuffers[i]->resize(config.bufferSize, nullptr);
+			data->vertexBuffers[i] = VertexBuffer::create(BufferUsage::Dynamic);
+			data->vertexBuffers[i]->resize(config.bufferSize);
 		}
 
-		uint32_t *indices = new uint32_t[config.indiciesSize];
-		uint32_t  offset  = 0;
+		std::vector<uint32_t> indices(config.indiciesSize);
+		uint32_t              offset = 0;
 		for (uint32_t i = 0; i < config.indiciesSize; i += 6)
 		{
 			indices[i]     = offset + 0;
@@ -100,67 +116,23 @@ namespace maple
 			indices[i + 3] = offset + 2;
 			indices[i + 4] = offset + 3;
 			indices[i + 5] = offset + 0;
-
 			offset += 4;
 		}
 
-		indexBuffer = IndexBuffer::create(indices, config.indiciesSize);
-		delete[] indices;
-
-		descriptorSet = DescriptorSet::create({pipeline.get(),
-		                                       1,
-		                                       shader,
-		                                       1});* /
+		data->indexBuffer = IndexBuffer::create(indices.data(), config.indiciesSize);
 	}
 
-	auto Renderer2D::begin() -> void
-	{
-		/ *auto bufferId = renderTexture != nullptr ? 0 : VulkanContext::get()->getSwapChain()->getCurrentBuffer();
-		renderPass->beginRenderPass(
-		    VulkanContext::get()->getSwapChain()->getCurrentCommandBuffer(),
-		    {0.3, 0.3, 0.8, 1}, frameBuffers[bufferId].get(), SubPassContents::INLINE, width, height);
-		textureCount = 0;
-		buffer       = static_cast<Vertex2D *>(vertexBuffers[batchDrawCallIndex]->getPointer());* /
-	}
-
-	auto Renderer2D::present() -> void
+	auto Renderer2D::renderScene() -> void
 	{
 		PROFILE_FUNCTION();
-		/ *if (indexCount == 0)
+
+
+		data->vertexBuffers[data->batchDrawCallIndex]->bind(getCommandBuffer(), data->pipeline.get());
+		data->buffer = data->vertexBuffers[data->batchDrawCallIndex]->getPointer<Vertex2D>();
+
+		for (auto &command : data->commands)
 		{
-			vertexBuffers[batchDrawCallIndex]->releasePointer();
-			return;
-		}
-
-		auto cmd = VulkanContext::get()->getSwapChain()->getCurrentCommandBuffer();
-		updateDesciptorSet();
-		pipeline->bind(cmd);
-
-		indexBuffer->setCount(indexCount);
-		indexBuffer->bind(cmd);
-
-		vertexBuffers[batchDrawCallIndex]->releasePointer();
-		vertexBuffers[batchDrawCallIndex]->bind(cmd, pipeline.get());
-		bindDescriptorSets(pipeline.get(), cmd, 0, {pipeline->getDescriptorSet(), descriptorSet});
-
-		drawIndexed(cmd, DrawType::TRIANGLE, indexCount);
-
-		vertexBuffers[batchDrawCallIndex]->unbind();
-		indexBuffer->unbind();
-
-		indexCount = 0;
-
-		batchDrawCallIndex++;* /
-	}
-
-	auto Renderer2D::submitQuad() -> void
-	{
-		/ *PROFILE_FUNCTION();
-		uniformBuffer->setData(sizeof(UniformBufferObject), &systemVsUniformBuffer);
-
-		for (auto &command : commands)
-		{
-			if (indexCount >= config.indiciesSize)
+			if (data->indexCount >= config.indiciesSize)
 			{
 				flush();
 			}
@@ -179,67 +151,34 @@ namespace maple
 			if (quad2d->getTexture())
 				textureSlot = submitTexture(quad2d->getTexture());
 
-			buffer->vertex = transform * glm::vec4(min.x, min.y, 0.0f, 1);
-			buffer->uv     = glm::vec3(uv[0], textureSlot);
-			buffer->color  = color;
-			buffer++;
+			data->buffer->vertex = transform * glm::vec4(min.x, min.y, 0.0f, 1);
+			data->buffer->uv     = glm::vec3(uv[0], textureSlot);
+			data->buffer->color  = color;
+			data->buffer++;
 
-			buffer->vertex = transform * glm::vec4(max.x, min.y, 0.0f, 1);
-			buffer->uv     = glm::vec3(uv[1], textureSlot);
-			buffer->color  = color;
-			buffer++;
+			data->buffer->vertex = transform * glm::vec4(max.x, min.y, 0.0f, 1);
+			data->buffer->uv     = glm::vec3(uv[1], textureSlot);
+			data->buffer->color  = color;
+			data->buffer++;
 
-			buffer->vertex = transform * glm::vec4(max.x, max.y, 0.0f, 1.0);
-			buffer->uv     = glm::vec3(uv[2], textureSlot);
-			buffer->color  = color;
-			buffer++;
+			data->buffer->vertex = transform * glm::vec4(max.x, max.y, 0.0f, 1.0);
+			data->buffer->uv     = glm::vec3(uv[2], textureSlot);
+			data->buffer->color  = color;
+			data->buffer++;
 
-			buffer->vertex = transform * glm::vec4(min.x, max.y, 0.0f, 1.0);
-			buffer->uv     = glm::vec3(uv[3], textureSlot);
-			buffer->color  = color;
-			buffer++;
-
-			indexCount += 6;
-		}* /
-	}
-
-	auto Renderer2D::end() -> void
-	{
-		PROFILE_FUNCTION();
-		/ *	renderPass->endRenderpass(VulkanContext::get()->getSwapChain()->getCurrentCommandBuffer());
-		batchDrawCallIndex = 0;* /
-	}
-
-	auto Renderer2D::submit(const RenderCommand &cmd) -> void
-	{
-	}
-
-	auto Renderer2D::submit(const Quad2D *quad, const glm::mat4 &transform) -> void
-	{
-		PROFILE_FUNCTION();
-		if (quad != nullptr)
-		{
-			auto &cmd     = commands.emplace_back();
-			cmd.quad      = quad;
-			cmd.transform = transform;
+			data->buffer->vertex = transform * glm::vec4(min.x, max.y, 0.0f, 1.0);
+			data->buffer->uv     = glm::vec3(uv[3], textureSlot);
+			data->buffer->color  = color;
+			data->buffer++;
+			data->indexCount += 6;
 		}
-	}
 
-	auto Renderer2D::onImGui() -> void
-	{
-		ImGui::DragInt("Pivot Type", &pivotType);
-	}
-
-	auto Renderer2D::renderScene() -> void
-	{
-		PROFILE_FUNCTION();
-		begin();
-		submitQuad();
 		present();
-		end();
+
+		data->batchDrawCallIndex = 0;
 	}
 
-	auto Renderer2D::beginScene(Scene *scene) -> void
+	auto Renderer2D::beginScene(Scene *scene, const glm::mat4 &projView) -> void
 	{
 		PROFILE_FUNCTION();
 
@@ -249,10 +188,12 @@ namespace maple
 			return;
 		}
 
-		systemVsUniformBuffer.projView =
-		    camera.first->getProjectionMatrix() * glm::inverse(camera.second->getWorldMatrix());
+		data->systemBuffer.projView = projView;
+		data->commands.clear();
 
-		commands.clear();
+		data->projViewSet->setUniformBufferData("UniformBufferObject", &data->systemBuffer);
+		data->projViewSet->update();
+
 		auto &registry = scene->getRegistry();
 		auto  group    = registry.group<Sprite>(entt::get<Transform>);
 
@@ -261,7 +202,7 @@ namespace maple
 			for (auto entity : group)
 			{
 				const auto &[sprite, trans] = group.get<Sprite, Transform>(entity);
-				submit(&sprite.getQuad(), trans.getWorldMatrix());
+				data->commands.push_back({&sprite.getQuad(), trans.getWorldMatrix()});
 			}
 		}
 		{
@@ -270,138 +211,97 @@ namespace maple
 			for (auto entity : group2)
 			{
 				const auto &[anim, trans] = group2.get<AnimatedSprite, Transform>(entity);
-				submit(&anim.getQuad(), trans.getWorldMatrix());
+				data->commands.push_back({&anim.getQuad(), trans.getWorldMatrix()});
 			}
 		}
 
-		std::sort(commands.begin(), commands.end(), [](Command2D &a, Command2D &b) {
+		std::sort(data->commands.begin(), data->commands.end(), [](Command2D &a, Command2D &b) {
 			return a.transform[3][2] < b.transform[3][2];
 		});
 	}
 
-	auto Renderer2D::onResize(uint32_t width, uint32_t height) -> void
-	{
-		PROFILE_FUNCTION();
-		this->width  = width;
-		this->height = height;
-		frameBuffers.clear();
-		createFrameBuffers();
-	}
-
-	auto Renderer2D::setRenderTarget(std::shared_ptr<Texture> texture, bool rebuildFramebuffer / *= true* /) -> void
+	auto Renderer2D::setRenderTarget(std::shared_ptr<Texture> texture, bool rebuildFramebuffer) -> void
 	{
 		PROFILE_FUNCTION();
 		Renderer::setRenderTarget(texture, rebuildFramebuffer);
-		if (rebuildFramebuffer)
-		{
-			frameBuffers.clear();
-			createFrameBuffers();
-		}
+		PipelineInfo pipeInfo;
+		pipeInfo.shader              = data->shader;
+		pipeInfo.cullMode            = CullMode::None;
+		pipeInfo.transparencyEnabled = true;
+		pipeInfo.depthBiasEnabled    = false;
+		pipeInfo.clearTargets        = false;
+		if (data->enableDepth)
+			pipeInfo.depthTarget = gbuffer->getDepthBuffer();
+		pipeInfo.colorTargets[0] = texture;
+		pipeInfo.blendMode       = BlendMode::SrcAlphaOneMinusSrcAlpha;
+		data->pipeline           = Pipeline::get(pipeInfo);
 	}
 
 	auto Renderer2D::submitTexture(const std::shared_ptr<Texture> &texture) -> int32_t
 	{
 		PROFILE_FUNCTION();
+
 		float result = 0.0f;
 		bool  found  = false;
-		for (uint32_t i = 0; i < textureCount; i++)
+
+		for (uint32_t i = 0; i < data->textureCount; i++)
 		{
-			if (textures[i] == texture)        //Temp
+			if (data->textures[i] == texture)        //Temp
 			{
 				return i + 1;
 			}
 		}
 
-		if (textureCount >= config.maxTextures)
+		if (data->textureCount >= config.maxTextures)
 		{
 			flush();
 		}
-		textures[textureCount] = texture;
-		textureCount++;
-		return textureCount;
-	}
-
-	auto Renderer2D::updateDesciptorSet() -> void
-	{
-		/ *if (textureCount == 0)
-			return;
-
-		ImageInfo imageInfo{};
-		imageInfo.binding  = 0;
-		imageInfo.name     = "textures";
-		imageInfo.textures = {textures};
-		imageInfo.type     = TextureType::COLOR;
-		descriptorSet->update({imageInfo});* /
+		data->textures[data->textureCount] = texture;
+		data->textureCount++;
+		return data->textureCount;
 	}
 
 	auto Renderer2D::flush() -> void
 	{
 		PROFILE_FUNCTION();
 		present();
-		/ *
-		textureCount = 0;
-		vertexBuffers[batchDrawCallIndex]->unbind();
-		buffer = static_cast<Vertex2D *>(vertexBuffers[batchDrawCallIndex]->getPointer());* /
+		data->textureCount = 0;
+		data->vertexBuffers[data->batchDrawCallIndex]->unbind();
+		data->buffer = data->vertexBuffers[data->batchDrawCallIndex]->getPointer<Vertex2D>();
 	}
 
-	auto Renderer2D::createFrameBuffers() -> void
+	auto Renderer2D::present() -> void
 	{
-		/ *frameBuffers.clear();
-		auto &buffers = VulkanContext::get()->getSwapChain()->getSwapChainBuffers();
-
-		if (renderTexture)
+		PROFILE_FUNCTION();
+		if (data->indexCount == 0)
 		{
-			FrameBufferInfo info;
-
-			if (enableDepth)
-			{
-				info.attachments = {renderTexture, gbuffer->getDepthBuffer()};
-				info.types       = {
-                    TextureType::COLOR,
-                    TextureType::DEPTH,
-                };
-			}
-			else
-			{
-				info.attachments = {renderTexture};
-				info.types       = {
-                    TextureType::COLOR,
-                };
-			}
-
-			info.width      = renderTexture->getWidth();
-			info.height     = renderTexture->getHeight();
-			info.renderPass = renderPass;
-			info.screenFBO  = false;
-			frameBuffers.emplace_back(FrameBuffer::create(info));
+			data->vertexBuffers[data->batchDrawCallIndex]->releasePointer();
+			return;
 		}
-		else
-		{
-			for (size_t i = 0; i < buffers.size(); i++)
-			{
-				FrameBufferInfo info;
-				info.width  = width;
-				info.height = height;
 
-				if (enableDepth)
-				{
-					info.attachments = {buffers[i], gbuffer->getDepthBuffer()};
-					info.types       = {
-                        TextureType::COLOR,
-                        TextureType::DEPTH,
-                    };
-				}
-				else
-				{
-					info.attachments = {buffers[i]};
-					info.types       = {
-                        TextureType::COLOR,
-                    };
-				}
+		data->descriptorSet->setTexture("textures", data->textures);
+		data->descriptorSet->update();
 
-				info.renderPass = renderPass;
-				frameBuffers.emplace_back(FrameBuffer::create(info));
-			}
-		}* /
-	}*/
+
+		auto cmd = getCommandBuffer();
+
+		data->pipeline->bind(cmd);
+		
+		data->indexBuffer->bind(cmd);
+		data->indexBuffer->setCount(data->indexCount);
+
+		data->vertexBuffers[data->batchDrawCallIndex]->bind(cmd, data->pipeline.get());
+		data->vertexBuffers[data->batchDrawCallIndex]->releasePointer();
+
+		Renderer::bindDescriptorSets(data->pipeline.get(), cmd, 0, {data->projViewSet, data->descriptorSet});
+		Renderer::drawIndexed(cmd, DrawType::Triangle, data->indexCount);
+
+		data->vertexBuffers[data->batchDrawCallIndex]->unbind();
+		data->indexBuffer->unbind();
+		data->indexCount = 0;
+
+		data->batchDrawCallIndex++;
+
+		data->pipeline->end(cmd);
+	}
 };        // namespace maple

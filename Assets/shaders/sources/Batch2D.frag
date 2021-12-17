@@ -6,7 +6,6 @@ layout (location = 0) out vec4 outColor;
 
 layout (location = 0) in OutData
 {
-	vec3 position;
 	vec2 uv;
 	vec4 color;
 	int textureID;

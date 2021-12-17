@@ -27,6 +27,11 @@ namespace maple
 		auto init(uint32_t width, uint32_t height) -> void;
 		auto addRender(const std::shared_ptr<Renderer> &render, int32_t renderId) -> void;
 
+		inline auto addRender(const std::shared_ptr<Renderer> &render, RenderId renderId)
+		{
+			addRender(render, static_cast<int32_t>(renderId));
+		}
+
 		auto reset() -> void;
 		auto onResize(uint32_t width, uint32_t height) -> void;
 		auto beginScene(Scene *scene) -> void;
@@ -41,15 +46,12 @@ namespace maple
 		auto executeForwardPass() -> void;
 		auto executeShadowPass() -> void;
 		auto executeSkyboxPass() -> void;
-		auto executeRender2DPass() -> void;
-		auto executeStencilPass() -> void;
 
 		auto executeDeferredOffScreenPass() -> void;
 		auto executeDeferredLightPass() -> void;
 
 		auto executePreviewPasss() -> void;
 
-		auto submitTexture(Texture *texture) -> float;
 		auto updateCascades(Scene *scene, Light *light) -> void;
 
 		auto setRenderTarget(const std::shared_ptr<Texture> &texture, bool rebuildFramebuffer = true) -> void;
@@ -118,8 +120,6 @@ namespace maple
 		ForwardData * forwardData  = nullptr;
 		DeferredData *deferredData = nullptr;
 		PreviewData * previewData  = nullptr;
-
-		Renderer2DData *renderer2DData = nullptr;
 
 		std::shared_ptr<Mesh>          skyboxMesh;
 		std::shared_ptr<Shader>        skyboxShader;

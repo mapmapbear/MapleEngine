@@ -7,6 +7,8 @@
 #include "Engine/Profiler.h"
 #include "Engine/Terrain.h"
 #include "Engine/Timestep.h"
+#include "Engine/Renderer/Renderer2D.h"
+
 #include "FileSystem/MeshLoader.h"
 #include "Others/Console.h"
 #include "Window/WindowWin.h"
@@ -19,11 +21,11 @@
 #include "ImGui/ImNotification.h"
 #include "Scene/Scene.h"
 #include "Scene/SceneManager.h"
-#include "Terrain/TerrainBuilder.h"
 #include "Scene/System/AccessSystem.h"
 #include "Scripts/Mono/MonoVirtualMachine.h"
-#include <imgui.h>
+
 #include <ecs/ecs.h>
+#include <imgui.h>
 
 //maple::Application* app;
 
@@ -44,6 +46,7 @@ namespace maple
 		monoVm        = std::make_shared<MonoVirtualMachine>();
 		renderGraph   = std::make_shared<RenderGraph>();
 		systemManager = std::make_unique<SystemManager>();
+	
 	}
 
 	auto Application::init() -> void
@@ -58,7 +61,6 @@ namespace maple
 		timer.start();
 		luaVm->init();
 		monoVm->init();
-
 		renderGraph->init(window->getWidth(), window->getHeight());
 		appDelegate->onInit();
 

@@ -9,45 +9,32 @@
 #include <memory>
 #include <vector>
 
-#include "Renderer.h"
 #include "RHI/DescriptorSet.h"
+#include "Renderer.h"
 
 namespace maple
 {
-	/*class UniformBuffer;
-	class Texture2D;
 	class VertexBuffer;
 	class IndexBuffer;
+	class Texture;
 
-	struct Config2D
+
+	class MAPLE_EXPORT Renderer2D : public Renderer
 	{
-		uint32_t maxQuads          = 10000;
-		uint32_t quadsSize         = sizeof(Vertex2D) * 4;
-		uint32_t bufferSize        = 10000 * sizeof(Vertex2D) * 4;
-		uint32_t indiciesSize      = 10000 * 6;
-		uint32_t maxTextures       = 16;
-		uint32_t maxBatchDrawCalls = 10;
+	  public:
+		Renderer2D(bool enableDepth = false);
+		~Renderer2D();
+		auto init(const std::shared_ptr<GBuffer> &buffer) -> void override;
+		auto renderScene() -> void override;
+		auto beginScene(Scene *scene, const glm::mat4 &projView) -> void override;
+		auto setRenderTarget(std::shared_ptr<Texture> texture, bool rebuildFramebuffer) -> void override;
 
-		auto setMaxQuads(uint32_t quads) -> void
-		{
-			maxQuads     = quads;
-			bufferSize   = maxQuads * sizeof(Vertex2D) * 4;
-			indiciesSize = maxQuads * 6;
-		}
+	  private:
+		auto present() -> void;
+		auto submitTexture(const std::shared_ptr<Texture> &texture) -> int32_t;
+		auto flush() -> void;
+
+		struct Renderer2DData;
+		Renderer2DData *data = nullptr;
 	};
-
-	struct Triangle
-	{
-		glm::vec3 pos1;
-		glm::vec3 pos2;
-		glm::vec3 pos3;
-		glm::vec4 color;
-	};
-
-	struct Command2D
-	{
-		const Quad2D *quad;
-		glm::mat4     transform;
-	};*/
-
 };        // namespace maple

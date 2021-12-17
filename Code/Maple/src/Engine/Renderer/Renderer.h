@@ -18,6 +18,7 @@ namespace maple
 	{
 		GridRender,
 		Geometry,
+		Render2D,
 		Length
 	};
 
