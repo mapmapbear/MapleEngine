@@ -13,7 +13,7 @@ namespace maple
 	{
 		const static Shader *shaderIndicator = nullptr;
 
-		inline auto initBufferLayout(const spirv_cross::SPIRType type, BufferLayout &layout) -> void
+		inline auto initBufferLayout(const spirv_cross::SPIRType type, BufferLayout &layout, const std::string &name, uint32_t location) -> void
 		{
 			switch (type.basetype)
 			{
@@ -21,16 +21,16 @@ namespace maple
 					switch (type.vecsize)
 					{
 						case 1:
-							layout.push<float>("");
+							layout.push<float>(name, location);
 							break;
 						case 2:
-							layout.push<glm::vec2>("");
+							layout.push<glm::vec2>(name, location);
 							break;
 						case 3:
-							layout.push<glm::vec3>("");
+							layout.push<glm::vec3>(name, location);
 							break;
 						case 4:
-							layout.push<glm::vec4>("");
+							layout.push<glm::vec4>(name, location);
 							break;
 					}
 				case spirv_cross::SPIRType::Double:
@@ -358,12 +358,20 @@ namespace maple
 		if (type == ShaderType::Vertex)
 		{
 			uint32_t stride = 0;
+
+			layout.getLayout().resize(resources.stage_inputs.size());
+
 			for (const spirv_cross::Resource &resource : resources.stage_inputs)
 			{
 				const spirv_cross::SPIRType &inputType = glsl->get_type(resource.type_id);
-				initBufferLayout(inputType, layout);
+
+				uint32_t localtion = glsl->get_decoration(resource.id, spv::DecorationLocation);
+
+				initBufferLayout(inputType, layout, resource.name, localtion);
+
 				stride += getStrideFromOpenGLFormat(0);
 			}
+			layout.computeStride();
 		}
 
 		for (auto &resource : resources.sampled_images)
@@ -371,8 +379,8 @@ namespace maple
 			uint32_t set     = glsl->get_decoration(resource.id, spv::DecorationDescriptorSet);
 			uint32_t binding = glsl->get_decoration(resource.id, spv::DecorationBinding);
 
-			auto &descriptorInfo  = descriptorInfos[set];
-			auto &descriptor      = descriptorInfo.descriptors.emplace_back();
+			auto &descriptorInfo = descriptorInfos[set];
+			auto &descriptor     = descriptorInfo.descriptors.emplace_back();
 
 			descriptor.offset     = 0;
 			descriptor.size       = 0;

@@ -25,7 +25,7 @@ namespace maple
 		return quad;
 	}
 
-	auto TexturePool::addSprite(const std::string &uniqueName, const std::vector<uint8_t> &data, uint32_t w, uint32_t h) -> Quad2D *
+	auto TexturePool::addSprite(const std::string &uniqueName, const std::vector<uint8_t> &data, uint32_t w, uint32_t h,bool flipY) -> Quad2D *
 	{
 		if (auto iter = mapping.find(uniqueName); iter != mapping.end())
 		{
@@ -36,7 +36,7 @@ namespace maple
 		{
 			createTextureAtlas();
 		}
-		auto quad = atlas.back().addSprite(uniqueName, data, w, h);
+		auto quad = atlas.back().addSprite(uniqueName, data, w, h, flipY);
 		if (quad == nullptr)
 		{        //full.. create a new one
 			auto txt = createTextureAtlas();

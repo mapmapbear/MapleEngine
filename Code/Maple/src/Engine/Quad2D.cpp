@@ -10,10 +10,11 @@ namespace maple
 	{
 		static std::array<glm::vec2, 4> results =
 		    {
-		        glm::vec2{0, 1},
-		        glm::vec2{1, 1},
+		        glm::vec2{0, 0},
 		        glm::vec2{1, 0},
-		        glm::vec2{0, 0}};
+		        glm::vec2{0, 1},
+		        glm::vec2{1, 1}
+			};
 		return results;
 	}
 
@@ -27,22 +28,33 @@ namespace maple
 	{
 		static std::array<glm::vec2, 4> results;
 		{
-			results[0] = {min.x, max.y};
-			results[1] = max;
-			results[2] = {max.x, min.y};
-			results[3] = min;
+			results[3] = {min.x, max.y};
+			results[2] = max;
+			results[1] = {max.x, min.y};
+			results[0] = min;
 		}
 		return results;
 	}
 
-	auto Quad2D::setTexCoords(uint32_t x, uint32_t y, uint32_t w, uint32_t h) -> void
+	auto Quad2D::setTexCoords(uint32_t x, uint32_t y, uint32_t w, uint32_t h, bool flipY) -> void
 	{
 		this->w      = w;
 		this->h      = h;
-		texCoords[0] = {x / (float) texture->getWidth(), (y + h) / (float) texture->getHeight()};
-		texCoords[1] = {(x + w) / (float) texture->getWidth(), (y + h) / (float) texture->getHeight()};
-		texCoords[2] = {(x + w) / (float) texture->getWidth(), y / (float) texture->getHeight()};
-		texCoords[3] = {x / (float) texture->getWidth(), y / (float) texture->getHeight()};
+		if (flipY)
+		{
+			texCoords[0] = {x / (float) texture->getWidth(), (y + h) / (float) texture->getHeight()};
+			texCoords[1] = {(x + w) / (float) texture->getWidth(), (y + h) / (float) texture->getHeight()};
+			texCoords[2] = {(x + w) / (float) texture->getWidth(), y / (float) texture->getHeight()};
+			texCoords[3] = {x / (float) texture->getWidth(), y / (float) texture->getHeight()};
+		}
+		else
+		{
+			texCoords[3] = {x / (float) texture->getWidth(), (y + h) / (float) texture->getHeight()};
+			texCoords[2] = {(x + w) / (float) texture->getWidth(), (y + h) / (float) texture->getHeight()};
+			texCoords[1] = {(x + w) / (float) texture->getWidth(), y / (float) texture->getHeight()};
+			texCoords[0] = {x / (float) texture->getWidth(), y / (float) texture->getHeight()};
+		}
+
 	}
 
 	maple::Quad2D Quad2D::nullQuad;

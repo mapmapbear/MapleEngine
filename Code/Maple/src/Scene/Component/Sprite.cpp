@@ -47,9 +47,9 @@ namespace maple
 	{
 	}
 
-	auto AnimatedSprite::addFrame(const std::vector<uint8_t> &data, uint32_t width, uint32_t height, float delay, const std::string &uniqueKey, float xOffset, float yOffset, uint32_t color) -> void
+	auto AnimatedSprite::addFrame(const std::vector<uint8_t> &data, uint32_t width, uint32_t height, float delay, const std::string &uniqueKey, float xOffset, float yOffset, bool flipY, uint32_t color) -> void
 	{
-		auto quad = Application::get()->getTexturePool()->addSprite(uniqueKey, data, width, height);
+		auto quad = Application::get()->getTexturePool()->addSprite(uniqueKey, data, width, height, flipY);
 		if (quad != nullptr)
 		{
 			auto &back     = animationFrames.emplace_back();

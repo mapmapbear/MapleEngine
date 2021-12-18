@@ -30,7 +30,7 @@ namespace maple
 		inline auto setTexture(const std::shared_ptr<Texture2D>& texture) { this->texture = texture; }
 		friend class Sprite;
 
-		auto setTexCoords(uint32_t x, uint32_t y, uint32_t w, uint32_t h) -> void;
+		auto setTexCoords(uint32_t x, uint32_t y, uint32_t w, uint32_t h, bool flipY) -> void;
 
 		inline auto getHeight() const { return h; }
 		inline auto getWidth() const { return w; }

@@ -322,7 +322,6 @@ namespace maple
 
 		prefilterRenderer = std::make_unique<PrefilterRenderer>();
 		prefilterRenderer->init();
-		addRender(std::make_shared<Renderer2D>(), RenderId::Render2D);
 
 		for (auto renderer : renderers)
 		{
@@ -331,6 +330,8 @@ namespace maple
 				renderer->init(gBuffer);
 			}
 		}
+
+		addRender(std::make_shared<Renderer2D>(), RenderId::Render2D);
 	}
 
 	auto RenderGraph::beginScene(Scene *scene) -> void
@@ -715,18 +716,25 @@ namespace maple
 			}
 		}
 
-		for (auto &renderer : renderers)
+		if (auto render = renderers[static_cast<int32_t>(RenderId::Render2D)]; render != nullptr)
 		{
-			if (renderer)
-			{
-				renderer->renderScene();
-			}
+			render->renderScene();
+		}
+
+		if (auto render = renderers[static_cast<int32_t>(RenderId::Geometry)]; render != nullptr)
+		{
+			render->renderScene();
 		}
 
 		if (settings.renderSkybox)
 		{
 			prefilterRenderer->renderScene();
 			executeSkyboxPass();
+		}
+
+		if (auto render = renderers[static_cast<int32_t>(RenderId::GridRender)]; render != nullptr)
+		{
+			render->renderScene();
 		}
 
 		transform = nullptr;

@@ -150,7 +150,7 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 		GLCall(glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0));
-		GLCall(glClearColor(0.3, 0.4, 0.1, 1));
+		GLCall(glClearColor(0, 0, 0, 1));
 		GLCall(glClear(GL_COLOR_BUFFER_BIT));
 	}
 

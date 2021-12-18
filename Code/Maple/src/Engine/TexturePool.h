@@ -13,7 +13,7 @@ namespace maple
 		TexturePool() = default;
 
 		auto addSprite(const std::string& file)->Quad2D*;
-		auto addSprite(const std::string& uniqueName, const std::vector<uint8_t>&, uint32_t w, uint32_t h)->Quad2D*;
+		auto addSprite(const std::string &uniqueName, const std::vector<uint8_t> &, uint32_t w, uint32_t h, bool flipY = false) -> Quad2D *;
 
 	private:
 		auto createTextureAtlas()->TextureAtlas*;

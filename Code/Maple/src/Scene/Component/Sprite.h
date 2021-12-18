@@ -76,7 +76,7 @@ namespace maple
 		AnimatedSprite();
 		virtual ~AnimatedSprite() = default;
 
-		auto addFrame(const std::vector<uint8_t> &data, uint32_t width, uint32_t height, float delay, const std::string &uniqueKey, float xOffset, float yOffset, uint32_t color = UINT32_MAX) -> void;
+		auto addFrame(const std::vector<uint8_t> &data, uint32_t width, uint32_t height, float delay, const std::string &uniqueKey, float xOffset, float yOffset, bool flipY = false, uint32_t color = UINT32_MAX) -> void;
 		auto onUpdate(float dt) -> void;
 		auto getAnimatedUVs() -> const std::array<glm::vec2, 4> &;
 		auto getQuad() -> const Quad2D & override;

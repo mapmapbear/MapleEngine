@@ -126,7 +126,6 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 
-
 		data->vertexBuffers[data->batchDrawCallIndex]->bind(getCommandBuffer(), data->pipeline.get());
 		data->buffer = data->vertexBuffers[data->batchDrawCallIndex]->getPointer<Vertex2D>();
 
@@ -139,36 +138,35 @@ namespace maple
 			auto &quad2d    = command.quad;
 			auto &transform = command.transform;
 
-			const glm::vec2 &min = quad2d->getOffset();
-
-			glm::vec2 max = min + glm::vec2{quad2d->getWidth(), quad2d->getHeight()};
+			glm::vec4 min = transform * glm::vec4(quad2d->getOffset(), 0, 1.f);
+			glm::vec4 max = transform * glm::vec4(quad2d->getOffset() + glm::vec2{quad2d->getWidth(), quad2d->getHeight()}, 0, 1.f);
 
 			const auto &color   = quad2d->getColor();
 			const auto &uv      = quad2d->getTexCoords();
 			const auto  texture = quad2d->getTexture();
 
 			int32_t textureSlot = -1;
-			if (quad2d->getTexture())
-				textureSlot = submitTexture(quad2d->getTexture());
+			if (texture)
+				textureSlot = submitTexture(texture);
 
-			data->buffer->vertex = transform * glm::vec4(min.x, min.y, 0.0f, 1);
+			data->buffer->vertex = glm::vec4(min.x, min.y, 0.0f, 1.0);
+			data->buffer->color  = color;
 			data->buffer->uv     = glm::vec3(uv[0], textureSlot);
-			data->buffer->color  = color;
 			data->buffer++;
 
-			data->buffer->vertex = transform * glm::vec4(max.x, min.y, 0.0f, 1);
+			data->buffer->vertex = glm::vec4(max.x, min.y, 0.0f, 1.0);
+			data->buffer->color  = color;
 			data->buffer->uv     = glm::vec3(uv[1], textureSlot);
-			data->buffer->color  = color;
 			data->buffer++;
 
-			data->buffer->vertex = transform * glm::vec4(max.x, max.y, 0.0f, 1.0);
+			data->buffer->vertex = glm::vec4(max.x, max.y, 0.0f, 1.0);
+			data->buffer->color  = color;
 			data->buffer->uv     = glm::vec3(uv[2], textureSlot);
-			data->buffer->color  = color;
 			data->buffer++;
 
-			data->buffer->vertex = transform * glm::vec4(min.x, max.y, 0.0f, 1.0);
-			data->buffer->uv     = glm::vec3(uv[3], textureSlot);
+			data->buffer->vertex = glm::vec4(min.x, max.y, 0.0f, 1.0);
 			data->buffer->color  = color;
+			data->buffer->uv     = glm::vec3(uv[3], textureSlot);
 			data->buffer++;
 			data->indexCount += 6;
 		}
@@ -282,16 +280,15 @@ namespace maple
 		data->descriptorSet->setTexture("textures", data->textures);
 		data->descriptorSet->update();
 
-
 		auto cmd = getCommandBuffer();
 
 		data->pipeline->bind(cmd);
-		
-		data->indexBuffer->bind(cmd);
-		data->indexBuffer->setCount(data->indexCount);
 
-		data->vertexBuffers[data->batchDrawCallIndex]->bind(cmd, data->pipeline.get());
+		data->indexBuffer->setCount(data->indexCount);
+		data->indexBuffer->bind(cmd);
+
 		data->vertexBuffers[data->batchDrawCallIndex]->releasePointer();
+		data->vertexBuffers[data->batchDrawCallIndex]->bind(cmd, data->pipeline.get());
 
 		Renderer::bindDescriptorSets(data->pipeline.get(), cmd, 0, {data->projViewSet, data->descriptorSet});
 		Renderer::drawIndexed(cmd, DrawType::Triangle, data->indexCount);
