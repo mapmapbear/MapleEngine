@@ -2,57 +2,89 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
+#include "Engine/Core.h"
+#include "RHI/GraphicsContext.h"
+#include <deque>
 #include <memory>
 #include <vector>
-#include <optional>
 #include <vulkan/vulkan.h>
-#include "Engine/Core.h"
 
-struct GLFWwindow;
 namespace maple
 {
-	class SwapChain;
-
-	class MAPLE_EXPORT VulkanContext
+	class MAPLE_EXPORT VulkanContext : public GraphicsContext
 	{
-	public:
-		VulkanContext(bool enableValidation = false);
+	  public:
+		VulkanContext();
 		~VulkanContext();
 
-		auto init() -> void;
+		auto init() -> void override;
+		auto present() -> void override;
+		auto getMinUniformBufferOffsetAlignment() const -> size_t override;
+		auto waitIdle() const -> void override;
+		auto onImGui() -> void override;
 
-		auto createSurface(GLFWwindow* win) -> void;
-		auto createSwapChain() -> void;
-		auto resize(uint32_t width, uint32_t height) -> void;
-		auto waiteIdle() -> void;
+		inline auto getGPUMemoryUsed() -> float override
+		{
+			return 0;
+		}
 
-		inline const auto getVkInstance() const { return vkInstance; }
-		inline auto getVkInstance() { return vkInstance; }
-		inline auto getVkSurface() { return surface; }
-		inline auto& getSwapChain() { return swapChain; }
+		inline auto getTotalGPUMemory() -> float override
+		{
+			return 0;
+		}
 
-		inline auto isEnableValidation() { return enableValidation; }
-		inline const auto& getValidationLayers() const { return validationLayers; }
+		inline const auto getVkInstance() const
+		{
+			return vkInstance;
+		}
+		inline auto getVkInstance()
+		{
+			return vkInstance;
+		}
 
-		static auto get()->std::shared_ptr<VulkanContext>;
-		static auto release()->void;
-	private:
+		struct DeletionQueue
+		{
+			DeletionQueue()                      = default;
+			DeletionQueue(const DeletionQueue &) = delete;
+			auto operator=(const DeletionQueue &) -> DeletionQueue & = delete;
+
+			std::deque<std::function<void()>> deletors;
+
+			template <typename F>
+			inline auto emplace(F &&function)
+			{
+				deletors.emplace_back(function);
+			}
+
+			inline auto flush()
+			{
+				for (auto it = deletors.rbegin(); it != deletors.rend(); it++)
+				{
+					(*it)();
+				}
+				deletors.clear();
+			}
+		};
+
+		static auto get() -> std::shared_ptr<VulkanContext>;
+
+		static auto getDeletionQueue() -> DeletionQueue &;
+		static auto getDeletionQueue(uint32_t index) -> DeletionQueue &;
+
+	  private:
 		auto setupDebug() -> void;
-		auto getRequireExtensions()->std::vector<const char*>;
-		static std::shared_ptr<VulkanContext> instance;
 
-		bool enableValidation = false;
 		VkInstance vkInstance;
-		VkDebugUtilsMessengerEXT debugCallback{};
-		std::vector<const char*> validationLayers;
-		uint32_t width;
-		uint32_t height;
-		bool vsync = true;
 
-		VkSurfaceKHR surface = VK_NULL_HANDLE;
+		//bind to triple buffer 
+		DeletionQueue deletionQueue[3];
 
-		std::shared_ptr<SwapChain> swapChain;
+		std::vector<const char *>          instanceLayerNames;
+		std::vector<const char *>          instanceExtensionNames;
+		std::vector<VkLayerProperties>     instanceLayers;
+		std::vector<VkExtensionProperties> instanceExtensions;
 
+		auto createInstance() -> void;
 	};
 
-};
+};        // namespace maple

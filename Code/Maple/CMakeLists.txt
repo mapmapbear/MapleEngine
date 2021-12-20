@@ -62,8 +62,8 @@ file(GLOB VK_APP_SRC
 	src/Engine/Renderer/*.h
 	src/RHI/*.h
 	src/RHI/*.cpp
-	#src/RHI/Vulkan/*.h
-	#src/RHI/Vulkan/*.cpp
+	src/RHI/Vulkan/*.h
+	src/RHI/Vulkan/*.cpp
 	src/RHI/OpenGL/*.h
 	src/RHI/OpenGL/*.cpp
 	src/RHI/ImGui/*.h

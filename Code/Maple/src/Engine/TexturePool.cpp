@@ -25,7 +25,7 @@ namespace maple
 		return quad;
 	}
 
-	auto TexturePool::addSprite(const std::string &uniqueName, const std::vector<uint8_t> &data, uint32_t w, uint32_t h,bool flipY) -> Quad2D *
+	auto TexturePool::addSprite(const std::string &uniqueName, const std::vector<uint8_t> &data, uint32_t w, uint32_t h, bool flipY) -> Quad2D *
 	{
 		if (auto iter = mapping.find(uniqueName); iter != mapping.end())
 		{

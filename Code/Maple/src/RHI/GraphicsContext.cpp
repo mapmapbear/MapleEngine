@@ -2,18 +2,36 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #include "Others/HashCode.h"
-#include "RHI/ImGui/GLImGuiRenderer.h"
-#include "RHI/OpenGL/GLCommandBuffer.h"
-#include "RHI/OpenGL/GLContext.h"
-#include "RHI/OpenGL/GLDescriptorSet.h"
-#include "RHI/OpenGL/GLFrameBuffer.h"
-#include "RHI/OpenGL/GLIndexBuffer.h"
-#include "RHI/OpenGL/GLPipeline.h"
-#include "RHI/OpenGL/GLRenderPass.h"
-#include "RHI/OpenGL/GLShader.h"
-#include "RHI/OpenGL/GLSwapChain.h"
-#include "RHI/OpenGL/GLUniformBuffer.h"
-#include "RHI/OpenGL/GLVertexBuffer.h"
+
+#ifdef MAPLE_VULKAN
+#	include "RHI/ImGui/VKImGuiRenderer.h"
+#	include "RHI/Vulkan/VulkanCommandBuffer.h"
+#	include "RHI/Vulkan/VulkanContext.h"
+#	include "RHI/Vulkan/VulkanDescriptorSet.h"
+#	include "RHI/Vulkan/VulkanFrameBuffer.h"
+#	include "RHI/Vulkan/VulkanIndexBuffer.h"
+#	include "RHI/Vulkan/VulkanPipeline.h"
+#	include "RHI/Vulkan/VulkanRenderPass.h"
+#	include "RHI/Vulkan/VulkanShader.h"
+#	include "RHI/Vulkan/VulkanSwapChain.h"
+#	include "RHI/Vulkan/VulkanUniformBuffer.h"
+#	include "RHI/Vulkan/VulkanVertexBuffer.h"
+#endif        // MAPLE_VULKAN
+
+#ifdef MAPLE_OPENGL
+#	include "RHI/ImGui/GLImGuiRenderer.h"
+#	include "RHI/OpenGL/GLCommandBuffer.h"
+#	include "RHI/OpenGL/GLContext.h"
+#	include "RHI/OpenGL/GLDescriptorSet.h"
+#	include "RHI/OpenGL/GLFrameBuffer.h"
+#	include "RHI/OpenGL/GLIndexBuffer.h"
+#	include "RHI/OpenGL/GLPipeline.h"
+#	include "RHI/OpenGL/GLRenderPass.h"
+#	include "RHI/OpenGL/GLShader.h"
+#	include "RHI/OpenGL/GLSwapChain.h"
+#	include "RHI/OpenGL/GLUniformBuffer.h"
+#	include "RHI/OpenGL/GLVertexBuffer.h"
+#endif
 
 #include "Application.h"
 
@@ -21,7 +39,12 @@ namespace maple
 {
 	auto GraphicsContext::create() -> std::shared_ptr<GraphicsContext>
 	{
+#ifdef MAPLE_VULKAN
+		return std::make_shared<VulkanContext>();
+#endif        // MAPLE_VULKAN
+#ifdef MAPLE_OPENGL
 		return std::make_shared<GLContext>();
+#endif        // MAPLE_OPENGL
 	}
 
 	auto GraphicsContext::clearUnused() -> void
@@ -49,17 +72,32 @@ namespace maple
 
 	auto SwapChain::create(uint32_t width, uint32_t height) -> std::shared_ptr<SwapChain>
 	{
+#ifdef MAPLE_VULKAN
+		return std::make_shared<VulkanSwapChain>(width, height);
+#endif
+#ifdef MAPLE_OPENGL
 		return std::make_shared<GLSwapChain>(width, height);
+#endif
 	}
 
 	auto Shader::create(const std::string &filePath) -> std::shared_ptr<Shader>
 	{
+#ifdef MAPLE_VULKAN
+		return Application::getCache()->emplace<VulkanShader>(filePath);
+#endif
+#ifdef MAPLE_OPENGL
 		return Application::getCache()->emplace<GLShader>(filePath);
+#endif
 	}
 
 	auto Shader::create(const std::vector<uint32_t> &vertData, const std::vector<uint32_t> &fragData) -> std::shared_ptr<Shader>
 	{
+#ifdef MAPLE_VULKAN
+		return Application::getCache()->emplace<VulkanShader>(vertData, fragData);
+#endif
+#ifdef MAPLE_OPENGL
 		return Application::getCache()->emplace<GLShader>(vertData, fragData);
+#endif
 	}
 
 	auto FrameBuffer::create(const FrameBufferInfo &desc) -> std::shared_ptr<FrameBuffer>
@@ -81,32 +119,61 @@ namespace maple
 		{
 			return found->second;
 		}
-
+#ifdef MAPLE_VULKAN
+		return frameBufferCache.emplace(hash, std::make_shared<VulkanFrameBuffer>(desc)).first->second;
+#endif
+#ifdef MAPLE_OPENGL
 		return frameBufferCache.emplace(hash, std::make_shared<GLFrameBuffer>(desc)).first->second;
+#endif
 	}
 
 	auto DescriptorSet::create(const DescriptorInfo &desc) -> std::shared_ptr<DescriptorSet>
 	{
+#ifdef MAPLE_VULKAN
+		return std::make_shared<VulkanDescriptorSet>(desc);
+#endif
+#ifdef MAPLE_OPENGL
 		return std::make_shared<GLDescriptorSet>(desc);
+#endif
 	}
 
 	auto CommandBuffer::create() -> std::shared_ptr<CommandBuffer>
 	{
+#ifdef MAPLE_VULKAN
+		return std::make_shared<VulkanCommandBuffer>();
+#endif
+#ifdef MAPLE_OPENGL
 		return std::make_shared<GLCommandBuffer>();
+#endif
 	}
 
 	auto ImGuiRenderer::create(uint32_t width, uint32_t height, bool clearScreen) -> std::shared_ptr<ImGuiRenderer>
 	{
+#ifdef MAPLE_VULKAN
+		return std::make_shared<VKImGuiRenderer>(width, height, clearScreen);
+#endif
+#ifdef MAPLE_OPENGL
 		return std::make_shared<GLImGuiRenderer>(width, height, clearScreen);
+#endif
 	}
 
 	auto IndexBuffer::create(const uint16_t *data, uint32_t count, BufferUsage bufferUsage) -> std::shared_ptr<IndexBuffer>
 	{
+#ifdef MAPLE_VULKAN
+		return std::make_shared<VulkanIndexBuffer>(data, count, bufferUsage);
+#endif
+#ifdef MAPLE_OPENGL
 		return std::make_shared<GLIndexBuffer>(data, count, bufferUsage);
+#endif
 	}
 	auto IndexBuffer::create(const uint32_t *data, uint32_t count, BufferUsage bufferUsage) -> std::shared_ptr<IndexBuffer>
 	{
+#ifdef MAPLE_VULKAN
+		return std::make_shared<VulkanIndexBuffer>(data, count, bufferUsage);
+#endif
+#ifdef MAPLE_OPENGL
 		return std::make_shared<GLIndexBuffer>(data, count, bufferUsage);
+#endif
 	}
 
 	auto Pipeline::get(const PipelineInfo &desc) -> std::shared_ptr<Pipeline>
@@ -169,24 +236,43 @@ namespace maple
 
 	auto RenderPass::create(const RenderPassInfo &desc) -> std::shared_ptr<RenderPass>
 	{
+#ifdef MAPLE_VULKAN
+		return std::make_shared<VulkanRenderPass>(desc);
+#endif
+#ifdef MAPLE_OPENGL
 		return std::make_shared<GLRenderPass>(desc);
+#endif
 	}
 
 	auto UniformBuffer::create() -> std::shared_ptr<UniformBuffer>
 	{
+#ifdef MAPLE_VULKAN
+		return std::make_shared<VulkanUniformBuffer>();
+#endif
+#ifdef MAPLE_OPENGL
 		return std::make_shared<GLUniformBuffer>();
+#endif
 	}
 
 	auto UniformBuffer::create(uint32_t size, const void *data) -> std::shared_ptr<UniformBuffer>
 	{
+#ifdef MAPLE_VULKAN
+		auto buffer = std::make_shared<VulkanUniformBuffer>();
+#endif
+#ifdef MAPLE_OPENGL
 		auto buffer = std::make_shared<GLUniformBuffer>();
+#endif
 		buffer->setData(size, data);
 		return buffer;
 	}
 
 	auto VertexBuffer::create(const BufferUsage &usage) -> std::shared_ptr<VertexBuffer>
 	{
+#ifdef MAPLE_VULKAN
+		return std::make_shared<VulkanVertexBuffer>(usage);
+#endif
+#ifdef MAPLE_OPENGL
 		return std::make_shared<GLVertexBuffer>(usage);
+#endif
 	}
-
 }        // namespace maple

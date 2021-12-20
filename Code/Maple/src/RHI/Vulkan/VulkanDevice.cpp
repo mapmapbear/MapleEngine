@@ -1,148 +1,309 @@
 //////////////////////////////////////////////////////////////////////////////
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
-#include <stdexcept>
 #include "VulkanDevice.h"
+#include "Vk.h"
+#include "VulkanCommandPool.h"
 #include "VulkanContext.h"
 #include "VulkanHelper.h"
-#include "VulkanCommandPool.h"
+#include <stdexcept>
 
+#include "Application.h"
 
 namespace maple
 {
-	const std::vector<const char*> deviceExtensions = {
-		VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-		VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME,
-		VK_KHR_MAINTENANCE1_EXTENSION_NAME
-		
-	};
-
-	auto VulkanDevice::init() -> bool
+	namespace
 	{
-		physicalDevice = std::make_shared<VulkanPhysicalDevice>();
-
-		auto indices = VulkanHelper::findQueueFamilies(*physicalDevice, VulkanContext::get()->getVkSurface());
-
-		std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-		std::set<uint32_t> uniqueQueueFamilies = { indices.graphicsFamily.value(), indices.presentFamily.value() };
-
-		float queuePriority = 1.0f;
-		for (uint32_t queueFamily : uniqueQueueFamilies) {
-			VkDeviceQueueCreateInfo queueCreateInfo{};
-			queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-			queueCreateInfo.queueFamilyIndex = queueFamily;
-			queueCreateInfo.queueCount = 1;
-			queueCreateInfo.pQueuePriorities = &queuePriority;
-			queueCreateInfos.emplace_back(queueCreateInfo);
+		inline auto getDeviceTypeName(VkPhysicalDeviceType type) -> const std::string
+		{
+			switch (type)
+			{
+				case VK_PHYSICAL_DEVICE_TYPE_OTHER:
+					return "Other";
+				case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+					return "Integrated GPU";
+				case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+					return "Discrete GPU";
+				case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
+					return "Virtual GPU";
+				case VK_PHYSICAL_DEVICE_TYPE_CPU:
+					return "CPU";
+				default:
+					return "UNKNOWN";
+			}
 		}
 
-		VkPhysicalDeviceFeatures deviceFeatures{};
-		deviceFeatures.samplerAnisotropy = VK_TRUE;
+		inline auto lookupQueueFamilyIndices(int32_t flags, std::vector<VkQueueFamilyProperties> &queueFamilyProperties) -> QueueFamilyIndices
+		{
+			QueueFamilyIndices indices;
 
-		VkDeviceCreateInfo createInfo{};
-		createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+			if (flags & VK_QUEUE_COMPUTE_BIT)
+			{
+				for (uint32_t i = 0; i < queueFamilyProperties.size(); i++)
+				{
+					auto &queueFamilyProperty = queueFamilyProperties[i];
+					if ((queueFamilyProperty.queueFlags & VK_QUEUE_COMPUTE_BIT) && ((queueFamilyProperty.queueFlags & VK_QUEUE_GRAPHICS_BIT) == 0))
+					{
+						indices.computeFamily = i;
+						break;
+					}
+				}
+			}
 
-		createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
-		createInfo.pQueueCreateInfos = queueCreateInfos.data();
+			if (flags & VK_QUEUE_TRANSFER_BIT)
+			{
+				for (uint32_t i = 0; i < queueFamilyProperties.size(); i++)
+				{
+					auto &queueFamilyProperty = queueFamilyProperties[i];
+					if ((queueFamilyProperty.queueFlags & VK_QUEUE_TRANSFER_BIT) && ((queueFamilyProperty.queueFlags & VK_QUEUE_GRAPHICS_BIT) == 0) && ((queueFamilyProperty.queueFlags & VK_QUEUE_COMPUTE_BIT) == 0))
+					{
+						indices.presentFamily = i;
+						break;
+					}
+				}
+			}
 
-		createInfo.pEnabledFeatures = &deviceFeatures;
+			for (uint32_t i = 0; i < queueFamilyProperties.size(); i++)
+			{
+				if ((flags & VK_QUEUE_TRANSFER_BIT) && !indices.presentFamily.has_value())
+				{
+					if (queueFamilyProperties[i].queueFlags & VK_QUEUE_TRANSFER_BIT)
+						indices.presentFamily = i;
+				}
 
-		createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
-		createInfo.ppEnabledExtensionNames = deviceExtensions.data();
+				if ((flags & VK_QUEUE_COMPUTE_BIT) && !indices.computeFamily.has_value())
+				{
+					if (queueFamilyProperties[i].queueFlags & VK_QUEUE_COMPUTE_BIT)
+						indices.computeFamily = i;
+				}
 
-		if (VulkanContext::get()->isEnableValidation()) {
-			createInfo.enabledLayerCount = static_cast<uint32_t>(VulkanContext::get()->getValidationLayers().size());
-			createInfo.ppEnabledLayerNames = VulkanContext::get()->getValidationLayers().data();
+				if (flags & VK_QUEUE_GRAPHICS_BIT)
+				{
+					if (queueFamilyProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
+						indices.graphicsFamily = i;
+				}
+			}
+
+			return indices;
 		}
-		else {
-			createInfo.enabledLayerCount = 0;
-		}
-
-		if (vkCreateDevice(*physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create logical device!");
-		}
-
-		vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
-		vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
-
-		commandPool = std::make_shared<VulkanCommandPool>();
-
-		createPipelineCache();
-
-		return true;
-	}
-
-	VulkanDevice::VulkanDevice()
-	{
-
-	}
-
-
+	}        // namespace
 
 	VulkanPhysicalDevice::VulkanPhysicalDevice()
 	{
-		/**
-		 * Select a supported graphics card (VkPhysicalDevice)
-		 */
-		uint32_t deviceCount = 0;
-		vkEnumeratePhysicalDevices(VulkanContext::get()->getVkInstance(), &deviceCount, nullptr);
-		if (deviceCount == 0) {
-			throw std::runtime_error("failed to find GPUs with Vulkan support!");
+		uint32_t numGPUs = 0;
+
+		auto vkContext = std::static_pointer_cast<VulkanContext>(Application::getGraphicsContext());
+
+		auto vkInstance = vkContext->getVkInstance();
+		vkEnumeratePhysicalDevices(vkInstance, &numGPUs, VK_NULL_HANDLE);
+		if (numGPUs == 0)
+		{
+			LOGC("No GPUs found!");
 		}
 
-		std::vector<VkPhysicalDevice> devices(deviceCount);
-		vkEnumeratePhysicalDevices(VulkanContext::get()->getVkInstance(), &deviceCount, devices.data());
+		std::vector<VkPhysicalDevice> physicalDevices(numGPUs);
+		vkEnumeratePhysicalDevices(vkInstance, &numGPUs, physicalDevices.data());
+		physicalDevice = physicalDevices.back();
 
-		for (const auto& device : devices) {
-			if (isDeviceSuitable(device)) {
+		for (VkPhysicalDevice device : physicalDevices)
+		{
+			vkGetPhysicalDeviceProperties(device, &physicalDeviceProperties);
+			if (physicalDeviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+			{
 				physicalDevice = device;
-				//get params 
-				vkGetPhysicalDeviceProperties(physicalDevice, &properties);
 				break;
 			}
 		}
 
-		if (physicalDevice == VK_NULL_HANDLE) {
-			throw std::runtime_error("failed to find a suitable GPU!");
+		vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
+		vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memoryProperties);
+
+		LOGI("Vulkan : {0}.{1}.{2}", VK_VERSION_MAJOR(physicalDeviceProperties.apiVersion), VK_VERSION_MINOR(physicalDeviceProperties.apiVersion), VK_VERSION_PATCH(physicalDeviceProperties.apiVersion));
+		LOGI("GPU : {0}", std::string(physicalDeviceProperties.deviceName));
+		LOGI("Vendor ID : {0}", physicalDeviceProperties.vendorID);
+		LOGI("Device Type : {0}", getDeviceTypeName(physicalDeviceProperties.deviceType));
+		LOGI("Driver Version : {0}.{1}.{2}", VK_VERSION_MAJOR(physicalDeviceProperties.driverVersion), VK_VERSION_MINOR(physicalDeviceProperties.driverVersion), VK_VERSION_PATCH(physicalDeviceProperties.driverVersion));
+
+		uint32_t queueFamilyCount;
+		vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nullptr);
+		MAPLE_ASSERT(queueFamilyCount > 0, "");
+		queueFamilyProperties.resize(queueFamilyCount);
+		vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, queueFamilyProperties.data());
+
+		uint32_t extCount = 0;
+		vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &extCount, nullptr);
+		if (extCount > 0)
+		{
+			std::vector<VkExtensionProperties> extensions(extCount);
+			if (vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &extCount, &extensions.front()) == VK_SUCCESS)
+			{
+				LOGI("Selected physical device has {0} extensions", extensions.size());
+				for (const auto &ext : extensions)
+				{
+					supportedExtensions.emplace(ext.extensionName);
+				}
+			}
+		}
+
+		static const float defaultQueuePriority(0.0f);
+
+		int32_t requestedQueueTypes = VK_QUEUE_GRAPHICS_BIT;        // | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT;
+		indices                     = lookupQueueFamilyIndices(requestedQueueTypes, queueFamilyProperties);
+
+		// Graphics queue
+		if (requestedQueueTypes & VK_QUEUE_GRAPHICS_BIT)
+		{
+			VkDeviceQueueCreateInfo queueInfo{};
+			queueInfo.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+			queueInfo.queueFamilyIndex = indices.graphicsFamily.value();
+			queueInfo.queueCount       = 1;
+			queueInfo.pQueuePriorities = &defaultQueuePriority;
+			queueCreateInfos.emplace_back(queueInfo);
+		}
+
+		// compute queue
+		if (requestedQueueTypes & VK_QUEUE_COMPUTE_BIT)
+		{
+			if (indices.computeFamily != indices.graphicsFamily)
+			{
+				// If compute family index differs, we need an additional queue create info for the compute queue
+				VkDeviceQueueCreateInfo queueInfo{};
+				queueInfo.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+				queueInfo.queueFamilyIndex = indices.computeFamily.value();
+				queueInfo.queueCount       = 1;
+				queueInfo.pQueuePriorities = &defaultQueuePriority;
+				queueCreateInfos.emplace_back(queueInfo);
+			}
+		}
+
+		// transfer queue
+		if (requestedQueueTypes & VK_QUEUE_TRANSFER_BIT)
+		{
+			if ((indices.presentFamily != indices.graphicsFamily) && (indices.presentFamily != indices.computeFamily))
+			{
+				// If compute family index differs, we need an additional queue create info for the compute queue
+				VkDeviceQueueCreateInfo queueInfo{};
+				queueInfo.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+				queueInfo.queueFamilyIndex = indices.presentFamily.value();
+				queueInfo.queueCount       = 1;
+				queueInfo.pQueuePriorities = &defaultQueuePriority;
+				queueCreateInfos.emplace_back(queueInfo);
+			}
 		}
 	}
 
-	/**
-	 * find a suitable graphics card
-	 */
-	auto VulkanPhysicalDevice::isDeviceSuitable(VkPhysicalDevice device) -> bool
+	auto VulkanPhysicalDevice::getMemoryTypeIndex(uint32_t typeBits, VkMemoryPropertyFlags properties) const -> uint32_t
 	{
-		indices = VulkanHelper::findQueueFamilies(device, VulkanContext::get()->getVkSurface());
-		bool extensionsSupported = VulkanHelper::checkDeviceExtensionSupport(device, deviceExtensions);
-		bool swapChainAdequate = false;
-		if (extensionsSupported) {
-			SwapChainSupportDetails swapChainSupport = VulkanHelper::querySwapChainSupport(device, VulkanContext::get()->getVkSurface());
-			swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
+		for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; i++)
+		{
+			if ((typeBits & 1) == 1)
+			{
+				if ((memoryProperties.memoryTypes[i].propertyFlags & properties) == properties)
+					return i;
+			}
+			typeBits >>= 1;
 		}
-		VkPhysicalDeviceFeatures supportedFeatures;
-		vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
-		return indices.isComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
+		MAPLE_ASSERT(false, "Could not find a suitable memory type!");
+		return -1;
 	}
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	auto VulkanDevice::get() ->std::shared_ptr<VulkanDevice>
+	VulkanDevice::VulkanDevice()
 	{
-		if (instance == nullptr) {
-			instance = std::make_shared<VulkanDevice>();
-		}
-		return instance;
-	}
-
-	auto VulkanDevice::release() -> void
-	{
-		instance.reset();
 	}
 
 	VulkanDevice::~VulkanDevice()
 	{
 		commandPool.reset();
+
+		vkDestroyPipelineCache(device, pipelineCache, VK_NULL_HANDLE);
+
+#if defined(MAPLE_PROFILE) && defined(TRACY_ENABLE)
+		for (int32_t i = 0; i < 3; i++)
+			TracyVkDestroy(tracyContext[i]);
+#endif
+
 		if (device != nullptr)
 			vkDestroyDevice(device, nullptr);
+	}
+
+	auto VulkanDevice::createTracyContext() -> void
+	{
+		VkCommandBufferAllocateInfo allocInfo = {};
+		allocInfo.sType                       = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		allocInfo.level                       = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		allocInfo.commandPool                 = *commandPool;
+		allocInfo.commandBufferCount          = 1;
+
+		VkCommandBuffer tracyBuffer;
+		vkAllocateCommandBuffers(device, &allocInfo, &tracyBuffer);
+
+#if defined(MAPLE_PROFILE) && defined(TRACY_ENABLE)
+		tracyContext.resize(3);
+		for (int i = 0; i < 3; i++)
+			tracyContext[i] = TracyVkContext(*physicalDevice, device, graphicsQueue, tracyBuffer);
+#endif
+
+		vkQueueWaitIdle(graphicsQueue);
+		vkFreeCommandBuffers(device, *commandPool, 1, &tracyBuffer);
+	}
+
+	auto VulkanDevice::init() -> bool
+	{
+		physicalDevice = std::make_shared<VulkanPhysicalDevice>();
+
+		VkPhysicalDeviceFeatures physicalDeviceFeatures;
+		vkGetPhysicalDeviceFeatures(*physicalDevice, &physicalDeviceFeatures);
+
+		std::vector<const char *> deviceExtensions = {
+		    VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+
+		if (physicalDevice->isExtensionSupported(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+		{
+			deviceExtensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+			enableDebugMarkers = true;
+		}
+
+		VkPhysicalDeviceDescriptorIndexingFeaturesEXT indexingFeatures{};
+		indexingFeatures.sType                           = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
+		indexingFeatures.runtimeDescriptorArray          = VK_TRUE;
+		indexingFeatures.descriptorBindingPartiallyBound = VK_TRUE;
+
+#if defined(PLATFORM_MACOS) || defined(PLATFORM_IOS)
+		// https://vulkan.lunarg.com/doc/view/1.2.162.0/mac/1.2-extensions/vkspec.html#VUID-VkDeviceCreateInfo-pProperties-04451
+		if (physicalDevice->isExtensionSupported("VK_KHR_portability_subset"))
+		{
+			deviceExtensions.emplace_back("VK_KHR_portability_subset");
+		}
+#endif
+
+		// Device
+		VkDeviceCreateInfo deviceCreateInfo{};
+		deviceCreateInfo.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+		deviceCreateInfo.queueCreateInfoCount    = static_cast<uint32_t>(physicalDevice->queueCreateInfos.size());
+		deviceCreateInfo.pQueueCreateInfos       = physicalDevice->queueCreateInfos.data();
+		deviceCreateInfo.enabledExtensionCount   = static_cast<uint32_t>(deviceExtensions.size());
+		deviceCreateInfo.ppEnabledExtensionNames = deviceExtensions.data();
+		deviceCreateInfo.pEnabledFeatures        = &physicalDeviceFeatures;
+		deviceCreateInfo.enabledLayerCount       = 0;
+		deviceCreateInfo.pNext                   = (void *) &indexingFeatures;
+
+		auto result = vkCreateDevice(*physicalDevice, &deviceCreateInfo, VK_NULL_HANDLE, &device);
+		if (result != VK_SUCCESS)
+		{
+			LOGC("[VULKAN] vkCreateDevice() failed!");
+			return false;
+		}
+
+		vkGetDeviceQueue(device, physicalDevice->indices.graphicsFamily.value(), 0, &graphicsQueue);
+		vkGetDeviceQueue(device, physicalDevice->indices.graphicsFamily.value(), 0, &presentQueue);
+
+		commandPool = std::make_shared<VulkanCommandPool>(physicalDevice->indices.graphicsFamily.value(), VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+
+		createTracyContext();
+		createPipelineCache();
+		return true;
 	}
 
 	auto VulkanDevice::createPipelineCache() -> void
@@ -154,4 +315,12 @@ namespace maple
 	}
 
 	std::shared_ptr<VulkanDevice> VulkanDevice::instance;
-};
+
+#if defined(MAPLE_PROFILE) && defined(TRACY_ENABLE)
+	auto VulkanDevice::getTracyContext() -> tracy::VkCtx *
+	{
+		auto index = Application::getGraphicsContext()->getSwapChain()->getCurrentBufferIndex();
+		return tracyContext[index];
+	}
+#endif
+};        // namespace maple

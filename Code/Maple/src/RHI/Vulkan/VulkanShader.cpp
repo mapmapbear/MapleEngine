@@ -2,237 +2,433 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #include "VulkanShader.h"
-#include "VulkanDevice.h"
-#include "VulkanCommandBuffer.h"
-#include "VulkanPipeline.h"
 #include "FileSystem/File.h"
-#include "Others/StringUtils.h"
 #include "Others/Console.h"
+#include "Others/StringUtils.h"
+#include "VulkanCommandBuffer.h"
+#include "VulkanDevice.h"
+#include "VulkanPipeline.h"
 #include <spirv_cross.hpp>
 
 namespace maple
 {
-	uint32_t getStrideFromVulkanFormat(VkFormat format)
+	namespace
 	{
-		switch (format)
+		inline auto getStrideFromVulkanFormat(VkFormat format) -> uint32_t
 		{
-		case VK_FORMAT_R8_SINT:
-		case VK_FORMAT_R32_SINT:
-			return sizeof(int);
-		case VK_FORMAT_R32_SFLOAT:
-			return sizeof(float);
-		case VK_FORMAT_R32G32_SFLOAT:
-			return sizeof(glm::vec2);
-		case VK_FORMAT_R32G32B32_SFLOAT:
-			return sizeof(glm::vec3);
-		case VK_FORMAT_R32G32B32A32_SFLOAT:
-			return sizeof(glm::vec4);
-		case VK_FORMAT_R32G32_SINT:
-			return sizeof(glm::ivec2);
-		case VK_FORMAT_R32G32B32_SINT:
-			return sizeof(glm::ivec3);
-		case VK_FORMAT_R32G32B32A32_SINT:
-			return sizeof(glm::ivec4);
-		case VK_FORMAT_R32G32_UINT:
-			return sizeof(glm::ivec2);
-		case VK_FORMAT_R32G32B32_UINT:
-			return sizeof(glm::ivec3);
-		case VK_FORMAT_R32G32B32A32_UINT:
-			return sizeof(glm::ivec4); 
-		default:
-			LOGE("Unsupported Vulkan Format {0} , {1} : {2}", format,__FUNCTION__,__LINE__);
+			switch (format)
+			{
+				case VK_FORMAT_R8_SINT:
+				case VK_FORMAT_R32_SINT:
+					return sizeof(int);
+				case VK_FORMAT_R32_SFLOAT:
+					return sizeof(float);
+				case VK_FORMAT_R32G32_SFLOAT:
+					return sizeof(glm::vec2);
+				case VK_FORMAT_R32G32B32_SFLOAT:
+					return sizeof(glm::vec3);
+				case VK_FORMAT_R32G32B32A32_SFLOAT:
+					return sizeof(glm::vec4);
+				case VK_FORMAT_R32G32_SINT:
+					return sizeof(glm::ivec2);
+				case VK_FORMAT_R32G32B32_SINT:
+					return sizeof(glm::ivec3);
+				case VK_FORMAT_R32G32B32A32_SINT:
+					return sizeof(glm::ivec4);
+				case VK_FORMAT_R32G32_UINT:
+					return sizeof(glm::ivec2);
+				case VK_FORMAT_R32G32B32_UINT:
+					return sizeof(glm::ivec3);
+				case VK_FORMAT_R32G32B32A32_UINT:
+					return sizeof(glm::ivec4);
+				default:
+					LOGE("Unsupported Vulkan Format {0} , {1} : {2}", format, __FUNCTION__, __LINE__);
+					return 0;
+			}
+
 			return 0;
 		}
 
-		return 0;
+		inline auto getVulkanFormat(const spirv_cross::SPIRType type)
+		{
+			VkFormat uintTypes[] =
+			    {
+			        VK_FORMAT_R32_UINT,
+			        VK_FORMAT_R32G32_UINT,
+			        VK_FORMAT_R32G32B32_UINT,
+			        VK_FORMAT_R32G32B32A32_UINT};
+
+			VkFormat intTypes[] =
+			    {
+			        VK_FORMAT_R32_SINT,
+			        VK_FORMAT_R32G32_SINT,
+			        VK_FORMAT_R32G32B32_SINT,
+			        VK_FORMAT_R32G32B32A32_SINT};
+
+			VkFormat floatTypes[] =
+			    {
+			        VK_FORMAT_R32_SFLOAT,
+			        VK_FORMAT_R32G32_SFLOAT,
+			        VK_FORMAT_R32G32B32_SFLOAT,
+			        VK_FORMAT_R32G32B32A32_SFLOAT};
+
+			VkFormat doubleTypes[] =
+			    {
+			        VK_FORMAT_R64_SFLOAT,
+			        VK_FORMAT_R64G64_SFLOAT,
+			        VK_FORMAT_R64G64B64_SFLOAT,
+			        VK_FORMAT_R64G64B64A64_SFLOAT,
+			    };
+
+			switch (type.basetype)
+			{
+				case spirv_cross::SPIRType::UInt:
+					return uintTypes[type.vecsize - 1];
+				case spirv_cross::SPIRType::Int:
+					return intTypes[type.vecsize - 1];
+				case spirv_cross::SPIRType::Float:
+					return floatTypes[type.vecsize - 1];
+				case spirv_cross::SPIRType::Double:
+					return doubleTypes[type.vecsize - 1];
+				default:
+					LOGC("Cannot find VK_Format : {0}", type.basetype);
+					return VK_FORMAT_R32G32B32A32_SFLOAT;
+			}
+		}
+
+		inline auto sprivTypeToDataType(const spirv_cross::SPIRType type)
+		{
+			switch (type.basetype)
+			{
+				case spirv_cross::SPIRType::Boolean:
+					return ShaderDataType::Bool;
+				case spirv_cross::SPIRType::Int:
+					if (type.vecsize == 1)
+						return ShaderDataType::Int;
+					if (type.vecsize == 2)
+						return ShaderDataType::IVec2;
+					if (type.vecsize == 3)
+						return ShaderDataType::IVec3;
+					if (type.vecsize == 4)
+						return ShaderDataType::IVec4;
+				case spirv_cross::SPIRType::UInt:
+					return ShaderDataType::UInt;
+				case spirv_cross::SPIRType::Float:
+					if (type.columns == 3)
+						return ShaderDataType::Mat3;
+					if (type.columns == 4)
+						return ShaderDataType::Mat4;
+
+					if (type.vecsize == 1)
+						return ShaderDataType::Float32;
+					if (type.vecsize == 2)
+						return ShaderDataType::Vec2;
+					if (type.vecsize == 3)
+						return ShaderDataType::Vec3;
+					if (type.vecsize == 4)
+						return ShaderDataType::Vec4;
+					break;
+				case spirv_cross::SPIRType::Struct:
+					return ShaderDataType::Struct;
+			}
+			LOGW("Unknown spirv type!");
+			return ShaderDataType::None;
+		}
+	}        // namespace
+
+	VulkanShader::VulkanShader(const std::string &path) :
+	    filePath(path)
+	{
+		name       = StringUtils::getFileName(filePath);
+		auto bytes = File::read(filePath);
+		source     = {bytes->begin(), bytes->end()};
+		if (!source.empty())
+		{
+			init();
+		}
 	}
 
-	VkFormat getVulkanFormat(const spirv_cross::SPIRType type)
+	VulkanShader::VulkanShader(const std::vector<uint32_t> &vertData, const std::vector<uint32_t> &fragData)
 	{
-		VkFormat uintTypes[] =
-		{
-			VK_FORMAT_R32_UINT, 
-			VK_FORMAT_R32G32_UINT, 
-			VK_FORMAT_R32G32B32_UINT, 
-			VK_FORMAT_R32G32B32A32_UINT
-		};
-
-		VkFormat intTypes[] =
-		{
-			VK_FORMAT_R32_SINT, 
-			VK_FORMAT_R32G32_SINT, 
-			VK_FORMAT_R32G32B32_SINT,
-			VK_FORMAT_R32G32B32A32_SINT
-		};
-
-		VkFormat floatTypes[] =
-		{
-			VK_FORMAT_R32_SFLOAT, 
-			VK_FORMAT_R32G32_SFLOAT, 
-			VK_FORMAT_R32G32B32_SFLOAT,
-			VK_FORMAT_R32G32B32A32_SFLOAT
-		};
-
-		VkFormat doubleTypes[] =
-		{
-			VK_FORMAT_R64_SFLOAT,
-			VK_FORMAT_R64G64_SFLOAT,
-			VK_FORMAT_R64G64B64_SFLOAT,
-			VK_FORMAT_R64G64B64A64_SFLOAT,
-		};
-
-		switch (type.basetype)
-		{
-		case spirv_cross::SPIRType::UInt:
-			return uintTypes[type.vecsize - 1];
-		case spirv_cross::SPIRType::Int:
-			return intTypes[type.vecsize - 1];
-		case spirv_cross::SPIRType::Float:
-			return floatTypes[type.vecsize - 1];
-		case spirv_cross::SPIRType::Double:
-			return doubleTypes[type.vecsize - 1];
-		default:
-			LOGC("Cannot find VK_Format : {0}", type.basetype); return VK_FORMAT_R32G32B32A32_SFLOAT;
-		}
+		LOGW("{0} did not implement",__FUNCTION__);
 	}
 
 	VulkanShader::~VulkanShader()
 	{
-		for (auto [type, shaderModule] : shaderModules) {
-			vkDestroyShaderModule(*VulkanDevice::get(), shaderModule, nullptr);
-		}
+		unload();
 	}
 
-	auto VulkanShader::bind() const -> void 
-	{
-	}
-
-	auto VulkanShader::unbind() const -> void 
-	{
-	}
-
-	auto VulkanShader::bindPushConstants(CommandBuffer* cmdBuffer, Pipeline* pipeline) -> void 
+	auto VulkanShader::bindPushConstants(CommandBuffer *cmdBuffer, Pipeline *pipeline) -> void
 	{
 		uint32_t index = 0;
-		for (auto& pc : pushConstants)
+		for (auto &pc : pushConstants)
 		{
 			vkCmdPushConstants(
-				static_cast<VulkanCommandBuffer&>(*cmdBuffer),
-				static_cast<VulkanPipeline*>(pipeline)->getPipelineLayout(),
-				VkConverter::shaderTypeToVK(pc.shaderStage), index, pc.size, pc.data.get());
+			    static_cast<VulkanCommandBuffer &>(*cmdBuffer),
+			    static_cast<VulkanPipeline *>(pipeline)->getPipelineLayout(),
+			    VkConverter::shaderTypeToVK(pc.shaderStage), index, pc.size, pc.data.data());
 		}
 	}
 
-	auto VulkanShader::getHandle() const -> void* 
+	auto VulkanShader::init() -> void
 	{
-		return nullptr;
-	}
-
-	VulkanShader::VulkanShader(const std::string& path)
-		:Shader(path)
-	{
-
-		auto buffer = File::read(path);
-		std::string str(buffer.begin(), buffer.end());
-
+		PROFILE_FUNCTION();
+		uint32_t currentShaderStage = 0;
 
 		std::vector<std::string> lines;
-		StringUtils::split(str,"\n", lines);
+		StringUtils::split(source, "\n", lines);
 		std::unordered_map<ShaderType, std::string> sources;
 		parseSource(lines, sources);
 
-		for (auto & s : sources)
+		for (auto &source : sources)
 		{
-			shaderModules[s.first] =   createShader(File::read(s.second), s.first);
+			shaderTypes.emplace_back(source.first);
 		}
 
-		for (auto [type, shaderModule] : shaderModules)
+		shaderStages.resize(sources.size());
+
+		LOGI("Loading Shader : {0}", name);
+
+		for (auto &source : sources)
 		{
-			auto& info = stageInfos.emplace_back();
-			info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-			info.stage = VkConverter::shaderTypeToVK(type);
-			info.module = shaderModule;
-			info.pName = "main";
+			auto buffer = File::read(source.second);
+			auto size   = buffer->size() / sizeof(uint32_t);
+			loadShader({reinterpret_cast<uint32_t *>(buffer->data()), reinterpret_cast<uint32_t *>(buffer->data()) + size}, source.first, currentShaderStage);
+			currentShaderStage++;
 		}
+
+		createPipelineLayout();
 	}
 
-	auto VulkanShader::createShader(const std::vector<uint8_t>& code, ShaderType shaderType) -> VkShaderModule
+	auto VulkanShader::createPipelineLayout() -> void
 	{
-		
-		LOGI("Processing shader......................");
+		std::vector<std::vector<DescriptorLayoutInfo>> layouts;
 
-		VkShaderModuleCreateInfo createInfo{};
-		createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-		createInfo.codeSize = code.size();
-		createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
-		VkShaderModule shaderModule;
-		if (vkCreateShaderModule(*VulkanDevice::get(), &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create shader module!");
+		for (auto &descriptorLayout : descriptorLayoutInfo)
+		{
+			if (layouts.size() < descriptorLayout.setID + 1)
+			{
+				layouts.emplace_back();
+			}
+			layouts[descriptorLayout.setID].emplace_back(descriptorLayout);
 		}
 
-		std::vector<uint32_t> spv(createInfo.pCode, createInfo.pCode + code.size() / sizeof(uint32_t));
+		for (auto &l : layouts)
+		{
+			std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings;
+			std::vector<VkDescriptorBindingFlags>     layoutBindingFlags;
+			setLayoutBindings.reserve(l.size());
+			layoutBindingFlags.reserve(l.size());
 
-		spirv_cross::Compiler comp(spv);
+			for (uint32_t i = 0; i < l.size(); i++)
+			{
+				auto &info = l[i];
+
+				VkDescriptorSetLayoutBinding setLayoutBinding{};
+				setLayoutBinding.descriptorType  = VkConverter::descriptorTypeToVK(info.type);
+				setLayoutBinding.stageFlags      = VkConverter::shaderTypeToVK(info.stage);
+				setLayoutBinding.binding         = info.binding;
+				setLayoutBinding.descriptorCount = info.count;
+
+				bool isArray = info.count > 1;
+				layoutBindingFlags.emplace_back(isArray ? VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT : 0);
+				setLayoutBindings.emplace_back(setLayoutBinding);
+			}
+
+			VkDescriptorSetLayoutBindingFlagsCreateInfoEXT flagsInfo = {};
+			flagsInfo.sType                                          = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO_EXT;
+			flagsInfo.pNext                                          = nullptr;
+			flagsInfo.bindingCount                                   = static_cast<uint32_t>(layoutBindingFlags.size());
+			flagsInfo.pBindingFlags                                  = layoutBindingFlags.data();
+
+			// Pipeline layout
+			VkDescriptorSetLayoutCreateInfo setLayoutCreateInfo{};
+			setLayoutCreateInfo.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+			setLayoutCreateInfo.bindingCount = static_cast<uint32_t>(setLayoutBindings.size());
+			setLayoutCreateInfo.pBindings    = setLayoutBindings.data();
+			setLayoutCreateInfo.pNext        = &flagsInfo;
+			VkDescriptorSetLayout layout;
+			vkCreateDescriptorSetLayout(*VulkanDevice::get(), &setLayoutCreateInfo, VK_NULL_HANDLE, &layout);
+
+			descriptorSetLayouts.emplace_back(layout);
+		}
+
+		std::vector<VkPushConstantRange> pushConstantRanges;
+
+		for (auto &pushConst : pushConstants)
+		{
+			pushConstantRanges.push_back(VulkanHelper::pushConstantRange(VkConverter::shaderTypeToVK(pushConst.shaderStage), pushConst.size, pushConst.offset));
+		}
+
+		VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
+		pipelineLayoutCreateInfo.sType          = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+		pipelineLayoutCreateInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
+		pipelineLayoutCreateInfo.pSetLayouts    = descriptorSetLayouts.data();
+
+		pipelineLayoutCreateInfo.pushConstantRangeCount = uint32_t(pushConstantRanges.size());
+		pipelineLayoutCreateInfo.pPushConstantRanges    = pushConstantRanges.data();
+
+		VK_CHECK_RESULT(vkCreatePipelineLayout(*VulkanDevice::get(), &pipelineLayoutCreateInfo, VK_NULL_HANDLE, &pipelineLayout));
+	}
+
+	auto VulkanShader::unload() const -> void
+	{
+		PROFILE_FUNCTION();
+		for (auto &stage : shaderStages)
+		{
+			vkDestroyShaderModule(*VulkanDevice::get(), stage.module, nullptr);
+		}
+
+		for (auto &descriptorLayout : descriptorSetLayouts)
+			vkDestroyDescriptorSetLayout(*VulkanDevice::get(), descriptorLayout, VK_NULL_HANDLE);
+
+		vkDestroyPipelineLayout(*VulkanDevice::get(), pipelineLayout, VK_NULL_HANDLE);
+	}
+
+	auto VulkanShader::loadShader(const std::vector<uint32_t> &spvCode, ShaderType shaderType, int32_t currentShaderStage) -> void
+	{
+		VkShaderModuleCreateInfo shaderCreateInfo{};
+		shaderCreateInfo.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+		shaderCreateInfo.codeSize = spvCode.size() / sizeof(uint32_t);
+		shaderCreateInfo.pCode    = spvCode.data();
+		shaderCreateInfo.pNext    = VK_NULL_HANDLE;
+
+		spirv_cross::Compiler        comp(spvCode);
 		spirv_cross::ShaderResources resources = comp.get_shader_resources();
 
-		if (shaderType == VERTEX_SHADER)
+		if (shaderType == ShaderType::Vertex)
 		{
+			//Vertex Layout
 			vertexInputStride = 0;
-			for (const auto & resource : resources.stage_inputs)
+
+			for (const spirv_cross::Resource &resource : resources.stage_inputs)
 			{
-				auto & inputType = comp.get_type(resource.type_id);
-				VkVertexInputAttributeDescription & description = vertexInputAttributeDescriptions.emplace_back();
-				description.binding = comp.get_decoration(resource.id, spv::DecorationBinding);
-				description.location = comp.get_decoration(resource.id, spv::DecorationLocation);
-				description.offset = vertexInputStride;
-				description.format = getVulkanFormat(inputType);
+				const spirv_cross::SPIRType &InputType = comp.get_type(resource.type_id);
+
+				VkVertexInputAttributeDescription description = {};
+				description.binding                           = comp.get_decoration(resource.id, spv::DecorationBinding);
+				description.location                          = comp.get_decoration(resource.id, spv::DecorationLocation);
+				description.offset                            = vertexInputStride;
+				description.format                            = getVulkanFormat(InputType);
+				vertexInputAttributeDescriptions.emplace_back(description);
 				vertexInputStride += getStrideFromVulkanFormat(description.format);
 			}
 		}
 
-#define addLayout(BUFFER,DESCRIPTORTYPE)																\
-			for (auto & uniform : BUFFER)																\
-			{																							\
-				auto set = comp.get_decoration(uniform.id, spv::DecorationDescriptorSet);				\
-				auto binding = comp.get_decoration(uniform.id, spv::DecorationBinding);					\
-				auto& type = comp.get_type(uniform.type_id);											\
-				LOGV(###DESCRIPTORTYPE" {0} at set = {1}, binding = {2}", uniform.name, set, binding);	\
-				auto& layout = descriptorLayoutInfo.emplace_back();										\
-				layout.type = DESCRIPTORTYPE;															\
-				layout.stage = shaderType;																\
-				layout.setId = set;																		\
-				layout.binding = binding;																\
-				layout.count = type.array.size() ? uint32_t(type.array[0]) : 1;							\
-			}
-
-
-		addLayout(resources.uniform_buffers, DescriptorType::UNIFORM_BUFFER);
-		addLayout(resources.sampled_images, DescriptorType::IMAGE_SAMPLER);
-
-		for (auto& buffer : resources.push_constant_buffers)
+		//Descriptor Layout
+		for (auto &u : resources.uniform_buffers)
 		{
-			auto set = comp.get_decoration(buffer.id, spv::DecorationDescriptorSet);
-			auto binding = comp.get_decoration(buffer.id, spv::DecorationBinding);
-			auto offset = comp.get_decoration(buffer.id, spv::DecorationOffset);
-			auto& type = comp.get_type(buffer.type_id);
-			auto ranges = comp.get_active_buffer_ranges(buffer.id);
+			uint32_t set     = comp.get_decoration(u.id, spv::DecorationDescriptorSet);
+			uint32_t binding = comp.get_decoration(u.id, spv::DecorationBinding);
+			auto &   type    = comp.get_type(u.type_id);
+
+			LOGI("Uniform {0} at set = {1}, binding = {2}", u.name, set, binding);
+			descriptorLayoutInfo.push_back({DescriptorType::UniformBuffer, shaderType, binding, set, type.array.size() ? uint32_t(type.array[0]) : 1});
+
+			auto &bufferType  = comp.get_type(u.base_type_id);
+			auto  bufferSize  = comp.get_declared_struct_size(bufferType);
+			auto  memberCount = (int32_t) bufferType.member_types.size();
+
+			auto &descriptorInfo  = descriptorInfos[set];
+			auto &descriptor      = descriptorInfo.descriptors.emplace_back();
+			descriptor.binding    = binding;
+			descriptor.size       = (uint32_t) bufferSize;
+			descriptor.name       = u.name;
+			descriptor.offset     = 0;
+			descriptor.shaderType = shaderType;
+			descriptor.type       = DescriptorType::UniformBuffer;
+			descriptor.buffer     = nullptr;
+
+			for (int32_t i = 0; i < memberCount; i++)
+			{
+				auto        type       = comp.get_type(bufferType.member_types[i]);
+				const auto &memberName = comp.get_member_name(bufferType.self, i);
+				auto        size       = comp.get_declared_struct_member_size(bufferType, i);
+				auto        offset     = comp.type_struct_member_offset(bufferType, i);
+
+				std::string uniformName = u.name + "." + memberName;
+
+				auto &member  = descriptor.members.emplace_back();
+				member.name   = memberName;
+				member.offset = offset;
+				member.size   = (uint32_t) size;
+
+				LOGI("{0} - Size {1}, offset {2}", uniformName, size, offset);
+			}
+		}
+
+		for (auto &u : resources.push_constant_buffers)
+		{
+			uint32_t set      = comp.get_decoration(u.id, spv::DecorationDescriptorSet);
+			uint32_t binding  = comp.get_decoration(u.id, spv::DecorationBinding);
+			uint32_t binding3 = comp.get_decoration(u.id, spv::DecorationOffset);
+
+			auto &type = comp.get_type(u.type_id);
+
+			auto ranges = comp.get_active_buffer_ranges(u.id);
 
 			uint32_t size = 0;
-			for (auto& range : ranges)
+			for (auto &range : ranges)
 			{
-				LOGV("Try to read PushConstant {0} offset {1}, size {2}", range.index, range.offset, range.range);
+				LOGI("Accessing Member {0} offset {1}, size {2}", range.index, range.offset, range.range);
 				size += uint32_t(range.range);
 			}
 
-			LOGV("Push Constant {0} at set = {1}, binding = {2}", buffer.name.c_str(), set, binding, type.array.size() ? uint32_t(type.array[0]) : 1);
+			LOGI("Push Constant {0} at set = {1}, binding = {2}", u.name.c_str(), set, binding);
 
-			auto & back = pushConstants.emplace_back();
-			back.size = size;
-			back.shaderStage = shaderType;
-			back.data = std::unique_ptr<uint8_t[]>(new uint8_t[size]);
+			auto &push       = pushConstants.emplace_back();
+			push.size        = size;
+			push.shaderStage = shaderType;
+			push.data.resize(size);
+			push.name = u.name;
+
+			auto &  bufferType  = comp.get_type(u.base_type_id);
+			auto    bufferSize  = comp.get_declared_struct_size(bufferType);
+			int32_t memberCount = (int32_t) bufferType.member_types.size();
+
+			for (int32_t i = 0; i < memberCount; i++)
+			{
+				auto        type       = comp.get_type(bufferType.member_types[i]);
+				const auto &memberName = comp.get_member_name(bufferType.self, i);
+				auto        size       = comp.get_declared_struct_member_size(bufferType, i);
+				auto        offset     = comp.type_struct_member_offset(bufferType, i);
+
+				std::string uniformName = u.name + "." + memberName;
+
+				auto &member    = pushConstants.back().members.emplace_back();
+				member.size     = (uint32_t) size;
+				member.offset   = offset;
+				member.type     = sprivTypeToDataType(type);
+				member.fullName = uniformName;
+				member.name     = memberName;
+			}
 		}
 
-		
-		return shaderModule;
+		for (auto &u : resources.sampled_images)
+		{
+			uint32_t set     = comp.get_decoration(u.id, spv::DecorationDescriptorSet);
+			uint32_t binding = comp.get_decoration(u.id, spv::DecorationBinding);
+
+			auto &descriptorInfo = descriptorInfos[set];
+			auto &descriptor     = descriptorInfo.descriptors.emplace_back();
+
+			auto &type = comp.get_type(u.type_id);
+			LOGI("Found Sampled Image {0} at set = {1}, binding = {2}", u.name.c_str(), set, binding);
+
+			descriptorLayoutInfo.push_back({DescriptorType::ImageSampler, shaderType, binding, set, type.array.size() ? uint32_t(type.array[0]) : 1});
+			descriptor.binding    = binding;
+			descriptor.name       = u.name;
+			descriptor.offset     = 0;
+			descriptor.size       = 0;
+			descriptor.shaderType = shaderType;
+		}
+
+		shaderStages[currentShaderStage].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		shaderStages[currentShaderStage].stage = VkConverter::shaderTypeToVK(shaderType);
+		shaderStages[currentShaderStage].pName = "main";
+		shaderStages[currentShaderStage].pNext = VK_NULL_HANDLE;
+
+		VK_CHECK_RESULT(vkCreateShaderModule(*VulkanDevice::get(), &shaderCreateInfo, nullptr, &shaderStages[currentShaderStage].module));
 	}
-};
+
+};        // namespace maple

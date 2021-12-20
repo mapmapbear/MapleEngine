@@ -2,39 +2,217 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #include "VulkanContext.h"
-#include "VulkanHelper.h"
+#include "Vk.h"
 #include "VulkanDevice.h"
-#include "Others/Console.h"
-#include "Application.h"
+#include "VulkanHelper.h"
+#include "VulkanRenderDevice.h"
+#include "VulkanSwapChain.h"
+
 #ifdef _WIN32
-#include <vulkan/vulkan_win32.h>
-#define GLFW_INCLUDE_VULKAN
-#include "GLFW/glfw3.h"
+#	include <vulkan/vulkan_win32.h>
+#	define GLFW_INCLUDE_VULKAN
+#	include "GLFW/glfw3.h"
 #endif
 
-#include "VulkanSwapChain.h"
+#include "Application.h"
+#include "Engine/Profiler.h"
+#include "Others/Console.h"
+
+#define VK_LAYER_LUNARG_STANDARD_VALIDATION_NAME "VK_LAYER_LUNARG_standard_validation"
+#define VK_LAYER_LUNARG_ASSISTENT_LAYER_NAME "VK_LAYER_LUNARG_assistant_layer"
+#define VK_LAYER_LUNARG_VALIDATION_NAME "VK_LAYER_KHRONOS_validation"
+
 namespace maple
 {
-
-	VulkanContext::VulkanContext(bool validation)
-		:enableValidation(validation)
+	namespace
 	{
-		validationLayers = {
-			"VK_LAYER_KHRONOS_validation"
-		};
+		VkDebugReportCallbackEXT reportCallback = {};
+
+		inline auto getRequiredLayers()
+		{
+			std::vector<const char *> layers;
+			if constexpr (VkConfig::StandardValidationLayer)
+				layers.emplace_back(VK_LAYER_LUNARG_STANDARD_VALIDATION_NAME);
+
+			if constexpr (VkConfig::AssistanceLayer)
+				layers.emplace_back(VK_LAYER_LUNARG_ASSISTENT_LAYER_NAME);
+
+			if constexpr (VkConfig::EnableValidationLayers)
+			{
+				layers.emplace_back(VK_LAYER_LUNARG_VALIDATION_NAME);
+			}
+			return layers;
+		}
+
+		inline auto getRequiredExtensions()
+		{
+			std::vector<const char *> extensions;
+
+			if constexpr (VkConfig::EnableValidationLayers)
+			{
+				extensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+				extensions.emplace_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+				extensions.emplace_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+			}
+
+			extensions.emplace_back("VK_EXT_debug_report");
+			extensions.emplace_back("VK_KHR_surface");
+
+#if defined(TRACY_ENABLE) && defined(PLATFORM_WINDOWS)
+			extensions.emplace_back("VK_EXT_calibrated_timestamps");
+#endif
+
+#if defined(_WIN32)
+			extensions.emplace_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
+#elif defined(VK_USE_PLATFORM_ANDROID_KHR)
+			extensions.emplace_back(VK_KHR_ANDROID_SURFACE_EXTENSION_NAME);
+#elif defined(_DIRECT2DISPLAY)
+			extensions.emplace_back(VK_KHR_DISPLAY_EXTENSION_NAME);
+#elif defined(VK_USE_PLATFORM_WAYLAND_KHR)
+			extensions.emplace_back(VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME);
+#elif defined(VK_USE_PLATFORM_XCB_KHR)
+			extensions.emplace_back(VK_KHR_XCB_SURFACE_EXTENSION_NAME);
+#elif defined(VK_USE_PLATFORM_IOS_MVK)
+			extensions.emplace_back("VK_EXT_metal_surface");
+#elif defined(VK_USE_PLATFORM_MACOS_MVK)
+			extensions.emplace_back(VK_MVK_MACOS_SURFACE_EXTENSION_NAME);
+#elif defined(VK_USE_PLATFORM_METAL_EXT)
+			extensions.emplace_back("VK_EXT_metal_surface");
+#endif
+			return extensions;
+		}
+
+		inline auto checkValidationLayerSupport(std::vector<VkLayerProperties> &layers, std::vector<const char *> &validationLayers)
+		{
+			uint32_t layerCount;
+			vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+
+			layers.resize(layerCount);
+			vkEnumerateInstanceLayerProperties(&layerCount, layers.data());
+			bool removedLayer = false;
+
+			validationLayers.erase(
+			    std::remove_if(
+			        validationLayers.begin(),
+			        validationLayers.end(),
+			        [&](const char *layerName) {
+				        bool layerFound = false;
+				        for (const auto &layerProperties : layers)
+				        {
+					        if (strcmp(layerName, layerProperties.layerName) == 0)
+					        {
+						        layerFound = true;
+						        break;
+					        }
+				        }
+				        if (!layerFound)
+				        {
+					        removedLayer = true;
+					        LOGW("[VULKAN] Layer not supported - {0}", layerName);
+				        }
+				        return !layerFound;
+			        }),
+			    validationLayers.end());
+			return !removedLayer;
+		}
+
+		inline auto checkExtensionSupport(std::vector<VkExtensionProperties> &properties, std::vector<const char *> &extensions)
+		{
+			uint32_t extensionCount;
+			vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
+
+			properties.resize(extensionCount);
+			vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, properties.data());
+			bool removedExtension = false;
+			extensions.erase(
+			    std::remove_if(
+			        extensions.begin(),
+			        extensions.end(),
+			        [&](const char *extensionName) {
+				        bool extensionFound = false;
+
+				        for (const auto &extensionProperties : properties)
+				        {
+					        if (strcmp(extensionName, extensionProperties.extensionName) == 0)
+					        {
+						        extensionFound = true;
+						        break;
+					        }
+				        }
+
+				        if (!extensionFound)
+				        {
+					        removedExtension = true;
+					        LOGW("[VULKAN] Extension not supported - {0}", extensionName);
+				        }
+				        return !extensionFound;
+			        }),
+			    extensions.end());
+			return !removedExtension;
+		}
+
+		inline auto debugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType, uint64_t sourceObj, size_t location, int32_t msgCode, const char *pLayerPrefix, const char *pMsg, void *userData) -> VkBool32
+		{
+			if (!flags)
+				return VK_FALSE;
+
+			if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)
+			{
+				LOGW("[VULKAN] - ERROR : [{0}] Code {1}  : {2}", pLayerPrefix, msgCode, pMsg);
+			};
+			if (flags & VK_DEBUG_REPORT_WARNING_BIT_EXT)
+			{
+				LOGW("[VULKAN] - WARNING : [{0}] Code {1}  : {2}", pLayerPrefix, msgCode, pMsg);
+			};
+			if (flags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT)
+			{
+				LOGW("[VULKAN] - PERFORMANCE : [{0}] Code {1}  : {2}", pLayerPrefix, msgCode, pMsg);
+			};
+			if (flags & VK_DEBUG_REPORT_INFORMATION_BIT_EXT)
+			{
+				LOGW("[VULKAN] - INFO : [{0}] Code {1}  : {2}", pLayerPrefix, msgCode, pMsg);
+			}
+			if (flags & VK_DEBUG_REPORT_DEBUG_BIT_EXT)
+			{
+				LOGI("[VULKAN] - DEBUG : [{0}] Code {1}  : {2}", pLayerPrefix, msgCode, pMsg);
+			}
+			return VK_FALSE;
+		}
+
+		inline auto createDebugReportCallbackEXT(VkInstance instance, const VkDebugReportCallbackCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDebugReportCallbackEXT *pCallback) -> VkResult
+		{
+			auto func = reinterpret_cast<PFN_vkCreateDebugReportCallbackEXT>(vkGetInstanceProcAddr(instance, "vkCreateDebugReportCallbackEXT"));
+			if (func != nullptr)
+			{
+				return func(instance, pCreateInfo, pAllocator, pCallback);
+			}
+			else
+			{
+				return VK_ERROR_EXTENSION_NOT_PRESENT;
+			}
+		}
+	}        // namespace
+
+	VulkanContext::VulkanContext()
+	{
 	}
 
 	VulkanContext::~VulkanContext()
-	
 	{
-		
-		vkDestroySurfaceKHR(vkInstance, surface, nullptr);
-		if (enableValidation) {
-			auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(vkInstance, "vkDestroyDebugUtilsMessengerEXT");
-			if (func != nullptr) {
-				func(vkInstance, debugCallback, nullptr);
-			}
+		for (int32_t i = 0; i < 3; i++)
+		{
+			getDeletionQueue(i).flush();
 		}
+
+		vkDestroyDescriptorPool(*VulkanDevice::get(), std::static_pointer_cast<VulkanRenderDevice>(Application::getRenderDevice())->getDescriptorPool(), VK_NULL_HANDLE);
+
+		if (reportCallback)
+		{
+			PFN_vkDestroyDebugReportCallbackEXT destoryCallback = (PFN_vkDestroyDebugReportCallbackEXT) vkGetInstanceProcAddr(vkInstance, "vkDestroyDebugReportCallbackEXT");
+
+			destoryCallback(vkInstance, reportCallback, VK_NULL_HANDLE);
+		}
+
 		vkDestroyInstance(vkInstance, nullptr);
 	}
 	/**
@@ -42,12 +220,17 @@ namespace maple
 	 */
 	auto VulkanContext::setupDebug() -> void
 	{
-		if (!enableValidation) return;
-		VkDebugUtilsMessengerCreateInfoEXT createInfo;
-		VulkanHelper::populateDebugMessengerCreateInfo(createInfo);
-		auto func = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(vkInstance, "vkCreateDebugUtilsMessengerEXT"));
-		if (func == nullptr || func(vkInstance, &createInfo, nullptr, &debugCallback) != VK_SUCCESS) {
-			throw std::runtime_error("failed to set up debug messenger!");
+		PROFILE_FUNCTION();
+		if constexpr (VkConfig::EnableValidationLayers)
+		{
+			VkDebugReportCallbackCreateInfoEXT createInfo = {};
+			createInfo.sType                              = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
+			createInfo.flags                              = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
+			createInfo.pfnCallback                        = reinterpret_cast<PFN_vkDebugReportCallbackEXT>(debugCallback);
+			if (createDebugReportCallbackEXT(vkInstance, &createInfo, nullptr, &reportCallback) != VK_SUCCESS)
+			{
+				LOGC("[VULKAN] Failed to set up debug callback!");
+			}
 		}
 	}
 	/**
@@ -55,118 +238,80 @@ namespace maple
 	 */
 	auto VulkanContext::init() -> void
 	{
-		if (enableValidation && !VulkanHelper::checkValidationLayerSupport(validationLayers)) {
-			throw std::runtime_error("validation layers requested, but not available!");
-		}
-
-		const std::string name = "SampleApp";
-		VkApplicationInfo appInfo = VulkanHelper::getApplicationInfo(name);
-		auto extensions = getRequireExtensions();
-
-
-		auto instanceCreateInfo = VulkanHelper::instanceCreateInfo(appInfo, extensions, validationLayers, enableValidation);
-
-
-		if (enableValidation) 
-		{
-			VkDebugReportCallbackCreateInfoEXT debugCreateInfo = { VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT };
-
-			debugCreateInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT 
-				| VK_DEBUG_REPORT_WARNING_BIT_EXT 
-				| VK_DEBUG_REPORT_INFORMATION_BIT_EXT 
-				| VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT 
-				| VK_DEBUG_REPORT_DEBUG_BIT_EXT;
-			debugCreateInfo.pfnCallback = [](
-				VkDebugReportFlagsEXT                       flags,
-				VkDebugReportObjectTypeEXT                  objectType,
-				uint64_t                                    object,
-				size_t                                      location,
-				int32_t                                     messageCode,
-				const char* pLayerPrefix,
-				const char* pMessage,
-				void* pUserData) -> VkBool32 {
-
-					LOGV("{0}", pMessage);
-
-					return 0;
-			};
-
-			instanceCreateInfo.pNext = &debugCreateInfo;
-
-			VkValidationFeatureEnableEXT enabled[] = { VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT };
-			VkValidationFeaturesEXT      features{ VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT };
-			features.disabledValidationFeatureCount = 0;
-			features.enabledValidationFeatureCount = 1;
-			features.pDisabledValidationFeatures = nullptr;
-			features.pEnabledValidationFeatures = enabled;
-
-			features.pNext = instanceCreateInfo.pNext;
-			instanceCreateInfo.pNext = &features;
-
-		}
-		VK_CHECK_RESULT(vkCreateInstance(&instanceCreateInfo, nullptr, &vkInstance));
+		PROFILE_FUNCTION();
+		createInstance();
+		VulkanDevice::get()->init();
 		setupDebug();
-	}
-	/**
-	 * create surface 
-	 */
-	auto VulkanContext::createSurface(GLFWwindow* win) -> void
-	{
-		if (glfwCreateWindowSurface(vkInstance, win, nullptr, &surface) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create window surface!");
-		}
+
+		auto &window = Application::getWindow();
+		swapChain    = SwapChain::create(window->getWidth(), window->getHeight());
+		swapChain->init(false, window.get());
 	}
 
-	/**
-	 * create the swapchain
-	 */
-	auto VulkanContext::createSwapChain() -> void
+	auto VulkanContext::present() -> void
 	{
-		swapChain = SwapChain::create();
-		swapChain->init();
 	}
 
-	/**
-	 * if the window size changed, the swapChain should be recreate.
-	 */
-	auto VulkanContext::resize(uint32_t width, uint32_t height) -> void
+	auto VulkanContext::getMinUniformBufferOffsetAlignment() const -> size_t
 	{
-		swapChain = SwapChain::create();
-		swapChain->init();
+		return 0;
 	}
 
-	auto VulkanContext::waiteIdle() -> void
+	auto VulkanContext::onImGui() -> void
+	{
+	}
+
+	auto VulkanContext::waitIdle() const -> void
 	{
 		vkDeviceWaitIdle(*VulkanDevice::get());
 	}
 
-	auto VulkanContext::get() ->std::shared_ptr<VulkanContext>
+	auto VulkanContext::createInstance() -> void
 	{
-		if (instance == nullptr) {
-			instance = std::make_shared<VulkanContext>(false);
+		PROFILE_FUNCTION();
+		instanceLayerNames     = getRequiredLayers();
+		instanceExtensionNames = getRequiredExtensions();
+		if (!checkValidationLayerSupport(instanceLayers, instanceLayerNames))
+		{
+			LOGC("[VULKAN] Validation layers requested, but not available!");
 		}
-		return instance;
+
+		if (!checkExtensionSupport(instanceExtensions, instanceExtensionNames))
+		{
+			LOGC("[VULKAN] Extensions requested are not available!");
+		}
+
+		VkApplicationInfo appInfo  = {};
+		appInfo.pApplicationName   = "Game";
+		appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+		appInfo.pEngineName        = "MapleEngine";
+		appInfo.engineVersion      = VK_MAKE_VERSION(1, 0, 0);
+		appInfo.apiVersion         = VK_API_VERSION_1_1;
+
+		VkInstanceCreateInfo createInfo    = {};
+		createInfo.pApplicationInfo        = &appInfo;
+		createInfo.sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+		createInfo.enabledExtensionCount   = static_cast<uint32_t>(instanceExtensionNames.size());
+		createInfo.ppEnabledExtensionNames = instanceExtensionNames.data();
+		createInfo.enabledLayerCount       = static_cast<uint32_t>(instanceLayerNames.size());
+		createInfo.ppEnabledLayerNames     = instanceLayerNames.data();
+		VK_CHECK_RESULT(vkCreateInstance(&createInfo, nullptr, &vkInstance));
 	}
 
-	auto VulkanContext::release() ->void
+	auto VulkanContext::get() -> std::shared_ptr<VulkanContext>
 	{
-		if (instance) {
-			instance.reset();
-		}
+		return std::static_pointer_cast<VulkanContext>(Application::getGraphicsContext());
 	}
 
-	auto VulkanContext::getRequireExtensions() ->std::vector<const char*>
+	auto VulkanContext::getDeletionQueue() -> DeletionQueue &
 	{
-		uint32_t glfwExtensionCount = 0;
-		const char** glfwExtensions;
-		glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-		std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
-		if (enableValidation) {
-			extensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-		}
-		return extensions;
+		return get()->deletionQueue[(get()->vkInstance && Application::getWindow()) ? get()->getSwapChain()->getCurrentBufferIndex() : 0];
 	}
 
-	std::shared_ptr<VulkanContext> VulkanContext::instance;
+	auto VulkanContext::getDeletionQueue(uint32_t index) -> DeletionQueue &
+	{
+		MAPLE_ASSERT(index < 3, "Unsupported Frame Index");
+		return get()->deletionQueue[index];
+	}
 
-};
+}        // namespace maple

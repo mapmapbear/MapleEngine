@@ -40,12 +40,11 @@ namespace maple
 
 		virtual auto init() -> void                                       = 0;
 		virtual auto present() -> void                                    = 0;
-		virtual auto getGPUMemoryUsed() -> float                          = 0;
-		virtual auto getTotalGPUMemory() -> float                         = 0;
 		virtual auto getMinUniformBufferOffsetAlignment() const -> size_t = 0;
-		virtual auto flipImGUITexture() const -> bool                     = 0;
 		virtual auto waitIdle() const -> void                             = 0;
 		virtual auto onImGui() -> void                                    = 0;
+		virtual auto getGPUMemoryUsed() -> float                          = 0;
+		virtual auto getTotalGPUMemory() -> float                         = 0;
 
 		inline auto getSwapChain() -> std::shared_ptr<SwapChain>
 		{

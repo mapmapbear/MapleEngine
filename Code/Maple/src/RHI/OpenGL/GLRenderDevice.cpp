@@ -253,7 +253,7 @@ namespace maple
 
 	auto GLRenderDevice::onResize(uint32_t width, uint32_t height) -> void
 	{
-		Application::getGraphicsContext()->getSwapChain()->onResize(width, height);
+		std::static_pointer_cast<GLSwapChain>(Application::getGraphicsContext()->getSwapChain())->onResize(width, height);
 	}
 
 	auto GLRenderDevice::setCullingInternal(bool enabled, bool front) -> void

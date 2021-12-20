@@ -2,43 +2,63 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
+#include "RHI/CommandBuffer.h"
 #include "VulkanHelper.h"
-#include "Engine/Interface/CommandBuffer.h"
 
 namespace maple
 {
-	class VulkanCommandBuffer;
-	class VulkanRenderPass;
-	class VulkanFrameBuffer;
+	enum class CommandBufferState : uint8_t
+	{
+		Idle,
+		Recording,
+		Ended,
+		Submitted
+	};
 
 	class VulkanCommandBuffer : public CommandBuffer
 	{
-	public:
-		VulkanCommandBuffer(bool primary = true);
+	  public:
+		VulkanCommandBuffer();
+		VulkanCommandBuffer(VkCommandBuffer commandBuffer);
 		~VulkanCommandBuffer();
 
-
 		auto init(bool primary) -> bool override;
-		auto execute(bool waitFence) -> void override;
-
-		auto beginRecordingSecondary(RenderPass* renderPass, FrameBuffer* framebuffer) -> void override;
-		auto executeSecondary(CommandBuffer* primaryCmdBuffer) -> void override;
-
+		auto init(bool primary, VkCommandPool commandPool) -> bool;
 		auto unload() -> void override;
-
 		auto beginRecording() -> void override;
+		auto beginRecordingSecondary(RenderPass *renderPass, FrameBuffer *framebuffer) -> void override;
 		auto endRecording() -> void override;
-
+		auto executeSecondary(CommandBuffer *primaryCmdBuffer) -> void override;
 		auto updateViewport(uint32_t width, uint32_t height) -> void override;
+		auto bindPipeline(Pipeline *pipeline) -> void override;
+		auto unbindPipeline() -> void override;
+		auto flush() -> bool override;
 
-		inline auto getCommandBuffer() { return &commandBuffer; }
+		inline auto getSemaphore() const
+		{
+			return semaphore;
+		}
+
+		auto        wait() -> void;
+		auto        reset() -> void;
+		inline auto getState() const
+		{
+			return state;
+		}
 
 		autoUnpack(commandBuffer);
-		auto executeInternal(VkPipelineStageFlags flags, VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, bool waitFence) -> void;
-	private:
-		auto init(bool primary, VkCommandPool cmdPool) -> bool;
-		VkCommandBuffer commandBuffer = nullptr;
-		VkFence fence = nullptr;
-		bool primary = false;
+
+		auto executeInternal(VkPipelineStageFlags flags, VkSemaphore signalSemaphore, bool waitFence) -> void;
+
+	  private:
+		VkCommandBuffer              commandBuffer = nullptr;
+		VkCommandPool                commandPool   = nullptr;
+		bool                         primary;
+		CommandBufferState           state = CommandBufferState::Idle;
+		std::shared_ptr<VulkanFence> fence;
+		VkSemaphore                  semaphore = nullptr;
+
+		Pipeline *  boundPipeline   = nullptr;
+		RenderPass *boundRenderPass = nullptr;
 	};
-};
+};        // namespace maple

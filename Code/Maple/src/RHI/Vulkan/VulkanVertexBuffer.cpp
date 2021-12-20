@@ -2,36 +2,24 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #include "VulkanVertexBuffer.h"
+#include "Engine/Profiler.h"
 #include "VulkanCommandBuffer.h"
 #include "VulkanPipeline.h"
-#include "Engine/Profiler.h"
 
-namespace Maple
+namespace maple
 {
-	VulkanVertexBuffer::VulkanVertexBuffer()
+	VulkanVertexBuffer::VulkanVertexBuffer(const BufferUsage &usage) :
+	    bufferUsage(usage)
 	{
-		this->usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-	}
-
-	VulkanVertexBuffer::VulkanVertexBuffer(const BufferUsage& usage)
-		:bufferUsage(usage)
-	{
-		this->usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+		VulkanBuffer::setUsage(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
 	}
 
 	VulkanVertexBuffer::~VulkanVertexBuffer()
 	{
-		PROFILE_FUNCTION();
-		if (mappedBuffer)
-		{
-			flush(size);
-			unmap();
-			mappedBuffer = false;
-		}
+		releasePointer();
 	}
 
-
-	auto VulkanVertexBuffer::resize(uint32_t size) -> void 
+	auto VulkanVertexBuffer::resize(uint32_t size) -> void
 	{
 		PROFILE_FUNCTION();
 		if (this->size != size)
@@ -41,7 +29,7 @@ namespace Maple
 		}
 	}
 
-	auto VulkanVertexBuffer::setData(uint32_t size, const void* data) -> void
+	auto VulkanVertexBuffer::setData(uint32_t size, const void *data) -> void
 	{
 		PROFILE_FUNCTION();
 		if (size != this->size)
@@ -49,14 +37,13 @@ namespace Maple
 			this->size = size;
 			VulkanBuffer::resize(size, data);
 		}
-		else 
+		else
 		{
 			VulkanBuffer::setVkData(size, data);
 		}
-
 	}
 
-	auto VulkanVertexBuffer::setDataSub(uint32_t size, const void* data, uint32_t offset) -> void
+	auto VulkanVertexBuffer::setDataSub(uint32_t size, const void *data, uint32_t offset) -> void
 	{
 		PROFILE_FUNCTION();
 		if (size != this->size)
@@ -81,22 +68,21 @@ namespace Maple
 		}
 	}
 
-	auto VulkanVertexBuffer::bind(CommandBuffer* commandBuffer, Pipeline* pipeline) -> void
+	auto VulkanVertexBuffer::bind(CommandBuffer *commandBuffer, Pipeline *pipeline) -> void
 	{
 		PROFILE_FUNCTION();
-		VkDeviceSize offsets[1] = { 0 };
+		VkDeviceSize offsets[1] = {0};
 		if (commandBuffer)
-			vkCmdBindVertexBuffers(*static_cast<VulkanCommandBuffer*>(commandBuffer), 0, 1, &buffer, offsets);
-
+			vkCmdBindVertexBuffers(*static_cast<VulkanCommandBuffer *>(commandBuffer), 0, 1, &buffer, offsets);
 	}
 
 	auto VulkanVertexBuffer::unbind() -> void
 	{
 	}
 
-	auto VulkanVertexBuffer::getPointerInternal() -> void*
+	auto VulkanVertexBuffer::getPointerInternal() -> void *
 	{
-		PROFILE_FUNCTION(); 
+		PROFILE_FUNCTION();
 		if (!mappedBuffer)
 		{
 			VulkanBuffer::map();
@@ -105,4 +91,4 @@ namespace Maple
 		return mapped;
 	}
 
-};
+};        // namespace maple

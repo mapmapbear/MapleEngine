@@ -3,181 +3,169 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #include "VulkanRenderPass.h"
-#include "VulkanHelper.h"
-#include "VulkanDevice.h"
 #include "Others/Console.h"
 #include "VulkanCommandBuffer.h"
+#include "VulkanDevice.h"
 #include "VulkanFrameBuffer.h"
+#include "VulkanHelper.h"
+#include "VulkanTexture.h"
 
 namespace maple
 {
-	VkSubpassContents subPassContentsToVK(SubPassContents contents)
+	inline auto subPassContentsToVK(SubPassContents contents) -> VkSubpassContents
 	{
 		switch (contents)
 		{
-		case INLINE:
-			return VK_SUBPASS_CONTENTS_INLINE;
-		case SECONDARY:
-			return VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS;
-		default:
-			return VK_SUBPASS_CONTENTS_INLINE;
+			case SubPassContents::Inline:
+				return VK_SUBPASS_CONTENTS_INLINE;
+			case SubPassContents ::Secondary:
+				return VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS;
+			default:
+				return VK_SUBPASS_CONTENTS_INLINE;
 		}
 	}
 
-	VkAttachmentDescription getAttachmentDescription(AttachmentInfo info, bool clear = true)
+	inline auto getAttachmentDescription(std::shared_ptr<Texture> texture, bool clear = true) -> VkAttachmentDescription
 	{
 		VkAttachmentDescription attachment = {};
-		if (info.textureType == TextureType::COLOR)
+		if (texture->getType() == TextureType::Color)
 		{
-			attachment.format = VkConverter::textureFormatToVK(info.format, info.srgb);
-			attachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;//VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;//VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			auto colorTexture = std::static_pointer_cast<VulkanTexture2D>(texture);
+
+			attachment.format        = colorTexture->getVkFormat();
+			attachment.initialLayout = colorTexture->getImageLayout();
+			attachment.finalLayout   = attachment.initialLayout;
 		}
-		else if (info.textureType == TextureType::DEPTH)
+		else if (texture->getType() == TextureType::Depth)
 		{
-			attachment.format = VkConverter::findDepthFormat();
-			attachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-								   //VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+			attachment.format        = VulkanHelper::getDepthFormat();
+			attachment.initialLayout = std::static_pointer_cast<VulkanTextureDepth>(texture)->getImageLayout();
+			attachment.finalLayout   = attachment.initialLayout;
 		}
-		else if (info.textureType == TextureType::DEPTHARRAY)
+		else if (texture->getType() == TextureType::DepthArray)
 		{
-			attachment.format = VkConverter::findDepthFormat();
-			attachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
-				//VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+			attachment.format        = VulkanHelper::getDepthFormat();
+			attachment.initialLayout = std::static_pointer_cast<VulkanTextureDepthArray>(texture)->getImageLayout();
+			attachment.finalLayout   = attachment.initialLayout;
 		}
-		else if (info.textureType == TextureType::CUBE) 
+		else if (texture->getType() == TextureType::Cube)
 		{
-			attachment.format = VkConverter::textureFormatToVK(info.format, info.srgb);
-				//VK_FORMAT_R32_SFLOAT;
-			attachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			attachment.format        = std::static_pointer_cast<VulkanTextureCube>(texture)->getVkFormat();
+			attachment.initialLayout = std::static_pointer_cast<VulkanTextureCube>(texture)->getImageLayout();
+			attachment.finalLayout   = attachment.initialLayout;
 		}
 		else
 		{
-			LOGC("[VULKAN] - Unsupported TextureType - {0}", static_cast<int>(info.textureType));
+			LOGC("[VULKAN] - Unsupported TextureType - {0}", int32_t(texture->getType()));
 			return attachment;
 		}
 
 		if (clear)
 		{
-			attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+			attachment.loadOp        = VK_ATTACHMENT_LOAD_OP_CLEAR;
 			attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 			attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		}
 		else
 		{
-			attachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+			attachment.loadOp        = VK_ATTACHMENT_LOAD_OP_LOAD;
 			attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
 			attachment.initialLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		}
 
-		if (info.textureType == TextureType::CUBE)
+		if (texture->getType() == TextureType::Cube)
 		{
 			attachment.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		}
 
-		attachment.samples = VK_SAMPLE_COUNT_1_BIT;
-		attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		attachment.samples        = VK_SAMPLE_COUNT_1_BIT;
+		attachment.storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
 		attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		attachment.flags = 0;
+		attachment.flags          = 0;
 
 		return attachment;
-
 	}
 
-
-	VulkanRenderPass::VulkanRenderPass(const RenderPassInfo& info)
+	VulkanRenderPass::VulkanRenderPass(const RenderPassInfo &info)
 	{
 		init(info);
 	}
 
-	auto VulkanRenderPass::init(const RenderPassInfo& info) -> void
+	auto VulkanRenderPass::init(const RenderPassInfo &info) -> void
 	{
-
+		PROFILE_FUNCTION();
 		std::vector<VkAttachmentDescription> attachments;
+
 		std::vector<VkAttachmentReference> colourAttachmentReferences;
 		std::vector<VkAttachmentReference> depthAttachmentReferences;
-		clearDepth = false;
-		depthOnly = true;
-		for (int i = 0; i < info.attachmentCount; i++)
-		{
-			attachments.emplace_back(getAttachmentDescription(info.textureType[i], info.clear));
-			//color 
-			attachmentTypes.emplace_back(info.textureType[i].textureType);
 
-			if (info.textureType[i].textureType == TextureType::COLOR)
+		depthOnly  = true;
+		clearDepth = false;
+
+		for (uint32_t i = 0; i < info.attachments.size(); i++)
+		{
+			auto texture = info.attachments[i];
+			attachments.emplace_back(getAttachmentDescription(info.attachments[i], info.clear));
+
+			if (texture->getType() == TextureType::Color)
+			{
+				VkImageLayout         layout              = std::static_pointer_cast<VulkanTexture2D>(texture)->getImageLayout();
+				VkAttachmentReference colourAttachmentRef = {};
+				colourAttachmentRef.attachment            = uint32_t(i);
+				colourAttachmentRef.layout                = layout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR ? VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL : layout;
+				colourAttachmentReferences.push_back(colourAttachmentRef);
+				depthOnly = false;
+			}
+			if (texture->getType() == TextureType::Depth)
+			{
+				VkAttachmentReference depthAttachmentRef = {};
+				depthAttachmentRef.attachment            = uint32_t(i);
+				depthAttachmentRef.layout                = std::static_pointer_cast<VulkanTextureDepth>(texture)->getImageLayout();
+				depthAttachmentReferences.push_back(depthAttachmentRef);
+				clearDepth = info.clear;
+			}
+			if (texture->getType() == TextureType::DepthArray)
+			{
+				VkAttachmentReference depthAttachmentRef = {};
+				depthAttachmentRef.attachment            = uint32_t(i);
+				depthAttachmentRef.layout                = std::static_pointer_cast<VulkanTextureDepthArray>(texture)->getImageLayout();
+				depthAttachmentReferences.push_back(depthAttachmentRef);
+				clearDepth = info.clear;
+			}
+			if (texture->getType() == TextureType::Cube)
 			{
 				VkAttachmentReference colourAttachmentRef = {};
-				colourAttachmentRef.attachment = uint32_t(i);
-				colourAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+				colourAttachmentRef.attachment            = uint32_t(i);
+				colourAttachmentRef.layout                = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 				colourAttachmentReferences.emplace_back(colourAttachmentRef);
 				depthOnly = false;
 			}
-			else if (info.textureType[i].textureType == TextureType::CUBE) 
+			else
 			{
-				VkAttachmentReference colourAttachmentRef = {};
-				colourAttachmentRef.attachment = uint32_t(i);
-				colourAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-				colourAttachmentReferences.emplace_back(colourAttachmentRef);
-				depthOnly = false;
-			}
-			//used for depth test
-			else if (info.textureType[i].textureType == TextureType::DEPTH)
-			{
-				VkAttachmentReference depthAttachmentRef = {};
-				depthAttachmentRef.attachment = uint32_t(i);
-				depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-				depthAttachmentReferences.emplace_back(depthAttachmentRef);
-				clearDepth = info.clear;
-			}
-			else if (info.textureType[i].textureType == TextureType::DEPTHARRAY)
-			{
-				VkAttachmentReference depthAttachmentRef = {};
-				depthAttachmentRef.attachment = uint32_t(i);
-				depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-				depthAttachmentReferences.emplace_back(depthAttachmentRef);
-				clearDepth = info.clear;
+				LOGE("Unsupported texture attachment");
 			}
 		}
 
 		VkSubpassDescription subpass{};
-		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-		subpass.colorAttachmentCount = colourAttachmentReferences.size();
-		subpass.pColorAttachments = colourAttachmentReferences.data();
+		subpass.pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
+		subpass.colorAttachmentCount    = static_cast<uint32_t>(colourAttachmentReferences.size());
+		subpass.pColorAttachments       = colourAttachmentReferences.data();
 		subpass.pDepthStencilAttachment = depthAttachmentReferences.data();
 
-/*
-		VkSubpassDependency dependency{};
-		dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-		dependency.dstSubpass = 0;
-		dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-		dependency.srcAccessMask = 0;
-		dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-		dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-*/
+		colorAttachmentCount = int32_t(colourAttachmentReferences.size());
 
+		VkRenderPassCreateInfo renderPassCreateInfo = VulkanHelper::renderPassCreateInfo();
+		renderPassCreateInfo.attachmentCount        = uint32_t(info.attachments.size());
+		renderPassCreateInfo.pAttachments           = attachments.data();
+		renderPassCreateInfo.subpassCount           = 1;
+		renderPassCreateInfo.pSubpasses             = &subpass;
+		renderPassCreateInfo.dependencyCount        = 0;
+		renderPassCreateInfo.pDependencies          = nullptr;
 
-		VkSubpassDependency dependency = {};
-		dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-		dependency.dstSubpass = 0;
-		dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		dependency.srcAccessMask = 0;
-		dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		VK_CHECK_RESULT(vkCreateRenderPass(*VulkanDevice::get(), &renderPassCreateInfo, VK_NULL_HANDLE, &renderPass));
 
-
-		VkRenderPassCreateInfo renderPassInfo = VulkanHelper::renderPassCreateInfo();
-		renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-		renderPassInfo.pAttachments = attachments.data();
-		renderPassInfo.subpassCount = 1;
-		renderPassInfo.pSubpasses = &subpass;
-		renderPassInfo.dependencyCount = 1;
-		renderPassInfo.pDependencies = &dependency;
-
-
-		if (vkCreateRenderPass(*VulkanDevice::get(), &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create render pass!");
-		}
-		clearValue = new VkClearValue[info.attachmentCount];
-		clearCount = info.attachmentCount;
+		clearValue = new VkClearValue[info.attachments.size()];
+		clearCount = info.attachments.size();
 	}
 
 	VulkanRenderPass::~VulkanRenderPass()
@@ -186,13 +174,9 @@ namespace maple
 		delete[] clearValue;
 	}
 
-	auto VulkanRenderPass::beginRenderPass(CommandBuffer* commandBuffer, const glm::vec4 & clearColor, FrameBuffer* frame, SubPassContents contents, uint32_t width, uint32_t height, bool beginCommandBuffer /*= true*/) -> void
+	auto VulkanRenderPass::beginRenderPass(CommandBuffer *commandBuffer, const glm::vec4 &clearColor, FrameBuffer *frame, SubPassContents contents, uint32_t width, uint32_t height, int32_t cubeFace, int32_t mipMapLevel) const -> void
 	{
-		if (beginCommandBuffer)
-			commandBuffer->beginRecording();
-		commandBuffer->updateViewport(width, height);
-
-		//clear color
+		PROFILE_FUNCTION();
 		if (!depthOnly)
 		{
 			for (int32_t i = 0; i < clearCount; i++)
@@ -206,29 +190,29 @@ namespace maple
 
 		if (clearDepth)
 		{
-			clearValue[clearCount - 1].depthStencil = VkClearDepthStencilValue{ 1.0f, 0};
+			clearValue[clearCount - 1].depthStencil = VkClearDepthStencilValue{1.0f, 0};
 		}
 
-		VkRenderPassBeginInfo rpBegin{};
-		rpBegin.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		rpBegin.pNext = NULL;
-		rpBegin.renderPass = renderPass;
-		rpBegin.framebuffer = *static_cast<VulkanFrameBuffer*>(frame);
-		rpBegin.renderArea.offset.x = 0;
-		rpBegin.renderArea.offset.y = 0;
-		rpBegin.renderArea.extent.width = width;
-		rpBegin.renderArea.extent.height = height;
-		rpBegin.clearValueCount = uint32_t(clearCount);
-		rpBegin.pClearValues = clearValue;
+		VkRenderPassBeginInfo info{};
+		info.sType                    = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		info.pNext                    = nullptr;
+		info.renderPass               = renderPass;
+		info.framebuffer              = *static_cast<VulkanFrameBuffer *>(frame);
+		info.renderArea.offset.x      = 0;
+		info.renderArea.offset.y      = 0;
+		info.renderArea.extent.width  = width;
+		info.renderArea.extent.height = height;
+		info.clearValueCount          = uint32_t(clearCount);
+		info.pClearValues             = clearValue;
 
-		vkCmdBeginRenderPass(*static_cast<VulkanCommandBuffer*>(commandBuffer), &rpBegin, subPassContentsToVK(contents));
+		vkCmdBeginRenderPass(*static_cast<VulkanCommandBuffer *>(commandBuffer), &info, subPassContentsToVK(contents));
+		commandBuffer->updateViewport(width, height);
 	}
 
-	auto VulkanRenderPass::endRenderpass(CommandBuffer* commandBuffer, bool endCommandBuffer /*= true*/) -> void
+	auto VulkanRenderPass::endRenderPass(CommandBuffer *commandBuffer) -> void
 	{
-		vkCmdEndRenderPass(*static_cast<VulkanCommandBuffer*>(commandBuffer));
-		if (endCommandBuffer)
-			commandBuffer->endRecording();
+		PROFILE_FUNCTION();
+		vkCmdEndRenderPass(*static_cast<VulkanCommandBuffer *>(commandBuffer));
 	}
 
-};
+};        // namespace maple

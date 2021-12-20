@@ -65,15 +65,7 @@ namespace maple
 
 	auto GLDescriptorSet::setTexture(const std::string &name, const std::shared_ptr<Texture> &texture) -> void
 	{
-		for (auto &descriptor : descriptors)
-		{
-			if (descriptor.type == DescriptorType::ImageSampler && descriptor.name == name)
-			{
-				descriptor.textures = {texture};
-				return;
-			}
-		}
-		LOGW("Texture not found {0}", name);
+		setTexture(name, std::vector<std::shared_ptr<Texture>>{texture});
 	}
 
 	auto GLDescriptorSet::setBuffer(const std::string &name, const std::shared_ptr<UniformBuffer> &buffer) -> void
@@ -237,7 +229,7 @@ namespace maple
 						GLCall(auto loc = glGetUniformBlockIndex(handle, descriptor.name.c_str()));
 						if (loc == GL_INVALID_INDEX)
 						{
-							LOGW("GLDescriptorSet {0}, GL_INVALID_INDEX , name : {1}",__LINE__,descriptor.name);
+							LOGW("GLDescriptorSet {0}, GL_INVALID_INDEX , name : {1}", __LINE__, descriptor.name);
 						}
 						else
 						{

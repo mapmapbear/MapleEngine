@@ -3,8 +3,13 @@
 //////////////////////////////////////////////////////////////////////////////
 #include "RenderDevice.h"
 #include "Application.h"
+#ifdef MAPLE_VULKAN
+#	include "RHI/Vulkan/VulkanRenderDevice.h"
+#endif
 
-#include "RHI/OpenGL/GLRenderDevice.h"
+#ifdef MAPLE_OPENGL
+#	include "RHI/OpenGL/GLRenderDevice.h"
+#endif
 
 namespace maple
 {
@@ -65,6 +70,12 @@ namespace maple
 
 	auto RenderDevice::create() -> std::shared_ptr<RenderDevice>
 	{
+#ifdef MAPLE_VULKAN
+		return std::make_shared<VulkanRenderDevice>();
+#endif        // MAPLE_VULKAN
+
+#ifdef MAPLE_OPENGL
 		return std::make_shared<GLRenderDevice>();
+#endif
 	}
 }        // namespace maple

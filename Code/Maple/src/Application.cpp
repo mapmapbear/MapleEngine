@@ -55,8 +55,8 @@ namespace maple
 		Input::create();
 		window->init();
 
-		renderDevice->init();
 		graphicsContext->init();
+		renderDevice->init();
 
 		timer.start();
 		luaVm->init();

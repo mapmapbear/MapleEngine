@@ -27,5 +27,6 @@ namespace maple
 	{
 		auto &window = Application::getWindow();
 		swapChain    = SwapChain::create(window->getWidth(),window->getHeight());
+		swapChain->init(false, window.get());
 	}
 }        // namespace maple

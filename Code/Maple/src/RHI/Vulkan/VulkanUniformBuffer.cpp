@@ -3,7 +3,7 @@
 //////////////////////////////////////////////////////////////////////////////
 #include "VulkanUniformBuffer.h"
 #include <memory.h>
-namespace Maple
+namespace maple
 {
 
 	VulkanUniformBuffer::VulkanUniformBuffer(uint32_t size, const void* data)
@@ -32,9 +32,10 @@ namespace Maple
 		VulkanBuffer::unmap();
 	}
 
-	auto VulkanUniformBuffer::setData(uint32_t size, const void* data, uint32_t offset /*= 0*/) -> void
+	auto VulkanUniformBuffer::setData(uint32_t size, const void *data) -> void 
 	{
-		VulkanBuffer::setData(size, data, offset);
+		VulkanBuffer::map();
+		memcpy(mapped, data, size);
+		VulkanBuffer::unmap();
 	}
-
 };

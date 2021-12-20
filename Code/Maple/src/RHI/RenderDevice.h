@@ -24,22 +24,19 @@ namespace maple
 		virtual auto onResize(uint32_t width, uint32_t height) -> void = 0;
 		virtual auto drawSplashScreen(const std::shared_ptr<Texture> &texture) -> void{};
 
-		virtual auto setDepthTestingInternal(bool enabled) -> void                                                                                                                     = 0;
-		virtual auto setStencilTestInternal(bool enabled) -> void                                                                                                                      = 0;
-		virtual auto setStencilMaskInternal(uint32_t mask) -> void                                                                                                                     = 0;
-		virtual auto setStencilOpInternal(StencilType fail, StencilType zfail, StencilType zpass) -> void                                                                              = 0;
-		virtual auto setStencilFunctionInternal(StencilType type, uint32_t ref, uint32_t mask) -> void                                                                                 = 0;
-		virtual auto presentInternal() -> void                                                                                                                                         = 0;
-		virtual auto presentInternal(CommandBuffer *commandBuffer) -> void                                                                                                             = 0;
-		virtual auto drawIndexedInternal(CommandBuffer *commandBuffer, DrawType type, uint32_t count, uint32_t start = 0) const -> void                                                = 0;
-		virtual auto drawInternal(CommandBuffer *commandBuffer, DrawType type, uint32_t count, DataType dataType = DataType::UnsignedInt, const void *indices = nullptr) const -> void = 0;
+		virtual auto setDepthTestingInternal(bool enabled) -> void{};
+		virtual auto setStencilTestInternal(bool enabled) -> void{};
+		virtual auto setStencilMaskInternal(uint32_t mask) -> void{};
+		virtual auto setStencilOpInternal(StencilType fail, StencilType zfail, StencilType zpass) -> void{};
+		virtual auto setStencilFunctionInternal(StencilType type, uint32_t ref, uint32_t mask) -> void{};
 
-		virtual auto bindDescriptorSetsInternal(Pipeline *pipeline, CommandBuffer *commandBuffer, uint32_t dynamicOffset, const std::vector<std::shared_ptr<DescriptorSet>> &descriptorSets) -> void = 0;
-
-		virtual auto clearRenderTarget(const std::shared_ptr<Texture> &texture, CommandBuffer *commandBuffer, const glm::vec4 &clearColor = {0.5f, 0.5f, 0.5f, 1.0f}) -> void
-		{}
-
-		virtual auto clearInternal(uint32_t bufferMask) -> void = 0;
+		virtual auto presentInternal() -> void{};
+		virtual auto presentInternal(CommandBuffer *commandBuffer) -> void{};
+		virtual auto drawIndexedInternal(CommandBuffer *commandBuffer, DrawType type, uint32_t count, uint32_t start = 0) const -> void{};
+		virtual auto drawInternal(CommandBuffer *commandBuffer, DrawType type, uint32_t count, DataType dataType = DataType::UnsignedInt, const void *indices = nullptr) const -> void{};
+		virtual auto bindDescriptorSetsInternal(Pipeline *pipeline, CommandBuffer *commandBuffer, uint32_t dynamicOffset, const std::vector<std::shared_ptr<DescriptorSet>> &descriptorSets) -> void{};
+		virtual auto clearRenderTarget(const std::shared_ptr<Texture> &texture, CommandBuffer *commandBuffer, const glm::vec4 &clearColor = {0.5f, 0.5f, 0.5f, 1.0f}) -> void{};
+		virtual auto clearInternal(uint32_t bufferMask) -> void{};
 
 		static auto clear(uint32_t bufferMask) -> void;
 		static auto present() -> void;
@@ -52,7 +49,6 @@ namespace maple
 		static auto setStencilMask(uint32_t mask) -> void;
 		static auto setStencilTest(bool enable) -> void;
 		static auto setDepthTest(bool enable) -> void;
-
 		static auto create() -> std::shared_ptr<RenderDevice>;
 	};
 };        // namespace maple

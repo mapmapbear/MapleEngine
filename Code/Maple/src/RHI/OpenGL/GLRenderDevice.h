@@ -6,7 +6,6 @@
 
 namespace maple
 {
-	class Window;
 	class GLContext;
 	class CommandBuffer;
 	class Shader;

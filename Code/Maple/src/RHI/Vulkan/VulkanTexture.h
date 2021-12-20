@@ -3,97 +3,181 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #pragma once
+#include "RHI/Texture.h"
 #include "VulkanHelper.h"
-#include "Engine/Interface/Texture.h"
 
 namespace maple
 {
-
 	class VulkanTexture2D : public Texture2D
 	{
-	public:
-		VulkanTexture2D(uint32_t width, uint32_t height, const void* data, TextureParameters parameters = TextureParameters(), TextureLoadOptions loadOptions = TextureLoadOptions());
-		VulkanTexture2D(const std::string& name, const std::string& filename, TextureParameters parameters = TextureParameters(), TextureLoadOptions loadOptions = TextureLoadOptions());
-		VulkanTexture2D(VkImage image, VkImageView imageView);
+	  public:
+		VulkanTexture2D(uint32_t width, uint32_t height, const void *data, TextureParameters parameters = TextureParameters(), TextureLoadOptions loadOptions = TextureLoadOptions());
+		VulkanTexture2D(const std::string &name, const std::string &filename, TextureParameters parameters = TextureParameters(), TextureLoadOptions loadOptions = TextureLoadOptions());
+		VulkanTexture2D(VkImage image, VkImageView imageView, VkFormat format, uint32_t width, uint32_t height);
 		VulkanTexture2D();
 		~VulkanTexture2D();
 
-		auto update(uint32_t x, uint32_t y, uint32_t w, uint32_t h, const uint8_t* data) -> void override;
+		auto update(int32_t x, int32_t y, int32_t w, int32_t h, const void *buffer) -> void override;
 
-		auto bind(uint32_t slot = 0) const -> void override {}
-		auto unbind(uint32_t slot = 0) const -> void override {}
+		inline auto bind(uint32_t slot = 0) const -> void override{};
+		inline auto unbind(uint32_t slot = 0) const -> void override{};
+		inline auto setData(const void *pixels) -> void override{};
 
-		inline auto setData(const void* pixels) -> void {};
-		inline auto getHandle() const ->  void* { return (void*)&descriptor; };
-	
-		inline auto& getName() const { return name; };
-	
-		inline auto setName(const std::string& name) -> void { this->name = name; }
+		inline auto getHandle() const -> void * override
+		{
+			return (void *) &descriptor;
+		};
 
-		inline const auto getDescriptor() const { return &descriptor; }
-		inline auto getImage() const { return textureImage; }
-		inline auto getDeviceMemory() const { return textureImageMemory; }
-		inline auto getImageView() const { return textureImageView; }
-		inline auto getSampler() const { return textureSampler; }
-		inline auto getImageLayout() const { return imageLayout; }
-		auto loadKTX() -> void;
+		inline auto getWidth() const -> uint32_t override
+		{
+			return width;
+		}
+		inline auto getHeight() const -> uint32_t override
+		{
+			return height;
+		}
+
+		inline auto getMipMapLevels() const -> uint32_t override
+		{
+			return mipLevels;
+		}
+
+		inline auto getFilePath() const -> const std::string & override
+		{
+			return fileName;
+		}
+
+		inline auto getType() const -> TextureType override
+		{
+			return TextureType::Color;
+		}
+
+		inline auto getFormat() const -> TextureFormat override
+		{
+			return format;
+		}
+
+		inline const auto getDescriptor() const
+		{
+			return &descriptor;
+		}
+
+		inline auto getDescriptorInfo() const -> void * override
+		{
+			return (void *) getDescriptor();
+		}
+
+		inline auto getImage() const
+		{
+			return textureImage;
+		}
+		inline auto getDeviceMemory() const
+		{
+			return textureImageMemory;
+		}
+		inline auto getImageView() const
+		{
+			return textureImageView;
+		}
+		inline auto getSampler() const
+		{
+			return textureSampler;
+		}
+
+		inline auto getImageLayout() const
+		{
+			return imageLayout;
+		}
+
+		inline auto getVkFormat() const
+		{
+			return vkFormat;
+		}
 
 		auto load() -> bool;
 		auto updateDescriptor() -> void;
-		auto buildTexture(TextureFormat internalformat, uint32_t width, uint32_t height, bool srgb, bool depth, bool samplerShadow) ->void override;
-	private:
-		std::string name;
-	
-		uint32_t handle = 0;
+		auto buildTexture(TextureFormat internalformat, uint32_t width, uint32_t height, bool srgb, bool depth, bool samplerShadow, bool mipmap) -> void override;
+		auto transitionImage(VkImageLayout newLayout, VulkanCommandBuffer *commandBuffer = nullptr) -> void;
+		auto getMipImageView(uint32_t mip) -> VkImageView;
 
-		const uint8_t* data = nullptr;
+	  private:
+		auto createSampler() -> void;
+		auto deleteSampler() -> void;
 
-		TextureParameters parameters;
-		TextureLoadOptions loadOptions;
+		std::string fileName;
 
-		VkImage textureImage = VK_NULL_HANDLE;
-		VkImageView textureImageView = VK_NULL_HANDLE;
+		TextureFormat format;
+		VkFormat      vkFormat = VK_FORMAT_R8G8B8A8_UNORM;
 
-		VkImageLayout imageLayout;
-		VkDeviceMemory textureImageMemory = VK_NULL_HANDLE;
-		VkSampler textureSampler = VK_NULL_HANDLE;
-		VkDescriptorImageInfo descriptor{};
+		uint32_t handle     = 0;
+		uint32_t width      = 0;
+		uint32_t height     = 0;
+		uint32_t mipLevels  = 1;
+		uint32_t layerCount = 1;
 
 		bool deleteImage = false;
 
-		uint32_t layerCount = 1;
+		const uint8_t *data = nullptr;
+
+		TextureParameters  parameters;
+		TextureLoadOptions loadOptions;
+
+		VkImage               textureImage       = VK_NULL_HANDLE;
+		VkImageView           textureImageView   = VK_NULL_HANDLE;
+		VkDeviceMemory        textureImageMemory = VK_NULL_HANDLE;
+		VkSampler             textureSampler     = VK_NULL_HANDLE;
+		VkImageLayout         imageLayout;
+		VkDescriptorImageInfo descriptor{};
+
+		std::unordered_map<uint32_t, VkImageView> mipImageViews;
 	};
-
-
 
 	class VulkanTextureDepth : public TextureDepth
 	{
-	public:
-		VulkanTextureDepth(uint32_t width, uint32_t height);
+	  public:
+		VulkanTextureDepth(uint32_t width, uint32_t height, bool stencil);
 		~VulkanTextureDepth();
 
-		auto bind(uint32_t slot = 0) const -> void override {}
-		auto unbind(uint32_t slot = 0) const -> void override {}
-		auto resize(uint32_t width, uint32_t height) -> void;
+		auto bind(uint32_t slot = 0) const -> void override{};
+		auto unbind(uint32_t slot = 0) const -> void override{};
+		auto resize(uint32_t width, uint32_t height) -> void override;
 
-		virtual auto getHandle() const -> void*
+		auto transitionImage(VkImageLayout newLayout, VulkanCommandBuffer *commandBuffer) -> void;
+
+		inline auto getDescriptorInfo() const -> void * override
 		{
-			return (void*)&descriptor;
+			return (void *) &descriptor;
+		}
+		virtual auto getHandle() const -> void *
+		{
+			return (void *) &descriptor;
 		}
 
-		inline auto getName() const -> const std::string&
+		inline auto getFilePath() const -> const std::string & override
 		{
 			return name;
 		}
-		inline auto getFilePath() const -> const std::string&
+
+		inline auto getType() const -> TextureType override
 		{
-			return name;
+			return TextureType::Depth;
+		}
+
+		inline auto getFormat() const -> TextureFormat override
+		{
+			return format;
 		}
 
 		inline const auto getImage() const
 		{
 			return textureImage;
 		};
+
+		inline auto getImageLayout() const
+		{
+			return imageLayout;
+		}
+
 		inline const auto getDeviceMemory() const
 		{
 			return textureImageMemory;
@@ -106,45 +190,63 @@ namespace maple
 		{
 			return textureSampler;
 		}
+
 		inline const auto getDescriptor() const
 		{
 			return &descriptor;
 		}
+
+		inline auto getWidth() const -> uint32_t override
+		{
+			return width;
+		}
+		inline auto getHeight() const -> uint32_t override
+		{
+			return height;
+		}
 		auto updateDescriptor() -> void;
 
-
-	protected:
+	  protected:
 		auto init() -> void;
 		auto release() -> void;
-	private:
-		std::string name;
-		uint32_t handle{};
 
-
-		VkImage textureImage{};
-		VkDeviceMemory textureImageMemory{};
-		VkImageView textureImageView{};
-		VkSampler textureSampler{};
+	  private:
+		bool                  stencil = false;
+		uint32_t              width  = 0;
+		uint32_t              height = 0;
+		uint32_t              handle{};
+		TextureFormat         format = TextureFormat::DEPTH;
+		VkImageLayout         imageLayout;
+		VkImage               textureImage{};
+		VkDeviceMemory        textureImageMemory{};
+		VkImageView           textureImageView{};
+		VkSampler             textureSampler{};
 		VkDescriptorImageInfo descriptor{};
 	};
 
-
-
 	class VulkanTextureCube : public TextureCube
 	{
-	public:
-		VulkanTextureCube(int32_t size,TextureFormat format = TextureFormat::RGBA8,int32_t numMips = 1);
+	  public:
+		VulkanTextureCube(uint32_t size, TextureFormat format = TextureFormat::RGBA8, int32_t numMips = 0);
+		VulkanTextureCube(const std::string &filePath);
+		VulkanTextureCube(const std::array<std::string, 6> &files);
+		VulkanTextureCube(const std::vector<std::string> &files, uint32_t mips, const TextureParameters &params, const TextureLoadOptions &loadOptions, const InputFormat &format);
 
-		VulkanTextureCube(const std::string& filePath);
 		~VulkanTextureCube();
-		auto bind(uint32_t slot = 0) const -> void override {}
-		auto unbind(uint32_t slot = 0) const -> void override {}
+		auto bind(uint32_t slot = 0) const -> void override{};
+		auto unbind(uint32_t slot = 0) const -> void override{};
 
-		virtual auto getHandle() const -> void* override { return (void*)&descriptor; }
+		inline auto getHandle() const -> void * override
+		{
+			return (void *) this;
+		}
+
+		auto generateMipmap() -> void override;
+
 		auto updateDescriptor() -> void;
 		auto load(uint32_t mips) -> void;
 
-		auto update(CommandBuffer* commandBuffer,FrameBuffer * framebuffer,int32_t cubeIndex, int32_t mipmapLevel = 0) -> void override;
+		auto update(CommandBuffer *commandBuffer, FrameBuffer *framebuffer, int32_t cubeIndex, int32_t mipmapLevel = 0) -> void override;
 
 		inline auto getImage() const
 		{
@@ -162,72 +264,173 @@ namespace maple
 		{
 			return textureSampler;
 		}
+		inline auto getWidth() const -> uint32_t override
+		{
+			return width;
+		}
+		inline auto getHeight() const -> uint32_t override
+		{
+			return height;
+		}
+		inline auto getFilePath() const -> const std::string & override
+		{
+			return name;
+		}
 
+		inline auto getImageLayout() const
+		{
+			return imageLayout;
+		}
 
+		inline auto getMipMapLevels() const -> uint32_t override
+		{
+			return numMips;
+		}
+		inline auto getType() const -> TextureType override
+		{
+			return TextureType::Cube;
+		}
 
-	private:
+		inline auto getFormat() const -> TextureFormat override
+		{
+			return parameters.format;
+		}
+
+		inline auto getSize() const -> uint32_t override
+		{
+			return size;
+		}
+
+		inline auto getDescriptorInfo() const -> void * override
+		{
+			return (void *) &descriptor;
+		}
+
+		inline auto getVkFormat() const
+		{
+			return vkFormat;
+		}
+
+	  private:
 		auto init() -> void;
-	
 
+		VkFormat    vkFormat = VK_FORMAT_R8G8B8A8_UNORM;
 		std::string name;
 		std::string files[6];
 
 		uint32_t handle = 0;
-/*
-		uint32_t width = 0; 
-		uint32_t height = 0; */
-		uint32_t size = 0;
-		//uint32_t numMips = 0;
+
+		uint32_t width   = 0;
+		uint32_t height  = 0;
+		uint32_t size    = 0;
+		uint32_t numMips = 0;
+
+		TextureParameters  parameters;
+		TextureLoadOptions loadOptions;
+
 		std::vector<uint8_t> data;
 
-		
-
-		VkImage textureImage = nullptr;
-		VkImageLayout imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		VkDeviceMemory textureImageMemory = nullptr;
-		VkImageView textureImageView = nullptr;
-		VkSampler textureSampler;
+		VkImage               textureImage       = nullptr;
+		VkImageLayout         imageLayout        = VK_IMAGE_LAYOUT_UNDEFINED;
+		VkDeviceMemory        textureImageMemory = nullptr;
+		VkImageView           textureImageView   = nullptr;
+		VkSampler             textureSampler;
 		VkDescriptorImageInfo descriptor;
-	
+
 		bool deleteImg = true;
 	};
 
-
-
-	class VulkanTextureDepthArray : public TextureDepthArray 
+	class VulkanTextureDepthArray : public TextureDepthArray
 	{
-	public:
+	  public:
 		VulkanTextureDepthArray(uint32_t width, uint32_t height, uint32_t count);
 		~VulkanTextureDepthArray();
 
-		auto bind(uint32_t slot = 0) const -> void override {};
-		auto unbind(uint32_t slot = 0) const -> void override {};
+		auto bind(uint32_t slot = 0) const -> void override{};
+		auto unbind(uint32_t slot = 0) const -> void override{};
 		auto resize(uint32_t width, uint32_t height, uint32_t count) -> void override;
 
-		auto getHandle() const -> void* override {return (void*)&descriptor;}
-		inline auto getImage() const { return textureImage; }
-		inline auto getImageView(int32_t index) const	{	return imageViews[index];	}
-		inline auto getSampler() const	{	return textureSampler;	}
-		inline auto getDescriptor() const{return &descriptor;}
+		auto getHandle() const -> void * override
+		{
+			return (void *) this;
+		}
+		inline auto getImage() const
+		{
+			return textureImage;
+		}
+		inline auto getImageView(int32_t index) const
+		{
+			return imageViews[index];
+		}
+		inline auto getSampler() const
+		{
+			return textureSampler;
+		}
+		inline auto getDescriptor() const
+		{
+			return &descriptor;
+		}
 
-		auto getHandleArray(uint32_t index) -> void* override;
+		inline auto getDescriptorInfo() const -> void * override
+		{
+			return (void *) &descriptor;
+		}
+
+		inline auto getWidth() const -> uint32_t override
+		{
+			return width;
+		}
+		inline auto getHeight() const -> uint32_t override
+		{
+			return height;
+		}
+		inline auto getFilePath() const -> const std::string & override
+		{
+			return name;
+		}
+
+		inline auto getType() const -> TextureType override
+		{
+			return TextureType::DepthArray;
+		}
+
+		inline auto getFormat() const -> TextureFormat override
+		{
+			return format;
+		}
+
+		inline auto getCount() const
+		{
+			return count;
+		}
+
+		inline auto getImageLayout() const
+		{
+			return imageLayout;
+		}
+
+		auto getHandleArray(uint32_t index) -> void * override;
 		auto updateDescriptor() -> void;
 
+		auto transitionImage(VkImageLayout newLayout, VulkanCommandBuffer *commandBuffer) -> void;
 
-	protected:
+	  protected:
 		auto init() -> void override;
-	private:
-		uint32_t handle{};
-		uint32_t width = 0;
-		uint32_t height = 0;
-		uint32_t count = 0;
 
-		VkImage textureImage{};
-		VkDeviceMemory textureImageMemory{};
-		VkImageView textureImageView{};
-		VkSampler textureSampler{};
-		VkDescriptorImageInfo descriptor{};
+	  private:
+		uint32_t      handle{};
+		uint32_t      width  = 0;
+		uint32_t      height = 0;
+		uint32_t      count  = 0;
+		TextureFormat format;
+
+		VkImageLayout            imageLayout;
+		VkImage                  textureImage{};
+		VkDeviceMemory           textureImageMemory{};
+		VkImageView              textureImageView{};
+		VkSampler                textureSampler{};
+		VkDescriptorImageInfo    descriptor{};
 		std::vector<VkImageView> imageViews;
 	};
 
-};
+};        // namespace maple

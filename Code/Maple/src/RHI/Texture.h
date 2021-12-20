@@ -74,6 +74,7 @@ namespace maple
 		{
 			this->name = name;
 		};
+
 		virtual auto getName() const -> const std::string &
 		{
 			return name;

@@ -2,73 +2,52 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "Engine/Interface/BufferLayout.h"
-#include "Engine/Interface/Pipeline.h"
-#include "Engine/Renderer/RenderParam.h"
+#include "RHI/Pipeline.h"
 #include "VulkanHelper.h"
-#include <memory>
 #include <functional>
+#include <memory>
 
 namespace maple
 {
-
-	class Shader;
-	class VulkanShader;
-	class RenderPass;
-	class CommandBuffer;
-
-
-
 	class VulkanPipeline : public Pipeline
 	{
-	public:
+	  public:
 		constexpr static uint32_t MAX_DESCRIPTOR_SET = 1500;
 
-		VulkanPipeline(const PipelineInfo& info);
+		VulkanPipeline(const PipelineInfo &info);
 		virtual ~VulkanPipeline();
 
-		auto unload() const -> void;
-		auto bind(CommandBuffer* buffer) -> void override;
-		auto init(const PipelineInfo& info) -> bool;
-		//bind to layoutId = 0;
-		auto getDescriptorSet() -> std::shared_ptr<DescriptorSet> override { return descriptorSet; };
+		auto init(const PipelineInfo &info) -> bool;
 
+		auto getWidth() -> uint32_t override;
+		auto getHeight() -> uint32_t override;
 
-		inline const auto& getPipelineLayout() const { return pipeLayout; };
-		inline const auto& getDescriptorPool() const { return descriptorPool; };
-		inline auto& getDescriptorPool() { return descriptorPool; };
+		auto bind(CommandBuffer *commandBuffer, uint32_t layer = 0, int32_t cubeFace = -1, int32_t mipMapLevel = 0) -> void override;
+		auto end(CommandBuffer *commandBuffer) -> void override;
+		auto clearRenderTargets(CommandBuffer *commandBuffer) -> void override;
 
-		inline const auto& getGraphicsPipeline() const { return graphicsPipeline; };
+		inline auto getShader() const -> std::shared_ptr<Shader> override
+		{
+			return shader;
+		};
 
-		inline const auto getDescriptorLayout(uint32_t layoutIndex) const {
-			return &descriptorSetLayouts[layoutIndex];
-		}
-		
-		inline auto& getDescriptorLayouts()  {
-			return descriptorSetLayouts;
+		inline auto getPipelineLayout() const
+		{
+			return pipelineLayout;
 		}
 
+	  private:
+		auto transitionAttachments() -> void;
+		auto createFrameBuffers() -> void;
 
-		auto getShader() -> std::shared_ptr<Shader> override { return shader; }
+		std::shared_ptr<Shader>                   shader;
+		std::shared_ptr<RenderPass>               renderPass;
+		std::vector<std::shared_ptr<FrameBuffer>> framebuffers;
 
-	private:
-		auto createDepthStencil(VkPipelineDepthStencilStateCreateInfo& ds) -> void;
-		auto createMultisample(VkPipelineMultisampleStateCreateInfo& ms) -> void;
-		auto createVertexLayout(VkPipelineVertexInputStateCreateInfo& vi) -> void;
-		auto createRasterization(VkPipelineRasterizationStateCreateInfo & vi,const PipelineInfo& info) -> void;
-		auto createColorBlend(VkPipelineColorBlendStateCreateInfo& cb, std::vector<VkPipelineColorBlendAttachmentState>& blendAttachState, const PipelineInfo& info) -> void;
-		auto createViewport(VkPipelineViewportStateCreateInfo& cb, std::vector<VkDynamicState> & dynamicState) -> void;
-		auto createPipelineLayout() -> void;
-		auto createDescriptorPool() -> void;
-		auto createDescriptorSet() -> void;
-
-		VkPipelineLayout pipeLayout = nullptr;
-		VkPipeline graphicsPipeline = nullptr;
-
-		VkDescriptorPool descriptorPool;
-		std::shared_ptr<Shader> shader;
-		std::shared_ptr<DescriptorSet> descriptorSet;
-		std::vector<VkDescriptorSetLayout> descriptorSetLayouts;
-		VkVertexInputBindingDescription vertexBindingDescription;
+		VkPipelineLayout pipelineLayout;
+		VkPipeline       pipeline;
+		bool             depthBiasEnabled;
+		float            depthBiasConstant;
+		float            depthBiasSlope;
 	};
-};
+};        // namespace maple

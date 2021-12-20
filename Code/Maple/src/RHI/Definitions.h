@@ -215,7 +215,8 @@ namespace maple
 	{
 		Point,
 		Triangle,
-		Lines
+		Lines,
+		TriangleStrip
 	};
 
 	enum class StencilType : int32_t

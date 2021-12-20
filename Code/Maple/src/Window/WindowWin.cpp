@@ -43,7 +43,12 @@ namespace maple
 
 	auto WindowWin::setTitle(const std::string &title) -> void
 	{
-		glfwSetWindowTitle(nativeInterface, title.c_str());
+#ifdef MAPLE_VULKAN
+		auto t = title + "(Vulkan)";
+#else
+		auto t = title + "(OpenGL)";
+#endif        // MAPLE_VULKAN
+		glfwSetWindowTitle(nativeInterface, t.c_str());
 	}
 
 	auto WindowWin::init() -> void
@@ -88,6 +93,8 @@ namespace maple
 
 		if (!nativeInterface)
 			return;
+
+		setTitle(data.title);
 
 		glfwMakeContextCurrent(nativeInterface);
 #ifdef MAPLE_OPENGL

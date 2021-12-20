@@ -101,7 +101,7 @@ namespace maple
 	{
 		uint32_t layoutIndex;
 		Shader * shader;
-		uint32_t count = 1;
+		uint32_t count = 1;//used in vulkan
 	};
 
 	struct Descriptor

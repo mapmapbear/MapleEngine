@@ -4,17 +4,25 @@
 #pragma once
 
 #include "VulkanHelper.h"
+
 namespace maple
 {
 	class VulkanCommandPool
 	{
-	public:
-		VulkanCommandPool();
+	  public:
+		VulkanCommandPool(int32_t queueIndex, VkCommandPoolCreateFlags flags);
 		~VulkanCommandPool();
 
-		auto init() -> void;
+		auto reset() -> void;
+
 		autoUnpack(commandPool);
-	private:
+
+		inline auto getHandle() const
+		{
+			return commandPool;
+		}
+
+	  private:
 		VkCommandPool commandPool;
 	};
-};
+};        // namespace maple

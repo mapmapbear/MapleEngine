@@ -6,12 +6,12 @@
 #include "RHI/Definitions.h"
 #include "RHI/Shader.h"
 
+#include "Vk.h"
 #include <array>
 #include <optional>
 #include <set>
 #include <stdexcept>
 #include <vector>
-#include <vulkan/vulkan.h>
 
 #define autoUnpack(x)            \
 	inline operator auto() const \
@@ -30,16 +30,6 @@
 	}
 namespace maple
 {
-	class VulkanDevice;
-	class VulkanBuffer;
-	class VulkanImage;
-	class VulkanImageView;
-	class VulkanInstance;
-	class VulkanQueryPool;
-	class VulkanSurface;
-	class VulkanSwapChain;
-	class VulkanDescriptorPool;
-
 	enum class DescriptorType;
 	struct SwapChainSupportDetails
 	{
@@ -61,6 +51,7 @@ namespace maple
 
 	namespace VulkanHelper
 	{
+		auto validateResolution(uint32_t &width, uint32_t &height) -> void;
 		auto instanceCreateInfo(const VkApplicationInfo &appInfo, const std::vector<const char *> &extensions, const std::vector<const char *> &validationLayers, bool validationLayer) -> VkInstanceCreateInfo;
 		auto getApplicationInfo(const std::string &name) -> VkApplicationInfo;
 		auto findQueueFamilies(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface) -> QueueFamilyIndices;
@@ -72,7 +63,7 @@ namespace maple
 		auto createImage(
 		    uint32_t width, uint32_t height, uint32_t mipLevels, VkFormat format, VkImageType imageType, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage &image, VkDeviceMemory &imageMemory, uint32_t arrayLayers, VkImageCreateFlags flags) -> uint64_t;
 
-		auto createImageView(VkImage image, VkFormat format, uint32_t mipLevels, VkImageViewType viewType, VkImageAspectFlags aspectMask, uint32_t layerCount, uint32_t baseArrayLayer = 0) -> VkImageView;
+		auto createImageView(VkImage image, VkFormat format, uint32_t mipLevels, VkImageViewType viewType, VkImageAspectFlags aspectMask, uint32_t layerCount, uint32_t baseArrayLayer = 0, uint32_t baseMipLevel = 0) -> VkImageView;
 
 		auto createBuffer(VkBuffer &buffer, VkDeviceMemory &bufferMemory,
 		                  VkPhysicalDevice physicalDevice, VkDevice device,
@@ -112,6 +103,8 @@ namespace maple
 		    void *                                      pUserData) -> VkBool32;
 
 		auto getSupportedDepthFormat(VkPhysicalDevice physicalDevice, VkFormat *depthFormat) -> VkBool32;
+		auto getSupportedFormat(const std::vector<VkFormat> &candidates, VkImageTiling tiling, VkFormatFeatureFlags features) -> VkFormat;
+		auto getDepthFormat() -> VkFormat;
 
 		inline auto semaphoreCreateInfo()
 		{
@@ -238,7 +231,7 @@ namespace maple
 
 		auto getBindingDescription() -> VkVertexInputBindingDescription;
 		auto getAttributeDescriptions() -> std::array<VkVertexInputAttributeDescription, 3>;
-		auto transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels = 1) -> void;
+		auto transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels = 1, uint32_t layerCount = 1, VkCommandBuffer commandBuffer = nullptr) -> void;
 		auto copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, int32_t offsetX = 0, int32_t offsetY = 0) -> void;
 		auto createTextureSampler(VkFilter magFilter = VK_FILTER_LINEAR, VkFilter minFilter = VK_FILTER_LINEAR, float minLod = 0.0f, float maxLod = 1.0f, bool anisotropyEnable = false, float maxAnisotropy = 1.0f, VkSamplerAddressMode modeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VkSamplerAddressMode modeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VkSamplerAddressMode modeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE) -> VkSampler;
 		auto beginSingleTimeCommands() -> VkCommandBuffer;
@@ -249,8 +242,6 @@ namespace maple
 	namespace VkConverter
 	{
 		auto textureFormatToVK(const TextureFormat &format, bool srgb = true) -> VkFormat;
-		auto findDepthFormat() -> VkFormat;
-		auto findSupportedFormat(const std::vector<VkFormat> &candidates, VkImageTiling tiling, VkFormatFeatureFlags features) -> VkFormat;
 		auto textureFilterToVK(TextureFilter filter) -> VkFilter;
 		auto textureWrapToVK(TextureWrap wrap) -> VkSamplerAddressMode;
 		auto drawTypeToTopology(DrawType type) -> VkPrimitiveTopology;

@@ -30,10 +30,5 @@ namespace maple
 		{
 			return 256;
 		}
-
-		inline auto flipImGUITexture() const -> bool override
-		{
-			return true;
-		}
 	};
 }        // namespace maple

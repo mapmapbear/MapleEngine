@@ -4,17 +4,17 @@
 #pragma once
 #include <cstdint>
 #include <functional>
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
-namespace maple 
+namespace maple
 {
 	struct LeftOver
 	{
-		int16_t l; //left
-		int16_t r; //right
-		int16_t t; //top
-		int16_t b; //bottom
+		int16_t l;        //left
+		int16_t r;        //right
+		int16_t t;        //top
+		int16_t b;        //bottom
 		LeftOver(int16_t x, int16_t y, int16_t width, int16_t height)
 		{
 			l = x;
@@ -42,12 +42,11 @@ namespace maple
 		}
 	};
 
-
 	template <typename K, typename V>
 	class QuadTree
 	{
-	public:
-		enum Direction
+	  public:
+		enum class Direction
 		{
 			LEFT,
 			RIGHT,
@@ -55,14 +54,14 @@ namespace maple
 			DOWN
 		};
 
-		QuadTree(std::function<Direction(const V&, const V&)> c)
+		QuadTree(std::function<Direction(const V &, const V &)> c)
 		{
-			root = 0;
+			root       = 0;
 			comparator = c;
 		}
 
-		QuadTree()
-			: QuadTree(nullptr)
+		QuadTree() :
+		    QuadTree(nullptr)
 		{
 		}
 
@@ -81,7 +80,7 @@ namespace maple
 				K current = root;
 				while (current)
 				{
-					parent = current;
+					parent  = current;
 					current = nodes[parent].addOrNext(key, value, comparator);
 				}
 			}
@@ -91,10 +90,9 @@ namespace maple
 			}
 
 			nodes.emplace(
-				std::piecewise_construct,
-				std::forward_as_tuple(key),
-				std::forward_as_tuple(value, parent, 0, 0, 0, 0)
-			);
+			    std::piecewise_construct,
+			    std::forward_as_tuple(key),
+			    std::forward_as_tuple(value, parent, 0, 0, 0, 0));
 		}
 
 		auto erase(K key)
@@ -102,10 +100,10 @@ namespace maple
 			if (!nodes.count(key))
 				return;
 
-			Node& toerase = nodes[key];
+			Node &toerase = nodes[key];
 
 			std::vector<K> leaves;
-			for (size_t i = LEFT; i <= DOWN; i++)
+			for (size_t i = static_cast<size_t>(Direction::LEFT); i <= static_cast<size_t>(Direction::DOWN); i++)
 			{
 				K leafkey = toerase[i];
 				if (leafkey)
@@ -125,13 +123,13 @@ namespace maple
 			}
 
 			nodes.erase(key);
-			for (auto& leaf : leaves)
+			for (auto &leaf : leaves)
 			{
 				readd(parent, leaf);
 			}
 		}
 
-		auto findNode(const V& value, std::function<bool(const V&, const V&)> predicate) -> K
+		auto findNode(const V &value, std::function<bool(const V &, const V &)> predicate) -> K
 		{
 			if (root)
 			{
@@ -141,27 +139,27 @@ namespace maple
 			return 0;
 		}
 
-		auto operator [](K key) -> V&
+		auto operator[](K key) -> V &
 
 		{
 			return nodes[key].value;
 		}
 
-		auto operator [](K key) const -> const V&
+		auto operator[](K key) const -> const V &
 
 		{
 			return nodes.at(key).value;
 		}
 
-	private:
-		auto findFrom(K start, const V& value, std::function<bool(const V&, const V&)> predicate) -> K
+	  private:
+		auto findFrom(K start, const V &value, std::function<bool(const V &, const V &)> predicate) -> K
 		{
 			if (!start)
 				return 0;
 
-			bool fulfilled = predicate(value, nodes[start].value);
-			Direction dir = comparator(value, nodes[start].value);
-			if (dir == RIGHT) //
+			bool      fulfilled = predicate(value, nodes[start].value);
+			Direction dir       = comparator(value, nodes[start].value);
+			if (dir == Direction::RIGHT)        //
 			{
 				K right = findFrom(nodes[start].right, value, predicate);
 				if (right && predicate(value, nodes[right].value))
@@ -170,7 +168,7 @@ namespace maple
 				}
 				return start;
 			}
-			if (dir == DOWN)
+			if (dir == Direction::DOWN)
 			{
 				K bottom = findFrom(nodes[start].bottom, value, predicate);
 				if (bottom && predicate(value, nodes[bottom].value))
@@ -191,7 +189,7 @@ namespace maple
 					return start;
 				}
 			}
-			if (dir == UP)
+			if (dir == Direction::UP)
 			{
 				K top = findFrom(nodes[start].top, value, predicate);
 				if (top && predicate(value, nodes[top].value))
@@ -257,11 +255,11 @@ namespace maple
 		{
 			if (start)
 			{
-				K parent = 0;
+				K parent  = 0;
 				K current = start;
 				while (current)
 				{
-					parent = current;
+					parent  = current;
 					current = nodes[parent].addOrNext(key, nodes[key].value, comparator);
 				}
 
@@ -288,13 +286,13 @@ namespace maple
 			K top;
 			K bottom;
 
-			Node(const V& v, K p, K l, K r, K t, K b)
-				: value(v), parent(p), left(l), right(r), top(t), bottom(b)
+			Node(const V &v, K p, K l, K r, K t, K b) :
+			    value(v), parent(p), left(l), right(r), top(t), bottom(b)
 			{
 			}
 
-			Node()
-				: Node(V(), 0, 0, 0, 0, 0)
+			Node() :
+			    Node(V(), 0, 0, 0, 0, 0)
 			{
 			}
 
@@ -310,26 +308,26 @@ namespace maple
 					bottom = 0;
 			}
 
-			auto addOrNext(K key, V val, std::function<Direction(const V&, const V&)> comparator) -> K
+			auto addOrNext(K key, V val, std::function<Direction(const V &, const V &)> comparator) -> K
 			{
-				Direction dir = comparator(val, value);
-				K dirkey = leaf(dir);
+				Direction dir    = comparator(val, value);
+				K         dirkey = leaf(dir);
 				if (!dirkey)
 				{
 					switch (dir)
 					{
-					case LEFT:
-						left = key;
-						break;
-					case RIGHT:
-						right = key;
-						break;
-					case UP:
-						top = key;
-						break;
-					case DOWN:
-						bottom = key;
-						break;
+						case Direction::LEFT:
+							left = key;
+							break;
+						case Direction::RIGHT:
+							right = key;
+							break;
+						case Direction::UP:
+							top = key;
+							break;
+						case Direction::DOWN:
+							bottom = key;
+							break;
 					}
 				}
 				return dirkey;
@@ -339,29 +337,29 @@ namespace maple
 			{
 				switch (dir)
 				{
-				case LEFT:
-					return left;
-				case RIGHT:
-					return right;
-				case UP:
-					return top;
-				case DOWN:
-					return bottom;
-				default:
-					return 0;
+					case Direction::LEFT:
+						return left;
+					case Direction::RIGHT:
+						return right;
+					case Direction::UP:
+						return top;
+					case Direction::DOWN:
+						return bottom;
+					default:
+						return 0;
 				}
 			}
 
-			auto operator [](size_t d) -> K
+			auto operator[](size_t d) -> K
 			{
 				auto dir = static_cast<Direction>(d);
 				return leaf(dir);
 			}
 		};
 
-		std::function<Direction(const V&, const V&)> comparator;
-		std::unordered_map<K, Node> nodes;
-		K root;
+		std::function<Direction(const V &, const V &)> comparator;
+		std::unordered_map<K, Node>                    nodes;
+		K                                              root;
 	};
 
-};
+};        // namespace maple

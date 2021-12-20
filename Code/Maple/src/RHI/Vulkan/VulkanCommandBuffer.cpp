@@ -3,17 +3,26 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include "VulkanCommandBuffer.h"
-#include "VulkanDevice.h"
-#include "VulkanCommandPool.h"
-#include "VulkanFrameBuffer.h"
-#include "VulkanRenderPass.h"
 #include "Others/Console.h"
+#include "VulkanCommandPool.h"
+#include "VulkanDevice.h"
+#include "VulkanFence.h"
+#include "VulkanFrameBuffer.h"
+#include "VulkanPipeline.h"
+#include "VulkanRenderPass.h"
+
+#include "Application.h"
 
 namespace maple
 {
-	VulkanCommandBuffer::VulkanCommandBuffer(bool primary)
+	VulkanCommandBuffer::VulkanCommandBuffer() :
+	    primary(false)
 	{
-		init(primary);
+	}
+
+	VulkanCommandBuffer::VulkanCommandBuffer(VkCommandBuffer commandBuffer) :
+	    primary(true), commandBuffer(commandBuffer)
+	{
 	}
 
 	VulkanCommandBuffer::~VulkanCommandBuffer()
@@ -21,44 +30,47 @@ namespace maple
 		unload();
 	}
 
-	/**
-	 * init the command buffer
-	 */
 	auto VulkanCommandBuffer::init(bool primary) -> bool
 	{
-		
-		return init(primary, *VulkanDevice::get()->getCommandPool());
-/*
+		this->primary = primary;
 
-		//create the fence.
-		VkFenceCreateInfo fenceCI{};
-		fenceCI.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-		fenceCI.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-		VK_CHECK_RESULT(vkCreateFence(*VulkanDevice::get(), &fenceCI, nullptr, &fence));*/
+		commandPool = *VulkanDevice::get()->getCommandPool();
+		VkCommandBufferAllocateInfo cmdBufferCI{};
+		cmdBufferCI.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		cmdBufferCI.commandPool        = commandPool;
+		cmdBufferCI.commandBufferCount = 1;
+		cmdBufferCI.level              = primary ? VK_COMMAND_BUFFER_LEVEL_PRIMARY : VK_COMMAND_BUFFER_LEVEL_SECONDARY;
+		VK_CHECK_RESULT(vkAllocateCommandBuffers(*VulkanDevice::get(), &cmdBufferCI, &commandBuffer));
 
-	//	return true;
+		VkSemaphoreCreateInfo semaphoreInfo = {};
+		semaphoreInfo.sType                 = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+		semaphoreInfo.pNext                 = nullptr;
+		VK_CHECK_RESULT(vkCreateSemaphore(*VulkanDevice::get(), &semaphoreInfo, nullptr, &semaphore));
+
+		fence = std::make_shared<VulkanFence>(false);
+
+		return true;
 	}
 
 	auto VulkanCommandBuffer::init(bool primary, VkCommandPool cmdPool) -> bool
 	{
 		this->primary = primary;
+
+		commandPool = cmdPool;
 		VkCommandBufferAllocateInfo cmdBufferCI{};
-
-		cmdBufferCI.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		cmdBufferCI.commandPool = cmdPool;
+		cmdBufferCI.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		cmdBufferCI.commandPool        = commandPool;
 		cmdBufferCI.commandBufferCount = 1;
-		cmdBufferCI.level = primary ? VK_COMMAND_BUFFER_LEVEL_PRIMARY : VK_COMMAND_BUFFER_LEVEL_SECONDARY;
-
-
+		cmdBufferCI.level              = primary ? VK_COMMAND_BUFFER_LEVEL_PRIMARY : VK_COMMAND_BUFFER_LEVEL_SECONDARY;
 		VK_CHECK_RESULT(vkAllocateCommandBuffers(*VulkanDevice::get(), &cmdBufferCI, &commandBuffer));
-		
-		VkFenceCreateInfo fenceCI{};
-		fenceCI.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-		fenceCI.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-		VK_CHECK_RESULT(vkCreateFence(*VulkanDevice::get(), &fenceCI, nullptr, &fence));
-		
-		
+		VkSemaphoreCreateInfo semaphoreInfo = {};
+		semaphoreInfo.sType                 = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+		semaphoreInfo.pNext                 = nullptr;
+		VK_CHECK_RESULT(vkCreateSemaphore(*VulkanDevice::get(), &semaphoreInfo, nullptr, &semaphore));
+
+		fence = std::make_shared<VulkanFence>(true);
+
 		return true;
 	}
 
@@ -67,29 +79,45 @@ namespace maple
 	 */
 	auto VulkanCommandBuffer::unload() -> void
 	{
-		vkDestroyFence(*VulkanDevice::get(), fence, nullptr);
-		vkFreeCommandBuffers(*VulkanDevice::get(), *VulkanDevice::get()->getCommandPool(), 1, &commandBuffer);
+		PROFILE_FUNCTION();
+		Application::getGraphicsContext()->waitIdle();
+
+		if (state == CommandBufferState::Submitted)
+			wait();
+
+		if (semaphore)
+			vkDestroySemaphore(*VulkanDevice::get(), semaphore, nullptr);
+		if (commandBuffer)
+			vkFreeCommandBuffers(*VulkanDevice::get(), commandPool, 1, &commandBuffer);
 	}
 
 	auto VulkanCommandBuffer::beginRecording() -> void
 	{
+		PROFILE_FUNCTION();
+		MAPLE_ASSERT(primary, "beginRecording() called from a secondary command buffer!");
+		state = CommandBufferState::Recording;
+
 		VkCommandBufferBeginInfo beginCI{};
 		beginCI.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 		beginCI.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 		VK_CHECK_RESULT(vkBeginCommandBuffer(commandBuffer, &beginCI));
 	}
 
-	auto VulkanCommandBuffer::beginRecordingSecondary(RenderPass* renderPass, FrameBuffer* framebuffer) -> void
+	auto VulkanCommandBuffer::beginRecordingSecondary(RenderPass *renderPass, FrameBuffer *framebuffer) -> void
 	{
+		PROFILE_FUNCTION();
+		MAPLE_ASSERT(!primary, "beginRecordingSecondary() called from a primary command buffer!");
+		state = CommandBufferState::Recording;
+
 		VkCommandBufferInheritanceInfo inheritanceInfo{};
-		inheritanceInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
-		inheritanceInfo.subpass = 0;
-		inheritanceInfo.renderPass = *(VulkanRenderPass*)renderPass;
-		inheritanceInfo.framebuffer = *(VulkanFrameBuffer*)framebuffer;
+		inheritanceInfo.sType       = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
+		inheritanceInfo.subpass     = 0;
+		inheritanceInfo.renderPass  = *(VulkanRenderPass *) renderPass;
+		inheritanceInfo.framebuffer = *(VulkanFrameBuffer *) framebuffer;
 
 		VkCommandBufferBeginInfo beginCI{};
-		beginCI.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		beginCI.flags = VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;
+		beginCI.sType            = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		beginCI.flags            = VK_COMMAND_BUFFER_USAGE_RENDER_PASS_CONTINUE_BIT;
 		beginCI.pInheritanceInfo = &inheritanceInfo;
 
 		VK_CHECK_RESULT(vkBeginCommandBuffer(commandBuffer, &beginCI));
@@ -97,33 +125,45 @@ namespace maple
 
 	auto VulkanCommandBuffer::endRecording() -> void
 	{
+		PROFILE_FUNCTION();
+
+		MAPLE_ASSERT(state == CommandBufferState::Recording, "CommandBuffer ended before started recording");
+
+		if (boundPipeline)
+			boundPipeline->end(this);
+
+		boundPipeline = nullptr;
+		TracyVkCollect(VulkanDevice::get()->getTracyContext(), commandBuffer);
+
+		VK_CHECK_RESULT(vkEndCommandBuffer(commandBuffer));
+		state = CommandBufferState::Ended;
+
 		VK_CHECK_RESULT(vkEndCommandBuffer(commandBuffer));
 	}
 
-	auto VulkanCommandBuffer::execute(bool waitFence) -> void
+	auto VulkanCommandBuffer::executeSecondary(CommandBuffer *primaryCmdBuffer) -> void
 	{
-		executeInternal(VkPipelineStageFlags(), VK_NULL_HANDLE, VK_NULL_HANDLE, waitFence);
-	}
+		PROFILE_FUNCTION();
+		MAPLE_ASSERT(!primary, "Used ExecuteSecondary on primary command buffer!");
+		state = CommandBufferState::Submitted;
 
-	auto VulkanCommandBuffer::executeSecondary(CommandBuffer* primaryCmdBuffer) -> void
-	{
-		vkCmdExecuteCommands(*(VulkanCommandBuffer*)primaryCmdBuffer, 1, &commandBuffer);
+		vkCmdExecuteCommands(*static_cast<VulkanCommandBuffer *>(primaryCmdBuffer), 1, &commandBuffer);
 	}
 
 	auto VulkanCommandBuffer::updateViewport(uint32_t width, uint32_t height) -> void
 	{
+		PROFILE_FUNCTION();
 		VkViewport viewport = {};
-		viewport.x = 0.0f;
-		viewport.y = 0.f;
-		viewport.width = static_cast<float>(width);
-		viewport.height = static_cast<float>(height);
-		viewport.minDepth = 0.0f;
-		viewport.maxDepth = 1.0f;
-
+		viewport.x          = 0.0f;
+		viewport.y          = 0.f;
+		viewport.width      = static_cast<float>(width);
+		viewport.height     = static_cast<float>(height);
+		viewport.minDepth   = 0.0f;
+		viewport.maxDepth   = 1.0f;
 
 		VkRect2D scissor = {};
-		scissor.offset = { 0, 0 };
-		scissor.extent = { width, height };
+		scissor.offset   = {0, 0};
+		scissor.extent   = {width, height};
 
 		//viewport param
 		vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
@@ -132,34 +172,71 @@ namespace maple
 		vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 	}
 
-	auto VulkanCommandBuffer::executeInternal(VkPipelineStageFlags flags, VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, bool waitFence) -> void
+	auto VulkanCommandBuffer::bindPipeline(Pipeline *pipeline) -> void
 	{
-		uint32_t waitSemaphoreCount = waitSemaphore ? 1 : 0, signalSemaphoreCount = signalSemaphore ? 1 : 0;
-
-		VkSubmitInfo submitInfo = {};
-		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submitInfo.pNext = VK_NULL_HANDLE;
-		submitInfo.waitSemaphoreCount = waitSemaphoreCount;
-		submitInfo.pWaitSemaphores = &waitSemaphore;
-		submitInfo.pWaitDstStageMask = &flags;
-		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = &commandBuffer;
-		submitInfo.signalSemaphoreCount = signalSemaphoreCount;
-		submitInfo.pSignalSemaphores = &signalSemaphore;
-
-		//VK_CHECK_RESULT(vkQueueSubmit(VulkanDevice::get()->getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE));
-
-
-		if (waitFence)
+		if (pipeline != boundPipeline)
 		{
-			VK_CHECK_RESULT(vkWaitForFences(*VulkanDevice::get(), 1, &fence, VK_TRUE, 100000000000));
-			VK_CHECK_RESULT(vkQueueSubmit(VulkanDevice::get()->getGraphicsQueue(), 1, &submitInfo, fence));
-			VK_CHECK_RESULT(vkResetFences(*VulkanDevice::get(), 1, &fence));
-		}
-		else
-		{
-			VK_CHECK_RESULT(vkQueueSubmit(VulkanDevice::get()->getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE));
-			VK_CHECK_RESULT(vkQueueWaitIdle(VulkanDevice::get()->getGraphicsQueue()));
+			if (boundPipeline)
+				boundPipeline->end(this);
+
+			pipeline->bind(this);
+			boundPipeline = pipeline;
 		}
 	}
-};
+
+	auto VulkanCommandBuffer::unbindPipeline() -> void
+	{
+		if (boundPipeline)
+			boundPipeline->end(this);
+		boundPipeline = nullptr;
+	}
+
+	auto VulkanCommandBuffer::flush() -> bool
+	{
+		if (state != CommandBufferState::Idle)
+		{
+			Application::getGraphicsContext()->waitIdle();
+			if (state == CommandBufferState::Submitted)
+				wait();
+		}
+		return true;
+	}
+
+	auto VulkanCommandBuffer::executeInternal(VkPipelineStageFlags flags, VkSemaphore signalSemaphore, bool waitFence) -> void
+	{
+		PROFILE_FUNCTION();
+		MAPLE_ASSERT(primary, "Used Execute on secondary command buffer!");
+		MAPLE_ASSERT(state == CommandBufferState::Ended, "CommandBuffer executed before ended recording");
+		uint32_t waitSemaphoreCount = signalSemaphore ? 1 : 0, signalSemaphoreCount = semaphore ? 1 : 0;
+
+		VkSubmitInfo submitInfo         = {};
+		submitInfo.sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submitInfo.pNext                = VK_NULL_HANDLE;
+		submitInfo.waitSemaphoreCount   = waitSemaphoreCount;
+		submitInfo.pWaitSemaphores      = &signalSemaphore;
+		submitInfo.pWaitDstStageMask    = &flags;
+		submitInfo.commandBufferCount   = 1;
+		submitInfo.pCommandBuffers      = &commandBuffer;
+		submitInfo.signalSemaphoreCount = signalSemaphoreCount;
+		submitInfo.pSignalSemaphores    = &semaphore;
+
+		fence->reset();
+
+		VK_CHECK_RESULT(vkQueueSubmit(VulkanDevice::get()->getGraphicsQueue(), 1, &submitInfo, *fence));
+		state = CommandBufferState::Submitted;
+	}
+
+	auto VulkanCommandBuffer::wait() -> void
+	{
+		PROFILE_FUNCTION();
+		MAPLE_ASSERT(state == CommandBufferState::Submitted, "");
+		fence->waitAndReset();
+		state = CommandBufferState::Idle;
+	}
+
+	auto VulkanCommandBuffer::reset() -> void
+	{
+		PROFILE_FUNCTION();
+		VK_CHECK_RESULT(vkResetCommandBuffer(commandBuffer, 0));
+	}
+};        // namespace maple

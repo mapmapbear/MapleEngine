@@ -17,17 +17,17 @@ namespace maple
 			bool hcomp = first.height() >= second.height();
 			if (wcomp && hcomp)
 			{
-				return QuadTree<size_t, LeftOver>::RIGHT;
+				return QuadTree<size_t, LeftOver>::Direction::RIGHT;
 			}
 			if (wcomp)
 			{
-				return QuadTree<size_t, LeftOver>::DOWN;
+				return QuadTree<size_t, LeftOver>::Direction::DOWN;
 			}
 			if (hcomp)
 			{
-				return QuadTree<size_t, LeftOver>::UP;
+				return QuadTree<size_t, LeftOver>::Direction::UP;
 			}
-			return QuadTree<size_t, LeftOver>::LEFT;
+			return QuadTree<size_t, LeftOver>::Direction::LEFT;
 		});
 	}
 
