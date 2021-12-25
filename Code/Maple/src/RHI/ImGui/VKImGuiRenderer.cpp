@@ -56,6 +56,7 @@ namespace maple
 	auto VKImGuiRenderer::init() -> void
 	{
 		PROFILE_FUNCTION();
+		ImGui_ImplGlfw_InitForVulkan((GLFWwindow *) Application::getWindow()->getNativeInterface(), true);
 
 		ImGui_ImplVulkanH_Window *wd = &g_WindowData;
 
@@ -74,9 +75,11 @@ namespace maple
 		init_info.PipelineCache             = VulkanDevice::get()->getPipelineCache();
 		init_info.DescriptorPool            = g_DescriptorPool;
 		init_info.Allocator                 = g_Allocator;
-		init_info.CheckVkResultFn           = NULL;
-		init_info.MinImageCount             = 2;
-		init_info.ImageCount                = (uint32_t) vkSwapChain->getSwapChainBufferCount();
+		init_info.CheckVkResultFn           = [](VkResult err) {
+            VK_CHECK_RESULT(err);
+		};
+		init_info.MinImageCount = 2;
+		init_info.ImageCount    = (uint32_t) vkSwapChain->getSwapChainBufferCount();
 		ImGui_ImplVulkan_Init(&init_info, wd->RenderPass);
 		// Upload Fonts
 		{
@@ -90,19 +93,11 @@ namespace maple
 		ImGuiIO &      io = ImGui::GetIO();
 		unsigned char *pixels;
 		int            width, height;
+
 		io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
-		auto texture = std::make_shared<VulkanTexture2D>(width, height, pixels, TextureParameters(TextureFilter::Nearest, TextureFilter::Nearest));
-
-		VkWriteDescriptorSet writeDesc[1] = {};
-		writeDesc[0].sType                = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		writeDesc[0].dstSet               = ImGui_ImplVulkanH_GetFontDescriptor();
-		writeDesc[0].descriptorCount      = 1;
-		writeDesc[0].descriptorType       = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		writeDesc[0].pImageInfo           = texture->getDescriptor();
-
-		vkUpdateDescriptorSets(*VulkanDevice::get(), 1, writeDesc, 0, nullptr);
-		io.Fonts->TexID = (ImTextureID) texture->getDescriptor();
-		ImGui_ImplVulkan_AddTexture(io.Fonts->TexID, ImGui_ImplVulkanH_GetFontDescriptor());
+		fontTexture = Texture2D::create(width, height, pixels);
+		fontTexture->setName("FontsTextures");
+		io.Fonts->TexID = (ImTextureID) fontTexture->getHandle();
 	}
 
 	auto VKImGuiRenderer::newFrame(const Timestep &dt) -> void
@@ -118,17 +113,48 @@ namespace maple
 
 	auto VKImGuiRenderer::render(CommandBuffer *commandBuffer) -> void
 	{
-		PROFILE_FUNCTION();
-		ImGui::Render();
-
 		//GPUProfile("ImGui Pass");
-
+		PROFILE_FUNCTION();
 		g_WindowData.FrameIndex = VulkanContext::get()->getSwapChain()->getCurrentBufferIndex();
 
-		renderPass->beginRenderPass(commandBuffer, glm::vec4(0.1f, 0.1f, 0.1f, 1.0f), frameBuffers[g_WindowData.FrameIndex].get(), SubPassContents::Inline, g_WindowData.Width, g_WindowData.Height,-1,0);
-		// Record Imgui Draw Data and draw funcs into command buffer
-		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), *((VulkanCommandBuffer *) commandBuffer));
+		auto  vkCommnadBuffer    = (VulkanCommandBuffer *) commandBuffer;
+		auto &descriptorImageMap = ImGui_ImplVulkan_GetDescriptorImageMap();
 
+		auto drawData = ImGui::GetDrawData();
+		for (int n = 0; n < drawData->CmdListsCount; n++)
+		{
+			const ImDrawList *cmdList = drawData->CmdLists[n];
+			for (int32_t cmdIdx = 0; cmdIdx < cmdList->CmdBuffer.Size; cmdIdx++)
+			{
+				const ImDrawCmd *pcmd = &cmdList->CmdBuffer[cmdIdx];
+
+				if ((Texture *) pcmd->TextureId)
+				{
+					if (((Texture *) pcmd->TextureId)->getType() == TextureType::Color)
+					{
+						auto texture = (VulkanTexture2D *) pcmd->TextureId;
+						texture->transitionImage(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, vkCommnadBuffer);
+						descriptorImageMap[pcmd->TextureId] = texture->getDescriptor();
+					}
+					else if (((Texture *) pcmd->TextureId)->getType() == TextureType::Depth)
+					{
+						auto texture = (VulkanTextureDepth *) pcmd->TextureId;
+						texture->transitionImage(VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL, vkCommnadBuffer);
+						descriptorImageMap[pcmd->TextureId] = texture->getDescriptor();
+					}
+					else if (((Texture *) pcmd->TextureId)->getType() == TextureType::DepthArray)
+					{
+						auto texture = (VulkanTextureDepthArray *) pcmd->TextureId;
+						texture->transitionImage(VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL, vkCommnadBuffer);
+						descriptorImageMap[pcmd->TextureId] = texture->getDescriptor();
+					}
+				}
+			}
+		}
+
+		ImGui_ImplVulkan_CreateDescriptorSets(ImGui::GetDrawData(), g_WindowData.FrameIndex);
+		renderPass->beginRenderPass(commandBuffer, glm::vec4(0.1f, 0.1f, 0.1f, 1.f), frameBuffers[g_WindowData.FrameIndex].get(), SubPassContents::Inline, g_WindowData.Width, g_WindowData.Height, -1, 0);
+		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), static_cast<VulkanCommandBuffer *>(commandBuffer)->getCommandBuffer(), nullptr, g_WindowData.FrameIndex);
 		renderPass->endRenderPass(commandBuffer);
 	}
 
@@ -147,6 +173,14 @@ namespace maple
 		wd->Height = height;
 		frameBuffers.clear();
 		frameBuffers.resize(swapChain->getSwapChainBufferCount());
+
+		RenderPassInfo renderPassDesc;
+		renderPassDesc.clear       = clearScreen;
+		renderPassDesc.attachments = {swapChain->getImage(0)};
+
+		renderPass     = RenderPass::create(renderPassDesc);
+		wd->RenderPass = *std::static_pointer_cast<VulkanRenderPass>(renderPass);
+
 		// Create Framebuffer
 		FrameBufferInfo bufferInfo{};
 		bufferInfo.width      = wd->Width;
@@ -154,6 +188,7 @@ namespace maple
 		bufferInfo.renderPass = renderPass;
 		bufferInfo.screenFBO  = true;
 		bufferInfo.attachments.resize(1);
+
 		for (uint32_t i = 0; i < swapChain->getSwapChainBufferCount(); i++)
 		{
 			bufferInfo.attachments[0] = swapChain->getImage(i);
@@ -212,7 +247,8 @@ namespace maple
 		{
 			for (uint32_t i = 0; i < wd->ImageCount; i++)
 			{
-				auto scBuffer                = (VulkanTexture2D *) swapChain->getImage(i).get();
+				auto scBuffer = std::static_pointer_cast<VulkanTexture2D>(swapChain->getImage(i));
+
 				wd->Frames[i].Backbuffer     = scBuffer->getImage();
 				wd->Frames[i].BackbufferView = scBuffer->getImageView();
 			}

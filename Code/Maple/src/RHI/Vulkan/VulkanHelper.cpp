@@ -10,6 +10,8 @@
 #include "VulkanDescriptorSet.h"
 #include "VulkanDevice.h"
 #include "VulkanSwapChain.h"
+#include "VulkanCommandBuffer.h"
+
 #include <string>
 
 #include <GLFW/glfw3.h>
@@ -379,70 +381,6 @@ namespace maple
 		return indices;
 	}
 
-	auto VulkanHelper::createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkFormat format, VkImageType imageType, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage &image, VkDeviceMemory &imageMemory, uint32_t arrayLayers, VkImageCreateFlags flags) -> uint64_t
-	{
-		VkImageCreateInfo imageInfo = {};
-		imageInfo.sType             = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-		imageInfo.imageType         = imageType;
-		imageInfo.extent            = {width, height, 1};
-		imageInfo.mipLevels         = mipLevels;
-		imageInfo.format            = format;
-		imageInfo.tiling            = tiling;
-		imageInfo.initialLayout     = VK_IMAGE_LAYOUT_UNDEFINED;
-		imageInfo.usage             = usage;
-		imageInfo.samples           = VK_SAMPLE_COUNT_1_BIT;
-		imageInfo.sharingMode       = VK_SHARING_MODE_EXCLUSIVE;
-		imageInfo.arrayLayers       = arrayLayers;
-
-		imageInfo.flags = flags;
-
-		if (vkCreateImage(*VulkanDevice::get(), &imageInfo, nullptr, &image) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to create image!");
-		}
-
-		vkCreateImage(*VulkanDevice::get(), &imageInfo, nullptr, &image);
-
-		VkMemoryRequirements memRequirements;
-		vkGetImageMemoryRequirements(*VulkanDevice::get(), image, &memRequirements);
-
-		VkMemoryAllocateInfo allocInfo = {};
-		allocInfo.sType                = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-		allocInfo.allocationSize       = memRequirements.size;
-		allocInfo.memoryTypeIndex      = findMemoryType(memRequirements.memoryTypeBits, properties);
-
-		VK_CHECK_RESULT(vkAllocateMemory(*VulkanDevice::get(), &allocInfo, nullptr, &imageMemory));
-		VK_CHECK_RESULT(vkBindImageMemory(*VulkanDevice::get(), image, imageMemory, 0));
-
-		return memRequirements.size;
-	}
-
-	auto VulkanHelper::createImageView(VkImage image, VkFormat format, uint32_t mipLevels, VkImageViewType viewType, VkImageAspectFlags aspectMask, uint32_t layerCount, uint32_t baseArrayLayer, uint32_t baseMipLevel) -> VkImageView
-	{
-		VkImageViewCreateInfo viewInfo = {};
-		viewInfo.sType                 = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		viewInfo.image                 = image;
-		viewInfo.viewType              = viewType;
-		viewInfo.format                = format;
-
-#ifdef PLATFORM_MACOS
-		viewInfo.components = {VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY};
-#else
-		viewInfo.components = {VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A};
-#endif
-		viewInfo.subresourceRange.aspectMask     = aspectMask;
-		viewInfo.subresourceRange.baseMipLevel   = baseMipLevel;
-		viewInfo.subresourceRange.levelCount     = mipLevels;
-		viewInfo.subresourceRange.baseArrayLayer = baseArrayLayer;
-		viewInfo.subresourceRange.layerCount     = layerCount;
-
-		VkImageView imageView;
-		if (vkCreateImageView(*VulkanDevice::get(), &viewInfo, nullptr, &imageView) != VK_SUCCESS)
-		{
-			throw std::runtime_error("failed to create texture image view!");
-		}
-		return imageView;
-	}
 
 	auto VulkanHelper::createBuffer(VkBuffer &buffer, VkDeviceMemory &bufferMemory, VkPhysicalDevice physicalDevice, VkDevice device, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBufferCreateFlags flags /*= 0*/, VkSharingMode sharingMode /*= VK_SHARING_MODE_EXCLUSIVE*/, const std::vector<uint32_t> &queueFamilyIndices /*= {}*/) -> void
 	{
@@ -661,38 +599,100 @@ namespace maple
 		return actualExtent;
 	}
 
-	auto VulkanHelper::getBindingDescription() -> VkVertexInputBindingDescription
+
+	
+	auto VulkanHelper::createImageView(VkImage image, VkFormat format, uint32_t mipLevels, VkImageViewType viewType, VkImageAspectFlags aspectMask, uint32_t layerCount, uint32_t baseArrayLayer, uint32_t baseMipLevel) -> VkImageView
 	{
-		VkVertexInputBindingDescription bindingDescription{};
-		bindingDescription.binding   = 0;
-		bindingDescription.stride    = sizeof(Vertex);
-		bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-		return bindingDescription;
+		PROFILE_FUNCTION();
+		VkImageViewCreateInfo viewInfo = {};
+		viewInfo.sType                 = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		viewInfo.image                 = image;
+		viewInfo.viewType              = viewType;
+		viewInfo.format                = format;
+#ifdef PLATFORM_MACOS
+		viewInfo.components = {VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY};
+#else
+		viewInfo.components = {VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A};
+#endif
+		viewInfo.subresourceRange.aspectMask     = aspectMask;
+		viewInfo.subresourceRange.baseMipLevel   = baseMipLevel;
+		viewInfo.subresourceRange.levelCount     = mipLevels;
+		viewInfo.subresourceRange.baseArrayLayer = baseArrayLayer;
+		viewInfo.subresourceRange.layerCount     = layerCount;
+
+		VkImageView imageView;
+		if (vkCreateImageView(*VulkanDevice::get(), &viewInfo, nullptr, &imageView) != VK_SUCCESS)
+		{
+			LOGE("Failed to create texture image view!");
+		}
+
+		return imageView;
 	}
 
-	auto VulkanHelper::getAttributeDescriptions() -> std::array<VkVertexInputAttributeDescription, 3>
+#ifdef USE_VMA_ALLOCATOR
+	auto VulkanHelper::createImageVma(const VkImageCreateInfo &imageInfo, VkImage &image, VmaAllocation &allocation) -> void
 	{
-		std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions{};
-
-		attributeDescriptions[0].binding  = 0;
-		attributeDescriptions[0].location = 0;
-		attributeDescriptions[0].format   = VK_FORMAT_R32G32B32_SFLOAT;
-		attributeDescriptions[0].offset   = offsetof(Vertex, pos);
-
-		attributeDescriptions[1].binding  = 0;
-		attributeDescriptions[1].location = 1;
-		attributeDescriptions[1].format   = VK_FORMAT_R32G32B32_SFLOAT;
-		attributeDescriptions[1].offset   = offsetof(Vertex, color);
-
-		attributeDescriptions[2].binding  = 0;
-		attributeDescriptions[2].location = 2;
-		attributeDescriptions[2].format   = VK_FORMAT_R32G32_SFLOAT;
-		attributeDescriptions[2].offset   = offsetof(Vertex, texCoord);
-
-		return attributeDescriptions;
+		PROFILE_FUNCTION();
+		VmaAllocationCreateInfo allocInfovma;
+		allocInfovma.flags          = 0;
+		allocInfovma.usage          = VMA_MEMORY_USAGE_GPU_ONLY;
+		allocInfovma.requiredFlags  = 0;
+		allocInfovma.preferredFlags = 0;
+		allocInfovma.memoryTypeBits = 0;
+		allocInfovma.pool           = nullptr;
+		allocInfovma.pUserData      = nullptr;
+		vmaCreateImage(VulkanDevice::get()->getAllocator(), &imageInfo, &allocInfovma, &image, &allocation, nullptr);
 	}
 
-	auto VulkanHelper::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels, uint32_t layerCount, VkCommandBuffer commandBuffer) -> void
+#else
+	auto VulkanHelper::createImageDefault(const VkImageCreateInfo &imageInfo, VkImage &image, VkDeviceMemory &imageMemory, VkMemoryPropertyFlags properties) -> void
+	{
+		PROFILE_FUNCTION();
+		vkCreateImage(*VulkanDevice::get(), &imageInfo, nullptr, &image);
+
+		VkMemoryRequirements memRequirements;
+		vkGetImageMemoryRequirements(*VulkanDevice::get(), image, &memRequirements);
+
+		VkMemoryAllocateInfo allocInfo = {};
+		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		allocInfo.allocationSize = memRequirements.size;
+		allocInfo.memoryTypeIndex = VulkanHelper::findMemoryType(memRequirements.memoryTypeBits, properties);
+
+		vkAllocateMemory(*VulkanDevice::get(), &allocInfo, nullptr, &imageMemory);
+		vkBindImageMemory(*VulkanDevice::get(), image, imageMemory, 0);
+	}
+#endif
+
+#ifdef USE_VMA_ALLOCATOR
+	auto VulkanHelper::createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkFormat format, VkImageType imageType, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage &image, VkDeviceMemory &imageMemory, uint32_t arrayLayers, VkImageCreateFlags flags, VmaAllocation &allocation) -> void
+#else
+	auto VulkanHelper::createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkFormat format, VkImageType imageType, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage &image, VkDeviceMemory &imageMemory, uint32_t arrayLayers, VkImageCreateFlags flags) -> void
+#endif
+	{
+		PROFILE_FUNCTION();
+		VkImageCreateInfo imageInfo = {};
+		imageInfo.sType             = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+		imageInfo.imageType         = imageType;
+		imageInfo.extent            = {width, height, 1};
+		imageInfo.mipLevels         = mipLevels;
+		imageInfo.format            = format;
+		imageInfo.tiling            = tiling;
+		imageInfo.initialLayout     = VK_IMAGE_LAYOUT_UNDEFINED;
+		imageInfo.usage             = usage;
+		imageInfo.samples           = VK_SAMPLE_COUNT_1_BIT;
+		imageInfo.sharingMode       = VK_SHARING_MODE_EXCLUSIVE;
+		imageInfo.arrayLayers       = arrayLayers;
+
+		imageInfo.flags = flags;
+
+#ifdef USE_VMA_ALLOCATOR
+		VulkanHelper::createImageVma(imageInfo, image, allocation);
+#else
+		VulkanHelper::createImageDefault(imageInfo, image, imageMemory, properties);
+#endif
+	}
+
+	auto VulkanHelper::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels, uint32_t layerCount, VkCommandBuffer commandBuffer, bool depth) -> void
 	{
 		PROFILE_FUNCTION();
 
@@ -705,7 +705,7 @@ namespace maple
 		}
 
 		VkImageSubresourceRange subresourceRange = {};
-		subresourceRange.aspectMask              = isDepthFormat(format) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
+		subresourceRange.aspectMask              = depth ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
 
 		if (isStencilFormat(format))
 			subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
@@ -723,40 +723,8 @@ namespace maple
 		imageMemoryBarrier.subresourceRange     = subresourceRange;
 		imageMemoryBarrier.srcAccessMask        = layoutToAccessMask(oldLayout, false);
 		imageMemoryBarrier.dstAccessMask        = layoutToAccessMask(newLayout, true);
-		imageMemoryBarrier.srcQueueFamilyIndex  = VK_QUEUE_FAMILY_IGNORED;
-		imageMemoryBarrier.dstQueueFamilyIndex  = VK_QUEUE_FAMILY_IGNORED;
-
-		VkPipelineStageFlags sourceStage = 0;
-		{
-			if (imageMemoryBarrier.oldLayout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
-			{
-				sourceStage = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-			}
-			else if (imageMemoryBarrier.srcAccessMask != 0)
-			{
-				sourceStage = accessFlagsToPipelineStage(imageMemoryBarrier.srcAccessMask, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
-			}
-			else
-			{
-				sourceStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
-			}
-		}
-
-		VkPipelineStageFlags destinationStage = 0;
-		{
-			if (imageMemoryBarrier.newLayout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR)
-			{
-				destinationStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-			}
-			else if (imageMemoryBarrier.dstAccessMask != 0)
-			{
-				destinationStage = accessFlagsToPipelineStage(imageMemoryBarrier.dstAccessMask, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
-			}
-			else
-			{
-				destinationStage = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
-			}
-		}
+		imageMemoryBarrier.srcQueueFamilyIndex  = VulkanDevice::get()->getPhysicalDevice()->getQueueFamilyIndices().graphicsFamily.value();
+		imageMemoryBarrier.dstQueueFamilyIndex  = VulkanDevice::get()->getPhysicalDevice()->getQueueFamilyIndices().graphicsFamily.value();
 
 		vkCmdPipelineBarrier(
 		    commandBuffer,
@@ -786,22 +754,27 @@ namespace maple
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-		vkBeginCommandBuffer(commandBuffer, &beginInfo);
+		VK_CHECK_RESULT(vkBeginCommandBuffer(commandBuffer, &beginInfo));
 
 		return commandBuffer;
 	}
 
 	auto VulkanHelper::endSingleTimeCommands(VkCommandBuffer commandBuffer) -> void
 	{
-		vkEndCommandBuffer(commandBuffer);
+		VK_CHECK_RESULT(vkEndCommandBuffer(commandBuffer));
 
 		VkSubmitInfo submitInfo{};
-		submitInfo.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers    = &commandBuffer;
+		submitInfo.sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submitInfo.commandBufferCount   = 1;
+		submitInfo.pCommandBuffers      = &commandBuffer;
+		submitInfo.pSignalSemaphores    = nullptr;
+		submitInfo.pNext                = nullptr;
+		submitInfo.pWaitDstStageMask    = nullptr;
+		submitInfo.signalSemaphoreCount = 0;
+		submitInfo.waitSemaphoreCount   = 0;
 
-		vkQueueSubmit(VulkanDevice::get()->getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
-		vkQueueWaitIdle(VulkanDevice::get()->getGraphicsQueue());
+		VK_CHECK_RESULT(vkQueueSubmit(VulkanDevice::get()->getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE));
+		VK_CHECK_RESULT(vkQueueWaitIdle(VulkanDevice::get()->getGraphicsQueue()));
 
 		vkFreeCommandBuffers(*VulkanDevice::get(), *VulkanDevice::get()->getCommandPool(), 1, &commandBuffer);
 	}
@@ -824,6 +797,7 @@ namespace maple
             height,
             1};
 		vkCmdCopyBufferToImage(commandBuffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
 		endSingleTimeCommands(commandBuffer);
 	}
 
@@ -995,6 +969,7 @@ namespace maple
 
 	auto VulkanHelper::createTextureSampler(VkFilter magFilter /*= VK_FILTER_LINEAR*/, VkFilter minFilter /*= VK_FILTER_LINEAR*/, float minLod /*= 0.0f*/, float maxLod /*= 1.0f*/, bool anisotropyEnable /*= false*/, float maxAnisotropy /*= 1.0f*/, VkSamplerAddressMode modeU /*= VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE*/, VkSamplerAddressMode modeV /*= VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE*/, VkSamplerAddressMode modeW /*= VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE*/) -> VkSampler
 	{
+		PROFILE_FUNCTION();
 		VkSampler           sampler;
 		VkSamplerCreateInfo samplerInfo     = {};
 		samplerInfo.sType                   = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -1013,19 +988,8 @@ namespace maple
 		samplerInfo.compareOp               = VK_COMPARE_OP_NEVER;
 		samplerInfo.minLod                  = minLod;
 		samplerInfo.maxLod                  = maxLod;
-		vkCreateSampler(*VulkanDevice::get(), &samplerInfo, nullptr, &sampler);
+		VK_CHECK_RESULT(vkCreateSampler(*VulkanDevice::get(), &samplerInfo, nullptr, &sampler));
 		return sampler;
-	}
-
-	auto VulkanHelper::copyBuffer(VkBuffer src, VkBuffer dst, VkDeviceSize bufferSize) -> void
-	{
-		/*VkCommandBuffer commandBuffer = beginSingleTimeCommands();
-
-		VkBufferCopy copyRegion{};
-		copyRegion.size = bufferSize;
-		vkCmdCopyBuffer(commandBuffer, src, dst, 1, &copyRegion);
-
-		endSingleTimeCommands(commandBuffer);*/
 	}
 
 	namespace VkConverter

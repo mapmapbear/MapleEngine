@@ -139,8 +139,11 @@ namespace maple
 	{
 	  public:
 		static auto create(uint32_t width, uint32_t height, bool stencil = false) -> std::shared_ptr<TextureDepth>;
-
-		virtual auto resize(uint32_t width, uint32_t height) -> void = 0;
+		inline auto getType() const -> TextureType override
+		{
+			return TextureType::Depth;
+		};
+		virtual auto resize(uint32_t width, uint32_t height, CommandBuffer *commandBuffer = nullptr) -> void = 0;
 	};
 
 	class MAPLE_EXPORT TextureDepthArray : public Texture

@@ -73,7 +73,7 @@ namespace maple
 		PROFILE_FUNCTION();
 		VkDeviceSize offsets[1] = {0};
 		if (commandBuffer)
-			vkCmdBindVertexBuffers(*static_cast<VulkanCommandBuffer *>(commandBuffer), 0, 1, &buffer, offsets);
+			vkCmdBindVertexBuffers(static_cast<VulkanCommandBuffer *>(commandBuffer)->getCommandBuffer(), 0, 1, &buffer, offsets);
 	}
 
 	auto VulkanVertexBuffer::unbind() -> void

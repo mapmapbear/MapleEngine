@@ -126,6 +126,21 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 
+		if (data->pipeline == nullptr && renderTexture)
+		{
+			PipelineInfo pipeInfo;
+			pipeInfo.shader              = data->shader;
+			pipeInfo.cullMode            = CullMode::None;
+			pipeInfo.transparencyEnabled = true;
+			pipeInfo.depthBiasEnabled    = false;
+			pipeInfo.clearTargets        = false;
+			if (data->enableDepth)
+				pipeInfo.depthTarget = gbuffer->getDepthBuffer();
+			pipeInfo.colorTargets[0] = renderTexture;
+			pipeInfo.blendMode       = BlendMode::SrcAlphaOneMinusSrcAlpha;
+			data->pipeline           = Pipeline::get(pipeInfo);
+		}
+
 		data->vertexBuffers[data->batchDrawCallIndex]->bind(getCommandBuffer(), data->pipeline.get());
 		data->buffer = data->vertexBuffers[data->batchDrawCallIndex]->getPointer<Vertex2D>();
 
@@ -222,17 +237,7 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 		Renderer::setRenderTarget(texture, rebuildFramebuffer);
-		PipelineInfo pipeInfo;
-		pipeInfo.shader              = data->shader;
-		pipeInfo.cullMode            = CullMode::None;
-		pipeInfo.transparencyEnabled = true;
-		pipeInfo.depthBiasEnabled    = false;
-		pipeInfo.clearTargets        = false;
-		if (data->enableDepth)
-			pipeInfo.depthTarget = gbuffer->getDepthBuffer();
-		pipeInfo.colorTargets[0] = texture;
-		pipeInfo.blendMode       = BlendMode::SrcAlphaOneMinusSrcAlpha;
-		data->pipeline           = Pipeline::get(pipeInfo);
+		data->pipeline = nullptr;
 	}
 
 	auto Renderer2D::submitTexture(const std::shared_ptr<Texture> &texture) -> int32_t
@@ -282,23 +287,26 @@ namespace maple
 
 		auto cmd = getCommandBuffer();
 
-		data->pipeline->bind(cmd);
+		if (data->pipeline)
+		{
+			data->pipeline->bind(cmd);
 
-		data->indexBuffer->setCount(data->indexCount);
-		data->indexBuffer->bind(cmd);
+			data->indexBuffer->setCount(data->indexCount);
+			data->indexBuffer->bind(cmd);
 
-		data->vertexBuffers[data->batchDrawCallIndex]->releasePointer();
-		data->vertexBuffers[data->batchDrawCallIndex]->bind(cmd, data->pipeline.get());
+			data->vertexBuffers[data->batchDrawCallIndex]->releasePointer();
+			data->vertexBuffers[data->batchDrawCallIndex]->bind(cmd, data->pipeline.get());
 
-		Renderer::bindDescriptorSets(data->pipeline.get(), cmd, 0, {data->projViewSet, data->descriptorSet});
-		Renderer::drawIndexed(cmd, DrawType::Triangle, data->indexCount);
+			Renderer::bindDescriptorSets(data->pipeline.get(), cmd, 0, {data->projViewSet, data->descriptorSet});
+			Renderer::drawIndexed(cmd, DrawType::Triangle, data->indexCount);
 
-		data->vertexBuffers[data->batchDrawCallIndex]->unbind();
-		data->indexBuffer->unbind();
-		data->indexCount = 0;
+			data->vertexBuffers[data->batchDrawCallIndex]->unbind();
+			data->indexBuffer->unbind();
+			data->indexCount = 0;
 
-		data->batchDrawCallIndex++;
+			data->batchDrawCallIndex++;
 
-		data->pipeline->end(cmd);
+			data->pipeline->end(cmd);
+		}
 	}
 };        // namespace maple

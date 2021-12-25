@@ -5,9 +5,9 @@
 #include "VulkanCommandBuffer.h"
 #include "VulkanContext.h"
 #include "VulkanDevice.h"
+#include "VulkanPipeline.h"
 #include "VulkanSwapChain.h"
 #include "VulkanTexture.h"
-#include "VulkanPipeline.h"
 
 #include "Engine/Core.h"
 #include "Engine/Profiler.h"
@@ -24,36 +24,30 @@ namespace maple
 {
 	static constexpr uint32_t MAX_DESCRIPTOR_SET_COUNT = 1500;
 
-
 	VulkanRenderDevice::VulkanRenderDevice()
 	{
 	}
 
 	VulkanRenderDevice::~VulkanRenderDevice()
 	{
+		vkDestroyDescriptorPool(*VulkanDevice::get(), descriptorPool, VK_NULL_HANDLE);
 	}
 
 	auto VulkanRenderDevice::init() -> void
 	{
 		PROFILE_FUNCTION();
 		VkDescriptorPoolSize poolSizes[] = {
-		    {VK_DESCRIPTOR_TYPE_SAMPLER, 1000},
-		    {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000},
-		    {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000},
-		    {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000},
-		    {VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000},
-		    {VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000},
-		    {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000},
-		    {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000},
-		    {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000},
-		    {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000},
-		    {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000}};
+		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_SAMPLER, 100},
+		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 100},
+		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 100},
+		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 100},
+		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 100}};
 
 		// Create info
 		VkDescriptorPoolCreateInfo poolCreateInfo = {};
 		poolCreateInfo.sType                      = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 		poolCreateInfo.flags                      = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-		poolCreateInfo.poolSizeCount              = 11;
+		poolCreateInfo.poolSizeCount              = 5;
 		poolCreateInfo.pPoolSizes                 = poolSizes;
 		poolCreateInfo.maxSets                    = MAX_DESCRIPTOR_SET_COUNT;
 
@@ -102,13 +96,13 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 		//NumDrawCalls++;
-		vkCmdDraw(*static_cast<VulkanCommandBuffer *>(commandBuffer), count, 1, 0, 0);
+		vkCmdDraw(static_cast<VulkanCommandBuffer *>(commandBuffer)->getCommandBuffer(), count, 1, 0, 0);
 	}
 
 	auto VulkanRenderDevice::drawIndexedInternal(CommandBuffer *commandBuffer, const DrawType type, uint32_t count, uint32_t start) const -> void
 	{
 		PROFILE_FUNCTION();
-		vkCmdDrawIndexed(*static_cast<VulkanCommandBuffer *>(commandBuffer), count, 1, 0, 0, 0);
+		vkCmdDrawIndexed(static_cast<VulkanCommandBuffer *>(commandBuffer)->getCommandBuffer(), count, 1, 0, 0, 0);
 	}
 
 	auto VulkanRenderDevice::bindDescriptorSetsInternal(Pipeline *pipeline, CommandBuffer *commandBuffer, uint32_t dynamicOffset, const std::vector<std::shared_ptr<DescriptorSet>> &descriptorSets) -> void
@@ -130,7 +124,7 @@ namespace maple
 			}
 		}
 
-		vkCmdBindDescriptorSets(*static_cast<VulkanCommandBuffer *>(commandBuffer), VK_PIPELINE_BIND_POINT_GRAPHICS, static_cast<VulkanPipeline *>(pipeline)->getPipelineLayout(), 0, numDesciptorSets, descriptorSetPool, numDynamicDescriptorSets, &dynamicOffset);
+		vkCmdBindDescriptorSets(static_cast<VulkanCommandBuffer *>(commandBuffer)->getCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, static_cast<VulkanPipeline *>(pipeline)->getPipelineLayout(), 0, numDesciptorSets, descriptorSetPool, numDynamicDescriptorSets, &dynamicOffset);
 	}
 
 	auto VulkanRenderDevice::clearRenderTarget(const std::shared_ptr<Texture> &texture, CommandBuffer *commandBuffer, const glm::vec4 &clearColor) -> void
@@ -146,20 +140,20 @@ namespace maple
 			auto vkTexture = (VulkanTexture2D *) texture.get();
 
 			VkImageLayout layout = vkTexture->getImageLayout();
-			((VulkanTexture2D *) texture.get())->transitionImage(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, (VulkanCommandBuffer *) commandBuffer);
+			vkTexture->transitionImage(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, (VulkanCommandBuffer *) commandBuffer);
 			subresourceRange.aspectMask        = VK_IMAGE_ASPECT_COLOR_BIT;
 			VkClearColorValue clearColourValue = VkClearColorValue({{clearColor.x, clearColor.y, clearColor.z, clearColor.w}});
-			vkCmdClearColorImage(*((VulkanCommandBuffer *) commandBuffer), vkTexture->getImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearColourValue, 1, &subresourceRange);
+			vkCmdClearColorImage(((VulkanCommandBuffer *) commandBuffer)->getCommandBuffer(), vkTexture->getImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearColourValue, 1, &subresourceRange);
 			vkTexture->transitionImage(layout, (VulkanCommandBuffer *) commandBuffer);
 		}
 		else if (texture->getType() == TextureType::Depth)
 		{
 			auto vkTexture = (VulkanTextureDepth *) texture.get();
 
-			VkClearDepthStencilValue clearDepthStencil = {1.0f, 1};
-			subresourceRange.aspectMask                = VK_IMAGE_ASPECT_DEPTH_BIT;
+			VkClearDepthStencilValue clearDepthStencil = {1.0f, 0};
+			subresourceRange.aspectMask                = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
 			vkTexture->transitionImage(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, (VulkanCommandBuffer *) commandBuffer);
-			vkCmdClearDepthStencilImage(*((VulkanCommandBuffer *) commandBuffer), vkTexture->getImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearDepthStencil, 1, &subresourceRange);
+			vkCmdClearDepthStencilImage(((VulkanCommandBuffer *) commandBuffer)->getCommandBuffer(), vkTexture->getImage(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearDepthStencil, 1, &subresourceRange);
 		}
 	}
 

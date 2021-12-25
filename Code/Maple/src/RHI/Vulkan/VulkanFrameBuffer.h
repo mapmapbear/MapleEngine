@@ -4,9 +4,11 @@
 
 #pragma once
 
+#include "Engine/Core.h"
 #include "RHI/FrameBuffer.h"
 #include "VulkanHelper.h"
 #include <memory>
+
 namespace maple
 {
 	class VulkanFrameBuffer : public FrameBuffer
@@ -14,7 +16,7 @@ namespace maple
 	  public:
 		VulkanFrameBuffer(const FrameBufferInfo &info);
 		~VulkanFrameBuffer();
-
+		NO_COPYABLE(VulkanFrameBuffer);
 		inline auto bind(uint32_t width, uint32_t height) const -> void{};
 		inline auto bind() const -> void override{};
 		inline auto unbind() const -> void override{};

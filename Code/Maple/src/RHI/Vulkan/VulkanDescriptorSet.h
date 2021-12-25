@@ -3,6 +3,7 @@
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "Engine/Buffer.h"
+#include "Engine/Core.h"
 #include "RHI/DescriptorSet.h"
 #include "VulkanHelper.h"
 
@@ -17,7 +18,7 @@ namespace maple
 	  public:
 		VulkanDescriptorSet(const DescriptorInfo &info);
 		~VulkanDescriptorSet();
-
+		NO_COPYABLE(VulkanDescriptorSet);
 		auto update() -> void override;
 
 		inline auto setDynamicOffset(uint32_t offset) -> void override

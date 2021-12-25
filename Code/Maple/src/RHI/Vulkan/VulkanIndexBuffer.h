@@ -4,7 +4,11 @@
 #pragma once
 #include "RHI/IndexBuffer.h"
 #include "VulkanBuffer.h"
+#include "Engine/Core.h"
+
 #include <memory>
+
+
 
 namespace maple
 {
@@ -19,6 +23,9 @@ namespace maple
 		VulkanIndexBuffer(const uint16_t *data, uint32_t count, BufferUsage bufferUsage);
 		VulkanIndexBuffer(const uint32_t *data, uint32_t count, BufferUsage bufferUsage);
 		~VulkanIndexBuffer();
+
+		NO_COPYABLE(VulkanIndexBuffer);
+
 		auto bind(CommandBuffer *commandBuffer) const -> void override;
 		auto unbind() const -> void override;
 		auto setData(uint32_t size, const void *data) -> void;

@@ -4,6 +4,7 @@
 #pragma once
 #include "RHI/RenderPass.h"
 #include "VulkanHelper.h"
+#include "Engine/Core.h"
 
 namespace maple
 {
@@ -12,7 +13,7 @@ namespace maple
 	  public:
 		VulkanRenderPass(const RenderPassInfo &info);
 		virtual ~VulkanRenderPass();
-
+		NO_COPYABLE(VulkanRenderPass);
 		auto init(const RenderPassInfo &info) -> void;
 
 		auto beginRenderPass(CommandBuffer *commandBuffer, const glm::vec4 &clearColor, FrameBuffer *frame, SubPassContents contents, uint32_t width, uint32_t height, int32_t cubeFace, int32_t mipMapLevel) const -> void override;

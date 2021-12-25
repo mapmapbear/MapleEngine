@@ -12,15 +12,16 @@
 #include "VulkanContext.h"
 #include "VulkanDevice.h"
 #include "VulkanFrameBuffer.h"
+#include "VulkanSwapChain.h"
 
+#include "Application.h"
 #include <cassert>
-#include <ktx.h>
 
 namespace maple
 {
 	namespace
 	{
-		auto generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels) -> void
+		inline auto generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels) -> void
 		{
 			VkFormatProperties formatProperties;
 			vkGetPhysicalDeviceFormatProperties(*VulkanDevice::get()->getPhysicalDevice(), imageFormat, &formatProperties);
@@ -129,21 +130,54 @@ namespace maple
 
 			VulkanHelper::endSingleTimeCommands(commandBuffer);
 		}
+
+		inline auto getFormatSize(const TextureFormat format)
+		{
+			switch (format)
+			{
+				case TextureFormat::NONE:
+					return 0;
+				case TextureFormat::R8:
+					return 1;
+				case TextureFormat::RG8:
+					return 2;
+				case TextureFormat::RGB8:
+				case TextureFormat::RGB:
+					return 3;
+				case TextureFormat::RGBA8:
+				case TextureFormat::RGBA:
+					return 4;
+				case TextureFormat::RGB16:
+					return 6;
+				case TextureFormat::RGBA16:
+					return 8;
+				case TextureFormat::RGB32:
+					return 12;
+				case TextureFormat::RGBA32:
+					return 16;
+				case TextureFormat::DEPTH:
+					return 0;
+				case TextureFormat::STENCIL:
+					return 0;
+				case TextureFormat::DEPTH_STENCIL:
+					return 0;
+				case TextureFormat::SCREEN:
+					return 0;
+			}
+		}
 	}        // namespace
 
 	VulkanTexture2D::VulkanTexture2D(uint32_t width, uint32_t height, const void *data, TextureParameters parameters, TextureLoadOptions loadOptions) :
 	    parameters(parameters),
 	    loadOptions(loadOptions),
 	    data((const uint8_t *) data),
-	    fileName("null"),
 	    width(width),
 	    height(height)
 	{
 		vkFormat = VkConverter::textureFormatToVK(parameters.format, parameters.srgb);
-		format   = parameters.format;
-		load();
 
-		createSampler();
+		buildTexture(parameters.format, width, height, parameters.srgb, false, false, loadOptions.generateMipMaps);
+		update(0, 0, width, height, data);
 	}
 
 	VulkanTexture2D::VulkanTexture2D(const std::string &name, const std::string &fileName, TextureParameters parameters, TextureLoadOptions loadOptions) :
@@ -151,10 +185,7 @@ namespace maple
 	    loadOptions(loadOptions),
 	    fileName(fileName)
 	{
-		this->name = name;
-		vkFormat   = VkConverter::textureFormatToVK(parameters.format, parameters.srgb);
-		format     = parameters.format;
-
+		this->name  = name;
 		deleteImage = load();
 		if (!deleteImage)
 			return;
@@ -169,11 +200,9 @@ namespace maple
 		updateDescriptor();
 	}
 
-	VulkanTexture2D::VulkanTexture2D() :
-	    fileName("null")
+	VulkanTexture2D::VulkanTexture2D()
 	{
 		deleteImage    = false;
-		format         = parameters.format;
 		textureSampler = VulkanHelper::createTextureSampler(
 		    VkConverter::textureFilterToVK(parameters.magFilter),
 		    VkConverter::textureFilterToVK(parameters.minFilter),
@@ -205,28 +234,29 @@ namespace maple
 
 	auto VulkanTexture2D::update(int32_t x, int32_t y, int32_t w, int32_t h, const void *buffer) -> void
 	{
-		auto stagingBuffer = std::make_unique<VulkanBuffer>(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, w * h * 4, data);
-		VulkanHelper::transitionImageLayout(textureImage, VkConverter::textureFormatToVK(parameters.format, parameters.srgb), VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mipLevels);
+		auto stagingBuffer = std::make_unique<VulkanBuffer>(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, w * h * 4, buffer);
+		auto oldLayout     = imageLayout;
+		transitionImage(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 		VulkanHelper::copyBufferToImage(stagingBuffer->getVkBuffer(), textureImage, static_cast<uint32_t>(w), static_cast<uint32_t>(h), x, y);
-		VulkanHelper::transitionImageLayout(textureImage, VkConverter::textureFormatToVK(parameters.format),
-		                                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-		                                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-		                                    mipLevels);
+		transitionImage(oldLayout);
 	}
 
 	auto VulkanTexture2D::load() -> bool
 	{
 		PROFILE_FUNCTION();
-		auto                          imageSize = 0;
-		const uint8_t *               pixel     = nullptr;
+		auto imageSize = getFormatSize(parameters.format) * width * height;
+
+		const uint8_t *pixel = nullptr;
+
 		std::unique_ptr<maple::Image> image;
+
 		if (data != nullptr)
 		{
-			imageSize         = width * height * 4;
-			pixel             = data;
-			parameters.format = TextureFormat::RGBA8;
+			pixel = data;
+			//imageSize         = width * height * 4;
+			//parameters.format = TextureFormat::RGBA8;
 		}
-		else
+		else if (fileName != "")
 		{
 			image             = maple::ImageLoader::loadAsset(fileName);
 			width             = image->getWidth();
@@ -234,6 +264,7 @@ namespace maple
 			imageSize         = image->getImageSize();
 			pixel             = reinterpret_cast<const uint8_t *>(image->getData());
 			parameters.format = image->getPixelFormat();
+			vkFormat          = VkConverter::textureFormatToVK(parameters.format, parameters.srgb);
 		}
 
 		mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(width, height)))) + 1;
@@ -243,26 +274,24 @@ namespace maple
 			mipLevels = 1;
 		}
 
-		auto size = VulkanHelper::createImage(width, height, mipLevels,
-		                                      VkConverter::textureFormatToVK(parameters.format, parameters.srgb),
-		                                      VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-		                                      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory, 1, 0);
-
-		auto stagingBuffer = std::make_unique<VulkanBuffer>(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, imageSize, pixel);
-
+#ifdef USE_VMA_ALLOCATOR
+		VulkanHelper::createImage(width, height, mipLevels, VkConverter::textureFormatToVK(parameters.format, parameters.srgb), VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory, 1, 0, allocation);
+#else
+		VulkanHelper::createImage(width, height, mipLevels, VkConverter::textureFormatToVK(parameters.format, parameters.srgb), VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory, 1, 0);
+#endif
 		VulkanHelper::transitionImageLayout(textureImage, VkConverter::textureFormatToVK(parameters.format, parameters.srgb),
 		                                    VK_IMAGE_LAYOUT_UNDEFINED,
-		                                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mipLevels);
+		                                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		                                    mipLevels, 1, nullptr, false);
 
+		auto stagingBuffer = std::make_unique<VulkanBuffer>(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, imageSize, pixel);
 		VulkanHelper::copyBufferToImage(stagingBuffer->getVkBuffer(), textureImage, static_cast<uint32_t>(width), static_cast<uint32_t>(height));
 
 		if (loadOptions.generateMipMaps)
 			generateMipmaps(textureImage, VkConverter::textureFormatToVK(parameters.format, parameters.srgb), width, height, mipLevels);
 
-		VulkanHelper::transitionImageLayout(textureImage, VkConverter::textureFormatToVK(parameters.format),
-		                                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-		                                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-		                                    mipLevels);
+		transitionImage(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
 		return true;
 	}
 
@@ -270,7 +299,7 @@ namespace maple
 	{
 		descriptor.sampler     = textureSampler;
 		descriptor.imageView   = textureImageView;
-		descriptor.imageLayout = imageLayout;        //VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;//VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		descriptor.imageLayout = imageLayout;
 	}
 
 	auto VulkanTexture2D::buildTexture(TextureFormat internalformat, uint32_t width, uint32_t height, bool srgb, bool depth, bool samplerShadow, bool mipmap) -> void
@@ -281,13 +310,23 @@ namespace maple
 
 		this->width  = width;
 		this->height = height;
-		handle       = 0;
 		deleteImage  = true;
 		mipLevels    = 1;
 
-		VulkanHelper::createImage(width, height, mipLevels, VkConverter::textureFormatToVK(internalformat, srgb), VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory, 1, 0);
+		constexpr uint32_t FLAGS = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-		textureImageView = VulkanHelper::createImageView(textureImage, VkConverter::textureFormatToVK(internalformat, srgb), mipLevels, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+		vkFormat = VkConverter::textureFormatToVK(internalformat, srgb);
+
+		parameters.format = internalformat;
+		parameters.srgb   = srgb;
+
+#ifdef USE_VMA_ALLOCATOR
+		VulkanHelper::createImage(width, height, mipLevels, vkFormat, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory, 1, 0, allocation);
+#else
+		VulkanHelper::createImage(width, height, mipLevels, vkFormat, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory, 1, 0);
+#endif
+
+		textureImageView = VulkanHelper::createImageView(textureImage, vkFormat, mipLevels, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 		textureSampler   = VulkanHelper::createTextureSampler(
             VkConverter::textureFilterToVK(parameters.magFilter),
             VkConverter::textureFilterToVK(parameters.minFilter),
@@ -298,20 +337,21 @@ namespace maple
             VkConverter::textureWrapToVK(parameters.wrap));
 
 		imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		transitionImage(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
-		vkFormat = VkConverter::textureFormatToVK(internalformat, srgb);
+		transitionImage(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 		updateDescriptor();
 	}
 
 	auto VulkanTexture2D::transitionImage(VkImageLayout newLayout, VulkanCommandBuffer *commandBuffer) -> void
 	{
 		PROFILE_FUNCTION();
+		if (commandBuffer)
+			MAPLE_ASSERT(commandBuffer->isRecording(), "must recording");
+
 		if (newLayout != imageLayout)
 		{
-			VulkanHelper::transitionImageLayout(textureImage, VulkanHelper::getDepthFormat(), imageLayout, newLayout, 1, 1, commandBuffer ? *commandBuffer : nullptr);
+			VulkanHelper::transitionImageLayout(textureImage, VkConverter::textureFormatToVK(parameters.format, parameters.srgb), imageLayout, newLayout, mipLevels, 1, commandBuffer ? commandBuffer->getCommandBuffer() : nullptr, false);
 		}
-
 		imageLayout = newLayout;
 		updateDescriptor();
 	}
@@ -367,12 +407,18 @@ namespace maple
 		if (deleteImage)
 		{
 			auto image = textureImage;
+
+#ifdef USE_VMA_ALLOCATOR
+			auto alloc = allocation;
+			deletionQueue.emplace([image, alloc] { vmaDestroyImage(VulkanDevice::get()->getAllocator(), image, alloc); });
+#else
 			deletionQueue.emplace([image] { vkDestroyImage(*VulkanDevice::get(), image, nullptr); });
 			if (textureImageMemory)
 			{
 				auto memory = textureImageMemory;
 				deletionQueue.emplace([memory] { vkFreeMemory(*VulkanDevice::get(), memory, nullptr); });
 			}
+#endif
 		}
 	}
 
@@ -405,6 +451,12 @@ namespace maple
 			});
 		}
 
+#ifdef USE_VMA_ALLOCATOR
+		auto image = textureImage;
+		auto alloc = allocation;
+
+		deletionQueue.emplace([image, alloc] { vmaDestroyImage(VulkanDevice::get()->getAllocator(), image, alloc); });
+#else
 		auto image       = textureImage;
 		auto imageMemory = textureImageMemory;
 
@@ -413,15 +465,16 @@ namespace maple
 			vkDestroyImage(*device, image, nullptr);
 			vkFreeMemory(*device, imageMemory, nullptr);
 		});
+#endif
 	}
 
-	auto VulkanTextureDepth::resize(uint32_t width, uint32_t height) -> void
+	auto VulkanTextureDepth::resize(uint32_t width, uint32_t height, CommandBuffer *commandBuffer) -> void
 	{
 		PROFILE_FUNCTION();
 		this->width  = width;
 		this->height = height;
 		release();
-		init();
+		init(commandBuffer);
 	}
 
 	auto VulkanTextureDepth::updateDescriptor() -> void
@@ -430,35 +483,42 @@ namespace maple
 		descriptor.sampler     = textureSampler;
 		descriptor.imageView   = textureImageView;
 		descriptor.imageLayout = imageLayout;
-		//must be VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL
-		//VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	}
 
-	auto VulkanTextureDepth::init() -> void
+	auto VulkanTextureDepth::init(CommandBuffer *commandBuffer) -> void
 	{
 		PROFILE_FUNCTION();
-		VkFormat depthFormat = VulkanHelper::getDepthFormat();
-		format               = TextureFormat::DEPTH;
-		VulkanHelper::createImage(width, height, 1, depthFormat, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory, 1, 0);
-		textureImageView = VulkanHelper::createImageView(textureImage, depthFormat, 1, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
+		vkFormat = VulkanHelper::getDepthFormat();
+		format   = TextureFormat::DEPTH;
 
-		VulkanHelper::transitionImageLayout(textureImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+#ifdef USE_VMA_ALLOCATOR
+		VulkanHelper::createImage(width, height, 1, vkFormat, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory, 1, 0, allocation);
+#else
+		VulkanHelper::createImage(width, height, 1, vkFormat, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory, 1, 0);
+#endif
 
-		imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		textureImageView = VulkanHelper::createImageView(textureImage, vkFormat, 1, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
+
+		transitionImage(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, (VulkanCommandBuffer *) commandBuffer);
 
 		textureSampler = VulkanHelper::createTextureSampler(VK_FILTER_LINEAR, VK_FILTER_LINEAR, 0.0f, 1.0f, true,
 		                                                    VulkanDevice::get()->getPhysicalDevice()->getProperties().limits.maxSamplerAnisotropy,
-		                                                    VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
-
+		                                                    VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+		                                                    VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+		                                                    VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
 		updateDescriptor();
 	}
 
 	auto VulkanTextureDepth::transitionImage(VkImageLayout newLayout, VulkanCommandBuffer *commandBuffer) -> void
 	{
 		PROFILE_FUNCTION();
+
+		if (commandBuffer)
+			MAPLE_ASSERT(commandBuffer->isRecording(), "must recording");
+
 		if (newLayout != imageLayout)
 		{
-			VulkanHelper::transitionImageLayout(textureImage, VulkanHelper::getDepthFormat(), imageLayout, newLayout, 1, 1, commandBuffer ? *commandBuffer : nullptr);
+			VulkanHelper::transitionImageLayout(textureImage, vkFormat, imageLayout, newLayout, 1, 1, commandBuffer ? commandBuffer->getCommandBuffer() : nullptr);
 		}
 		imageLayout = newLayout;
 		updateDescriptor();
@@ -510,25 +570,29 @@ namespace maple
 		if (deleteImg)
 		{
 			auto image = textureImage;
+#ifdef USE_VMA_ALLOCATOR
+			auto alloc = allocation;
+			deletionQueue.emplace([image, alloc] { vmaDestroyImage(VulkanDevice::get()->getAllocator(), image, alloc); });
+#else
 			deletionQueue.emplace([image] { vkDestroyImage(*VulkanDevice::get(), image, nullptr); });
 			if (textureImageMemory)
 			{
 				auto imageMemory = textureImageMemory;
 				deletionQueue.emplace([imageMemory] { vkFreeMemory(*VulkanDevice::get(), imageMemory, nullptr); });
 			}
+#endif
 		}
 	}
 
 	auto VulkanTextureCube::generateMipmap() -> void
 	{
-
 	}
 
 	auto VulkanTextureCube::updateDescriptor() -> void
 	{
 		descriptor.sampler     = textureSampler;
 		descriptor.imageView   = textureImageView;
-		descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		descriptor.imageLayout = imageLayout;
 	}
 
 	auto VulkanTextureCube::load(uint32_t mips) -> void
@@ -640,12 +704,12 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 		vkFormat = VkConverter::textureFormatToVK(parameters.format);
-		VulkanHelper::createImage(
-		    width, height, numMips, vkFormat,
-		    VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL,
-		    VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-		    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory,
-		    6, VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT);
+
+#ifdef USE_VMA_ALLOCATOR
+		VulkanHelper::createImage(width, height, numMips, vkFormat, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory, 6, VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT, allocation);
+#else
+		VulkanHelper::createImage(width, height, numMips, vkFormat, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory, 6, VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT);
+#endif
 
 		VkCommandBuffer cmdBuffer = VulkanHelper::beginSingleTimeCommands();
 
@@ -675,6 +739,8 @@ namespace maple
 		textureImageView = VulkanHelper::createImageView(textureImage, vkFormat, numMips,
 		                                                 VK_IMAGE_VIEW_TYPE_CUBE, VK_IMAGE_ASPECT_COLOR_BIT, 6);
 
+		imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
 		updateDescriptor();
 	}
 
@@ -686,14 +752,7 @@ namespace maple
 
 	VulkanTextureDepthArray::~VulkanTextureDepthArray()
 	{
-		vkDestroyImageView(*VulkanDevice::get(), textureImageView, nullptr);
-		vkDestroyImage(*VulkanDevice::get(), textureImage, nullptr);
-		vkFreeMemory(*VulkanDevice::get(), textureImageMemory, nullptr);
-		vkDestroySampler(*VulkanDevice::get(), textureSampler, nullptr);
-		for (uint32_t i = 0; i < count; i++)
-		{
-			vkDestroyImageView(*VulkanDevice::get(), imageViews[i], nullptr);
-		}
+		release();
 	}
 
 	auto VulkanTextureDepthArray::resize(uint32_t width, uint32_t height, uint32_t count) -> void
@@ -702,13 +761,7 @@ namespace maple
 		this->height = height;
 		this->count  = count;
 
-		if (textureSampler)
-			vkDestroySampler(*VulkanDevice::get(), textureSampler, nullptr);
-
-		vkDestroyImageView(*VulkanDevice::get(), textureImageView, nullptr);
-		vkDestroyImage(*VulkanDevice::get(), textureImage, nullptr);
-		vkFreeMemory(*VulkanDevice::get(), textureImageMemory, nullptr);
-
+		release();
 		init();
 	}
 
@@ -722,23 +775,62 @@ namespace maple
 	{
 		descriptor.sampler     = textureSampler;
 		descriptor.imageView   = textureImageView;
-		descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		descriptor.imageLayout = imageLayout;
 	}
 
 	auto VulkanTextureDepthArray::init() -> void
 	{
 		auto depthFormat = VulkanHelper::getDepthFormat();
+
+#ifdef USE_VMA_ALLOCATOR
+		VulkanHelper::createImage(width, height, 1, depthFormat, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory, count, 0, allocation);
+#else
 		VulkanHelper::createImage(width, height, 1, depthFormat, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory, count, 0);
+#endif
 		textureImageView = VulkanHelper::createImageView(textureImage, depthFormat, 1, VK_IMAGE_VIEW_TYPE_2D_ARRAY, VK_IMAGE_ASPECT_DEPTH_BIT, count);
 		for (uint32_t i = 0; i < count; i++)
 		{
 			imageViews.emplace_back(VulkanHelper::createImageView(textureImage, depthFormat, 1, VK_IMAGE_VIEW_TYPE_2D_ARRAY, VK_IMAGE_ASPECT_DEPTH_BIT, 1, i));
 		}
-
-		VulkanHelper::transitionImageLayout(textureImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+		format = TextureFormat::DEPTH;
+		VulkanHelper::transitionImageLayout(textureImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1, count);
 		imageLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 		textureSampler = VulkanHelper::createTextureSampler();
 		updateDescriptor();
+	}
+
+	auto VulkanTextureDepthArray::release() -> void
+	{
+		auto &queue = VulkanContext::getDeletionQueue();
+
+		auto textureImageView   = this->textureImageView;
+		auto textureImage       = this->textureImage;
+		auto textureImageMemory = this->textureImageMemory;
+		auto textureSampler     = this->textureSampler;
+		auto imageViews         = this->imageViews;
+		auto size               = count;
+
+		queue.emplace([textureImageView, textureSampler, imageViews, size]() {
+			vkDestroyImageView(*VulkanDevice::get(), textureImageView, nullptr);
+
+			if (textureSampler)
+				vkDestroySampler(*VulkanDevice::get(), textureSampler, nullptr);
+
+			for (uint32_t i = 0; i < size; i++)
+			{
+				vkDestroyImageView(*VulkanDevice::get(), imageViews[i], nullptr);
+			}
+		});
+
+#ifdef USE_VMA_ALLOCATOR
+		auto alloc = allocation;
+		queue.emplace([textureImage, alloc] { vmaDestroyImage(VulkanDevice::get()->getAllocator(), textureImage, alloc); });
+#else
+		queue.emplace([textureImage, textureImageMemory]() {
+			vkDestroyImage(*VulkanDevice::get(), textureImage, nullptr);
+			vkFreeMemory(*VulkanDevice::get(), textureImageMemory, nullptr);
+		});
+#endif
 	}
 
 	auto VulkanTextureDepthArray::transitionImage(VkImageLayout newLayout, VulkanCommandBuffer *commandBuffer) -> void
@@ -746,7 +838,7 @@ namespace maple
 		PROFILE_FUNCTION();
 		if (newLayout != imageLayout)
 		{
-			VulkanHelper::transitionImageLayout(textureImage, VulkanHelper::getDepthFormat(), imageLayout, newLayout, 1, 1, commandBuffer ? *commandBuffer : nullptr);
+			VulkanHelper::transitionImageLayout(textureImage, VulkanHelper::getDepthFormat(), imageLayout, newLayout, 1, count, commandBuffer ? commandBuffer->getCommandBuffer() : nullptr);
 		}
 		imageLayout = newLayout;
 		updateDescriptor();

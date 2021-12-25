@@ -2,8 +2,9 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <vulkan/vulkan.h>
+#include "Vk.h"
 
+#include "Engine/Core.h"
 namespace maple
 {
 	class VulkanBuffer
@@ -12,6 +13,7 @@ namespace maple
 		VulkanBuffer();
 		VulkanBuffer(VkBufferUsageFlags usage, uint32_t size, const void *data);
 		virtual ~VulkanBuffer();
+		NO_COPYABLE(VulkanBuffer);
 
 		auto resize(uint32_t size, const void *data) -> void;
 		auto init(VkBufferUsageFlags usage, uint32_t size, const void *data) -> void;
@@ -48,5 +50,10 @@ namespace maple
 		VkDeviceSize           alignment = 0;
 		void *                 mapped    = nullptr;
 		VkBufferUsageFlags     usage;
+
+#ifdef USE_VMA_ALLOCATOR
+		VmaAllocation allocation{};
+		VmaAllocation mappedAllocation{};
+#endif
 	};
 }        // namespace maple

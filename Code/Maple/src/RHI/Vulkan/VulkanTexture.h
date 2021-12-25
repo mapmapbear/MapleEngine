@@ -25,7 +25,7 @@ namespace maple
 
 		inline auto getHandle() const -> void * override
 		{
-			return (void *) &descriptor;
+			return (void *) this;
 		};
 
 		inline auto getWidth() const -> uint32_t override
@@ -54,7 +54,7 @@ namespace maple
 
 		inline auto getFormat() const -> TextureFormat override
 		{
-			return format;
+			return parameters.format;
 		}
 
 		inline const auto getDescriptor() const
@@ -106,8 +106,7 @@ namespace maple
 
 		std::string fileName;
 
-		TextureFormat format;
-		VkFormat      vkFormat = VK_FORMAT_R8G8B8A8_UNORM;
+		VkFormat vkFormat = VK_FORMAT_R8G8B8A8_UNORM;
 
 		uint32_t handle     = 0;
 		uint32_t width      = 0;
@@ -126,10 +125,14 @@ namespace maple
 		VkImageView           textureImageView   = VK_NULL_HANDLE;
 		VkDeviceMemory        textureImageMemory = VK_NULL_HANDLE;
 		VkSampler             textureSampler     = VK_NULL_HANDLE;
-		VkImageLayout         imageLayout;
+		VkImageLayout         imageLayout        = VK_IMAGE_LAYOUT_UNDEFINED;
 		VkDescriptorImageInfo descriptor{};
 
 		std::unordered_map<uint32_t, VkImageView> mipImageViews;
+
+#ifdef USE_VMA_ALLOCATOR
+		VmaAllocation allocation{};
+#endif
 	};
 
 	class VulkanTextureDepth : public TextureDepth
@@ -140,9 +143,9 @@ namespace maple
 
 		auto bind(uint32_t slot = 0) const -> void override{};
 		auto unbind(uint32_t slot = 0) const -> void override{};
-		auto resize(uint32_t width, uint32_t height) -> void override;
+		auto resize(uint32_t width, uint32_t height, CommandBuffer *commandBuffer) -> void override;
 
-		auto transitionImage(VkImageLayout newLayout, VulkanCommandBuffer *commandBuffer) -> void;
+		auto transitionImage(VkImageLayout newLayout, VulkanCommandBuffer *commandBuffer = nullptr) -> void;
 
 		inline auto getDescriptorInfo() const -> void * override
 		{
@@ -150,17 +153,12 @@ namespace maple
 		}
 		virtual auto getHandle() const -> void *
 		{
-			return (void *) &descriptor;
+			return (void *) this;
 		}
 
 		inline auto getFilePath() const -> const std::string & override
 		{
 			return name;
-		}
-
-		inline auto getType() const -> TextureType override
-		{
-			return TextureType::Depth;
 		}
 
 		inline auto getFormat() const -> TextureFormat override
@@ -207,27 +205,31 @@ namespace maple
 		auto updateDescriptor() -> void;
 
 	  protected:
-		auto init() -> void;
+		auto init(CommandBuffer *commandBuffer = nullptr) -> void;
 		auto release() -> void;
 
 	  private:
 		bool                  stencil = false;
-		uint32_t              width  = 0;
-		uint32_t              height = 0;
+		uint32_t              width   = 0;
+		uint32_t              height  = 0;
 		uint32_t              handle{};
 		TextureFormat         format = TextureFormat::DEPTH;
-		VkImageLayout         imageLayout;
+		VkFormat              vkFormat;
+		VkImageLayout         imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		VkImage               textureImage{};
 		VkDeviceMemory        textureImageMemory{};
 		VkImageView           textureImageView{};
 		VkSampler             textureSampler{};
 		VkDescriptorImageInfo descriptor{};
+#ifdef USE_VMA_ALLOCATOR
+		VmaAllocation allocation{};
+#endif
 	};
 
 	class VulkanTextureCube : public TextureCube
 	{
 	  public:
-		VulkanTextureCube(uint32_t size, TextureFormat format = TextureFormat::RGBA8, int32_t numMips = 0);
+		VulkanTextureCube(uint32_t size, TextureFormat format = TextureFormat::RGBA8, int32_t numMips = 1);
 		VulkanTextureCube(const std::string &filePath);
 		VulkanTextureCube(const std::array<std::string, 6> &files);
 		VulkanTextureCube(const std::vector<std::string> &files, uint32_t mips, const TextureParameters &params, const TextureLoadOptions &loadOptions, const InputFormat &format);
@@ -338,6 +340,9 @@ namespace maple
 		VkDescriptorImageInfo descriptor;
 
 		bool deleteImg = true;
+#ifdef USE_VMA_ALLOCATOR
+		VmaAllocation allocation{};
+#endif
 	};
 
 	class VulkanTextureDepthArray : public TextureDepthArray
@@ -416,6 +421,7 @@ namespace maple
 
 	  protected:
 		auto init() -> void override;
+		auto release() -> void;
 
 	  private:
 		uint32_t      handle{};
@@ -431,6 +437,9 @@ namespace maple
 		VkSampler                textureSampler{};
 		VkDescriptorImageInfo    descriptor{};
 		std::vector<VkImageView> imageViews;
+#ifdef USE_VMA_ALLOCATOR
+		VmaAllocation allocation{};
+#endif
 	};
 
 };        // namespace maple

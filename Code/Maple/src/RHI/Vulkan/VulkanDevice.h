@@ -4,6 +4,7 @@
 
 #pragma once
 #include "Engine/Profiler.h"
+#include "Engine/Core.h"
 #include "VulkanHelper.h"
 
 #include <TracyVulkan.hpp>
@@ -20,7 +21,7 @@ namespace maple
 	{
 	  public:
 		VulkanPhysicalDevice();
-
+		NO_COPYABLE(VulkanPhysicalDevice);
 		inline auto isExtensionSupported(const std::string &extensionName) const
 		{
 			return supportedExtensions.find(extensionName) != supportedExtensions.end();
@@ -53,7 +54,6 @@ namespace maple
 		std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 
 		VkPhysicalDevice                 physicalDevice;
-		VkPhysicalDeviceFeatures         features;
 		VkPhysicalDeviceProperties       physicalDeviceProperties;
 		VkPhysicalDeviceMemoryProperties memoryProperties;
 
@@ -109,6 +109,13 @@ namespace maple
 			return device;
 		}
 
+#ifdef USE_VMA_ALLOCATOR
+		inline auto getAllocator() const
+		{
+			return allocator;
+		}
+#endif
+
 #if defined(MAPLE_PROFILE) && defined(TRACY_ENABLE)
 		auto getTracyContext() -> tracy::VkCtx *;
 #endif
@@ -129,7 +136,11 @@ namespace maple
 		VkPipelineCache          pipelineCache;
 
 #if defined(MAPLE_PROFILE) && defined(TRACY_ENABLE)
-		std::vector<tracy::VkCtx *> tracyContext;
+		tracy::VkCtx *tracyContext;
+#endif
+
+#ifdef USE_VMA_ALLOCATOR
+		VmaAllocator allocator{};
 #endif
 
 		bool enableDebugMarkers = false;

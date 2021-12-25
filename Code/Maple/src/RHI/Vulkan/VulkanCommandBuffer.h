@@ -4,6 +4,7 @@
 #pragma once
 #include "RHI/CommandBuffer.h"
 #include "VulkanHelper.h"
+#include "Engine/Core.h"
 
 namespace maple
 {
@@ -22,6 +23,8 @@ namespace maple
 		VulkanCommandBuffer(VkCommandBuffer commandBuffer);
 		~VulkanCommandBuffer();
 
+		NO_COPYABLE(VulkanCommandBuffer);
+
 		auto init(bool primary) -> bool override;
 		auto init(bool primary, VkCommandPool commandPool) -> bool;
 		auto unload() -> void override;
@@ -34,24 +37,33 @@ namespace maple
 		auto unbindPipeline() -> void override;
 		auto flush() -> bool override;
 
-		inline auto getSemaphore() const
+		inline auto isRecording() const -> bool override
 		{
-			return semaphore;
+			return state == CommandBufferState::Recording;
 		}
 
-		auto        wait() -> void;
-		auto        reset() -> void;
 		inline auto getState() const
 		{
 			return state;
 		}
 
-		autoUnpack(commandBuffer);
+		inline auto getSemaphore() const
+		{
+			return semaphore;
+		}
+
+		auto wait() -> void;
+		auto reset() -> void;
 
 		auto executeInternal(VkPipelineStageFlags flags, VkSemaphore signalSemaphore, bool waitFence) -> void;
 
+		inline auto getCommandBuffer() const
+		{
+			return commandBuffer;
+		}
+
 	  private:
-		VkCommandBuffer              commandBuffer = nullptr;
+		VkCommandBuffer              commandBuffer;
 		VkCommandPool                commandPool   = nullptr;
 		bool                         primary;
 		CommandBufferState           state = CommandBufferState::Idle;

@@ -49,7 +49,7 @@ namespace maple
 
 	auto GraphicsContext::clearUnused() -> void
 	{
-		for (auto iter = pipelineCache.begin(); iter != pipelineCache.end();)
+	/*	for (auto iter = pipelineCache.begin(); iter != pipelineCache.end();)
 		{
 			if (iter->second.use_count() == 1)
 			{
@@ -67,7 +67,7 @@ namespace maple
 				continue;
 			}
 			iter++;
-		}
+		}*/
 	}
 
 	auto SwapChain::create(uint32_t width, uint32_t height) -> std::shared_ptr<SwapChain>

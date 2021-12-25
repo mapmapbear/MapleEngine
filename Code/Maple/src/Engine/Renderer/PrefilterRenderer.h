@@ -50,9 +50,9 @@ namespace maple
 		auto updateUniform() -> void;
 		auto createFrameBuffer() -> void;
 
-		std::shared_ptr<Pipeline> cubeMapPipeline;
+		/*std::shared_ptr<Pipeline> cubeMapPipeline;
 		std::shared_ptr<Pipeline> prefilterPipeline;
-		std::shared_ptr<Pipeline> irradiancePipeline;
+		std::shared_ptr<Pipeline> irradiancePipeline;*/
 
 		std::shared_ptr<Shader> irradianceShader;
 		std::shared_ptr<Shader> prefilterShader;

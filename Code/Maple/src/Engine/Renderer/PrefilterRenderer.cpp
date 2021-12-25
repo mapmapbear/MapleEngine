@@ -59,7 +59,7 @@ namespace maple
 		irradianceShader = Shader::create("shaders/Irradiance.shader");
 		prefilterShader  = Shader::create("shaders/Prefilter.shader");
 
-		skyboxCaptureColor = Texture2D::create(SkyboxSize, SkyboxSize, nullptr);
+		skyboxCaptureColor = Texture2D::create(SkyboxSize, SkyboxSize, nullptr, {}, {false, false, false});
 		skyboxCube         = TextureCube::create(SkyboxSize, TextureFormat::RGBA32, 5);
 
 		irradianceCaptureColor = Texture2D::create();
@@ -176,6 +176,17 @@ namespace maple
 			cubeMapSet->setTexture("equirectangularMap", equirectangularMap);
 		}
 		cubeMapSet->update();
+
+		PipelineInfo pipeInfo;
+		pipeInfo.shader              = cubeMapShader;
+		pipeInfo.cullMode            = CullMode::Front;
+		pipeInfo.transparencyEnabled = false;
+		pipeInfo.depthBiasEnabled    = false;
+		pipeInfo.clearTargets        = true;
+		pipeInfo.colorTargets[0]     = skyboxCaptureColor;
+		pipeInfo.colorTargets[1]     = skyboxCube;
+		auto cubeMapPipeline              = Pipeline::get(pipeInfo);
+
 		for (auto faceId = 0; faceId < 6; faceId++)
 		{
 			cubeMapPipeline->bind(cmd, 0, faceId);
@@ -225,6 +236,8 @@ namespace maple
 
 	auto PrefilterRenderer::generatePrefilterMap() -> void
 	{
+		cubeMapSet->update();
+
 		PipelineInfo pipeInfo;
 		pipeInfo.shader   = prefilterShader;
 		pipeInfo.cullMode = CullMode::None;
@@ -262,15 +275,6 @@ namespace maple
 
 	auto PrefilterRenderer::createPipeline() -> void
 	{
-		PipelineInfo pipeInfo;
-		pipeInfo.shader              = cubeMapShader;
-		pipeInfo.cullMode            = CullMode::Front;
-		pipeInfo.transparencyEnabled = false;
-		pipeInfo.depthBiasEnabled    = false;
-		pipeInfo.clearTargets        = true;
-		pipeInfo.colorTargets[0]     = skyboxCaptureColor;
-		pipeInfo.colorTargets[1]     = skyboxCube;
-		cubeMapPipeline              = Pipeline::get(pipeInfo);
 	}
 
 	auto PrefilterRenderer::updateUniform() -> void
@@ -283,8 +287,6 @@ namespace maple
 		{
 			cubeMapSet->setTexture("equirectangularMap", equirectangularMap);
 		}
-
-		cubeMapSet->update();
 	}
 
 	auto PrefilterRenderer::createFrameBuffer() -> void

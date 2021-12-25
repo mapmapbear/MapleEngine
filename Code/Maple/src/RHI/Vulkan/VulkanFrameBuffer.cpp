@@ -18,25 +18,22 @@ namespace maple
 		std::vector<VkImageView> attachments;
 
 		//apply attachment for the framebuffer
-		for (uint32_t i = 0; i < info.attachments.size(); i++)
+
+		for (auto &attachment : info.attachments)
 		{
-			switch (info.attachments[i]->getType())
+			switch (attachment->getType())
 			{
-					//color attachment
 				case TextureType::Color:
-					attachments.emplace_back(static_cast<VulkanTexture2D *>(info.attachments[i].get())->getImageView());
+					attachments.emplace_back(static_cast<VulkanTexture2D *>(attachment.get())->getImageView());
 					break;
-					//depth attachment for depth test
 				case TextureType::Depth:
-					attachments.emplace_back(static_cast<VulkanTextureDepth *>(info.attachments[i].get())->getImageView());
+					attachments.emplace_back(static_cast<VulkanTextureDepth *>(attachment.get())->getImageView());
 					break;
-
 				case TextureType::DepthArray:
-					attachments.emplace_back(static_cast<VulkanTextureDepthArray *>(info.attachments[i].get())->getImageView(info.layer));
+					attachments.emplace_back(static_cast<VulkanTextureDepthArray *>(attachment.get())->getImageView(info.layer));
 					break;
-
 				case TextureType::Cube:
-					attachments.emplace_back(static_cast<VulkanTextureCube *>(info.attachments[i].get())->getImageView());
+					attachments.emplace_back(static_cast<VulkanTextureCube *>(attachment.get())->getImageView());
 					break;
 			}
 		}

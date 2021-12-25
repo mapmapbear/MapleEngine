@@ -72,7 +72,7 @@ namespace maple
 			vi.pVertexAttributeDescriptions    = vertexInputAttributeDescription.data();
 		}
 
-		inline auto createRasterization(VkPipelineInputAssemblyStateCreateInfo inputAssemblyCI, VkPipelineRasterizationStateCreateInfo &rs, const PipelineInfo &info) -> void
+		inline auto createRasterization(VkPipelineInputAssemblyStateCreateInfo &inputAssemblyCI, VkPipelineRasterizationStateCreateInfo &rs, const PipelineInfo &info) -> void
 		{
 			inputAssemblyCI.sType                  = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 			inputAssemblyCI.pNext                  = NULL;
@@ -158,7 +158,7 @@ namespace maple
 			cb.blendConstants[3] = 1.0f;
 		}
 
-		auto createViewport(VkPipelineViewportStateCreateInfo &vp, std::vector<VkDynamicState> &dynamicState) -> void
+		inline auto createViewport(VkPipelineViewportStateCreateInfo &vp, std::vector<VkDynamicState> &dynamicState) -> void
 		{
 			vp.sType         = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
 			vp.pNext         = NULL;
@@ -311,7 +311,7 @@ namespace maple
 		transitionAttachments();
 
 		if (depthBiasEnabled)
-			vkCmdSetDepthBias(*static_cast<VulkanCommandBuffer *>(cmdBuffer), depthBiasConstant, 0.0f, depthBiasSlope);
+			vkCmdSetDepthBias(static_cast<VulkanCommandBuffer *>(cmdBuffer)->getCommandBuffer(), depthBiasConstant, 0.0f, depthBiasSlope);
 
 		FrameBuffer *framebuffer = nullptr;
 
@@ -329,7 +329,7 @@ namespace maple
 		}
 
 		renderPass->beginRenderPass(cmdBuffer, description.clearColor, framebuffer, SubPassContents::Inline, getWidth(), getHeight(), cubeFace, mipMapLevel);
-		vkCmdBindPipeline(*static_cast<VulkanCommandBuffer *>(cmdBuffer), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+		vkCmdBindPipeline(static_cast<VulkanCommandBuffer *>(cmdBuffer)->getCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 	}
 
 	auto VulkanPipeline::end(CommandBuffer *commandBuffer) -> void
@@ -371,31 +371,42 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 
-		auto commandBuffer = Application::getGraphicsContext()->getSwapChain()->getCurrentCommandBuffer();
+		auto commandBuffer = static_cast<VulkanCommandBuffer *>(Application::getGraphicsContext()->getSwapChain()->getCurrentCommandBuffer());
+		/*if (!commandBuffer->isRecording())
+		{
+			commandBuffer = nullptr;
+		}*/
 
 		if (description.swapChainTarget)
 		{
 			for (uint32_t i = 0; i < Application::getGraphicsContext()->getSwapChain()->getSwapChainBufferCount(); i++)
 			{
-				((VulkanTexture2D *) Application::getGraphicsContext()->getSwapChain()->getImage(i).get())->transitionImage(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, (VulkanCommandBuffer *) commandBuffer);
+				((VulkanTexture2D *) Application::getGraphicsContext()->getSwapChain()->getImage(i).get())->transitionImage(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, commandBuffer);
 			}
 		}
 
 		if (description.depthArrayTarget)
 		{
-			((VulkanTextureDepthArray *) description.depthArrayTarget.get())->transitionImage(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, (VulkanCommandBuffer *) commandBuffer);
+			((VulkanTextureDepthArray *) description.depthArrayTarget.get())->transitionImage(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, commandBuffer);
 		}
 
 		if (description.depthTarget)
 		{
-			((VulkanTextureDepth *) description.depthTarget.get())->transitionImage(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, (VulkanCommandBuffer *) commandBuffer);
+			((VulkanTextureDepth *) description.depthTarget.get())->transitionImage(VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, commandBuffer);
 		}
 
 		for (auto texture : description.colorTargets)
 		{
 			if (texture != nullptr)
 			{
-				((VulkanTexture2D *) texture.get())->transitionImage(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, (VulkanCommandBuffer *) commandBuffer);
+				if (texture->getType() == TextureType::Color)
+				{
+					((VulkanTexture2D *) texture.get())->transitionImage(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, commandBuffer);
+				}
+				else if (texture->getType() == TextureType::Cube)
+				{
+					//((VulkanTextureCube *) texture.get())->transitionImage(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, (VulkanCommandBuffer *) commandBuffer);
+				}
 			}
 		}
 	}

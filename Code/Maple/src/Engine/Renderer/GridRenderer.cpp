@@ -51,6 +51,21 @@ namespace maple
 	auto GridRenderer::renderScene() -> void
 	{
 		PROFILE_FUNCTION();
+
+		if (pipeline == nullptr && renderTexture)
+		{
+			PipelineInfo pipeInfo;
+			pipeInfo.shader              = gridShader;
+			pipeInfo.cullMode            = CullMode::None;
+			pipeInfo.transparencyEnabled = true;
+			pipeInfo.depthBiasEnabled    = false;
+			pipeInfo.clearTargets        = false;
+			pipeInfo.depthTarget         = gbuffer->getDepthBuffer();
+			pipeInfo.colorTargets[0]     = renderTexture;
+			pipeInfo.blendMode           = BlendMode::SrcAlphaOneMinusSrcAlpha;
+			pipeline                     = Pipeline::get(pipeInfo);
+		}
+
 		if (pipeline)
 		{
 			pipeline->bind(getCommandBuffer());
@@ -74,6 +89,9 @@ namespace maple
 		{
 			return;
 		}
+
+		
+
 		descriptorSet->setUniformBufferData("UniformBufferObject", glm::value_ptr(projView));
 		systemBuffer.cameraPos = glm::vec4(camera.second->getWorldPosition(), 1.f);
 		descriptorSet->setUniformBufferData("UniformBuffer", &systemBuffer);
@@ -94,16 +112,6 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 		Renderer::setRenderTarget(texture, rebuildFramebuffer);
-
-		PipelineInfo pipeInfo;
-		pipeInfo.shader              = gridShader;
-		pipeInfo.cullMode            = CullMode::None;
-		pipeInfo.transparencyEnabled = true;
-		pipeInfo.depthBiasEnabled    = false;
-		pipeInfo.clearTargets        = false;
-		pipeInfo.depthTarget         = gbuffer->getDepthBuffer();
-		pipeInfo.colorTargets[0]     = texture;
-		pipeInfo.blendMode           = BlendMode::SrcAlphaOneMinusSrcAlpha;
-		pipeline                     = Pipeline::get(pipeInfo);
+		pipeline = nullptr;
 	}
 };        // namespace maple

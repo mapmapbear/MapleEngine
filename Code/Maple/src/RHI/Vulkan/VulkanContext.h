@@ -9,6 +9,7 @@
 #include <vector>
 #include <vulkan/vulkan.h>
 
+
 namespace maple
 {
 	class MAPLE_EXPORT VulkanContext : public GraphicsContext
@@ -17,6 +18,7 @@ namespace maple
 		VulkanContext();
 		~VulkanContext();
 
+		NO_COPYABLE(VulkanContext);
 		auto init() -> void override;
 		auto present() -> void override;
 		auto getMinUniformBufferOffsetAlignment() const -> size_t override;
@@ -42,11 +44,11 @@ namespace maple
 			return vkInstance;
 		}
 
-		struct DeletionQueue
+		struct CommandQueue
 		{
-			DeletionQueue()                      = default;
-			DeletionQueue(const DeletionQueue &) = delete;
-			auto operator=(const DeletionQueue &) -> DeletionQueue & = delete;
+			CommandQueue()                     = default;
+			CommandQueue(const CommandQueue &) = delete;
+			auto operator=(const CommandQueue &) -> CommandQueue & = delete;
 
 			std::deque<std::function<void()>> deletors;
 
@@ -68,16 +70,16 @@ namespace maple
 
 		static auto get() -> std::shared_ptr<VulkanContext>;
 
-		static auto getDeletionQueue() -> DeletionQueue &;
-		static auto getDeletionQueue(uint32_t index) -> DeletionQueue &;
+		static auto getDeletionQueue() -> CommandQueue &;
+		static auto getDeletionQueue(uint32_t index) -> CommandQueue &;
 
 	  private:
 		auto setupDebug() -> void;
 
-		VkInstance vkInstance;
+		VkInstance vkInstance = nullptr;
 
-		//bind to triple buffer 
-		DeletionQueue deletionQueue[3];
+		//bind to triple buffer
+		CommandQueue deletionQueue[3];
 
 		std::vector<const char *>          instanceLayerNames;
 		std::vector<const char *>          instanceExtensionNames;

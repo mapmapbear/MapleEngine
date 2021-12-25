@@ -29,7 +29,7 @@ namespace maple
 
 	auto VulkanIndexBuffer::bind(CommandBuffer *commandBuffer) const -> void
 	{
-		vkCmdBindIndexBuffer(*static_cast<VulkanCommandBuffer *>(commandBuffer), buffer, 0, VK_INDEX_TYPE_UINT32);
+		vkCmdBindIndexBuffer(static_cast<VulkanCommandBuffer *>(commandBuffer)->getCommandBuffer(), buffer, 0, VK_INDEX_TYPE_UINT32);
 	}
 
 	auto VulkanIndexBuffer::unbind() const -> void

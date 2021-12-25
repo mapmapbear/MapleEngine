@@ -3,6 +3,7 @@
 //////////////////////////////////////////////////////////////////////////////
 #include "VulkanBuffer.h"
 #include "Others/Console.h"
+#include "VulkanContext.h"
 #include "VulkanDevice.h"
 #include "VulkanHelper.h"
 
@@ -35,6 +36,11 @@ namespace maple
 		bufferInfo.usage              = usage;
 		bufferInfo.sharingMode        = VK_SHARING_MODE_EXCLUSIVE;
 
+#ifdef USE_VMA_ALLOCATOR
+		VmaAllocationCreateInfo vmaAllocInfo = {};
+		vmaAllocInfo.usage                   = VMA_MEMORY_USAGE_CPU_TO_GPU;
+		vmaCreateBuffer(VulkanDevice::get()->getAllocator(), &bufferInfo, &vmaAllocInfo, &buffer, &allocation, nullptr);
+#else
 		VK_CHECK_RESULT(vkCreateBuffer(*VulkanDevice::get(), &bufferInfo, nullptr, &buffer));
 
 		VkMemoryRequirements memRequirements;
@@ -51,6 +57,7 @@ namespace maple
 		//bind buffer ->
 		vkBindBufferMemory(*VulkanDevice::get(), buffer, memory, 0);
 		//if the data is not nullptr, upload the data.
+#endif
 		if (data != nullptr)
 			setVkData(size, data);
 	}
@@ -61,7 +68,11 @@ namespace maple
 	auto VulkanBuffer::map(VkDeviceSize size, VkDeviceSize offset) -> void
 	{
 		PROFILE_FUNCTION();
+#ifdef USE_VMA_ALLOCATOR
+		VK_CHECK_RESULT(vmaMapMemory(VulkanDevice::get()->getAllocator(), allocation, &mapped));
+#else
 		VK_CHECK_RESULT(vkMapMemory(*VulkanDevice::get(), memory, offset, size, 0, &mapped));
+#endif        // USE_
 	}
 	/**
 	 * unmap the data.
@@ -71,7 +82,11 @@ namespace maple
 		PROFILE_FUNCTION();
 		if (mapped)
 		{
+#ifdef USE_VMA_ALLOCATOR
+			vmaUnmapMemory(VulkanDevice::get()->getAllocator(), allocation);
+#else
 			vkUnmapMemory(*VulkanDevice::get(), memory);
+#endif
 			mapped = nullptr;
 		}
 	}
@@ -79,23 +94,31 @@ namespace maple
 	auto VulkanBuffer::flush(VkDeviceSize size, VkDeviceSize offset) -> void
 	{
 		PROFILE_FUNCTION();
+#ifdef USE_VMA_ALLOCATOR
+		vmaFlushAllocation(VulkanDevice::get()->getAllocator(), allocation, offset, size);
+#else
 		VkMappedMemoryRange mappedRange = {};
 		mappedRange.sType               = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
 		mappedRange.memory              = memory;
 		mappedRange.offset              = offset;
 		mappedRange.size                = size;
 		VK_CHECK_RESULT(vkFlushMappedMemoryRanges(*VulkanDevice::get(), 1, &mappedRange));
+#endif
 	}
 
 	auto VulkanBuffer::invalidate(VkDeviceSize size, VkDeviceSize offset) -> void
 	{
 		PROFILE_FUNCTION();
+#ifdef USE_VMA_ALLOCATOR
+		vmaInvalidateAllocation(VulkanDevice::get()->getAllocator(), allocation, offset, size);
+#else
 		VkMappedMemoryRange mappedRange = {};
 		mappedRange.sType               = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
 		mappedRange.memory              = memory;
 		mappedRange.offset              = offset;
 		mappedRange.size                = size;
 		VK_CHECK_RESULT(vkInvalidateMappedMemoryRanges(*VulkanDevice::get(), 1, &mappedRange));
+#endif
 	}
 
 	auto VulkanBuffer::setVkData(uint32_t size, const void *data, uint32_t offset) -> void
@@ -118,12 +141,23 @@ namespace maple
 		PROFILE_FUNCTION();
 		if (buffer)
 		{
-			vkDestroyBuffer(*VulkanDevice::get(), buffer, nullptr);
+			auto &queue  = VulkanContext::getDeletionQueue();
+			auto  buffer = this->buffer;
 
-			if (memory)
-			{
-				vkFreeMemory(*VulkanDevice::get(), memory, nullptr);
-			}
+#ifdef USE_VMA_ALLOCATOR
+			auto alloc = allocation;
+			queue.emplace([buffer, alloc] { vmaDestroyBuffer(VulkanDevice::get()->getAllocator(), buffer, alloc); });
+#else
+
+			auto memory = this->memory;
+			queue.emplace([buffer, memory]() {
+				vkDestroyBuffer(*VulkanDevice::get(), buffer, nullptr);
+				if (memory)
+				{
+					vkFreeMemory(*VulkanDevice::get(), memory, nullptr);
+				}
+			});
+#endif
 		}
 	}
 };        // namespace maple

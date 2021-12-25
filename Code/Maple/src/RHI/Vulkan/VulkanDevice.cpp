@@ -147,7 +147,7 @@ namespace maple
 
 		static const float defaultQueuePriority(0.0f);
 
-		int32_t requestedQueueTypes = VK_QUEUE_GRAPHICS_BIT;        // | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT;
+		int32_t requestedQueueTypes = VK_QUEUE_GRAPHICS_BIT;// | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT;
 		indices                     = lookupQueueFamilyIndices(requestedQueueTypes, queueFamilyProperties);
 
 		// Graphics queue
@@ -207,7 +207,7 @@ namespace maple
 		return -1;
 	}
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	VulkanDevice::VulkanDevice()
 	{
@@ -215,15 +215,15 @@ namespace maple
 
 	VulkanDevice::~VulkanDevice()
 	{
-		commandPool.reset();
-
 		vkDestroyPipelineCache(device, pipelineCache, VK_NULL_HANDLE);
 
-#if defined(MAPLE_PROFILE) && defined(TRACY_ENABLE)
-		for (int32_t i = 0; i < 3; i++)
-			TracyVkDestroy(tracyContext[i]);
+#ifdef USE_VMA_ALLOCATOR
+		vmaDestroyAllocator(allocator);
 #endif
 
+#if defined(MAPLE_PROFILE) && defined(TRACY_ENABLE)
+		TracyVkDestroy(tracyContext);
+#endif
 		if (device != nullptr)
 			vkDestroyDevice(device, nullptr);
 	}
@@ -236,17 +236,13 @@ namespace maple
 		allocInfo.commandPool                 = *commandPool;
 		allocInfo.commandBufferCount          = 1;
 
+#if defined(MAPLE_PROFILE) && defined(TRACY_ENABLE)
 		VkCommandBuffer tracyBuffer;
 		vkAllocateCommandBuffers(device, &allocInfo, &tracyBuffer);
-
-#if defined(MAPLE_PROFILE) && defined(TRACY_ENABLE)
-		tracyContext.resize(3);
-		for (int i = 0; i < 3; i++)
-			tracyContext[i] = TracyVkContext(*physicalDevice, device, graphicsQueue, tracyBuffer);
-#endif
-
+		tracyContext = TracyVkContext(*physicalDevice, device, graphicsQueue, tracyBuffer);
 		vkQueueWaitIdle(graphicsQueue);
 		vkFreeCommandBuffers(device, *commandPool, 1, &tracyBuffer);
+#endif
 	}
 
 	auto VulkanDevice::init() -> bool
@@ -256,8 +252,9 @@ namespace maple
 		VkPhysicalDeviceFeatures physicalDeviceFeatures;
 		vkGetPhysicalDeviceFeatures(*physicalDevice, &physicalDeviceFeatures);
 
-		std::vector<const char *> deviceExtensions = {
-		    VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+		std::vector<const char *> deviceExtensions =
+		    {
+		        VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
 		if (physicalDevice->isExtensionSupported(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
 		{
@@ -299,6 +296,45 @@ namespace maple
 		vkGetDeviceQueue(device, physicalDevice->indices.graphicsFamily.value(), 0, &graphicsQueue);
 		vkGetDeviceQueue(device, physicalDevice->indices.graphicsFamily.value(), 0, &presentQueue);
 
+#ifdef USE_VMA_ALLOCATOR
+		VmaAllocatorCreateInfo allocatorInfo = {};
+		allocatorInfo.physicalDevice         = *physicalDevice;
+		allocatorInfo.device                 = device;
+		allocatorInfo.instance               = VulkanContext::get()->getVkInstance();
+
+		VmaVulkanFunctions fn;
+		fn.vkAllocateMemory                        = (PFN_vkAllocateMemory) vkAllocateMemory;
+		fn.vkBindBufferMemory                      = (PFN_vkBindBufferMemory) vkBindBufferMemory;
+		fn.vkBindImageMemory                       = (PFN_vkBindImageMemory) vkBindImageMemory;
+		fn.vkCmdCopyBuffer                         = (PFN_vkCmdCopyBuffer) vkCmdCopyBuffer;
+		fn.vkCreateBuffer                          = (PFN_vkCreateBuffer) vkCreateBuffer;
+		fn.vkCreateImage                           = (PFN_vkCreateImage) vkCreateImage;
+		fn.vkDestroyBuffer                         = (PFN_vkDestroyBuffer) vkDestroyBuffer;
+		fn.vkDestroyImage                          = (PFN_vkDestroyImage) vkDestroyImage;
+		fn.vkFlushMappedMemoryRanges               = (PFN_vkFlushMappedMemoryRanges) vkFlushMappedMemoryRanges;
+		fn.vkFreeMemory                            = (PFN_vkFreeMemory) vkFreeMemory;
+		fn.vkGetBufferMemoryRequirements           = (PFN_vkGetBufferMemoryRequirements) vkGetBufferMemoryRequirements;
+		fn.vkGetImageMemoryRequirements            = (PFN_vkGetImageMemoryRequirements) vkGetImageMemoryRequirements;
+		fn.vkGetPhysicalDeviceMemoryProperties     = (PFN_vkGetPhysicalDeviceMemoryProperties) vkGetPhysicalDeviceMemoryProperties;
+		fn.vkGetPhysicalDeviceProperties           = (PFN_vkGetPhysicalDeviceProperties) vkGetPhysicalDeviceProperties;
+		fn.vkInvalidateMappedMemoryRanges          = (PFN_vkInvalidateMappedMemoryRanges) vkInvalidateMappedMemoryRanges;
+		fn.vkMapMemory                             = (PFN_vkMapMemory) vkMapMemory;
+		fn.vkUnmapMemory                           = (PFN_vkUnmapMemory) vkUnmapMemory;
+		fn.vkGetBufferMemoryRequirements2KHR       = 0;        //(PFN_vkGetBufferMemoryRequirements2KHR)vkGetBufferMemoryRequirements2KHR;
+		fn.vkGetImageMemoryRequirements2KHR        = 0;        //(PFN_vkGetImageMemoryRequirements2KHR)vkGetImageMemoryRequirements2KHR;
+		fn.vkBindImageMemory2KHR                   = 0;
+		fn.vkBindBufferMemory2KHR                  = 0;
+		fn.vkGetPhysicalDeviceMemoryProperties2KHR = 0;
+		fn.vkGetImageMemoryRequirements2KHR        = 0;
+		fn.vkGetBufferMemoryRequirements2KHR       = 0;
+		allocatorInfo.pVulkanFunctions             = &fn;
+
+		if (vmaCreateAllocator(&allocatorInfo, &allocator) != VK_SUCCESS)
+		{
+			LOGC("[VULKAN] Failed to create VMA allocator");
+		}
+#endif
+
 		commandPool = std::make_shared<VulkanCommandPool>(physicalDevice->indices.graphicsFamily.value(), VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
 		createTracyContext();
@@ -319,8 +355,7 @@ namespace maple
 #if defined(MAPLE_PROFILE) && defined(TRACY_ENABLE)
 	auto VulkanDevice::getTracyContext() -> tracy::VkCtx *
 	{
-		auto index = Application::getGraphicsContext()->getSwapChain()->getCurrentBufferIndex();
-		return tracyContext[index];
+		return tracyContext;
 	}
 #endif
 };        // namespace maple

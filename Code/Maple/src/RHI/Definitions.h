@@ -172,11 +172,11 @@ namespace maple
 		bool generateMipMaps;
 
 		constexpr TextureLoadOptions() :
-		    TextureLoadOptions(false, false, true)
+		    TextureLoadOptions(false, false, false)
 		{
 		}
 
-		constexpr TextureLoadOptions(bool flipX, bool flipY, bool genMips = true) :
+		constexpr TextureLoadOptions(bool flipX, bool flipY, bool genMips = false) :
 		    flipX(flipX), flipY(flipY), generateMipMaps(genMips)
 		{
 		}
@@ -265,13 +265,43 @@ namespace maple
 		UnsignedByte
 	};
 
+	struct PipelineInfo
+	{
+		std::shared_ptr<Shader> shader;
+
+		bool transparencyEnabled = true;
+		bool depthBiasEnabled    = false;
+		bool swapChainTarget     = false;
+		bool clearTargets        = false;
+		bool stencilTest         = false;
+		bool depthTest           = true;
+
+		uint32_t    stencilMask = 0x00;
+		StencilType stencilFunc = StencilType::Always;
+
+		StencilType stencilFail      = StencilType::Keep;
+		StencilType stencilDepthFail = StencilType::Keep;
+		StencilType stencilDepthPass = StencilType::Replace;
+
+		CullMode    cullMode    = CullMode::Back;
+		PolygonMode polygonMode = PolygonMode::Fill;
+		DrawType    drawType    = DrawType::Triangle;
+		BlendMode   blendMode   = BlendMode::None;
+		glm::vec4   clearColor  = {0.2f, 0.2f, 0.2f, 1.0};
+
+		std::shared_ptr<Texture> depthTarget      = nullptr;
+		std::shared_ptr<Texture> depthArrayTarget = nullptr;
+
+		std::array<std::shared_ptr<Texture>, MAX_RENDER_TARGETS> colorTargets = {};
+	};
+
 	struct RenderCommand
 	{
 		Mesh *    mesh     = nullptr;
 		Material *material = nullptr;
 
-		std::shared_ptr<Pipeline> pipeline;
-		std::shared_ptr<Pipeline> stencilPipeline;
+		PipelineInfo pipelineInfo;
+		PipelineInfo stencilPipelineInfo;
 
 		glm::mat4 transform;
 	};

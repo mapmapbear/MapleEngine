@@ -4,6 +4,8 @@
 #pragma once
 #include "RHI/Pipeline.h"
 #include "VulkanHelper.h"
+#include "Engine/Core.h"
+
 #include <functional>
 #include <memory>
 
@@ -16,6 +18,7 @@ namespace maple
 
 		VulkanPipeline(const PipelineInfo &info);
 		virtual ~VulkanPipeline();
+		NO_COPYABLE(VulkanPipeline);
 
 		auto init(const PipelineInfo &info) -> bool;
 
@@ -35,6 +38,8 @@ namespace maple
 		{
 			return pipelineLayout;
 		}
+
+
 
 	  private:
 		auto transitionAttachments() -> void;

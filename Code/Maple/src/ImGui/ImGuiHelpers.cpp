@@ -254,7 +254,6 @@ namespace maple
 		auto image(const Texture *texture, const glm::vec2 &size) -> void
 		{
 			bool flipImage = true;        //opengl is true
-
 			ImGui::Image(texture ? texture->getHandle() : nullptr, ImVec2(size.x, size.y), ImVec2(0.0f, flipImage ? 1.0f : 0.0f), ImVec2(1.0f, flipImage ? 0.0f : 1.0f));
 		}
 

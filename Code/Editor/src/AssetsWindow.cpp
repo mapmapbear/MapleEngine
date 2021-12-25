@@ -218,7 +218,9 @@ namespace maple
 				bgColor = {1., 0.3f, 0.4f, 1.0f};
 			}
 
-			if (ImGui::ImageButtonNoBg(icon && icon->getTexture() ? icon->getTexture()->getHandle() : nullptr,
+			auto img = icon && icon->getTexture() ? icon->getTexture()->getHandle() : nullptr;
+
+			if (ImGui::ImageButton(img,
 			                           {80 * editor.getWindow()->getScale(), 80 * editor.getWindow()->getScale()},
 			                           ImVec2(uv[3].x, uv[1].y),
 			                           ImVec2(uv[1].x, uv[3].y), -1, bgColor))

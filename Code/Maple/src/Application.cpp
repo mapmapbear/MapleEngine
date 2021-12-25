@@ -5,9 +5,9 @@
 #include "Application.h"
 #include "Engine/Camera.h"
 #include "Engine/Profiler.h"
+#include "Engine/Renderer/Renderer2D.h"
 #include "Engine/Terrain.h"
 #include "Engine/Timestep.h"
-#include "Engine/Renderer/Renderer2D.h"
 
 #include "FileSystem/MeshLoader.h"
 #include "Others/Console.h"
@@ -46,7 +46,6 @@ namespace maple
 		monoVm        = std::make_shared<MonoVirtualMachine>();
 		renderGraph   = std::make_shared<RenderGraph>();
 		systemManager = std::make_unique<SystemManager>();
-	
 	}
 
 	auto Application::init() -> void
@@ -88,8 +87,9 @@ namespace maple
 				sceneManager->apply();
 				executeAll();
 				onUpdate(timestep);
-				onRender();
 
+				renderDevice->begin();
+				onRender();
 				imGuiManager->onRender(sceneManager->getCurrentScene());
 				renderDevice->present();        //present all data
 				window->swapBuffers();
@@ -124,14 +124,11 @@ namespace maple
 	auto Application::onRender() -> void
 	{
 		PROFILE_FUNCTION();
-		renderDevice->begin();
 
 		renderGraph->beginPreviewScene(sceneManager->getSceneByName("PreviewScene"));
 		renderGraph->onRenderPreview();
-
 		renderGraph->beginScene(sceneManager->getCurrentScene());
 		renderGraph->onRender();
-
 		onRenderDebug();
 	}
 
@@ -164,7 +161,10 @@ namespace maple
 		graphicsContext->waitIdle();
 		renderDevice->onResize(w, h);
 		imGuiManager->onResize(w, h);
-		renderGraph->onResize(w, h);
+		if (!editor)
+		{
+			renderGraph->onResize(w, h);
+		}
 		graphicsContext->waitIdle();
 	}
 

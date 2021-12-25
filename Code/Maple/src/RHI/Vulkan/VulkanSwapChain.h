@@ -3,6 +3,7 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #pragma once
+#include "Engine/Core.h"
 #include "RHI/SwapChain.h"
 #include "RHI/Texture.h"
 #include "VulkanHelper.h"
@@ -14,8 +15,8 @@ namespace maple
 
 	struct FrameData
 	{
-		VkSemaphore                          presentSemaphore = VK_NULL_HANDLE;
 		std::shared_ptr<VulkanCommandPool>   commandPool;
+		VkSemaphore                          presentSemaphore = VK_NULL_HANDLE;
 		std::shared_ptr<VulkanCommandBuffer> commandBuffer;
 	};
 
@@ -23,7 +24,7 @@ namespace maple
 	{
 	  public:
 		VulkanSwapChain(uint32_t width, uint32_t height);
-
+		NO_COPYABLE(VulkanSwapChain);
 		virtual ~VulkanSwapChain();
 
 		auto init(bool vsync, NativeWindow *window) -> bool override;

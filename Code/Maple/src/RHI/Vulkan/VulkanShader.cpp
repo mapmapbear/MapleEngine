@@ -150,7 +150,7 @@ namespace maple
 
 	VulkanShader::VulkanShader(const std::vector<uint32_t> &vertData, const std::vector<uint32_t> &fragData)
 	{
-		LOGW("{0} did not implement",__FUNCTION__);
+		LOGW("{0} did not implement", __FUNCTION__);
 	}
 
 	VulkanShader::~VulkanShader()
@@ -164,7 +164,7 @@ namespace maple
 		for (auto &pc : pushConstants)
 		{
 			vkCmdPushConstants(
-			    static_cast<VulkanCommandBuffer &>(*cmdBuffer),
+			    static_cast<VulkanCommandBuffer *>(cmdBuffer)->getCommandBuffer(),
 			    static_cast<VulkanPipeline *>(pipeline)->getPipelineLayout(),
 			    VkConverter::shaderTypeToVK(pc.shaderStage), index, pc.size, pc.data.data());
 		}
@@ -289,11 +289,11 @@ namespace maple
 	{
 		VkShaderModuleCreateInfo shaderCreateInfo{};
 		shaderCreateInfo.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-		shaderCreateInfo.codeSize = spvCode.size() / sizeof(uint32_t);
+		shaderCreateInfo.codeSize = spvCode.size() * 4; // len is same as uint8_t 
 		shaderCreateInfo.pCode    = spvCode.data();
 		shaderCreateInfo.pNext    = VK_NULL_HANDLE;
 
-		spirv_cross::Compiler        comp(spvCode);
+		spirv_cross::Compiler        comp(spvCode.data(), spvCode.size());
 		spirv_cross::ShaderResources resources = comp.get_shader_resources();
 
 		if (shaderType == ShaderType::Vertex)
@@ -370,7 +370,7 @@ namespace maple
 			uint32_t size = 0;
 			for (auto &range : ranges)
 			{
-				LOGI("Accessing Member {0} offset {1}, size {2}", range.index, range.offset, range.range);
+				LOGI("\tAccessing Member {0} offset {1}, size {2}", range.index, range.offset, range.range);
 				size += uint32_t(range.range);
 			}
 

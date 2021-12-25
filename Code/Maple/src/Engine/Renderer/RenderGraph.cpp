@@ -222,7 +222,7 @@ namespace maple
 
 			DescriptorInfo info{};
 			descriptorColorSet.resize(2);
-			descriptorLightSet.resize(2);
+			descriptorLightSet.resize(1);
 
 			info.shader           = deferredColorShader.get();
 			info.layoutIndex      = 0;
@@ -232,8 +232,8 @@ namespace maple
 			info.layoutIndex      = 0;
 			descriptorLightSet[0] = DescriptorSet::create(info);
 
-			info.layoutIndex      = 1;
-			descriptorLightSet[1] = DescriptorSet::create(info);
+			/*info.layoutIndex      = 1;
+			descriptorLightSet[1] = DescriptorSet::create(info);*/
 
 			screenQuad = Mesh::createQuad(true);
 		}
@@ -360,10 +360,7 @@ namespace maple
 		{
 			auto descriptorSet = settings.deferredRender ? deferredData->descriptorColorSet[0] : forwardData->descriptorSet[0];
 			descriptorSet->setUniform("UniformBufferObject", "projView", &projView);
-			descriptorSet->update();
-
 			stencilDescriptorSet->setUniform("UniformBufferObject", "projView", &projView);
-			stencilDescriptorSet->update();
 		}
 
 		if (settings.renderSkybox || settings.render3D)
@@ -438,7 +435,7 @@ namespace maple
 				}
 			}
 
-			auto descriptorSet = settings.deferredRender ? deferredData->descriptorLightSet[1] : forwardData->descriptorSet[2];
+			auto descriptorSet = settings.deferredRender ? deferredData->descriptorLightSet[0] : forwardData->descriptorSet[2];
 			descriptorSet->setUniform("UniformBufferLight", "lights", lights, sizeof(LightData) * numLights);
 			auto cameraPos = glm::vec4{camera.second->getWorldPosition(), 1.f};
 			descriptorSet->setUniform("UniformBufferLight", "cameraPosition", &cameraPos);
@@ -475,7 +472,7 @@ namespace maple
 
 		if (settings.render3D)
 		{
-			auto descriptorSet = settings.deferredRender ? deferredData->descriptorLightSet[1] : forwardData->descriptorSet[2];
+			auto descriptorSet = settings.deferredRender ? deferredData->descriptorLightSet[0] : forwardData->descriptorSet[2];
 
 			descriptorSet->setUniform("UniformBufferLight", "viewMatrix", &view);
 			descriptorSet->setUniform("UniformBufferLight", "lightView", &lightView);
@@ -499,7 +496,6 @@ namespace maple
 			descriptorSet->setTexture("uShadowMap", shadowData->shadowTexture);
 			descriptorSet->setTexture("uPrefilterMap", forwardData->environmentMap);
 			descriptorSet->setTexture("uIrradianceMap", forwardData->irradianceMap);
-			descriptorSet->update();
 		}
 
 		auto group = registry.group<MeshRenderer>(entt::get<Transform>);
@@ -542,15 +538,14 @@ namespace maple
 
 					//if (inside != Intersection::Outside)
 					{
-						auto &cmd       = settings.deferredRender ? deferredData->commandQueue.emplace_back() : forwardData->commandQueue.emplace_back();
-						auto  depthTest = settings.deferredRender ? deferredData->depthTest : forwardData->depthTest;
-
+						auto &cmd     = settings.deferredRender ? deferredData->commandQueue.emplace_back() : forwardData->commandQueue.emplace_back();
 						cmd.mesh      = mesh.getMesh().get();
 						cmd.transform = worldTransform;
 						cmd.material  = mesh.getMesh()->getMaterial() ? mesh.getMesh()->getMaterial().get() : settings.deferredRender ? deferredData->defaultMaterial.get() :
                                                                                                                                         forwardData->defaultMaterial.get();
 						cmd.material->bind();
 
+						auto depthTest = settings.deferredRender ? deferredData->depthTest : forwardData->depthTest;
 						if (settings.deferredRender)
 						{
 							pipelineInfo.colorTargets[0] = gBuffer->getBuffer(GBufferTextures::COLOR);
@@ -581,7 +576,7 @@ namespace maple
 							pipelineInfo.stencilDepthFail = StencilType::Keep;
 							pipelineInfo.stencilDepthPass = StencilType::Replace;
 							pipelineInfo.depthTest        = true;
-							cmd.stencilPipeline           = Pipeline::get(pipelineInfo);
+							cmd.stencilPipelineInfo       = pipelineInfo;
 
 							pipelineInfo.shader           = settings.deferredRender ? deferredData->deferredColorShader : forwardData->shader;
 							pipelineInfo.stencilMask      = 0xFF;
@@ -591,7 +586,7 @@ namespace maple
 							pipelineInfo.stencilDepthPass = StencilType::Replace;
 							pipelineInfo.depthTest        = true;
 						}
-						cmd.pipeline = Pipeline::get(pipelineInfo);
+						cmd.pipelineInfo = pipelineInfo;
 					}
 				}
 			}
@@ -650,15 +645,6 @@ namespace maple
 		descriptorSets[2]->setUniform("UniformBufferLight", "light", &directionaLight->lightData);
 		descriptorSets[2]->setUniform("UniformBufferLight", "cameraPosition", glm::value_ptr(cameraPos));
 
-		PipelineInfo pipelineInfo{};
-		pipelineInfo.shader          = previewData->shader;
-		pipelineInfo.polygonMode     = PolygonMode::Fill;
-		pipelineInfo.blendMode       = BlendMode::SrcAlphaOneMinusSrcAlpha;
-		pipelineInfo.clearTargets    = false;
-		pipelineInfo.swapChainTarget = false;
-		pipelineInfo.colorTargets[0] = previewData->renderTexture;
-		pipelineInfo.depthTarget     = previewData->depthTexture;
-
 		auto meshGroup = registry.group<MeshRenderer>(entt::get<Transform>);
 
 		for (auto entity : meshGroup)
@@ -674,9 +660,6 @@ namespace maple
 				data.material->setShader(previewData->shader);
 
 			data.material->bind();
-			pipelineInfo.cullMode            = data.material->isFlagOf(Material::RenderFlags::TwoSided) ? CullMode::None : CullMode::Back;
-			pipelineInfo.transparencyEnabled = data.material->isFlagOf(Material::RenderFlags::AlphaBlend);
-			data.pipeline                    = Pipeline::get(pipelineInfo);
 		}
 	}
 
@@ -684,21 +667,26 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 
+		if (!forwardData->renderTexture)
+		{
+			LOGW("renderTexture is null");
+			return;
+		}
+
 		const auto &settings      = Application::getCurrentScene()->getSettings();
 		auto        swapChain     = Application::getGraphicsContext()->getSwapChain();
 		auto        renderTargert = forwardData->renderTexture ? forwardData->renderTexture : swapChain->getCurrentImage();
-
-		Application::getRenderDevice()->clearRenderTarget(renderTargert, getCommandBuffer());
-
-		Application::getRenderDevice()->clearRenderTarget(gBuffer->getBuffer(GBufferTextures::COLOR), getCommandBuffer(), {0, 0, 0, 0});
-		Application::getRenderDevice()->clearRenderTarget(gBuffer->getBuffer(GBufferTextures::POSITION), getCommandBuffer(), {0, 0, 0, 0});
-		Application::getRenderDevice()->clearRenderTarget(gBuffer->getBuffer(GBufferTextures::NORMALS), getCommandBuffer(), {0, 0, 0, 0});
-		Application::getRenderDevice()->clearRenderTarget(gBuffer->getBuffer(GBufferTextures::PBR), getCommandBuffer(), {0, 0, 0, 0});
 
 		if ((settings.deferredRender && deferredData->depthTest) || forwardData->depthTest)
 		{
 			Application::getRenderDevice()->clearRenderTarget(gBuffer->getDepthBuffer(), getCommandBuffer());
 		}
+
+		Application::getRenderDevice()->clearRenderTarget(renderTargert, getCommandBuffer());
+		Application::getRenderDevice()->clearRenderTarget(gBuffer->getBuffer(GBufferTextures::COLOR), getCommandBuffer(), {0, 0, 0, 0});
+		Application::getRenderDevice()->clearRenderTarget(gBuffer->getBuffer(GBufferTextures::POSITION), getCommandBuffer(), {0, 0, 0, 0});
+		Application::getRenderDevice()->clearRenderTarget(gBuffer->getBuffer(GBufferTextures::NORMALS), getCommandBuffer(), {0, 0, 0, 0});
+		Application::getRenderDevice()->clearRenderTarget(gBuffer->getBuffer(GBufferTextures::PBR), getCommandBuffer(), {0, 0, 0, 0});
 
 		if (settings.renderShadow)
 			executeShadowPass();
@@ -767,7 +755,16 @@ namespace maple
 
 		auto commandBuffer = getCommandBuffer();
 
-		Pipeline *pipeline = nullptr;
+		std::shared_ptr<Pipeline> pipeline;
+
+		PipelineInfo pipelineInfo{};
+		pipelineInfo.shader          = previewData->shader;
+		pipelineInfo.polygonMode     = PolygonMode::Fill;
+		pipelineInfo.blendMode       = BlendMode::SrcAlphaOneMinusSrcAlpha;
+		pipelineInfo.clearTargets    = false;
+		pipelineInfo.swapChainTarget = false;
+		pipelineInfo.colorTargets[0] = previewData->renderTexture;
+		pipelineInfo.depthTarget     = previewData->depthTexture;
 
 		for (auto &command : previewData->commandQueue)
 		{
@@ -777,10 +774,12 @@ namespace maple
 
 			Material *material = command.material;
 
-			pipeline = command.pipeline.get();
+			pipelineInfo.cullMode            = command.material->isFlagOf(Material::RenderFlags::TwoSided) ? CullMode::None : CullMode::Back;
+			pipelineInfo.transparencyEnabled = command.material->isFlagOf(Material::RenderFlags::AlphaBlend);
+			pipeline                         = Pipeline::get(pipelineInfo);
 
 			if (commandBuffer)
-				commandBuffer->bindPipeline(pipeline);
+				commandBuffer->bindPipeline(pipeline.get());
 			else
 				pipeline->bind(commandBuffer);
 
@@ -789,10 +788,10 @@ namespace maple
 			auto &pushConstants = previewData->shader->getPushConstants()[0];
 			pushConstants.setValue("transform", (void *) &worldTransform);
 
-			previewData->shader->bindPushConstants(commandBuffer, pipeline);
+			previewData->shader->bindPushConstants(commandBuffer, pipeline.get());
 
-			Renderer::bindDescriptorSets(pipeline, commandBuffer, 0, previewData->descriporSets);
-			Renderer::drawMesh(commandBuffer, pipeline, mesh);
+			Renderer::bindDescriptorSets(pipeline.get(), commandBuffer, 0, previewData->descriporSets);
+			Renderer::drawMesh(commandBuffer, pipeline.get(), mesh);
 		}
 
 		if (commandBuffer)
@@ -903,6 +902,9 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 		GPUProfile("Forward Pass");
+
+		/*
+		* forwardData->descriptorSet[0]->update();
 		forwardData->descriptorSet[2]->update();
 
 		auto commandBuffer = getCommandBuffer();
@@ -941,7 +943,7 @@ namespace maple
 		if (pipeline)        //temp
 		{
 			pipeline->end(commandBuffer);
-		}
+		}*/
 	}
 
 	auto RenderGraph::executeShadowPass() -> void
@@ -954,7 +956,7 @@ namespace maple
 		PipelineInfo pipelineInfo;
 		pipelineInfo.shader = shadowData->shader;
 
-		pipelineInfo.cullMode            = CullMode::Front;
+		pipelineInfo.cullMode            = CullMode::None;
 		pipelineInfo.transparencyEnabled = false;
 		pipelineInfo.depthBiasEnabled    = false;
 		pipelineInfo.depthArrayTarget    = shadowData->shadowTexture;
@@ -965,7 +967,6 @@ namespace maple
 		for (uint32_t i = 0; i < shadowData->shadowMapNum; ++i)
 		{
 			//GPUProfile("Shadow Layer Pass");
-
 			pipeline->bind(getCommandBuffer(), i);
 
 			for (auto &command : shadowData->cascadeCommandQueue[i])
@@ -1022,32 +1023,40 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 		deferredData->descriptorColorSet[0]->update();
-		auto      commandBuffer = getCommandBuffer();
-		Pipeline *pipeline      = nullptr;
+		stencilDescriptorSet->update();
+
+		auto                      commandBuffer = getCommandBuffer();
+		std::shared_ptr<Pipeline> pipeline;
+
 		for (auto &command : deferredData->commandQueue)
 		{
-			pipeline = command.pipeline.get();
+			pipeline = Pipeline::get(command.pipelineInfo);
+
 			if (commandBuffer)
-				commandBuffer->bindPipeline(pipeline);
+				commandBuffer->bindPipeline(pipeline.get());
 			else
 				pipeline->bind(commandBuffer);
+
 			deferredData->descriptorColorSet[1] = command.material->getDescriptorSet();
 			auto &pushConstants                 = deferredData->deferredColorShader->getPushConstants()[0];
 			pushConstants.setValue("transform", &command.transform);
-			deferredData->deferredColorShader->bindPushConstants(commandBuffer, pipeline);
-			Renderer::bindDescriptorSets(pipeline, commandBuffer, 0, deferredData->descriptorColorSet);
-			Renderer::drawMesh(commandBuffer, pipeline, command.mesh);
+			deferredData->deferredColorShader->bindPushConstants(commandBuffer, pipeline.get());
+			Renderer::bindDescriptorSets(pipeline.get(), commandBuffer, 0, deferredData->descriptorColorSet);
+			Renderer::drawMesh(commandBuffer, pipeline.get(), command.mesh);
 
-			if (command.stencilPipeline)
+			if (command.stencilPipelineInfo.stencilTest)
 			{
-				command.stencilPipeline->bind(commandBuffer);
+				auto stencilPipeline = Pipeline::get(command.stencilPipelineInfo);
+				stencilPipeline->bind(commandBuffer);
 				auto &pushConstants = stencilShader->getPushConstants()[0];
 				pushConstants.setValue("transform", &command.transform);
-				stencilShader->bindPushConstants(commandBuffer, command.stencilPipeline.get());
+				stencilShader->bindPushConstants(commandBuffer, stencilPipeline.get());
 
-				Renderer::bindDescriptorSets(pipeline, commandBuffer, 0, {stencilDescriptorSet});
-				Renderer::drawMesh(commandBuffer, command.stencilPipeline.get(), command.mesh);
+				Renderer::bindDescriptorSets(stencilPipeline.get(), commandBuffer, 0, {stencilDescriptorSet});
+				Renderer::drawMesh(commandBuffer, stencilPipeline.get(), command.mesh);
+				stencilPipeline->end(commandBuffer);
 			}
+			pipeline->end(commandBuffer);
 		}
 
 		if (commandBuffer)
@@ -1057,6 +1066,18 @@ namespace maple
 	auto RenderGraph::executeDeferredLightPass() -> void
 	{
 		PROFILE_FUNCTION();
+		auto descriptorSet = deferredData->descriptorLightSet[0];
+		descriptorSet->setTexture("uColorSampler", gBuffer->getBuffer(GBufferTextures::COLOR));
+		descriptorSet->setTexture("uPositionSampler", gBuffer->getBuffer(GBufferTextures::POSITION));
+		descriptorSet->setTexture("uNormalSampler", gBuffer->getBuffer(GBufferTextures::NORMALS));
+		descriptorSet->setTexture("uPBRSampler", gBuffer->getBuffer(GBufferTextures::PBR));
+		descriptorSet->setTexture("uDepthSampler", gBuffer->getDepthBuffer());
+		descriptorSet->setTexture("uIrradianceMap", forwardData->irradianceMap);
+		descriptorSet->setTexture("uPreintegratedFG", forwardData->preintegratedFG);
+		descriptorSet->setTexture("uShadowMap", shadowData->shadowTexture);
+		descriptorSet->setTexture("uPrefilterMap", forwardData->environmentMap);
+		descriptorSet->update();
+
 		PipelineInfo pipeInfo;
 		pipeInfo.shader                     = deferredData->deferredLightShader;
 		pipeInfo.polygonMode                = PolygonMode::Fill;
@@ -1066,19 +1087,6 @@ namespace maple
 		pipeInfo.clearTargets               = false;
 		pipeInfo.colorTargets[0]            = deferredData->renderTexture;
 		deferredData->deferredLightPipeline = Pipeline::get(pipeInfo);
-
-		auto descriptorSet = deferredData->descriptorLightSet[1];
-
-		descriptorSet->setTexture("uColorSampler", gBuffer->getBuffer(GBufferTextures::COLOR));
-		descriptorSet->setTexture("uPositionSampler", gBuffer->getBuffer(GBufferTextures::POSITION));
-		descriptorSet->setTexture("uNormalSampler", gBuffer->getBuffer(GBufferTextures::NORMALS));
-		descriptorSet->setTexture("uDepthSampler", gBuffer->getBuffer(GBufferTextures::DEPTH));
-		descriptorSet->setTexture("uPBRSampler", gBuffer->getBuffer(GBufferTextures::PBR));
-		descriptorSet->setTexture("uIrradianceMap", forwardData->irradianceMap);
-		descriptorSet->setTexture("uPreintegratedFG", forwardData->preintegratedFG);
-		descriptorSet->setTexture("uShadowMap", shadowData->shadowTexture);
-		descriptorSet->setTexture("uPrefilterMap", forwardData->environmentMap);
-		descriptorSet->update();
 
 		deferredData->deferredLightPipeline->bind(getCommandBuffer());
 		Renderer::bindDescriptorSets(deferredData->deferredLightPipeline.get(), getCommandBuffer(), 0, deferredData->descriptorLightSet);

@@ -15,17 +15,16 @@
 #include "Engine/Timestep.h"
 #include "Event/EventDispatcher.h"
 #include "ImGui/ImGuiSystem.h"
-#include "ImGui/VkImGUIRenderer.h"
 #include "Others/Timer.h"
 #include "RHI/GraphicsContext.h"
 #include "RHI/RenderDevice.h"
+#include "Resources/Cache.h"
 #include "Scene/SceneManager.h"
+#include "Scene/System/AccessSystem.h"
 #include "Scene/System/SystemManager.h"
 #include "Scripts/Lua/LuaVirtualMachine.h"
 #include "Thread/ThreadPool.h"
 #include "Window/NativeWindow.h"
-
-#include "Scene/System/AccessSystem.h"
 
 namespace maple
 {
@@ -192,6 +191,7 @@ namespace maple
 		uint64_t                                                         frames      = 0;
 		float                                                            secondTimer = 0.0f;
 		bool                                                             sceneActive = true;
+		bool                                                             editor      = false;
 		EditorState                                                      state       = EditorState::Play;
 		std::mutex                                                       executeMutex;
 		std::queue<std::pair<std::promise<bool>, std::function<bool()>>> executeQueue;

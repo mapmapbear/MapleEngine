@@ -60,8 +60,11 @@ namespace maple
 		auto checkDeviceExtensionSupport(VkPhysicalDevice device, const std::vector<const char *> &deviceExtensions) -> bool;
 		auto checkValidationLayerSupport(const std::vector<const char *> &layerNames) -> bool;
 
-		auto createImage(
-		    uint32_t width, uint32_t height, uint32_t mipLevels, VkFormat format, VkImageType imageType, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage &image, VkDeviceMemory &imageMemory, uint32_t arrayLayers, VkImageCreateFlags flags) -> uint64_t;
+#ifdef USE_VMA_ALLOCATOR
+		auto createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkFormat format, VkImageType imageType, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage &image, VkDeviceMemory &imageMemory, uint32_t arrayLayers, VkImageCreateFlags flags, VmaAllocation &allocation) -> void;
+#else
+		auto createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkFormat format, VkImageType imageType, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage &image, VkDeviceMemory &imageMemory, uint32_t arrayLayers, VkImageCreateFlags flags) -> void;
+#endif        // USE_VMA_ALLOCATOR
 
 		auto createImageView(VkImage image, VkFormat format, uint32_t mipLevels, VkImageViewType viewType, VkImageAspectFlags aspectMask, uint32_t layerCount, uint32_t baseArrayLayer = 0, uint32_t baseMipLevel = 0) -> VkImageView;
 
@@ -229,14 +232,16 @@ namespace maple
 		auto chooseSwapPresentMode(const std::vector<VkPresentModeKHR> &presentModes, bool vsync) -> VkPresentModeKHR;
 		auto chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities) -> VkExtent2D;
 
-		auto getBindingDescription() -> VkVertexInputBindingDescription;
-		auto getAttributeDescriptions() -> std::array<VkVertexInputAttributeDescription, 3>;
-		auto transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels = 1, uint32_t layerCount = 1, VkCommandBuffer commandBuffer = nullptr) -> void;
+		auto transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels = 1, uint32_t layerCount = 1, VkCommandBuffer commandBuffer = nullptr, bool depth = true) -> void;
 		auto copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height, int32_t offsetX = 0, int32_t offsetY = 0) -> void;
 		auto createTextureSampler(VkFilter magFilter = VK_FILTER_LINEAR, VkFilter minFilter = VK_FILTER_LINEAR, float minLod = 0.0f, float maxLod = 1.0f, bool anisotropyEnable = false, float maxAnisotropy = 1.0f, VkSamplerAddressMode modeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VkSamplerAddressMode modeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VkSamplerAddressMode modeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE) -> VkSampler;
 		auto beginSingleTimeCommands() -> VkCommandBuffer;
 		auto endSingleTimeCommands(VkCommandBuffer commandBuffer) -> void;
-		auto copyBuffer(VkBuffer stagingBuffer, VkBuffer vertexBuffer, VkDeviceSize bufferSize) -> void;
+#ifdef USE_VMA_ALLOCATOR
+		auto createImageVma(const VkImageCreateInfo &imageInfo, VkImage &image, VmaAllocation &allocation) -> void;
+#else
+		auto createImageDefault(const VkImageCreateInfo &imageInfo, VkImage &image, VkDeviceMemory &imageMemory, VkMemoryPropertyFlags properties) -> void;
+#endif
 	};        // namespace VulkanHelper
 
 	namespace VkConverter

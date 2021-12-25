@@ -57,6 +57,7 @@ namespace maple
 	Editor::Editor(AppDelegate *appDelegate) :
 	    Application(appDelegate)
 	{
+		editor = true;
 	}
 #define addWindow(T) editorWindows.emplace(typeid(T).hash_code(), std::make_shared<T>())
 	auto Editor::init() -> void

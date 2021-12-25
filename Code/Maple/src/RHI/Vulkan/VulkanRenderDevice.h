@@ -20,6 +20,8 @@ namespace maple
 		VulkanRenderDevice();
 		~VulkanRenderDevice();
 
+	
+
 		auto begin() -> void override;
 		auto init() -> void override;
 		auto onResize(uint32_t width, uint32_t height) -> void override;

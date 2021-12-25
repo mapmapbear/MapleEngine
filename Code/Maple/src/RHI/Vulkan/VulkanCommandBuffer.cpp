@@ -133,12 +133,13 @@ namespace maple
 			boundPipeline->end(this);
 
 		boundPipeline = nullptr;
+#ifdef MAPLE_PROFILE
 		TracyVkCollect(VulkanDevice::get()->getTracyContext(), commandBuffer);
+#endif        // MAPLE_PROFILE
+
 
 		VK_CHECK_RESULT(vkEndCommandBuffer(commandBuffer));
 		state = CommandBufferState::Ended;
-
-		VK_CHECK_RESULT(vkEndCommandBuffer(commandBuffer));
 	}
 
 	auto VulkanCommandBuffer::executeSecondary(CommandBuffer *primaryCmdBuffer) -> void
@@ -147,7 +148,7 @@ namespace maple
 		MAPLE_ASSERT(!primary, "Used ExecuteSecondary on primary command buffer!");
 		state = CommandBufferState::Submitted;
 
-		vkCmdExecuteCommands(*static_cast<VulkanCommandBuffer *>(primaryCmdBuffer), 1, &commandBuffer);
+		vkCmdExecuteCommands(static_cast<VulkanCommandBuffer *>(primaryCmdBuffer)->getCommandBuffer(), 1, &commandBuffer);
 	}
 
 	auto VulkanCommandBuffer::updateViewport(uint32_t width, uint32_t height) -> void
@@ -207,7 +208,8 @@ namespace maple
 		PROFILE_FUNCTION();
 		MAPLE_ASSERT(primary, "Used Execute on secondary command buffer!");
 		MAPLE_ASSERT(state == CommandBufferState::Ended, "CommandBuffer executed before ended recording");
-		uint32_t waitSemaphoreCount = signalSemaphore ? 1 : 0, signalSemaphoreCount = semaphore ? 1 : 0;
+		uint32_t waitSemaphoreCount   = signalSemaphore ? 1 : 0;
+		uint32_t signalSemaphoreCount = semaphore ? 1 : 0;
 
 		VkSubmitInfo submitInfo         = {};
 		submitInfo.sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO;

@@ -12,22 +12,24 @@ namespace maple
 		buildTexture();
 	}
 
-	auto GBuffer::resize(uint32_t width, uint32_t height) -> void
+	auto GBuffer::resize(uint32_t width, uint32_t height, CommandBuffer *commandBuffer) -> void
 	{
 		this->width  = width;
 		this->height = height;
-		buildTexture();
+		buildTexture(commandBuffer);
 	}
 
-	auto GBuffer::buildTexture() -> void
+	auto GBuffer::buildTexture(CommandBuffer *commandBuffer) -> void
 	{
 		if (depthBuffer == nullptr)
 		{
 			for (auto i = 0; i < GBufferTextures::LENGTH; i++)
 			{
 				screenTextures[i] = Texture2D::create();
+				screenTextures[i]->setName(getGBufferTextureName((GBufferTextures) i));
 			}
 			depthBuffer = TextureDepth::create(width, height, true);
+			depthBuffer->setName("GBuffer-Depth");
 		}
 
 		formats[COLOR]    = TextureFormat::RGBA8;
@@ -36,10 +38,10 @@ namespace maple
 		formats[PBR]      = TextureFormat::RGBA16;
 
 		screenTextures[COLOR]->buildTexture(formats[COLOR], width, height, false, false, false);
-		screenTextures[POSITION]->buildTexture(formats[POSITION], width, height, false, true, false);
-		screenTextures[NORMALS]->buildTexture(formats[NORMALS], width, height, false, true, false);
-		screenTextures[PBR]->buildTexture(formats[PBR], width, height, false, true, false);
-		depthBuffer->resize(width, height);
+		screenTextures[POSITION]->buildTexture(formats[POSITION], width, height, false, false, false);
+		screenTextures[NORMALS]->buildTexture(formats[NORMALS], width, height, false, false, false);
+		screenTextures[PBR]->buildTexture(formats[PBR], width, height, false, false, false);
+		depthBuffer->resize(width, height, commandBuffer);
 	}
 
 	auto GBuffer::getGBufferTextureName(GBufferTextures index) -> const char *
@@ -49,7 +51,6 @@ namespace maple
 #define STR(r) \
 	case r:    \
 		return #r
-			STR(DEPTH);
 			STR(COLOR);
 			STR(POSITION);
 			STR(NORMALS);

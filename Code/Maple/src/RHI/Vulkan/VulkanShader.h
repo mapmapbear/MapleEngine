@@ -2,6 +2,8 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
+
+#include "Engine/Core.h"
 #include "Others/Console.h"
 #include "RHI/DescriptorSet.h"
 #include "RHI/Shader.h"
@@ -18,7 +20,7 @@ namespace maple
 		VulkanShader(const std::string &path);
 		VulkanShader(const std::vector<uint32_t> &vertData, const std::vector<uint32_t> &fragData);
 		~VulkanShader();
-
+		NO_COPYABLE(VulkanShader);
 		auto bindPushConstants(CommandBuffer *commandBuffer, Pipeline *pipeline) -> void override;
 
 		auto bind() const -> void override{};

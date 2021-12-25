@@ -47,7 +47,6 @@ namespace maple
 
 	auto EventDispatcher::removeEventHandler(EventHandler *eventHandler) -> void
 	{
-		PROFILE_FUNCTION();
 		if (eventHandler->eventDispatcher == this)
 			eventHandler->eventDispatcher = nullptr;
 

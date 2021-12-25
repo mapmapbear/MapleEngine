@@ -11,6 +11,7 @@ namespace maple
 	{
 		texture = Texture2D::create();
 		texture->buildTexture(TextureFormat::RGBA8, w, h, false, false, false);
+		texture->setName("EditorTextureAtlas");
 
 		leftovers = QuadTree<size_t, LeftOver>([](const LeftOver &first, const LeftOver &second) {
 			bool wcomp = first.width() >= second.width();

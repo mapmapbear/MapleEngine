@@ -9,6 +9,7 @@
 #include "Devices/Input.h"
 #include "Editor.h"
 #include "Engine/Camera.h"
+#include "Engine/GBuffer.h"
 #include "Event/WindowEvent.h"
 #include "IconsMaterialDesignIcons.h"
 #include "ImGui/ImGuiHelpers.h"
@@ -67,7 +68,6 @@ namespace maple
 				}
 			}
 			bool click = drawToolBar();
-
 
 			if (transform != nullptr)
 			{
@@ -153,19 +153,19 @@ namespace maple
 			this->height = height;
 		}
 
-		if (previewTexture == nullptr)
-		{
-			previewTexture = Texture2D::create();
-		}
-
 		if (resized)
 		{
-			editor.getCamera()->setAspectRatio(width / (float) height);
-			Application::get()->getGraphicsContext()->waitIdle();
-			previewTexture->buildTexture(TextureFormat::RGBA8, width, height, false, false, false);
-			Application::getRenderGraph()->setRenderTarget(previewTexture);
-			Application::getRenderGraph()->onResize(width, height);
-			Application::get()->getGraphicsContext()->waitIdle();
+			if (previewTexture == nullptr)
+			{
+				previewTexture = Texture2D::create();
+				previewTexture->setName("PreviewTexture");
+			}
+			editor.getCamera()->setAspectRatio(this->width / (float) this->height);
+			//editor.getGraphicsContext()->waitIdle();
+			previewTexture->buildTexture(TextureFormat::RGBA8, this->width, this->height, false, false, false);
+			editor.getRenderGraph()->setRenderTarget(previewTexture);
+			editor.getRenderGraph()->onResize(this->width, this->height);
+			//editor.getGraphicsContext()->waitIdle();
 		}
 	}
 

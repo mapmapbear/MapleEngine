@@ -21,6 +21,7 @@
 #define VK_LAYER_LUNARG_STANDARD_VALIDATION_NAME "VK_LAYER_LUNARG_standard_validation"
 #define VK_LAYER_LUNARG_ASSISTENT_LAYER_NAME "VK_LAYER_LUNARG_assistant_layer"
 #define VK_LAYER_LUNARG_VALIDATION_NAME "VK_LAYER_KHRONOS_validation"
+#define VK_LAYER_RENDERDOC_CAPTURE_NAME "VK_LAYER_RENDERDOC_Capture"
 
 namespace maple
 {
@@ -41,6 +42,8 @@ namespace maple
 			{
 				layers.emplace_back(VK_LAYER_LUNARG_VALIDATION_NAME);
 			}
+
+		//	layers.emplace_back(VK_LAYER_RENDERDOC_CAPTURE_NAME);
 			return layers;
 		}
 
@@ -51,15 +54,13 @@ namespace maple
 			if constexpr (VkConfig::EnableValidationLayers)
 			{
 				extensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-				extensions.emplace_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
-				extensions.emplace_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 			}
 
 			extensions.emplace_back("VK_EXT_debug_report");
 			extensions.emplace_back("VK_KHR_surface");
 
 #if defined(TRACY_ENABLE) && defined(PLATFORM_WINDOWS)
-			extensions.emplace_back("VK_EXT_calibrated_timestamps");
+			//extensions.emplace_back("VK_EXT_calibrated_timestamps");
 #endif
 
 #if defined(_WIN32)
@@ -89,31 +90,24 @@ namespace maple
 
 			layers.resize(layerCount);
 			vkEnumerateInstanceLayerProperties(&layerCount, layers.data());
-			bool removedLayer = false;
 
-			validationLayers.erase(
-			    std::remove_if(
-			        validationLayers.begin(),
-			        validationLayers.end(),
-			        [&](const char *layerName) {
-				        bool layerFound = false;
-				        for (const auto &layerProperties : layers)
-				        {
-					        if (strcmp(layerName, layerProperties.layerName) == 0)
-					        {
-						        layerFound = true;
-						        break;
-					        }
-				        }
-				        if (!layerFound)
-				        {
-					        removedLayer = true;
-					        LOGW("[VULKAN] Layer not supported - {0}", layerName);
-				        }
-				        return !layerFound;
-			        }),
-			    validationLayers.end());
-			return !removedLayer;
+			for (const char *layerName : validationLayers)
+			{
+				bool layerFound = false;
+				for (const auto &layerProperties : layers)
+				{
+					if (strcmp(layerName, layerProperties.layerName) == 0)
+					{
+						layerFound = true;
+						break;
+					}
+				}
+				if (!layerFound)
+				{
+					return false;
+				}
+			}
+			return true;
 		}
 
 		inline auto checkExtensionSupport(std::vector<VkExtensionProperties> &properties, std::vector<const char *> &extensions)
@@ -123,32 +117,31 @@ namespace maple
 
 			properties.resize(extensionCount);
 			vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, properties.data());
-			bool removedExtension = false;
-			extensions.erase(
-			    std::remove_if(
-			        extensions.begin(),
-			        extensions.end(),
-			        [&](const char *extensionName) {
-				        bool extensionFound = false;
 
-				        for (const auto &extensionProperties : properties)
-				        {
-					        if (strcmp(extensionName, extensionProperties.extensionName) == 0)
-					        {
-						        extensionFound = true;
-						        break;
-					        }
-				        }
+			bool extensionSupported = true;
 
-				        if (!extensionFound)
-				        {
-					        removedExtension = true;
-					        LOGW("[VULKAN] Extension not supported - {0}", extensionName);
-				        }
-				        return !extensionFound;
-			        }),
-			    extensions.end());
-			return !removedExtension;
+			for (int i = 0; i < extensions.size(); i++)
+			{
+				const char *extensionName = extensions[i];
+				bool        layerFound    = false;
+
+				for (const auto &layerProperties : properties)
+				{
+					if (strcmp(extensionName, layerProperties.extensionName) == 0)
+					{
+						layerFound = true;
+						break;
+					}
+				}
+
+				if (!layerFound)
+				{
+					extensions.erase(extensions.begin() + i);
+					extensionSupported = false;
+					LOGW("Extension not supported {0}", extensionName);
+				}
+			}
+			return extensionSupported;
 		}
 
 		inline auto debugCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT objType, uint64_t sourceObj, size_t location, int32_t msgCode, const char *pLayerPrefix, const char *pMsg, void *userData) -> VkBool32
@@ -159,6 +152,7 @@ namespace maple
 			if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)
 			{
 				LOGW("[VULKAN] - ERROR : [{0}] Code {1}  : {2}", pLayerPrefix, msgCode, pMsg);
+				int32_t i = 0;
 			};
 			if (flags & VK_DEBUG_REPORT_WARNING_BIT_EXT)
 			{
@@ -271,7 +265,7 @@ namespace maple
 		PROFILE_FUNCTION();
 		instanceLayerNames     = getRequiredLayers();
 		instanceExtensionNames = getRequiredExtensions();
-		if (!checkValidationLayerSupport(instanceLayers, instanceLayerNames))
+		if (VkConfig::EnableValidationLayers && !checkValidationLayerSupport(instanceLayers, instanceLayerNames))
 		{
 			LOGC("[VULKAN] Validation layers requested, but not available!");
 		}
@@ -303,12 +297,12 @@ namespace maple
 		return std::static_pointer_cast<VulkanContext>(Application::getGraphicsContext());
 	}
 
-	auto VulkanContext::getDeletionQueue() -> DeletionQueue &
+	auto VulkanContext::getDeletionQueue() -> CommandQueue &
 	{
 		return get()->deletionQueue[(get()->vkInstance && Application::getWindow()) ? get()->getSwapChain()->getCurrentBufferIndex() : 0];
 	}
 
-	auto VulkanContext::getDeletionQueue(uint32_t index) -> DeletionQueue &
+	auto VulkanContext::getDeletionQueue(uint32_t index) -> CommandQueue &
 	{
 		MAPLE_ASSERT(index < 3, "Unsupported Frame Index");
 		return get()->deletionQueue[index];

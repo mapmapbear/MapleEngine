@@ -5,6 +5,7 @@
 #include "VulkanRenderPass.h"
 #include "Others/Console.h"
 #include "VulkanCommandBuffer.h"
+#include "VulkanContext.h"
 #include "VulkanDevice.h"
 #include "VulkanFrameBuffer.h"
 #include "VulkanHelper.h"
@@ -31,8 +32,10 @@ namespace maple
 		if (texture->getType() == TextureType::Color)
 		{
 			auto colorTexture = std::static_pointer_cast<VulkanTexture2D>(texture);
+			attachment.format = colorTexture->getVkFormat();
 
-			attachment.format        = colorTexture->getVkFormat();
+			MAPLE_ASSERT(attachment.format != VK_FORMAT_UNDEFINED, "");
+
 			attachment.initialLayout = colorTexture->getImageLayout();
 			attachment.finalLayout   = attachment.initialLayout;
 		}
@@ -41,18 +44,21 @@ namespace maple
 			attachment.format        = VulkanHelper::getDepthFormat();
 			attachment.initialLayout = std::static_pointer_cast<VulkanTextureDepth>(texture)->getImageLayout();
 			attachment.finalLayout   = attachment.initialLayout;
+			MAPLE_ASSERT(attachment.format != VK_FORMAT_UNDEFINED, "");
 		}
 		else if (texture->getType() == TextureType::DepthArray)
 		{
 			attachment.format        = VulkanHelper::getDepthFormat();
 			attachment.initialLayout = std::static_pointer_cast<VulkanTextureDepthArray>(texture)->getImageLayout();
 			attachment.finalLayout   = attachment.initialLayout;
+			MAPLE_ASSERT(attachment.format != VK_FORMAT_UNDEFINED, "");
 		}
 		else if (texture->getType() == TextureType::Cube)
 		{
-			attachment.format        = std::static_pointer_cast<VulkanTextureCube>(texture)->getVkFormat();
-			attachment.initialLayout = std::static_pointer_cast<VulkanTextureCube>(texture)->getImageLayout();
-			attachment.finalLayout   = attachment.initialLayout;
+			//attachment.format        = std::static_pointer_cast<VulkanTextureCube>(texture)->getVkFormat();
+			//attachment.initialLayout = std::static_pointer_cast<VulkanTextureCube>(texture)->getImageLayout();
+			//attachment.finalLayout   = attachment.initialLayout;
+			MAPLE_ASSERT(attachment.format != VK_FORMAT_UNDEFINED, "");
 		}
 		else
 		{
@@ -70,12 +76,11 @@ namespace maple
 		{
 			attachment.loadOp        = VK_ATTACHMENT_LOAD_OP_LOAD;
 			attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-			attachment.initialLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		}
 
 		if (texture->getType() == TextureType::Cube)
 		{
-			attachment.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			//attachment.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		}
 
 		attachment.samples        = VK_SAMPLE_COUNT_1_BIT;
@@ -116,7 +121,7 @@ namespace maple
 				colourAttachmentReferences.push_back(colourAttachmentRef);
 				depthOnly = false;
 			}
-			if (texture->getType() == TextureType::Depth)
+			else if (texture->getType() == TextureType::Depth)
 			{
 				VkAttachmentReference depthAttachmentRef = {};
 				depthAttachmentRef.attachment            = uint32_t(i);
@@ -124,7 +129,7 @@ namespace maple
 				depthAttachmentReferences.push_back(depthAttachmentRef);
 				clearDepth = info.clear;
 			}
-			if (texture->getType() == TextureType::DepthArray)
+			else if (texture->getType() == TextureType::DepthArray)
 			{
 				VkAttachmentReference depthAttachmentRef = {};
 				depthAttachmentRef.attachment            = uint32_t(i);
@@ -132,7 +137,7 @@ namespace maple
 				depthAttachmentReferences.push_back(depthAttachmentRef);
 				clearDepth = info.clear;
 			}
-			if (texture->getType() == TextureType::Cube)
+			else if (texture->getType() == TextureType::Cube)
 			{
 				VkAttachmentReference colourAttachmentRef = {};
 				colourAttachmentRef.attachment            = uint32_t(i);
@@ -170,7 +175,10 @@ namespace maple
 
 	VulkanRenderPass::~VulkanRenderPass()
 	{
-		vkDestroyRenderPass(*VulkanDevice::get(), renderPass, nullptr);
+		auto renderPass = this->renderPass;
+		VulkanContext::getDeletionQueue().emplace([renderPass]() {
+			vkDestroyRenderPass(*VulkanDevice::get(), renderPass, nullptr);
+		});
 		delete[] clearValue;
 	}
 
@@ -205,14 +213,18 @@ namespace maple
 		info.clearValueCount          = uint32_t(clearCount);
 		info.pClearValues             = clearValue;
 
-		vkCmdBeginRenderPass(*static_cast<VulkanCommandBuffer *>(commandBuffer), &info, subPassContentsToVK(contents));
+		auto vkCmd = static_cast<VulkanCommandBuffer *>(commandBuffer);
+
+		MAPLE_ASSERT(vkCmd->isRecording(), "must recording");
+
+		vkCmdBeginRenderPass(vkCmd->getCommandBuffer(), &info, subPassContentsToVK(contents));
 		commandBuffer->updateViewport(width, height);
 	}
 
 	auto VulkanRenderPass::endRenderPass(CommandBuffer *commandBuffer) -> void
 	{
 		PROFILE_FUNCTION();
-		vkCmdEndRenderPass(*static_cast<VulkanCommandBuffer *>(commandBuffer));
+		vkCmdEndRenderPass(static_cast<VulkanCommandBuffer *>(commandBuffer)->getCommandBuffer());
 	}
 
 };        // namespace maple

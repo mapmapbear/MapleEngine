@@ -10,7 +10,7 @@
 #ifdef MAPLE_VULKAN
 #	define GLFW_INCLUDE_VULKAN
 #elif MAPLE_OPENGL
-#include "RHI/OpenGL/GL.h"
+#	include "RHI/OpenGL/GL.h"
 #endif        // MAPLE_VULKAN
 
 #include "GLFW/glfw3.h"
@@ -38,7 +38,9 @@ namespace maple
 
 	auto WindowWin::setVSync(bool vsync) -> void
 	{
+#ifndef MAPLE_VULKAN
 		glfwSwapInterval(vsync ? 1 : 0);
+#endif
 	}
 
 	auto WindowWin::setTitle(const std::string &title) -> void
@@ -108,9 +110,11 @@ namespace maple
 		registerNativeEvent(data);
 	}
 
-	auto WindowWin::swapBuffers() -> void 
+	auto WindowWin::swapBuffers() -> void
 	{
+#ifdef MAPLE_OPENGL
 		glfwSwapBuffers(nativeInterface);
+#endif        // MAPLE_OPENGL
 	}
 
 	auto WindowWin::registerNativeEvent(const WindowInitData &data) -> void

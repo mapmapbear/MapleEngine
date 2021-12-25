@@ -518,7 +518,7 @@ namespace maple
 		GLCall(glBindTexture(GL_TEXTURE_2D, 0));
 	}
 
-	auto GLTextureDepth::resize(uint32_t width, uint32_t height) -> void
+	auto GLTextureDepth::resize(uint32_t width, uint32_t height, CommandBuffer *commandBuffer) -> void
 	{
 		this->width  = width;
 		this->height = height;

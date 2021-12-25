@@ -4,6 +4,7 @@
 #pragma once
 
 #include "VulkanHelper.h"
+#include "Engine/Core.h"
 
 namespace maple
 {
@@ -12,7 +13,7 @@ namespace maple
 	  public:
 		VulkanCommandPool(int32_t queueIndex, VkCommandPoolCreateFlags flags);
 		~VulkanCommandPool();
-
+		NO_COPYABLE(VulkanCommandPool);
 		auto reset() -> void;
 
 		autoUnpack(commandPool);

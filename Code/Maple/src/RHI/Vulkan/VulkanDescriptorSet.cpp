@@ -24,21 +24,21 @@ namespace maple
 			if (!texture)
 				return;
 
-			auto commandBuffer = Application::getGraphicsContext()->getSwapChain()->getCurrentCommandBuffer();
+			VulkanCommandBuffer *commandBuffer = (VulkanCommandBuffer *) Application::getGraphicsContext()->getSwapChain()->getCurrentCommandBuffer();
 			if (texture->getType() == TextureType::Color)
 			{
 				if (((VulkanTexture2D *) texture)->getImageLayout() != VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
 				{
-					((VulkanTexture2D *) texture)->transitionImage(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, (VulkanCommandBuffer *) commandBuffer);
+					((VulkanTexture2D *) texture)->transitionImage(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, commandBuffer);
 				}
 			}
 			else if (texture->getType() == TextureType::Depth)
 			{
-				((VulkanTextureDepth *) texture)->transitionImage(VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL, (VulkanCommandBuffer *) commandBuffer);
+				((VulkanTextureDepth *) texture)->transitionImage(VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL, commandBuffer);
 			}
 			else if (texture->getType() == TextureType::DepthArray)
 			{
-				((VulkanTextureDepthArray *) texture)->transitionImage(VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL, (VulkanCommandBuffer *) commandBuffer);
+				((VulkanTextureDepthArray *) texture)->transitionImage(VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL, commandBuffer);
 			}
 		}
 	}        // namespace
@@ -94,6 +94,7 @@ namespace maple
 
 	VulkanDescriptorSet::~VulkanDescriptorSet()
 	{
+		PROFILE_FUNCTION();
 	}
 
 	auto VulkanDescriptorSet::update() -> void
@@ -123,27 +124,41 @@ namespace maple
 			{
 				if (imageInfo.type == DescriptorType::ImageSampler)
 				{
-					for (uint32_t i = 0; i < imageInfo.textures.size(); i++)
+					if (!imageInfo.textures.empty())
 					{
-						transitionImageLayout(imageInfo.textures[i].get());
+						auto writeable = false;
 
-						VkDescriptorImageInfo &des                = *static_cast<VkDescriptorImageInfo *>(imageInfo.textures[i]->getDescriptorInfo());
-						imageInfoPool[i + imageIndex].imageLayout = des.imageLayout;
-						imageInfoPool[i + imageIndex].imageView   = des.imageView;
-						imageInfoPool[i + imageIndex].sampler     = des.sampler;
+						for (uint32_t i = 0; i < imageInfo.textures.size(); i++)
+						{
+							if (imageInfo.textures[i])
+							{
+								transitionImageLayout(imageInfo.textures[i].get());
+
+								const auto &des                           = *static_cast<VkDescriptorImageInfo *>(imageInfo.textures[i]->getDescriptorInfo());
+								imageInfoPool[i + imageIndex].imageLayout = des.imageLayout;
+								imageInfoPool[i + imageIndex].imageView   = des.imageView;
+								imageInfoPool[i + imageIndex].sampler     = des.sampler;
+								writeable                                 = true;
+							}
+						}
+
+						if (writeable)
+						{
+							VkWriteDescriptorSet writeDescriptorSet{};
+							writeDescriptorSet.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+							writeDescriptorSet.dstSet          = descriptorSet[currentFrame];
+							writeDescriptorSet.descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+							writeDescriptorSet.dstBinding      = imageInfo.binding;
+							writeDescriptorSet.pImageInfo      = &imageInfoPool[imageIndex];
+							writeDescriptorSet.descriptorCount = imageInfo.textures.empty() ? 1 : imageInfo.textures.size();
+
+							MAPLE_ASSERT(writeDescriptorSet.descriptorCount != 0, "writeDescriptorSet.descriptorCount should be greater than zero");
+
+							writeDescriptorSetPool[descriptorWritesCount] = writeDescriptorSet;
+							imageIndex++;
+							descriptorWritesCount++;
+						}
 					}
-
-					VkWriteDescriptorSet writeDescriptorSet{};
-					writeDescriptorSet.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-					writeDescriptorSet.dstSet          = descriptorSet[currentFrame];
-					writeDescriptorSet.descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-					writeDescriptorSet.dstBinding      = imageInfo.binding;
-					writeDescriptorSet.pImageInfo      = &imageInfoPool[imageIndex];
-					writeDescriptorSet.descriptorCount = imageInfo.textures.size();
-
-					writeDescriptorSetPool[descriptorWritesCount] = writeDescriptorSet;
-					imageIndex++;
-					descriptorWritesCount++;
 				}
 				else if (imageInfo.type == DescriptorType::UniformBuffer)
 				{

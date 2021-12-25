@@ -4,6 +4,9 @@
 
 #pragma once
 #include <vulkan/vulkan.h>
+#ifdef USE_VMA_ALLOCATOR
+#	include <vulkan/vk_mem_alloc.h>
+#endif        // USE_VMA_ALLOCATOR
 
 namespace maple
 {
@@ -11,7 +14,7 @@ namespace maple
 	{
 		static constexpr bool StandardValidationLayer = false;
 		static constexpr bool AssistanceLayer         = false;
-		static constexpr bool EnableValidationLayers  = false;
+		static constexpr bool EnableValidationLayers  = true;
 	};
 
 	class VulkanDevice;

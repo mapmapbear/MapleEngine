@@ -12,13 +12,10 @@ namespace maple
 	enum class TextureFormat;
 	enum GBufferTextures
 	{
-		DEPTH      = 0,        //Depth Buffer
-		COLOR      = 1,        //Main Render
-		POSITION   = 2,        //Deferred Render - World Space Positions
-		NORMALS    = 3,        //Deferred Render - World Space Normals
-		PBR        = 4,
-		OFFSCREEN0 = 5,
-		OFFSCREEN1 = 6,
+		COLOR    = 0,        //Main Render
+		POSITION = 1,        //Deferred Render - World Space Positions
+		NORMALS  = 2,        //Deferred Render - World Space Normals
+		PBR      = 3,
 		LENGTH
 	};
 
@@ -35,8 +32,8 @@ namespace maple
 		{
 			return height;
 		}
-		auto resize(uint32_t width, uint32_t height) -> void;
-		auto buildTexture() -> void;
+		auto resize(uint32_t width, uint32_t height, CommandBuffer *commandBuffer = nullptr) -> void;
+		auto buildTexture(CommandBuffer *commandBuffer = nullptr) -> void;
 
 		inline auto getDepthBuffer()
 		{
