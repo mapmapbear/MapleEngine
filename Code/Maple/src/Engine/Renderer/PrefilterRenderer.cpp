@@ -38,12 +38,12 @@ namespace maple
 
 	const glm::mat4 captureProjView[] =
 	    {
-	        glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f) * glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
-	        glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f) * glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(-1.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
-	        glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f) * glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
-	        glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f) * glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f)),
-	        glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f) * glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
-	        glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f) * glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f))};
+	        glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f) * captureViews[0],
+	        glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f) * captureViews[1],
+	        glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f) * captureViews[2],
+	        glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f) * captureViews[3],
+	        glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f) * captureViews[4],
+	        glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f) * captureViews[5]};
 
 	PrefilterRenderer::PrefilterRenderer()
 	{
@@ -59,22 +59,29 @@ namespace maple
 		irradianceShader = Shader::create("shaders/Irradiance.shader");
 		prefilterShader  = Shader::create("shaders/Prefilter.shader");
 
+		skyboxCube = TextureCube::create(SkyboxSize, TextureFormat::RGBA32, 5);
+
 		skyboxCaptureColor = Texture2D::create(SkyboxSize, SkyboxSize, nullptr, {}, {false, false, false});
-		skyboxCube         = TextureCube::create(SkyboxSize, TextureFormat::RGBA32, 5);
+
+		skyboxCaptureColor->buildTexture(
+		    TextureFormat::RGBA32,
+		    SkyboxSize,
+		    SkyboxSize,
+		    false, false, false);
 
 		irradianceCaptureColor = Texture2D::create();
 		irradianceCaptureColor->buildTexture(
 		    TextureFormat::RGBA32,
 		    Environment::IrradianceMapSize,
 		    Environment::IrradianceMapSize,
-		    true, false, false);
+		    false, false, false);
 
 		prefilterCaptureColor = Texture2D::create();
 		prefilterCaptureColor->buildTexture(
 		    TextureFormat::RGBA32,
 		    Environment::PrefilterMapSize,
 		    Environment::PrefilterMapSize,
-		    true, false, false);
+		    false, false, false);
 
 		cube = Mesh::createCube();
 
@@ -185,12 +192,12 @@ namespace maple
 		pipeInfo.clearTargets        = true;
 		pipeInfo.colorTargets[0]     = skyboxCaptureColor;
 		pipeInfo.colorTargets[1]     = skyboxCube;
-		auto cubeMapPipeline              = Pipeline::get(pipeInfo);
+		auto cubeMapPipeline         = Pipeline::get(pipeInfo);
 
 		for (auto faceId = 0; faceId < 6; faceId++)
 		{
-			cubeMapPipeline->bind(cmd, 0, faceId);
-			auto &constants = cubeMapShader->getPushConstants();
+			auto  framebuffer = cubeMapPipeline->bind(cmd, 0, faceId);
+			auto &constants   = cubeMapShader->getPushConstants();
 			if (constants.size() > 0)
 			{
 				constants[0].setValue("view", glm::value_ptr(captureViews[faceId]));
@@ -198,9 +205,10 @@ namespace maple
 			}
 			Application::getRenderDevice()->bindDescriptorSets(cubeMapPipeline.get(), cmd, 0, {cubeMapSet});
 			Renderer::drawMesh(cmd, cubeMapPipeline.get(), cube.get());
+			cubeMapPipeline->end(cmd);
+			skyboxCube->update(cmd, framebuffer, faceId);
 		}
-		skyboxCube->generateMipmap();
-		cubeMapPipeline->end(cmd);
+		skyboxCube->generateMipmap(cmd);
 	}
 
 	auto PrefilterRenderer::generateIrradianceMap() -> void
@@ -211,7 +219,7 @@ namespace maple
 
 		pipeInfo.transparencyEnabled = false;
 		pipeInfo.depthBiasEnabled    = false;
-		pipeInfo.clearTargets        = false;
+		pipeInfo.clearTargets        = true;
 
 		pipeInfo.colorTargets[0] = irradianceCaptureColor;
 		pipeInfo.colorTargets[1] = envComponent->getIrradianceMap();
@@ -222,16 +230,17 @@ namespace maple
 
 		for (auto faceId = 0; faceId < 6; faceId++)
 		{
-			pipeline->bind(cmd, 0, faceId);
+			auto fb = pipeline->bind(cmd, 0, faceId);
 
 			irradianceSet->setUniformBufferData("UniformBufferObject", &captureProjView[faceId]);
 			irradianceSet->update();
 
 			Application::getRenderDevice()->bindDescriptorSets(pipeline.get(), cmd, 0, {irradianceSet});
 			Renderer::drawMesh(cmd, pipeline.get(), cube.get());
-		}
 
-		pipeline->end(cmd);
+			pipeline->end(cmd);
+			envComponent->getIrradianceMap()->update(cmd, fb, faceId);
+		}
 	}
 
 	auto PrefilterRenderer::generatePrefilterMap() -> void
@@ -244,7 +253,7 @@ namespace maple
 
 		pipeInfo.transparencyEnabled = false;
 		pipeInfo.depthBiasEnabled    = false;
-		pipeInfo.clearTargets        = false;
+		pipeInfo.clearTargets        = true;
 
 		pipeInfo.colorTargets[0] = prefilterCaptureColor;
 		pipeInfo.colorTargets[1] = envComponent->getPrefilteredEnvironment();
@@ -253,24 +262,25 @@ namespace maple
 
 		auto cmd = Application::getGraphicsContext()->getSwapChain()->getCurrentCommandBuffer();
 
-		const auto maxMipLevels = 5;
+		constexpr auto maxMipLevels = 5;
 		for (auto mip = 0; mip < maxMipLevels; ++mip)
 		{
 			auto roughness = (float) mip / (float) (maxMipLevels - 1);
 			prefilterSet->setUniformBufferData("UniformBufferRoughness", &roughness);
 			for (auto faceId = 0; faceId < 6; faceId++)
 			{
-				pipeline->bind(cmd, 0, faceId, mip);
+				auto fb = pipeline->bind(cmd, 0, faceId, mip);
 
 				prefilterSet->setUniformBufferData("UniformBufferObject", &captureProjView[faceId]);
 				prefilterSet->update();
 
 				Application::getRenderDevice()->bindDescriptorSets(pipeline.get(), cmd, 0, {prefilterSet});
 				Renderer::drawMesh(cmd, pipeline.get(), cube.get());
+
+				pipeline->end(cmd);
+				envComponent->getPrefilteredEnvironment()->update(cmd, fb, faceId, mip);
 			}
 		}
-
-		pipeline->end(cmd);
 	}
 
 	auto PrefilterRenderer::createPipeline() -> void

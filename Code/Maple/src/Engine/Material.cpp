@@ -116,6 +116,7 @@ namespace maple
 		}
 		else
 		{
+			descriptorSet->setTexture("uAlbedoMap", Texture2D::getDefaultTexture());
 			materialProperties.usingAlbedoMap = 0.0f;
 		}
 
@@ -126,6 +127,7 @@ namespace maple
 		else
 		{
 			materialProperties.usingMetallicMap = 0.0f;
+			descriptorSet->setTexture("uMetallicMap", Texture2D::getDefaultTexture());
 		}
 
 		if (pbrMaterialTextures.roughness)
@@ -134,6 +136,7 @@ namespace maple
 		}
 		else
 		{
+			descriptorSet->setTexture("uRoughnessMap", Texture2D::getDefaultTexture());
 			materialProperties.usingRoughnessMap = 0.0f;
 		}
 
@@ -143,6 +146,7 @@ namespace maple
 		}
 		else
 		{
+			descriptorSet->setTexture("uNormalMap", Texture2D::getDefaultTexture());
 			materialProperties.usingNormalMap = 0.0f;
 		}
 
@@ -152,6 +156,7 @@ namespace maple
 		}
 		else
 		{
+			descriptorSet->setTexture("uAOMap", Texture2D::getDefaultTexture());
 			materialProperties.usingAOMap = 0.0f;
 		}
 
@@ -161,6 +166,7 @@ namespace maple
 		}
 		else
 		{
+			descriptorSet->setTexture("uEmissiveMap", Texture2D::getDefaultTexture());
 			materialProperties.usingEmissiveMap = 0.0f;
 		}
 

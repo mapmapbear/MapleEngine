@@ -692,7 +692,7 @@ namespace maple
 #endif
 	}
 
-	auto VulkanHelper::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels, uint32_t layerCount, VkCommandBuffer commandBuffer, bool depth) -> void
+	auto VulkanHelper::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels, uint32_t layerCount, VkCommandBuffer commandBuffer, bool depth, uint32_t baseArrayLayer) -> void
 	{
 		PROFILE_FUNCTION();
 
@@ -711,8 +711,8 @@ namespace maple
 			subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
 
 		subresourceRange.baseMipLevel   = 0;
+		subresourceRange.baseArrayLayer = baseArrayLayer;
 		subresourceRange.levelCount     = mipLevels;
-		subresourceRange.baseArrayLayer = 0;
 		subresourceRange.layerCount     = layerCount;
 
 		// Create an image barrier object

@@ -34,7 +34,7 @@ namespace maple
 {
 	namespace
 	{
-		auto renderOutputMode(int32_t mode) -> const std::string
+		inline auto renderOutputMode(int32_t mode) -> const std::string
 		{
 			switch (mode)
 			{
@@ -64,6 +64,20 @@ namespace maple
 					return "Lighting";
 			}
 		}
+
+		inline auto cubeMapModeToString(int32_t mode) -> const std::string
+		{
+			switch (mode)
+			{
+				case 0:
+					return "CubeMap";
+				case 1:
+					return "Prefilter";
+				case 2:
+					return "Irradiance";
+			}
+		}
+
 	}        // namespace
 
 #ifdef MAPLE_OPENGL
@@ -84,14 +98,15 @@ namespace maple
 
 	struct RenderGraph::ShadowData
 	{
-		float     cascadeSplitLambda             = 0.995f;
-		float     sceneRadiusMultiplier          = 1.4f;
-		float     lightSize                      = 1.5f;
-		float     maxShadowDistance              = 400.0f;
-		float     shadowFade                     = 40.0f;
-		float     cascadeTransitionFade          = 3.0f;
-		float     initialBias                    = 0.0023f;
-		bool      shadowMapsInvalidated          = true;
+		float cascadeSplitLambda    = 0.995f;
+		float sceneRadiusMultiplier = 1.4f;
+		float lightSize             = 1.5f;
+		float maxShadowDistance     = 400.0f;
+		float shadowFade            = 40.0f;
+		float cascadeTransitionFade = 3.0f;
+		float initialBias           = 0.0023f;
+		bool  shadowMapsInvalidated = true;
+
 		uint32_t  shadowMapNum                   = 4;
 		uint32_t  shadowMapSize                  = SHADOWMAP_SiZE_MAX;
 		glm::mat4 shadowProjView[SHADOWMAP_MAX]  = {};
@@ -148,6 +163,8 @@ namespace maple
 		uint32_t  renderMode      = 0;
 		uint32_t  currentBufferID = 0;
 		bool      depthTest       = true;
+		float     cubeMapLevel    = 0;
+		uint32_t  cubeMapMode     = 0;
 
 		ForwardData()
 		{
@@ -735,11 +752,11 @@ namespace maple
 			return;
 		}
 		PROFILE_FUNCTION();
-		if (previewData->renderTexture)
+		/*	if (previewData->renderTexture)
 		{
 			Application::getRenderDevice()->clearRenderTarget(previewData->renderTexture, getCommandBuffer());
 			Application::getRenderDevice()->clearRenderTarget(previewData->depthTexture, getCommandBuffer());
-		}
+		}*/
 		executePreviewPasss();
 
 		for (auto &renderer : renderers)
@@ -884,6 +901,24 @@ namespace maple
 
 		ImGui::Columns(1);
 
+		ImGui::Separator();
+		ImGui::TextUnformatted("CubeMap");
+		ImGui::DragFloat("CubeMap LodLevel", &forwardData->cubeMapLevel, 0.5f, 0.0f, 4.0f);
+
+		if (ImGui::BeginMenu(cubeMapModeToString(forwardData->cubeMapMode).c_str()))
+		{
+			constexpr int32_t numModes = 3;
+
+			for (int32_t i = 0; i < numModes; i++)
+			{
+				if (ImGui::MenuItem(cubeMapModeToString(i).c_str(), "", forwardData->cubeMapMode == i, true))
+				{
+					forwardData->cubeMapMode = i;
+				}
+			}
+			ImGui::EndMenu();
+		}
+
 		/*ImGui::TextUnformatted("2D renderer");
 		ImGui::Columns(2);
 
@@ -1009,10 +1044,20 @@ namespace maple
 
 		skyboxPipeline = Pipeline::get(pipelineInfo);
 		skyboxPipeline->bind(getCommandBuffer());
+		if (forwardData->cubeMapMode == 0)
+		{
+			skyboxDescriptorSet->setTexture("uCubeMap", forwardData->skybox);
+		}
+		else if (forwardData->cubeMapMode == 1)
+		{
+			skyboxDescriptorSet->setTexture("uCubeMap", forwardData->environmentMap);
+		}
+		else if (forwardData->cubeMapMode == 2)
+		{
+			skyboxDescriptorSet->setTexture("uCubeMap", forwardData->irradianceMap);
+		}
 
-		skyboxDescriptorSet->setTexture("uCubeMap", forwardData->skybox);
-		float level = 0;
-		skyboxDescriptorSet->setUniform("UniformBufferObjectLod", "lodLevel", &level);
+		skyboxDescriptorSet->setUniform("UniformBufferObjectLod", "lodLevel", &forwardData->cubeMapLevel);
 		skyboxDescriptorSet->update();
 		Renderer::bindDescriptorSets(skyboxPipeline.get(), getCommandBuffer(), 0, {skyboxDescriptorSet});
 		Renderer::drawMesh(getCommandBuffer(), skyboxPipeline.get(), skyboxMesh.get());
@@ -1044,7 +1089,7 @@ namespace maple
 			Renderer::bindDescriptorSets(pipeline.get(), commandBuffer, 0, deferredData->descriptorColorSet);
 			Renderer::drawMesh(commandBuffer, pipeline.get(), command.mesh);
 
-			if (command.stencilPipelineInfo.stencilTest)
+			/*	if (command.stencilPipelineInfo.stencilTest)
 			{
 				auto stencilPipeline = Pipeline::get(command.stencilPipelineInfo);
 				stencilPipeline->bind(commandBuffer);
@@ -1055,8 +1100,8 @@ namespace maple
 				Renderer::bindDescriptorSets(stencilPipeline.get(), commandBuffer, 0, {stencilDescriptorSet});
 				Renderer::drawMesh(commandBuffer, stencilPipeline.get(), command.mesh);
 				stencilPipeline->end(commandBuffer);
-			}
-			pipeline->end(commandBuffer);
+			}*/
+			//pipeline->end(commandBuffer);
 		}
 
 		if (commandBuffer)

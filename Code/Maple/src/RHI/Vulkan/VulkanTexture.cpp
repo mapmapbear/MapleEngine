@@ -21,7 +21,7 @@ namespace maple
 {
 	namespace
 	{
-		inline auto generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels) -> void
+		inline auto generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels, uint32_t faces = 1, VkCommandBuffer commandBuffer = nullptr, VkImageLayout initLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) -> void
 		{
 			VkFormatProperties formatProperties;
 			vkGetPhysicalDeviceFormatProperties(*VulkanDevice::get()->getPhysicalDevice(), imageFormat, &formatProperties);
@@ -31,7 +31,13 @@ namespace maple
 				LOGE("Texture image format does not support linear blitting!");
 			}
 
-			VkCommandBuffer commandBuffer = VulkanHelper::beginSingleTimeCommands();
+			bool singleTime = false;
+
+			if (commandBuffer == nullptr)
+			{
+				commandBuffer = VulkanHelper::beginSingleTimeCommands();
+				singleTime    = true;
+			}
 
 			VkImageMemoryBarrier barrier{};
 			barrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -48,50 +54,82 @@ namespace maple
 
 			for (uint32_t i = 1; i < mipLevels; i++)
 			{
-				barrier.subresourceRange.baseMipLevel = i - 1;
-				barrier.oldLayout                     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-				barrier.newLayout                     = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-				barrier.srcAccessMask                 = VK_ACCESS_TRANSFER_WRITE_BIT;
-				barrier.dstAccessMask                 = VK_ACCESS_TRANSFER_READ_BIT;
+				for (auto face = 0; face < faces; face++)
+				{
+					LOGI("Mips : {0}, face {1}", i, face);
+					barrier.subresourceRange.baseMipLevel   = i - 1;
+					barrier.subresourceRange.baseArrayLayer = face;
+					barrier.oldLayout                       = initLayout;
+					barrier.newLayout                       = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+					barrier.srcAccessMask                   = VK_ACCESS_TRANSFER_WRITE_BIT;
+					barrier.dstAccessMask                   = VK_ACCESS_TRANSFER_READ_BIT;
 
-				vkCmdPipelineBarrier(commandBuffer,
-				                     VK_PIPELINE_STAGE_TRANSFER_BIT,
-				                     VK_PIPELINE_STAGE_TRANSFER_BIT,
-				                     0,
-				                     0,
-				                     nullptr,
-				                     0,
-				                     nullptr,
-				                     1,
-				                     &barrier);
+					vkCmdPipelineBarrier(commandBuffer,
+					                     VK_PIPELINE_STAGE_TRANSFER_BIT,
+					                     VK_PIPELINE_STAGE_TRANSFER_BIT,
+					                     0,
+					                     0,
+					                     nullptr,
+					                     0,
+					                     nullptr,
+					                     1,
+					                     &barrier);
 
-				VkImageBlit blit{};
-				blit.srcOffsets[0]                 = {0, 0, 0};
-				blit.srcOffsets[1]                 = {mipWidth, mipHeight, 1};
-				blit.srcSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-				blit.srcSubresource.mipLevel       = i - 1;
-				blit.srcSubresource.baseArrayLayer = 0;
-				blit.srcSubresource.layerCount     = 1;
-				blit.dstOffsets[0]                 = {0, 0, 0};
-				blit.dstOffsets[1]                 = {mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1};
-				blit.dstSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-				blit.dstSubresource.mipLevel       = i;
-				blit.dstSubresource.baseArrayLayer = 0;
-				blit.dstSubresource.layerCount     = 1;
+					VkImageBlit blit{};
+					blit.srcOffsets[0]                 = {0, 0, 0};
+					blit.srcOffsets[1]                 = {mipWidth, mipHeight, 1};
+					blit.srcSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+					blit.srcSubresource.mipLevel       = i - 1;
+					blit.srcSubresource.baseArrayLayer = face;
+					blit.srcSubresource.layerCount     = 1;
 
-				vkCmdBlitImage(commandBuffer,
-				               image,
-				               VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-				               image,
-				               VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-				               1,
-				               &blit,
-				               VK_FILTER_LINEAR);
+					blit.dstOffsets[0]                 = {0, 0, 0};
+					blit.dstOffsets[1]                 = {mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1};
+					blit.dstSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+					blit.dstSubresource.mipLevel       = i;
+					blit.dstSubresource.baseArrayLayer = face;
+					blit.dstSubresource.layerCount     = 1;
 
-				barrier.oldLayout     = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-				barrier.newLayout     = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-				barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-				barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+					vkCmdBlitImage(commandBuffer,
+					               image,
+					               VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+					               image,
+					               VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+					               1,
+					               &blit,
+					               VK_FILTER_LINEAR);
+
+					barrier.oldLayout     = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+					barrier.newLayout     = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+					barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+					barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+					vkCmdPipelineBarrier(commandBuffer,
+					                     VK_PIPELINE_STAGE_TRANSFER_BIT,
+					                     VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+					                     0,
+					                     0,
+					                     nullptr,
+					                     0,
+					                     nullptr,
+					                     1,
+					                     &barrier);
+				}
+
+				if (mipWidth > 1)
+					mipWidth /= 2;
+				if (mipHeight > 1)
+					mipHeight /= 2;
+			}
+
+			for (auto face = 0; face < faces; face++)
+			{
+				barrier.subresourceRange.baseMipLevel   = mipLevels - 1;
+				barrier.subresourceRange.baseArrayLayer = face;
+				barrier.oldLayout                       = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+				barrier.newLayout                       = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				barrier.srcAccessMask                   = VK_ACCESS_TRANSFER_WRITE_BIT;
+				barrier.dstAccessMask                   = VK_ACCESS_SHADER_READ_BIT;
 
 				vkCmdPipelineBarrier(commandBuffer,
 				                     VK_PIPELINE_STAGE_TRANSFER_BIT,
@@ -103,32 +141,10 @@ namespace maple
 				                     nullptr,
 				                     1,
 				                     &barrier);
-
-				if (mipWidth > 1)
-					mipWidth /= 2;
-				if (mipHeight > 1)
-					mipHeight /= 2;
 			}
 
-			barrier.subresourceRange.baseMipLevel = mipLevels - 1;
-			barrier.oldLayout                     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-			barrier.newLayout                     = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			//barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-			barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-			barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-			vkCmdPipelineBarrier(commandBuffer,
-			                     VK_PIPELINE_STAGE_TRANSFER_BIT,
-			                     VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-			                     0,
-			                     0,
-			                     nullptr,
-			                     0,
-			                     nullptr,
-			                     1,
-			                     &barrier);
-
-			VulkanHelper::endSingleTimeCommands(commandBuffer);
+			if (singleTime)
+				VulkanHelper::endSingleTimeCommands(commandBuffer);
 		}
 
 		inline auto getFormatSize(const TextureFormat format)
@@ -287,7 +303,7 @@ namespace maple
 		auto stagingBuffer = std::make_unique<VulkanBuffer>(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, imageSize, pixel);
 		VulkanHelper::copyBufferToImage(stagingBuffer->getVkBuffer(), textureImage, static_cast<uint32_t>(width), static_cast<uint32_t>(height));
 
-		if (loadOptions.generateMipMaps)
+		if (loadOptions.generateMipMaps && mipLevels > 1)
 			generateMipmaps(textureImage, VkConverter::textureFormatToVK(parameters.format, parameters.srgb), width, height, mipLevels);
 
 		transitionImage(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
@@ -342,7 +358,7 @@ namespace maple
 		updateDescriptor();
 	}
 
-	auto VulkanTexture2D::transitionImage(VkImageLayout newLayout, VulkanCommandBuffer *commandBuffer) -> void
+	auto VulkanTexture2D::transitionImage(VkImageLayout newLayout, const VulkanCommandBuffer *commandBuffer) -> void
 	{
 		PROFILE_FUNCTION();
 		if (commandBuffer)
@@ -509,7 +525,7 @@ namespace maple
 		updateDescriptor();
 	}
 
-	auto VulkanTextureDepth::transitionImage(VkImageLayout newLayout, VulkanCommandBuffer *commandBuffer) -> void
+	auto VulkanTextureDepth::transitionImage(VkImageLayout newLayout, const VulkanCommandBuffer *commandBuffer) -> void
 	{
 		PROFILE_FUNCTION();
 
@@ -545,7 +561,7 @@ namespace maple
 	}
 
 	VulkanTextureCube::VulkanTextureCube(uint32_t size, TextureFormat format, int32_t numMips) :
-	    numMips(numMips), width(size), height(size), deleteImg(false)
+	    numMips(numMips), width(size), height(size), deleteImg(false), size(size)
 	{
 		parameters.format = format;
 		init();
@@ -584,8 +600,13 @@ namespace maple
 		}
 	}
 
-	auto VulkanTextureCube::generateMipmap() -> void
+	auto VulkanTextureCube::generateMipmap(const CommandBuffer *commandBuffer) -> void
 	{
+		auto vkCmd = static_cast<const VulkanCommandBuffer *>(commandBuffer);
+		transitionImage(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, vkCmd);
+		generateMipmaps(textureImage, vkFormat, size, size, numMips, 6, vkCmd->getCommandBuffer());
+		imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		updateDescriptor();
 	}
 
 	auto VulkanTextureCube::updateDescriptor() -> void
@@ -600,59 +621,28 @@ namespace maple
 		PROFILE_FUNCTION();
 	}
 
-	auto VulkanTextureCube::update(CommandBuffer *commandBuffer, FrameBuffer *framebuffer, int32_t cubeIndex, int32_t mipmapLevel) -> void
+	auto VulkanTextureCube::update(CommandBuffer *commandBuffer, FrameBuffer *framebuffer, int32_t cubeIndex, int32_t mipMapLevel) -> void
 	{
 		PROFILE_FUNCTION();
-		/*VkCommandBuffer    cmd         = *static_cast<VulkanCommandBuffer *>(commandBuffer);
-		VulkanFrameBuffer *frameBuffer = static_cast<VulkanFrameBuffer *>(framebuffer);
+		auto cmd = static_cast<VulkanCommandBuffer *>(commandBuffer);
 
-		VkImage colorImage = nullptr;
-		auto &  info       = frameBuffer->getFrameBufferInfo();
-		switch (frameBuffer->getFrameBufferInfo().types[0])
-		{
-			case TextureType::COLOR:
-				colorImage = static_cast<VulkanTexture2D *>(info.attachments[0].get())->getImage();
-				break;
+		auto frameBuffer = static_cast<VulkanFrameBuffer *>(framebuffer);
 
-			case TextureType::DEPTH:
-				colorImage = static_cast<VulkanTextureDepth *>(info.attachments[0].get())->getImage();
-				break;
-
-			case TextureType::DEPTHARRAY:
-				colorImage = static_cast<VulkanTextureDepthArray *>(info.attachments[0].get())->getImage();
-				break;
-
-			case TextureType::CUBE:
-				colorImage = static_cast<VulkanTextureCube *>(info.attachments[0].get())->getImage();
-				break;
-		}
+		auto &info       = frameBuffer->getFrameBufferInfo();
+		auto  vkTexture  = dynamic_cast<VkTexture *>(info.attachments[0].get());
+		auto  colorImage = vkTexture->getImage();
+		auto  oldLayout  = vkTexture->getImageLayout();
 
 		assert(colorImage != nullptr);
 
-		VulkanHelper::setImageLayout(
-		    cmd,
-		    colorImage,
-		    VK_IMAGE_ASPECT_COLOR_BIT,
-		    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-		    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-
-		VkImageSubresourceRange cubeFaceSubresourceRange = {};
-		cubeFaceSubresourceRange.aspectMask              = VK_IMAGE_ASPECT_COLOR_BIT;
-		cubeFaceSubresourceRange.baseMipLevel            = 0;
-		cubeFaceSubresourceRange.baseArrayLayer          = cubeIndex;
-		cubeFaceSubresourceRange.layerCount              = 6;
-		cubeFaceSubresourceRange.levelCount              = numMips;
-
-		// Change image layout of one cubemap face to transfer destination
-		VulkanHelper::setImageLayout(
-		    cmd,
-		    textureImage,
-		    VK_IMAGE_ASPECT_COLOR_BIT,
-		    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-		    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
-		    / *VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,* /
-		);
+		//set itself as transfer-dst
+		{
+			transitionImage(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, cmd);
+		}
+		//set the attachment as TRANSFER-src
+		{
+			vkTexture->transitionImage(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, cmd);
+		}
 
 		// Copy region for transfer from framebuffer to cube face
 		VkImageCopy copyRegion = {};
@@ -665,17 +655,19 @@ namespace maple
 
 		copyRegion.dstSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
 		copyRegion.dstSubresource.baseArrayLayer = cubeIndex;
-		copyRegion.dstSubresource.mipLevel       = mipmapLevel;
+		copyRegion.dstSubresource.mipLevel       = mipMapLevel;
 		copyRegion.dstSubresource.layerCount     = 1;
 		copyRegion.dstOffset                     = {0, 0, 0};
 
-		copyRegion.extent.width  = width;
-		copyRegion.extent.height = height;
+		auto mipScale = std::pow(0.5, mipMapLevel);
+
+		copyRegion.extent.width  = width * mipScale;
+		copyRegion.extent.height = height * mipScale;
 		copyRegion.extent.depth  = 1;
 
 		// Put image copy into command buffer
 		vkCmdCopyImage(
-		    cmd,
+		    cmd->getCommandBuffer(),
 		    colorImage,
 		    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 		    textureImage,
@@ -684,20 +676,20 @@ namespace maple
 		    &copyRegion);
 
 		// Transform framebuffer color attachment back
-		VulkanHelper::setImageLayout(
-		    cmd,
-		    colorImage,
-		    VK_IMAGE_ASPECT_COLOR_BIT,
-		    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-		    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+		vkTexture->transitionImage(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, cmd);
 
-		// Change image layout of copied face to shader read
-		VulkanHelper::setImageLayout(
-		    cmd,
-		    textureImage,
-		    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-		    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-		    cubeFaceSubresourceRange);*/
+		transitionImage(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, cmd);
+	}
+
+	auto VulkanTextureCube::transitionImage(VkImageLayout newLayout, const VulkanCommandBuffer *commandBuffer /*= nullptr*/) -> void
+	{
+		PROFILE_FUNCTION();
+		if (newLayout != imageLayout)
+		{
+			VulkanHelper::transitionImageLayout(textureImage, vkFormat, imageLayout, newLayout, numMips, 6, commandBuffer ? commandBuffer->getCommandBuffer() : nullptr, false);
+		}
+		imageLayout = newLayout;
+		updateDescriptor();
 	}
 
 	auto VulkanTextureCube::init() -> void
@@ -706,11 +698,12 @@ namespace maple
 		vkFormat = VkConverter::textureFormatToVK(parameters.format);
 
 #ifdef USE_VMA_ALLOCATOR
-		VulkanHelper::createImage(width, height, numMips, vkFormat, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory, 6, VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT, allocation);
+		VulkanHelper::createImage(width, height, numMips, vkFormat, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory, 6, VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT, allocation);
 #else
-		VulkanHelper::createImage(width, height, numMips, vkFormat, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory, 6, VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT);
+		VulkanHelper::createImage(width, height, numMips, vkFormat, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory, 6, VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT);
 #endif
 
+		/*
 		VkCommandBuffer cmdBuffer = VulkanHelper::beginSingleTimeCommands();
 
 		VkImageSubresourceRange subresourceRange = {};
@@ -723,10 +716,10 @@ namespace maple
 		    cmdBuffer,
 		    textureImage,
 		    VK_IMAGE_LAYOUT_UNDEFINED,
-		    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+		    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 		    subresourceRange);
 
-		VulkanHelper::endSingleTimeCommands(cmdBuffer);
+		VulkanHelper::endSingleTimeCommands(cmdBuffer);*/
 
 		textureSampler = VulkanHelper::createTextureSampler(
 		    VK_FILTER_LINEAR,
@@ -739,7 +732,7 @@ namespace maple
 		textureImageView = VulkanHelper::createImageView(textureImage, vkFormat, numMips,
 		                                                 VK_IMAGE_VIEW_TYPE_CUBE, VK_IMAGE_ASPECT_COLOR_BIT, 6);
 
-		imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
 		updateDescriptor();
 	}
@@ -833,7 +826,7 @@ namespace maple
 #endif
 	}
 
-	auto VulkanTextureDepthArray::transitionImage(VkImageLayout newLayout, VulkanCommandBuffer *commandBuffer) -> void
+	auto VulkanTextureDepthArray::transitionImage(VkImageLayout newLayout, const VulkanCommandBuffer *commandBuffer) -> void
 	{
 		PROFILE_FUNCTION();
 		if (newLayout != imageLayout)

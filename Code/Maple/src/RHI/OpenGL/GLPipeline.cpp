@@ -210,7 +210,7 @@ namespace maple
 		return 0;
 	}
 
-	auto GLPipeline::bind(CommandBuffer *commandBuffer, uint32_t layer, int32_t cubeFace, int32_t mipMapLevel) -> void
+	auto GLPipeline::bind(CommandBuffer *commandBuffer, uint32_t layer, int32_t cubeFace, int32_t mipMapLevel) -> FrameBuffer *
 	{
 		PROFILE_FUNCTION();
 		std::shared_ptr<FrameBuffer> frameBuffer;
@@ -231,11 +231,9 @@ namespace maple
 
 		auto mipScale = std::pow(0.5, mipMapLevel);
 
-	
-
 		renderPass->beginRenderPass(commandBuffer, description.clearColor, frameBuffer.get(), SubPassContents::Inline, getWidth() * mipScale, getHeight() * mipScale, cubeFace, mipMapLevel);
 		description.shader->bind();
-		
+
 		RenderDevice::setStencilTest(description.stencilTest);
 		RenderDevice::setDepthTest(description.depthTest);
 		//RenderDevice::setStencilMask(0xFF);
@@ -251,8 +249,6 @@ namespace maple
 			RenderDevice::setStencilMask(0xFF);
 			RenderDevice::setStencilOp(StencilType::Keep, StencilType::Keep, StencilType::Keep);
 		}
-		
-	
 
 		if (transparencyEnabled)
 		{
@@ -299,6 +295,8 @@ namespace maple
 		}
 
 		GLCall(glFrontFace(GL_CCW));
+
+		return frameBuffer.get();
 	}
 
 	auto GLPipeline::end(CommandBuffer *commandBuffer) -> void

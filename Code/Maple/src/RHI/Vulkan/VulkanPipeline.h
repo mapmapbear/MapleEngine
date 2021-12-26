@@ -25,7 +25,7 @@ namespace maple
 		auto getWidth() -> uint32_t override;
 		auto getHeight() -> uint32_t override;
 
-		auto bind(CommandBuffer *commandBuffer, uint32_t layer = 0, int32_t cubeFace = -1, int32_t mipMapLevel = 0) -> void override;
+		auto bind(CommandBuffer *commandBuffer, uint32_t layer = 0, int32_t cubeFace = -1, int32_t mipMapLevel = 0) -> FrameBuffer * override;
 		auto end(CommandBuffer *commandBuffer) -> void override;
 		auto clearRenderTargets(CommandBuffer *commandBuffer) -> void override;
 

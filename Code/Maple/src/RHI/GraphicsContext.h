@@ -17,6 +17,15 @@ namespace maple
 		NONE,
 	};
 
+	template <typename T>
+	struct CacheAsset
+	{
+		CacheAsset(std::shared_ptr<T> asset, uint64_t lastTimestamp) :
+		    asset(asset), lastTimestamp(lastTimestamp){};
+		std::shared_ptr<T> asset;
+		uint64_t           lastTimestamp;
+	};
+
 	class MAPLE_EXPORT CommandBuffer;
 	class MAPLE_EXPORT SwapChain;
 	class MAPLE_EXPORT Pipeline;
@@ -67,8 +76,8 @@ namespace maple
 		auto clearUnused() -> void;
 
 	  protected:
-		std::shared_ptr<SwapChain>                                    swapChain;
-		std::unordered_map<std::size_t, std::shared_ptr<Pipeline>>    pipelineCache;
-		std::unordered_map<std::size_t, std::shared_ptr<FrameBuffer>> frameBufferCache;
+		std::shared_ptr<SwapChain>                               swapChain;
+		std::unordered_map<std::size_t, CacheAsset<Pipeline>>    pipelineCache;
+		std::unordered_map<std::size_t, CacheAsset<FrameBuffer>> frameBufferCache;
 	};
 }        // namespace maple

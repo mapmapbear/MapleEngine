@@ -49,10 +49,13 @@ namespace maple
 
 	auto GraphicsContext::clearUnused() -> void
 	{
-	/*	for (auto iter = pipelineCache.begin(); iter != pipelineCache.end();)
+		auto current = Application::getTimer().currentTimestamp();
+
+		for (auto iter = pipelineCache.begin(); iter != pipelineCache.end();)
 		{
-			if (iter->second.use_count() == 1)
+			if (iter->second.asset.use_count() == 1 && (current - iter->second.lastTimestamp) > 12000)
 			{
+				LOGI("Pipeline clear");
 				iter = pipelineCache.erase(iter);
 				continue;
 			}
@@ -61,13 +64,14 @@ namespace maple
 
 		for (auto iter = frameBufferCache.begin(); iter != frameBufferCache.end();)
 		{
-			if (iter->second.use_count() == 1)
+			if (iter->second.asset.use_count() == 1 && (current - iter->second.lastTimestamp) > 12000)
 			{
+				LOGI("FrameBuffer clear");
 				iter = frameBufferCache.erase(iter);
 				continue;
 			}
 			iter++;
-		}*/
+		}
 	}
 
 	auto SwapChain::create(uint32_t width, uint32_t height) -> std::shared_ptr<SwapChain>
@@ -115,15 +119,19 @@ namespace maple
 		}
 		auto &frameBufferCache = Application::getGraphicsContext()->getFrameBufferCache();
 		auto  found            = frameBufferCache.find(hash);
-		if (found != frameBufferCache.end() && found->second)
+		if (found != frameBufferCache.end() && found->second.asset)
 		{
-			return found->second;
+			found->second.lastTimestamp = Application::getTimer().currentTimestamp();
+			return found->second.asset;
 		}
 #ifdef MAPLE_VULKAN
-		return frameBufferCache.emplace(hash, std::make_shared<VulkanFrameBuffer>(desc)).first->second;
+
+		std::shared_ptr<FrameBuffer> fb = std::make_shared<VulkanFrameBuffer>(desc);
+		return frameBufferCache.emplace(std::piecewise_construct, std::forward_as_tuple(hash), std::forward_as_tuple(fb, Application::getTimer().currentTimestamp())).first->second.asset;
 #endif
 #ifdef MAPLE_OPENGL
-		return frameBufferCache.emplace(hash, std::make_shared<GLFrameBuffer>(desc)).first->second;
+		std::shared_ptr<FrameBuffer> fb = std::make_shared<GLFrameBuffer>(desc);
+		return frameBufferCache.emplace(std::piecewise_construct, std::forward_as_tuple(hash), std::forward_as_tuple(fb, Application::getTimer().currentTimestamp())).first->second.asset;
 #endif
 	}
 
@@ -220,17 +228,21 @@ namespace maple
 		}
 		auto &pipelineCache = Application::getGraphicsContext()->getPipelineCache();
 		auto  found         = pipelineCache.find(hash);
-		if (found != pipelineCache.end() && found->second)
+
+		if (found != pipelineCache.end() && found->second.asset)
 		{
-			return found->second;
+			found->second.lastTimestamp = Application::getTimer().currentTimestamp();
+			return found->second.asset;
 		}
 
 #ifdef MAPLE_OPENGL
-		return pipelineCache.emplace(hash, std::make_shared<GLPipeline>(desc)).first->second;
+		std::shared_ptr<Pipeline> pipeline = std::make_shared<GLPipeline>(desc);
+		return pipelineCache.emplace(std::piecewise_construct, std::forward_as_tuple(hash), std::forward_as_tuple(pipeline, Application::getTimer().currentTimestamp())).first->second.asset;
 #endif        // MAPLE_OPENGL
 
 #ifdef MAPLE_VULKAN
-		return pipelineCache.emplace(hash, std::make_shared<VulkanPipeline>(desc)).first->second;
+		std::shared_ptr<Pipeline> pipeline = std::make_shared<VulkanPipeline>(desc);
+		return pipelineCache.emplace(std::piecewise_construct, std::forward_as_tuple(hash), std::forward_as_tuple(pipeline, Application::getTimer().currentTimestamp())).first->second.asset;
 #endif        // MAPLE_OPENGL
 	}
 

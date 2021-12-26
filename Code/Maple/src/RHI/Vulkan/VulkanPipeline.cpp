@@ -86,7 +86,7 @@ namespace maple
 			//TODO there is a bug here.
 			//because vulkan Y axis is up to down and different with opengl
 			//http://anki3d.org/vulkan-coordinate-system/
-			rs.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;        //VK_FRONT_FACE_CLOCKWISE;
+			rs.frontFace = VK_FRONT_FACE_CLOCKWISE;        //VK_FRONT_FACE_COUNTER_CLOCKWISE;//
 
 			rs.depthClampEnable        = VK_FALSE;
 			rs.rasterizerDiscardEnable = VK_FALSE;
@@ -305,7 +305,7 @@ namespace maple
 		return 0;
 	}
 
-	auto VulkanPipeline::bind(CommandBuffer *cmdBuffer, uint32_t layer, int32_t cubeFace, int32_t mipMapLevel) -> void
+	auto VulkanPipeline::bind(CommandBuffer *cmdBuffer, uint32_t layer, int32_t cubeFace, int32_t mipMapLevel) -> FrameBuffer *
 	{
 		PROFILE_FUNCTION();
 		transitionAttachments();
@@ -328,8 +328,11 @@ namespace maple
 			framebuffer = framebuffers[0].get();
 		}
 
-		renderPass->beginRenderPass(cmdBuffer, description.clearColor, framebuffer, SubPassContents::Inline, getWidth(), getHeight(), cubeFace, mipMapLevel);
+		auto mipScale = std::pow(0.5, mipMapLevel);
+
+		renderPass->beginRenderPass(cmdBuffer, description.clearColor, framebuffer, SubPassContents::Inline, getWidth() * mipScale, getHeight() * mipScale, cubeFace, mipMapLevel);
 		vkCmdBindPipeline(static_cast<VulkanCommandBuffer *>(cmdBuffer)->getCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+		return framebuffer;
 	}
 
 	auto VulkanPipeline::end(CommandBuffer *commandBuffer) -> void
@@ -403,10 +406,10 @@ namespace maple
 				{
 					((VulkanTexture2D *) texture.get())->transitionImage(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, commandBuffer);
 				}
-				else if (texture->getType() == TextureType::Cube)
+				/*else if (texture->getType() == TextureType::Cube)
 				{
-					//((VulkanTextureCube *) texture.get())->transitionImage(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, (VulkanCommandBuffer *) commandBuffer);
-				}
+					((VulkanTextureCube *) texture.get())->transitionImage(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, commandBuffer);
+				}*/
 			}
 		}
 	}

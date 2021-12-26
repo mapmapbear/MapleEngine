@@ -24,7 +24,9 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 		bool hdr = stbi_is_hdr(name.c_str());
+
 		stbi_set_flip_vertically_on_load(1);
+
 		int32_t       width;
 		int32_t       height;
 		int32_t       channels;
@@ -35,14 +37,16 @@ namespace maple
 
 		uint32_t imageSize = width * height * 4 * (hdr ? sizeof(float) : sizeof(uint8_t));
 		assert(data);
-		return std::make_unique<Image>(format, width, height, data, imageSize, channels, mipmaps,hdr);
+		return std::make_unique<Image>(format, width, height, data, imageSize, channels, mipmaps, hdr);
 	}
 
 	auto ImageLoader::loadAsset(const std::string &name, Image *image) -> void
 	{
 		PROFILE_FUNCTION();
 		bool hdr = stbi_is_hdr(name.c_str());
+
 		stbi_set_flip_vertically_on_load(1);
+
 		int32_t       width;
 		int32_t       height;
 		int32_t       channels;

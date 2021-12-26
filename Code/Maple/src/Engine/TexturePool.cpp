@@ -29,7 +29,7 @@ namespace maple
 	{
 		if (auto iter = mapping.find(uniqueName); iter != mapping.end())
 		{
-			return iter->second->addSprite(uniqueName);
+			return iter->second->addSprite(uniqueName, flipY);
 		}
 
 		if (atlas.empty())
@@ -40,7 +40,7 @@ namespace maple
 		if (quad == nullptr)
 		{        //full.. create a new one
 			auto txt = createTextureAtlas();
-			quad     = txt->addSprite(uniqueName);
+			quad     = txt->addSprite(uniqueName, flipY);
 		}
 		mapping[uniqueName] = &atlas.back();
 		return quad;

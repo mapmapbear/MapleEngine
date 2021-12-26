@@ -8,7 +8,15 @@
 
 namespace maple
 {
-	class VulkanTexture2D : public Texture2D
+	class VkTexture
+	{
+	  public:
+		virtual auto transitionImage(VkImageLayout newLayout, const VulkanCommandBuffer *commandBuffer = nullptr) -> void = 0;
+		virtual auto getImageLayout() const -> VkImageLayout                                                              = 0;
+		virtual auto getImage() const -> VkImage                                                                          = 0;
+	};
+
+	class VulkanTexture2D : public Texture2D, public VkTexture
 	{
 	  public:
 		VulkanTexture2D(uint32_t width, uint32_t height, const void *data, TextureParameters parameters = TextureParameters(), TextureLoadOptions loadOptions = TextureLoadOptions());
@@ -67,10 +75,16 @@ namespace maple
 			return (void *) getDescriptor();
 		}
 
-		inline auto getImage() const
+		inline auto getImage() const -> VkImage override
 		{
 			return textureImage;
 		}
+
+		inline auto getImageLayout() const -> VkImageLayout override
+		{
+			return imageLayout;
+		}
+
 		inline auto getDeviceMemory() const
 		{
 			return textureImageMemory;
@@ -84,11 +98,6 @@ namespace maple
 			return textureSampler;
 		}
 
-		inline auto getImageLayout() const
-		{
-			return imageLayout;
-		}
-
 		inline auto getVkFormat() const
 		{
 			return vkFormat;
@@ -97,7 +106,9 @@ namespace maple
 		auto load() -> bool;
 		auto updateDescriptor() -> void;
 		auto buildTexture(TextureFormat internalformat, uint32_t width, uint32_t height, bool srgb, bool depth, bool samplerShadow, bool mipmap) -> void override;
-		auto transitionImage(VkImageLayout newLayout, VulkanCommandBuffer *commandBuffer = nullptr) -> void;
+
+		auto transitionImage(VkImageLayout newLayout, const VulkanCommandBuffer *commandBuffer = nullptr) -> void override;
+
 		auto getMipImageView(uint32_t mip) -> VkImageView;
 
 	  private:
@@ -135,7 +146,7 @@ namespace maple
 #endif
 	};
 
-	class VulkanTextureDepth : public TextureDepth
+	class VulkanTextureDepth : public TextureDepth, public VkTexture
 	{
 	  public:
 		VulkanTextureDepth(uint32_t width, uint32_t height, bool stencil);
@@ -145,7 +156,7 @@ namespace maple
 		auto unbind(uint32_t slot = 0) const -> void override{};
 		auto resize(uint32_t width, uint32_t height, CommandBuffer *commandBuffer) -> void override;
 
-		auto transitionImage(VkImageLayout newLayout, VulkanCommandBuffer *commandBuffer = nullptr) -> void;
+		auto transitionImage(VkImageLayout newLayout, const VulkanCommandBuffer *commandBuffer = nullptr) -> void override;
 
 		inline auto getDescriptorInfo() const -> void * override
 		{
@@ -166,12 +177,12 @@ namespace maple
 			return format;
 		}
 
-		inline const auto getImage() const
+		inline auto getImage() const -> VkImage override
 		{
 			return textureImage;
-		};
+		}
 
-		inline auto getImageLayout() const
+		inline auto getImageLayout() const -> VkImageLayout override
 		{
 			return imageLayout;
 		}
@@ -226,7 +237,7 @@ namespace maple
 #endif
 	};
 
-	class VulkanTextureCube : public TextureCube
+	class VulkanTextureCube : public TextureCube, public VkTexture
 	{
 	  public:
 		VulkanTextureCube(uint32_t size, TextureFormat format = TextureFormat::RGBA8, int32_t numMips = 1);
@@ -243,17 +254,25 @@ namespace maple
 			return (void *) this;
 		}
 
-		auto generateMipmap() -> void override;
+		auto generateMipmap(const CommandBuffer *commandBuffer) -> void override;
 
 		auto updateDescriptor() -> void;
 		auto load(uint32_t mips) -> void;
 
 		auto update(CommandBuffer *commandBuffer, FrameBuffer *framebuffer, int32_t cubeIndex, int32_t mipmapLevel = 0) -> void override;
 
-		inline auto getImage() const
+		auto transitionImage(VkImageLayout newLayout, const VulkanCommandBuffer *commandBuffer = nullptr) -> void override;
+
+		inline auto getImage() const -> VkImage override
 		{
 			return textureImage;
-		};
+		}
+
+		inline auto getImageLayout() const -> VkImageLayout override
+		{
+			return imageLayout;
+		}
+
 		inline auto getDeviceMemory() const
 		{
 			return textureImageMemory;
@@ -277,11 +296,6 @@ namespace maple
 		inline auto getFilePath() const -> const std::string & override
 		{
 			return name;
-		}
-
-		inline auto getImageLayout() const
-		{
-			return imageLayout;
 		}
 
 		inline auto getMipMapLevels() const -> uint32_t override
@@ -345,7 +359,7 @@ namespace maple
 #endif
 	};
 
-	class VulkanTextureDepthArray : public TextureDepthArray
+	class VulkanTextureDepthArray : public TextureDepthArray, public VkTexture
 	{
 	  public:
 		VulkanTextureDepthArray(uint32_t width, uint32_t height, uint32_t count);
@@ -359,10 +373,7 @@ namespace maple
 		{
 			return (void *) this;
 		}
-		inline auto getImage() const
-		{
-			return textureImage;
-		}
+
 		inline auto getImageView(int32_t index) const
 		{
 			return imageViews[index];
@@ -409,15 +420,21 @@ namespace maple
 			return count;
 		}
 
-		inline auto getImageLayout() const
+		inline auto getImage() const -> VkImage override
+		{
+			return textureImage;
+		}
+
+		inline auto getImageLayout() const -> VkImageLayout override
 		{
 			return imageLayout;
 		}
 
+
 		auto getHandleArray(uint32_t index) -> void * override;
 		auto updateDescriptor() -> void;
 
-		auto transitionImage(VkImageLayout newLayout, VulkanCommandBuffer *commandBuffer) -> void;
+		auto transitionImage(VkImageLayout newLayout, const VulkanCommandBuffer *commandBuffer) -> void override;
 
 	  protected:
 		auto init() -> void override;

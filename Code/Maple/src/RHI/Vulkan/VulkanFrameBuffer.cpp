@@ -33,7 +33,7 @@ namespace maple
 					attachments.emplace_back(static_cast<VulkanTextureDepthArray *>(attachment.get())->getImageView(info.layer));
 					break;
 				case TextureType::Cube:
-					attachments.emplace_back(static_cast<VulkanTextureCube *>(attachment.get())->getImageView());
+					//attachments.emplace_back(static_cast<VulkanTextureCube *>(attachment.get())->getImageView());
 					break;
 			}
 		}

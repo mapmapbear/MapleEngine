@@ -55,10 +55,10 @@ namespace maple
 		}
 		else if (texture->getType() == TextureType::Cube)
 		{
-			//attachment.format        = std::static_pointer_cast<VulkanTextureCube>(texture)->getVkFormat();
-			//attachment.initialLayout = std::static_pointer_cast<VulkanTextureCube>(texture)->getImageLayout();
-			//attachment.finalLayout   = attachment.initialLayout;
-			MAPLE_ASSERT(attachment.format != VK_FORMAT_UNDEFINED, "");
+			/*	attachment.format        = std::static_pointer_cast<VulkanTextureCube>(texture)->getVkFormat();
+			attachment.initialLayout = std::static_pointer_cast<VulkanTextureCube>(texture)->getImageLayout();
+			attachment.finalLayout   = attachment.initialLayout;
+			MAPLE_ASSERT(attachment.format != VK_FORMAT_UNDEFINED, "");*/
 		}
 		else
 		{
@@ -76,11 +76,6 @@ namespace maple
 		{
 			attachment.loadOp        = VK_ATTACHMENT_LOAD_OP_LOAD;
 			attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-		}
-
-		if (texture->getType() == TextureType::Cube)
-		{
-			//attachment.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		}
 
 		attachment.samples        = VK_SAMPLE_COUNT_1_BIT;
@@ -101,7 +96,7 @@ namespace maple
 		PROFILE_FUNCTION();
 		std::vector<VkAttachmentDescription> attachments;
 
-		std::vector<VkAttachmentReference> colourAttachmentReferences;
+		std::vector<VkAttachmentReference> colorAttachmentReferences;
 		std::vector<VkAttachmentReference> depthAttachmentReferences;
 
 		depthOnly  = true;
@@ -110,15 +105,22 @@ namespace maple
 		for (uint32_t i = 0; i < info.attachments.size(); i++)
 		{
 			auto texture = info.attachments[i];
+
+			if (texture->getType() == TextureType::Cube)
+			{
+				LOGW("CubeMap could not be used as an attachment");
+				continue;
+			}
+
 			attachments.emplace_back(getAttachmentDescription(info.attachments[i], info.clear));
 
 			if (texture->getType() == TextureType::Color)
 			{
 				VkImageLayout         layout              = std::static_pointer_cast<VulkanTexture2D>(texture)->getImageLayout();
-				VkAttachmentReference colourAttachmentRef = {};
-				colourAttachmentRef.attachment            = uint32_t(i);
-				colourAttachmentRef.layout                = layout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR ? VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL : layout;
-				colourAttachmentReferences.push_back(colourAttachmentRef);
+				VkAttachmentReference colorAttachmentRef = {};
+				colorAttachmentRef.attachment            = uint32_t(i);
+				colorAttachmentRef.layout                = layout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR ? VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL : layout;
+				colorAttachmentReferences.push_back(colorAttachmentRef);
 				depthOnly = false;
 			}
 			else if (texture->getType() == TextureType::Depth)
@@ -139,11 +141,11 @@ namespace maple
 			}
 			else if (texture->getType() == TextureType::Cube)
 			{
-				VkAttachmentReference colourAttachmentRef = {};
-				colourAttachmentRef.attachment            = uint32_t(i);
-				colourAttachmentRef.layout                = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-				colourAttachmentReferences.emplace_back(colourAttachmentRef);
-				depthOnly = false;
+				/*VkAttachmentReference colorAttachmentRef = {};
+				colorAttachmentRef.attachment            = uint32_t(i);
+				colorAttachmentRef.layout                = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+				colorAttachmentReferences.emplace_back(colorAttachmentRef);
+				depthOnly = false;*/
 			}
 			else
 			{
@@ -153,14 +155,14 @@ namespace maple
 
 		VkSubpassDescription subpass{};
 		subpass.pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
-		subpass.colorAttachmentCount    = static_cast<uint32_t>(colourAttachmentReferences.size());
-		subpass.pColorAttachments       = colourAttachmentReferences.data();
+		subpass.colorAttachmentCount    = static_cast<uint32_t>(colorAttachmentReferences.size());
+		subpass.pColorAttachments       = colorAttachmentReferences.data();
 		subpass.pDepthStencilAttachment = depthAttachmentReferences.data();
 
-		colorAttachmentCount = int32_t(colourAttachmentReferences.size());
+		colorAttachmentCount = int32_t(colorAttachmentReferences.size());
 
 		VkRenderPassCreateInfo renderPassCreateInfo = VulkanHelper::renderPassCreateInfo();
-		renderPassCreateInfo.attachmentCount        = uint32_t(info.attachments.size());
+		renderPassCreateInfo.attachmentCount        = uint32_t(attachments.size());
 		renderPassCreateInfo.pAttachments           = attachments.data();
 		renderPassCreateInfo.subpassCount           = 1;
 		renderPassCreateInfo.pSubpasses             = &subpass;
@@ -169,8 +171,8 @@ namespace maple
 
 		VK_CHECK_RESULT(vkCreateRenderPass(*VulkanDevice::get(), &renderPassCreateInfo, VK_NULL_HANDLE, &renderPass));
 
-		clearValue = new VkClearValue[info.attachments.size()];
-		clearCount = info.attachments.size();
+		clearValue = new VkClearValue[attachments.size()];
+		clearCount = attachments.size();
 	}
 
 	VulkanRenderPass::~VulkanRenderPass()

@@ -121,7 +121,7 @@ namespace maple
 
 		auto update(CommandBuffer *commandBuffer, FrameBuffer *framebuffer, int32_t cubeIndex, int32_t mipmapLevel = 0) -> void override;
 
-		auto generateMipmap() -> void override;
+		auto generateMipmap(const CommandBuffer *commandBuffer) -> void override;
 
 	  private:
 		static auto loadFromFile() -> uint32_t;
@@ -186,9 +186,9 @@ namespace maple
 		auto init() -> void;
 
 		bool     stencil = false;
-		uint32_t handle = 0;
-		uint32_t width  = 0;
-		uint32_t height = 0;
+		uint32_t handle  = 0;
+		uint32_t width   = 0;
+		uint32_t height  = 0;
 
 		TextureFormat format;
 	};

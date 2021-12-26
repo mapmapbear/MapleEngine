@@ -782,11 +782,16 @@ namespace maple
 
 	auto Editor::getIcon(FileType type) -> Quad2D *
 	{
+#ifdef MAPLE_VULKAN
+		constexpr bool flipY = true;
+#else
+		constexpr bool flipY = false;
+#endif        // MAPLE_VULKAN
 		if (auto iter = cacheIcons.find(type); iter != cacheIcons.end())
 		{
-			return textureAtlas->addSprite(iter->second);
+			return textureAtlas->addSprite(iter->second, flipY);
 		}
-		return textureAtlas->addSprite(cacheIcons[FileType::Normal]);
+		return textureAtlas->addSprite(cacheIcons[FileType::Normal], flipY);
 	}
 
 	auto Editor::processIcons() -> void
@@ -818,7 +823,12 @@ namespace maple
 			if (str != "")
 			{
 				cacheIcons[static_cast<FileType>(i++)] = str;
-				textureAtlas->addSprite(str);
+#ifdef MAPLE_VULKAN
+				constexpr bool flipY = true;
+#else
+				constexpr bool flipY = false;
+#endif        // MAPLE_VULKAN
+				textureAtlas->addSprite(str, flipY);
 			}
 		}
 	}

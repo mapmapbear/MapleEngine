@@ -32,6 +32,13 @@ namespace maple
 					((VulkanTexture2D *) texture)->transitionImage(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, commandBuffer);
 				}
 			}
+			else if (texture->getType() == TextureType::Cube)
+			{
+				if (((VulkanTextureCube *) texture)->getImageLayout() != VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+				{
+					((VulkanTextureCube *) texture)->transitionImage(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, commandBuffer);
+				}
+			}
 			else if (texture->getType() == TextureType::Depth)
 			{
 				((VulkanTextureDepth *) texture)->transitionImage(VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL, commandBuffer);
@@ -90,6 +97,8 @@ namespace maple
 			descriptorSet[frame]   = nullptr;
 			VK_CHECK_RESULT(vkAllocateDescriptorSets(*VulkanDevice::get(), &descriptorSetAllocateInfo, &descriptorSet[frame]));
 		}
+
+		memset(imageInfoPool.data(), 0, sizeof(VkDescriptorImageInfo) * MAX_IMAGE_INFOS);
 	}
 
 	VulkanDescriptorSet::~VulkanDescriptorSet()
@@ -126,38 +135,30 @@ namespace maple
 				{
 					if (!imageInfo.textures.empty())
 					{
-						auto writeable = false;
-
 						for (uint32_t i = 0; i < imageInfo.textures.size(); i++)
 						{
 							if (imageInfo.textures[i])
 							{
 								transitionImageLayout(imageInfo.textures[i].get());
 
-								const auto &des                           = *static_cast<VkDescriptorImageInfo *>(imageInfo.textures[i]->getDescriptorInfo());
-								imageInfoPool[i + imageIndex].imageLayout = des.imageLayout;
-								imageInfoPool[i + imageIndex].imageView   = des.imageView;
-								imageInfoPool[i + imageIndex].sampler     = des.sampler;
-								writeable                                 = true;
+								const auto &des               = *static_cast<VkDescriptorImageInfo *>(imageInfo.textures[i]->getDescriptorInfo());
+								imageInfoPool[i + imageIndex] = des;
 							}
 						}
 
-						if (writeable)
-						{
-							VkWriteDescriptorSet writeDescriptorSet{};
-							writeDescriptorSet.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-							writeDescriptorSet.dstSet          = descriptorSet[currentFrame];
-							writeDescriptorSet.descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-							writeDescriptorSet.dstBinding      = imageInfo.binding;
-							writeDescriptorSet.pImageInfo      = &imageInfoPool[imageIndex];
-							writeDescriptorSet.descriptorCount = imageInfo.textures.empty() ? 1 : imageInfo.textures.size();
+						VkWriteDescriptorSet writeDescriptorSet{};
+						writeDescriptorSet.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+						writeDescriptorSet.dstSet          = descriptorSet[currentFrame];
+						writeDescriptorSet.descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+						writeDescriptorSet.dstBinding      = imageInfo.binding;
+						writeDescriptorSet.pImageInfo      = &imageInfoPool[imageIndex];
+						writeDescriptorSet.descriptorCount = imageInfo.textures.empty() ? 1 : imageInfo.textures.size();
 
-							MAPLE_ASSERT(writeDescriptorSet.descriptorCount != 0, "writeDescriptorSet.descriptorCount should be greater than zero");
+						MAPLE_ASSERT(writeDescriptorSet.descriptorCount != 0, "writeDescriptorSet.descriptorCount should be greater than zero");
 
-							writeDescriptorSetPool[descriptorWritesCount] = writeDescriptorSet;
-							imageIndex++;
-							descriptorWritesCount++;
-						}
+						writeDescriptorSetPool[descriptorWritesCount] = writeDescriptorSet;
+						imageIndex++;
+						descriptorWritesCount++;
 					}
 				}
 				else if (imageInfo.type == DescriptorType::UniformBuffer)

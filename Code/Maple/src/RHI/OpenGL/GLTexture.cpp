@@ -162,8 +162,7 @@ namespace maple
 
 		auto floatData = parameters.format == TextureFormat::RGB16 || parameters.format == TextureFormat::RGB32 || parameters.format == TextureFormat::RGBA16 || parameters.format == TextureFormat::RGBA32;
 
-
-		GLCall(glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, textureFormatToInternalFormat(format), ( isHDR || floatData )? GL_FLOAT : GL_UNSIGNED_BYTE, data ? data : nullptr));
+		GLCall(glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, textureFormatToInternalFormat(format), (isHDR || floatData) ? GL_FLOAT : GL_UNSIGNED_BYTE, data ? data : nullptr));
 		GLCall(glGenerateMipmap(GL_TEXTURE_2D));
 	}
 
@@ -222,7 +221,7 @@ namespace maple
 		auto floatData = parameters.format == TextureFormat::RGB16 || parameters.format == TextureFormat::RGB32 || parameters.format == TextureFormat::RGBA16 || parameters.format == TextureFormat::RGBA32;
 
 		GLCall(glBindTexture(GL_TEXTURE_2D, handle));
-		GLCall(glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, textureFormatToInternalFormat(textureFormatToGL(parameters.format, parameters.srgb)),( isHDR || floatData )? GL_FLOAT : GL_UNSIGNED_BYTE, pixels));
+		GLCall(glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, textureFormatToInternalFormat(textureFormatToGL(parameters.format, parameters.srgb)), (isHDR || floatData) ? GL_FLOAT : GL_UNSIGNED_BYTE, pixels));
 		GLCall(glGenerateMipmap(GL_TEXTURE_2D));
 	}
 
@@ -299,7 +298,7 @@ namespace maple
 		auto internalFormat = textureFormatToGL(format, false);
 		auto dataFormat     = textureFormatToInternalFormat(internalFormat);
 
-		auto floatData = format == TextureFormat::RGB16 || format == TextureFormat::RGB32 || format == TextureFormat::RGBA16 ||  format == TextureFormat::RGBA32;
+		auto floatData = format == TextureFormat::RGB16 || format == TextureFormat::RGB32 || format == TextureFormat::RGBA16 || format == TextureFormat::RGBA32;
 
 		for (int32_t i = 0; i < 6; ++i)
 		{
@@ -333,7 +332,7 @@ namespace maple
 	{
 	}
 
-	auto GLTextureCube::generateMipmap() -> void
+	auto GLTextureCube::generateMipmap(const CommandBuffer *commandBuffer) -> void
 	{
 		GLCall(glBindTexture(GL_TEXTURE_CUBE_MAP, handle));
 		GLCall(glGenerateMipmap(GL_TEXTURE_CUBE_MAP));

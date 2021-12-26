@@ -130,7 +130,7 @@ namespace maple
 		return std::make_shared<GLTextureCube>(size, format, numMips);
 #endif        // MAPLE_OPENGL
 #ifdef MAPLE_VULKAN
-		return std::make_shared<VulkanTextureCube>(size);
+		return std::make_shared<VulkanTextureCube>(size, format, numMips);
 #endif        // MAPLE_VULKAN
 	}
 
