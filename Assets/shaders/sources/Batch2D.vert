@@ -21,7 +21,8 @@ layout (location = 0) out OutData
 void main()
 {
 	gl_Position =  ubo.projView * vec4(inPosition,1.0);
+	
+	data.color = inColor;
 	data.uv = inTexCoord.xy;
 	data.textureID = int(inTexCoord.z - 0.5);
-	data.color = inColor;
 }

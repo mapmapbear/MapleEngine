@@ -24,7 +24,6 @@ namespace maple
 		PROFILE_FUNCTION();
 		if (this->size != size)
 		{
-			this->size = size;
 			VulkanBuffer::resize(size, nullptr);
 		}
 	}
@@ -34,7 +33,6 @@ namespace maple
 		PROFILE_FUNCTION();
 		if (size != this->size)
 		{
-			this->size = size;
 			VulkanBuffer::resize(size, data);
 		}
 		else
@@ -48,7 +46,6 @@ namespace maple
 		PROFILE_FUNCTION();
 		if (size != this->size)
 		{
-			this->size = size;
 			VulkanBuffer::resize(size, data);
 		}
 		else

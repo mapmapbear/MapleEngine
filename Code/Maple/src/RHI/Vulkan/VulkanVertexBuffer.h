@@ -32,6 +32,5 @@ namespace maple
 	  protected:
 		bool        mappedBuffer = false;
 		BufferUsage bufferUsage  = BufferUsage::Static;
-		uint32_t    size         = 0;
 	};
 };        // namespace maple

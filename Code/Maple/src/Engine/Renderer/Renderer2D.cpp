@@ -164,22 +164,22 @@ namespace maple
 			if (texture)
 				textureSlot = submitTexture(texture);
 
-			data->buffer->vertex = glm::vec4(min.x, min.y, 0.0f, 1.0);
+			data->buffer->vertex = glm::vec3(min.x, min.y, 0.0f);
 			data->buffer->color  = color;
 			data->buffer->uv     = glm::vec3(uv[0], textureSlot);
 			data->buffer++;
 
-			data->buffer->vertex = glm::vec4(max.x, min.y, 0.0f, 1.0);
+			data->buffer->vertex = glm::vec3(max.x, min.y, 0.0f);
 			data->buffer->color  = color;
 			data->buffer->uv     = glm::vec3(uv[1], textureSlot);
 			data->buffer++;
 
-			data->buffer->vertex = glm::vec4(max.x, max.y, 0.0f, 1.0);
+			data->buffer->vertex = glm::vec3(max.x, max.y, 0.0f);
 			data->buffer->color  = color;
 			data->buffer->uv     = glm::vec3(uv[2], textureSlot);
 			data->buffer++;
 
-			data->buffer->vertex = glm::vec4(min.x, max.y, 0.0f, 1.0);
+			data->buffer->vertex = glm::vec3(min.x, max.y, 0.0f);
 			data->buffer->color  = color;
 			data->buffer->uv     = glm::vec3(uv[3], textureSlot);
 			data->buffer++;

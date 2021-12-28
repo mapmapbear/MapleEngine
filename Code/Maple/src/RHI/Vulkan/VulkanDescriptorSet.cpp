@@ -139,6 +139,7 @@ namespace maple
 				{
 					if (!imageInfo.textures.empty())
 					{
+						auto validCount = 0;
 						for (uint32_t i = 0; i < imageInfo.textures.size(); i++)
 						{
 							if (imageInfo.textures[i])
@@ -147,22 +148,26 @@ namespace maple
 
 								const auto &des               = *static_cast<VkDescriptorImageInfo *>(imageInfo.textures[i]->getDescriptorInfo());
 								imageInfoPool[i + imageIndex] = des;
+								validCount++;
 							}
 						}
 
-						VkWriteDescriptorSet writeDescriptorSet{};
-						writeDescriptorSet.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-						writeDescriptorSet.dstSet          = descriptorSet[currentFrame];
-						writeDescriptorSet.descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-						writeDescriptorSet.dstBinding      = imageInfo.binding;
-						writeDescriptorSet.pImageInfo      = &imageInfoPool[imageIndex];
-						writeDescriptorSet.descriptorCount = imageInfo.textures.empty() ? 1 : imageInfo.textures.size();
+						if (validCount > 0)
+						{
+							VkWriteDescriptorSet writeDescriptorSet{};
+							writeDescriptorSet.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+							writeDescriptorSet.dstSet          = descriptorSet[currentFrame];
+							writeDescriptorSet.descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+							writeDescriptorSet.dstBinding      = imageInfo.binding;
+							writeDescriptorSet.pImageInfo      = &imageInfoPool[imageIndex];
+							writeDescriptorSet.descriptorCount = validCount;
 
-						MAPLE_ASSERT(writeDescriptorSet.descriptorCount != 0, "writeDescriptorSet.descriptorCount should be greater than zero");
+							MAPLE_ASSERT(writeDescriptorSet.descriptorCount != 0, "writeDescriptorSet.descriptorCount should be greater than zero");
 
-						writeDescriptorSetPool[descriptorWritesCount] = writeDescriptorSet;
-						imageIndex++;
-						descriptorWritesCount++;
+							writeDescriptorSetPool[descriptorWritesCount] = writeDescriptorSet;
+							imageIndex++;
+							descriptorWritesCount++;
+						}
 					}
 				}
 				else if (imageInfo.type == DescriptorType::UniformBuffer)
@@ -189,7 +194,9 @@ namespace maple
 						dynamic = true;
 				}
 			}
-			vkUpdateDescriptorSets(*VulkanDevice::get(), descriptorWritesCount, writeDescriptorSetPool.data(), 0, nullptr);
+
+			if (descriptorWritesCount > 0)
+				vkUpdateDescriptorSets(*VulkanDevice::get(), descriptorWritesCount, writeDescriptorSetPool.data(), 0, nullptr);
 		}
 	}
 
