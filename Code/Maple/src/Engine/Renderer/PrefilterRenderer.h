@@ -32,9 +32,7 @@ namespace maple
 		~PrefilterRenderer();
 
 		auto init() -> void;
-		auto begin() -> void;
 		auto present() -> void;
-		auto end() -> void;
 		auto renderScene() -> void;
 		auto beginScene(Scene *scene) -> void;
 
@@ -60,6 +58,7 @@ namespace maple
 
 		std::shared_ptr<DescriptorSet> irradianceSet;
 		std::shared_ptr<DescriptorSet> prefilterSet;
+
 		std::shared_ptr<DescriptorSet> cubeMapSet;
 
 		std::shared_ptr<DescriptorSet> currentSet;
@@ -74,6 +73,7 @@ namespace maple
 		std::shared_ptr<TextureDepth> skyboxDepth;
 
 		std::shared_ptr<Mesh> cube;
+		std::shared_ptr<Mesh> cube2;
 		Environment *         envComponent = nullptr;
 	};
 };        // namespace maple

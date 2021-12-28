@@ -1,15 +1,16 @@
 #version 450
 
+#extension GL_EXT_debug_printf : enable
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
 
-layout (location = 0) out vec4 outColor;
-
 layout (location = 0) in vec3 sampleDirection;
 
-layout (set = 0,binding = 1) uniform samplerCube uCubeMapSampler;
+layout (set = 0,binding = 0) uniform samplerCube uCubeMapSampler;
 
 const float PI = 3.1415926536;
+
+layout (location = 0) out vec4 outColor;
 
 void main()
 {		
@@ -22,7 +23,7 @@ void main()
 	vec3 right = cross(up, normal);
 	up = cross(normal, right);
 
-	float sampleDelta = 0.025;
+	const float sampleDelta = 0.025;
 	float nrSamples = 0.0;
 	for (float phi = 0.0; phi < 2.0 * PI; phi += sampleDelta)
 	{
@@ -33,11 +34,11 @@ void main()
 	        // Tangent space to world
 	        vec3 sampleVec = tangentSample.x * right + tangentSample.y * up + tangentSample.z * normal; 
 
-	        irradiance += texture(uCubeMapSampler, sampleVec).rgb * cos(theta) * sin(theta);
+	        irradiance += textureLod(uCubeMapSampler, sampleVec,0).rgb * cos(theta) * sin(theta);
 	        ++nrSamples;
 	    }
 	}
 	irradiance = PI * irradiance * (1.0 / nrSamples);
-  
+
     outColor = vec4(irradiance, 1.0);
 }

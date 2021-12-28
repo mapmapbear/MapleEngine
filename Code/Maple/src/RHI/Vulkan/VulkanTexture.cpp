@@ -628,10 +628,11 @@ namespace maple
 
 		auto frameBuffer = static_cast<VulkanFrameBuffer *>(framebuffer);
 
-		auto &info       = frameBuffer->getFrameBufferInfo();
-		auto  vkTexture  = dynamic_cast<VkTexture *>(info.attachments[0].get());
-		auto  colorImage = vkTexture->getImage();
-		auto  oldLayout  = vkTexture->getImageLayout();
+		auto &info = frameBuffer->getFrameBufferInfo();
+		//TODO..... avoid using dynamic_cast
+		auto vkTexture  = dynamic_cast<VkTexture *>(info.attachments[0].get());
+		auto colorImage = vkTexture->getImage();
+		auto oldLayout  = vkTexture->getImageLayout();
 
 		assert(colorImage != nullptr);
 

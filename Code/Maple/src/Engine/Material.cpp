@@ -69,11 +69,7 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 
-		if (descriptorSet)
-		{
-			descriptorSet.reset();
-		}
-
+	
 		if (shader == nullptr)
 		{
 			if (isFlagOf(RenderFlags::ForwardRender))
@@ -180,7 +176,6 @@ namespace maple
 			return;
 
 		descriptorSet->setUniformBufferData("UniformMaterialData", &materialProperties);
-		descriptorSet->update();
 	}
 
 	auto Material::setMaterialProperites(const MaterialProperties &properties) -> void
@@ -278,10 +273,14 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 
-		if (descriptorSet == nullptr || isTexturesUpdated())
+		if (descriptorSet == nullptr)
 		{
 			createDescriptorSet();
 			setTexturesUpdated(false);
+		}
+		if (texturesUpdated)
+		{
+			updateDescriptorSet();
 		}
 		descriptorSet->update();
 	}

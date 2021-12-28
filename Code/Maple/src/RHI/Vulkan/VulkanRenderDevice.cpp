@@ -36,7 +36,7 @@ namespace maple
 	auto VulkanRenderDevice::init() -> void
 	{
 		PROFILE_FUNCTION();
-		VkDescriptorPoolSize poolSizes[] = {
+		std::array<VkDescriptorPoolSize, 5> poolSizes = {
 		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_SAMPLER, 100},
 		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 100},
 		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 100},
@@ -47,8 +47,8 @@ namespace maple
 		VkDescriptorPoolCreateInfo poolCreateInfo = {};
 		poolCreateInfo.sType                      = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 		poolCreateInfo.flags                      = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-		poolCreateInfo.poolSizeCount              = 5;
-		poolCreateInfo.pPoolSizes                 = poolSizes;
+		poolCreateInfo.poolSizeCount              = poolSizes.size();
+		poolCreateInfo.pPoolSizes                 = poolSizes.data();
 		poolCreateInfo.maxSets                    = MAX_DESCRIPTOR_SET_COUNT;
 
 		// Pool

@@ -45,18 +45,16 @@ layout(location = 0) in vec3 fragColor;
 layout(location = 1) in vec2 fragTexCoord;
 layout(location = 0) out vec4 outColor;
 
-layout(set = 1, binding = 0) uniform sampler2D uColorSampler;
-layout(set = 1, binding = 1) uniform sampler2D uPositionSampler;
-layout(set = 1, binding = 2) uniform sampler2D uNormalSampler;
-layout(set = 1, binding = 3) uniform sampler2D uDepthSampler;
-layout(set = 1, binding = 4) uniform sampler2DArray uShadowMap;
-
-layout(set = 1, binding = 5) uniform sampler2D uPBRSampler;
-layout(set = 1, binding = 6) uniform samplerCube uIrradianceMap;
-layout(set = 1, binding = 7) uniform samplerCube uPrefilterMap;
-layout(set = 1, binding = 8) uniform sampler2D uPreintegratedFG;
-
-layout(set = 1, binding = 9) uniform UniformBufferLight
+layout(set = 0, binding = 0) uniform sampler2D uColorSampler;
+layout(set = 0, binding = 1) uniform sampler2D uPositionSampler;
+layout(set = 0, binding = 2) uniform sampler2D uNormalSampler;
+layout(set = 0, binding = 3) uniform sampler2D uDepthSampler;
+layout(set = 0, binding = 4) uniform sampler2DArray uShadowMap;
+layout(set = 0, binding = 5) uniform sampler2D uPBRSampler;
+layout(set = 0, binding = 6) uniform samplerCube uIrradianceMap;
+layout(set = 0, binding = 7) uniform samplerCube uPrefilterMap;
+layout(set = 0, binding = 8) uniform sampler2D uPreintegratedFG;
+layout(set = 0, binding = 9) uniform UniformBufferLight
 {
 	Light lights[MAX_LIGHTS];
 	mat4 shadowTransform[MAX_SHADOWMAPS];

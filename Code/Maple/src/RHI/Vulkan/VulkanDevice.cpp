@@ -147,7 +147,7 @@ namespace maple
 
 		static const float defaultQueuePriority(0.0f);
 
-		int32_t requestedQueueTypes = VK_QUEUE_GRAPHICS_BIT;// | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT;
+		int32_t requestedQueueTypes = VK_QUEUE_GRAPHICS_BIT;        // | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT;
 		indices                     = lookupQueueFamilyIndices(requestedQueueTypes, queueFamilyProperties);
 
 		// Graphics queue
@@ -252,9 +252,9 @@ namespace maple
 		VkPhysicalDeviceFeatures physicalDeviceFeatures;
 		vkGetPhysicalDeviceFeatures(*physicalDevice, &physicalDeviceFeatures);
 
-		std::vector<const char *> deviceExtensions =
-		    {
-		        VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+		std::vector<const char *> deviceExtensions = {
+		    VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+		    VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME};
 
 		if (physicalDevice->isExtensionSupported(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
 		{

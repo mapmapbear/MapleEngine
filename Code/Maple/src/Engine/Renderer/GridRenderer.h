@@ -2,11 +2,11 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
+#include "Renderer.h"
 #include <cstdint>
+#include <glm/glm.hpp>
 #include <memory>
 #include <vector>
-#include <glm/glm.hpp>
-#include "Renderer.h"
 
 namespace maple
 {
@@ -15,12 +15,12 @@ namespace maple
 
 	class MAPLE_EXPORT GridRenderer : public Renderer
 	{
-	public:
+	  public:
 		GridRenderer() = default;
 		GridRenderer(uint32_t width, uint32_t height);
 		~GridRenderer();
 
-		auto init(const std::shared_ptr<GBuffer>& buffer) -> void override;
+		auto init(const std::shared_ptr<GBuffer> &buffer) -> void override;
 		auto renderScene() -> void override;
 		auto renderPreviewScene() -> void override;
 
@@ -31,7 +31,6 @@ namespace maple
 		auto setRenderTarget(std::shared_ptr<Texture> texture, bool rebuildFramebuffer) -> void override;
 
 	  private:
-
 		std::shared_ptr<Mesh> quad;
 
 		std::shared_ptr<Shader> gridShader;
@@ -40,14 +39,13 @@ namespace maple
 
 		std::shared_ptr<DescriptorSet> descriptorSet;
 
-	
 		struct UniformBufferObject
 		{
 			glm::vec4 cameraPos;
-			float     scale = 500.0f;
-			float     res = 1.4f;
+			float     scale       = 500.0f;
+			float     res         = 1.4f;
 			float     maxDistance = 600.0f;
 			float     p1;
-		}systemBuffer;
+		} systemBuffer;
 	};
-};
+};        // namespace maple

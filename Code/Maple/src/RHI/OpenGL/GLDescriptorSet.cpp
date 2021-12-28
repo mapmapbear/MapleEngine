@@ -83,7 +83,7 @@ namespace maple
 		LOGW("Buffer not found {0}", name);
 	}
 
-	auto GLDescriptorSet::setUniform(const std::string &bufferName, const std::string &uniformName, const void *data) -> void
+	auto GLDescriptorSet::setUniform(const std::string &bufferName, const std::string &uniformName, const void *data, bool dynamic) -> void
 	{
 		PROFILE_FUNCTION();
 
@@ -103,7 +103,7 @@ namespace maple
 		LOGW("Uniform not found {0}.{1}", bufferName, uniformName);
 	}
 
-	auto GLDescriptorSet::setUniform(const std::string &bufferName, const std::string &uniformName, const void *data, uint32_t size) -> void
+	auto GLDescriptorSet::setUniform(const std::string &bufferName, const std::string &uniformName, const void *data, uint32_t size, bool dynamic) -> void
 	{
 		PROFILE_FUNCTION();
 

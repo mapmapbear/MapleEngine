@@ -101,7 +101,7 @@ namespace maple
 	{
 		uint32_t layoutIndex;
 		Shader * shader;
-		uint32_t count = 1;//used in vulkan
+		uint32_t count = 1;        //used in vulkan
 	};
 
 	struct Descriptor
@@ -131,15 +131,15 @@ namespace maple
 		virtual ~DescriptorSet() = default;
 		static auto create(const DescriptorInfo &desc) -> std::shared_ptr<DescriptorSet>;
 
-		virtual auto update() -> void                                                                                                   = 0;
-		virtual auto setDynamicOffset(uint32_t offset) -> void                                                                          = 0;
-		virtual auto getDynamicOffset() const -> uint32_t                                                                               = 0;
-		virtual auto setTexture(const std::string &name, const std::vector<std::shared_ptr<Texture>> &textures) -> void                 = 0;
-		virtual auto setTexture(const std::string &name, const std::shared_ptr<Texture> &textures) -> void                              = 0;
-		virtual auto setBuffer(const std::string &name, const std::shared_ptr<UniformBuffer> &buffer) -> void                           = 0;
-		virtual auto getUnifromBuffer(const std::string &name) -> std::shared_ptr<UniformBuffer>                                        = 0;
-		virtual auto setUniform(const std::string &bufferName, const std::string &uniformName, const void *data) -> void                = 0;
-		virtual auto setUniform(const std::string &bufferName, const std::string &uniformName, const void *data, uint32_t size) -> void = 0;
-		virtual auto setUniformBufferData(const std::string &bufferName, const void *data) -> void                                      = 0;
+		virtual auto update() -> void                                                                                                                         = 0;
+		virtual auto setDynamicOffset(uint32_t offset) -> void                                                                                                = 0;
+		virtual auto getDynamicOffset() const -> uint32_t                                                                                                     = 0;
+		virtual auto setTexture(const std::string &name, const std::vector<std::shared_ptr<Texture>> &textures) -> void                                       = 0;
+		virtual auto setTexture(const std::string &name, const std::shared_ptr<Texture> &textures) -> void                                                    = 0;
+		virtual auto setBuffer(const std::string &name, const std::shared_ptr<UniformBuffer> &buffer) -> void                                                 = 0;
+		virtual auto getUnifromBuffer(const std::string &name) -> std::shared_ptr<UniformBuffer>                                                              = 0;
+		virtual auto setUniform(const std::string &bufferName, const std::string &uniformName, const void *data, bool dynamic = false) -> void                = 0;
+		virtual auto setUniform(const std::string &bufferName, const std::string &uniformName, const void *data, uint32_t size, bool dynamic = false) -> void = 0;
+		virtual auto setUniformBufferData(const std::string &bufferName, const void *data) -> void                                                            = 0;
 	};
 }        // namespace maple

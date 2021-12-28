@@ -90,8 +90,6 @@ namespace maple
 			return;
 		}
 
-		
-
 		descriptorSet->setUniformBufferData("UniformBufferObject", glm::value_ptr(projView));
 		systemBuffer.cameraPos = glm::vec4(camera.second->getWorldPosition(), 1.f);
 		descriptorSet->setUniformBufferData("UniformBuffer", &systemBuffer);

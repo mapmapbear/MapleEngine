@@ -24,13 +24,12 @@ const float subdivisions = 10.0f;
 vec4 Grid(float divisions)
 {
 	vec2 coord = fragTexCoord.xy * divisions;
-
-	vec2 grid = abs(fract(coord - 0.5) - 0.5) / fwidth(coord);
+  	vec2 derivative = fwidth(coord);
+	vec2 grid = abs(fract(coord - 0.5) - 0.5) / derivative;
 	float line = min(grid.x, grid.y);
 	float lineResult = ubo.res - min(line, ubo.res);
 	vec3 color = vec3(lineResult) * vec3(0.3, 0.3, 0.3);
-
-	return vec4( color, 0.1 * lineResult);
+	return vec4( color, 0.1 * lineResult);;
 }
 
 void main()

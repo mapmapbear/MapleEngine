@@ -41,8 +41,8 @@ namespace maple
 		auto setTexture(const std::string &name, const std::shared_ptr<Texture> &textures) -> void override;
 		auto setBuffer(const std::string &name, const std::shared_ptr<UniformBuffer> &buffer) -> void override;
 		auto getUnifromBuffer(const std::string &name) -> std::shared_ptr<UniformBuffer> override;
-		auto setUniform(const std::string &bufferName, const std::string &uniformName, const void *data) -> void override;
-		auto setUniform(const std::string &bufferName, const std::string &uniformName, const void *data, uint32_t size) -> void override;
+		auto setUniform(const std::string &bufferName, const std::string &uniformName, const void *data, bool dynamic) -> void override;
+		auto setUniform(const std::string &bufferName, const std::string &uniformName, const void *data, uint32_t size, bool dynamic) -> void override;
 		auto setUniformBufferData(const std::string &bufferName, const void *data) -> void override;
 
 	  private:
@@ -62,14 +62,13 @@ namespace maple
 		struct UniformBufferInfo
 		{
 			std::vector<BufferMemberInfo> members;
-
-			Buffer localStorage;
-
-			bool hasUpdated[10] = {};
+			Buffer                        localStorage;
+			bool                          dynamic        = false;
+			bool                          hasUpdated[10] = {};
 		};
 
-		std::unordered_map<uint32_t, VkDescriptorSet>                                                 descriptorSet;
-		std::unordered_map<uint32_t, std::unordered_map<std::string, std::shared_ptr<UniformBuffer>>> uniformBuffers;
-		std::unordered_map<std::string, UniformBufferInfo>                                            uniformBuffersData;
+		std::vector<VkDescriptorSet>                                                 descriptorSet;
+		std::vector<std::unordered_map<std::string, std::shared_ptr<UniformBuffer>>> uniformBuffers;
+		std::unordered_map<std::string, UniformBufferInfo>                           uniformBuffersData;
 	};
 };        // namespace maple

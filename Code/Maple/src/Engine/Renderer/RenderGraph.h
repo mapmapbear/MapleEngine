@@ -101,6 +101,7 @@ namespace maple
 		struct Renderer2DData;
 		struct DeferredData;
 		struct PreviewData;
+		struct SkyboxData;
 
 		auto getCommandBuffer() -> CommandBuffer *;
 
@@ -120,10 +121,9 @@ namespace maple
 		ForwardData * forwardData  = nullptr;
 		DeferredData *deferredData = nullptr;
 		PreviewData * previewData  = nullptr;
+		SkyboxData *  skyboxData   = nullptr;
 
-		std::shared_ptr<Mesh>          skyboxMesh;
-		std::shared_ptr<Shader>        skyboxShader;
-		std::shared_ptr<DescriptorSet> skyboxDescriptorSet;
+	
 
 		std::shared_ptr<Shader>        finalShader;
 		std::shared_ptr<DescriptorSet> finalDescriptorSet;

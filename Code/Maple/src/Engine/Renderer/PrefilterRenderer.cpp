@@ -36,14 +36,16 @@ namespace maple
 	        glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, -1.0f, 0.0f)),
 	        glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, -1.0f, 0.0f))};
 
+	const glm::mat4 projection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+
 	const glm::mat4 captureProjView[] =
 	    {
-	        glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f) * captureViews[0],
-	        glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f) * captureViews[1],
-	        glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f) * captureViews[2],
-	        glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f) * captureViews[3],
-	        glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f) * captureViews[4],
-	        glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f) * captureViews[5]};
+	        projection * captureViews[0],
+	        projection *captureViews[1],
+	        projection *captureViews[2],
+	        projection *captureViews[3],
+	        projection *captureViews[4],
+	        projection *captureViews[5]};
 
 	PrefilterRenderer::PrefilterRenderer()
 	{
@@ -85,29 +87,15 @@ namespace maple
 
 		cube = Mesh::createCube();
 
-		DescriptorInfo info;
-		info.layoutIndex = 0;
+		cubeMapSet = DescriptorSet::create({0, cubeMapShader.get()});
 
-		info.shader = cubeMapShader.get();
-		cubeMapSet  = DescriptorSet::create(info);
+		irradianceSet = DescriptorSet::create({0, irradianceShader.get()});
 
-		info.shader   = irradianceShader.get();
-		irradianceSet = DescriptorSet::create(info);
-
-		info.shader  = prefilterShader.get();
-		prefilterSet = DescriptorSet::create(info);
+		prefilterSet = DescriptorSet::create({0, prefilterShader.get()});
 
 		skyboxDepth = TextureDepth::create(SkyboxSize, SkyboxSize);
 		createPipeline();
 		updateUniform();
-	}
-
-	auto PrefilterRenderer::begin() -> void
-	{
-	}
-
-	auto PrefilterRenderer::end() -> void
-	{
 	}
 
 	auto PrefilterRenderer::renderScene() -> void
@@ -157,7 +145,7 @@ namespace maple
 	{
 		if (envComponent)
 		{
-			irradianceSet->setTexture("uCubeMapSampler", envComponent->getEnvironment());
+			irradianceSet->setTexture("uCubeMapSampler", skyboxCube);
 			irradianceSet->update();
 		}
 	}
@@ -166,8 +154,8 @@ namespace maple
 	{
 		if (envComponent)
 		{
-			prefilterSet->setTexture("uCubeMapSampler", envComponent->getEnvironment());
-			irradianceSet->update();
+			prefilterSet->setTexture("uCubeMapSampler", skyboxCube);
+			prefilterSet->update();
 		}
 	}
 
@@ -230,10 +218,11 @@ namespace maple
 
 		for (auto faceId = 0; faceId < 6; faceId++)
 		{
-			auto fb = pipeline->bind(cmd, 0, faceId);
+			auto  fb        = pipeline->bind(cmd, 0, faceId);
+			auto &constants = irradianceShader->getPushConstants();
 
-			irradianceSet->setUniformBufferData("UniformBufferObject", &captureProjView[faceId]);
-			irradianceSet->update();
+			constants[0].setValue("projView", glm::value_ptr(captureProjView[faceId]));
+			irradianceShader->bindPushConstants(cmd, pipeline.get());
 
 			Application::getRenderDevice()->bindDescriptorSets(pipeline.get(), cmd, 0, {irradianceSet});
 			Renderer::drawMesh(cmd, pipeline.get(), cube.get());
@@ -266,13 +255,16 @@ namespace maple
 		for (auto mip = 0; mip < maxMipLevels; ++mip)
 		{
 			auto roughness = (float) mip / (float) (maxMipLevels - 1);
-			prefilterSet->setUniformBufferData("UniformBufferRoughness", &roughness);
+
+			prefilterSet->setUniform("UniformBufferRoughness", "constRoughness", &roughness, true);
+
 			for (auto faceId = 0; faceId < 6; faceId++)
 			{
 				auto fb = pipeline->bind(cmd, 0, faceId, mip);
 
-				prefilterSet->setUniformBufferData("UniformBufferObject", &captureProjView[faceId]);
-				prefilterSet->update();
+				auto &constants = prefilterShader->getPushConstants();
+				constants[0].setValue("projView", glm::value_ptr(captureProjView[faceId]));
+				prefilterShader->bindPushConstants(cmd, pipeline.get());
 
 				Application::getRenderDevice()->bindDescriptorSets(pipeline.get(), cmd, 0, {prefilterSet});
 				Renderer::drawMesh(cmd, pipeline.get(), cube.get());

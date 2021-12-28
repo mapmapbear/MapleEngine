@@ -43,7 +43,7 @@ namespace maple
 				layers.emplace_back(VK_LAYER_LUNARG_VALIDATION_NAME);
 			}
 
-		//	layers.emplace_back(VK_LAYER_RENDERDOC_CAPTURE_NAME);
+			//	layers.emplace_back(VK_LAYER_RENDERDOC_CAPTURE_NAME);
 			return layers;
 		}
 
@@ -219,7 +219,7 @@ namespace maple
 		{
 			VkDebugReportCallbackCreateInfoEXT createInfo = {};
 			createInfo.sType                              = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
-			createInfo.flags                              = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
+			createInfo.flags                              = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT | VK_DEBUG_REPORT_INFORMATION_BIT_EXT;
 			createInfo.pfnCallback                        = reinterpret_cast<PFN_vkDebugReportCallbackEXT>(debugCallback);
 			if (createDebugReportCallbackEXT(vkInstance, &createInfo, nullptr, &reportCallback) != VK_SUCCESS)
 			{
@@ -289,6 +289,17 @@ namespace maple
 		createInfo.ppEnabledExtensionNames = instanceExtensionNames.data();
 		createInfo.enabledLayerCount       = static_cast<uint32_t>(instanceLayerNames.size());
 		createInfo.ppEnabledLayerNames     = instanceLayerNames.data();
+
+		VkValidationFeatureEnableEXT enabled[] = {VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT};
+		VkValidationFeaturesEXT      features{VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT};
+		features.disabledValidationFeatureCount = 0;
+		features.enabledValidationFeatureCount  = 1;
+		features.pDisabledValidationFeatures    = nullptr;
+		features.pEnabledValidationFeatures     = enabled;
+		features.pNext                          = createInfo.pNext;
+
+		createInfo.pNext                        = &features;
+
 		VK_CHECK_RESULT(vkCreateInstance(&createInfo, nullptr, &vkInstance));
 	}
 

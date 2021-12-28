@@ -291,6 +291,14 @@ namespace maple
 		}
 	};
 
+	struct RenderGraph::SkyboxData
+	{
+		std::shared_ptr<Mesh>          skyboxMesh;
+		std::shared_ptr<Shader>        skyboxShader;
+		std::shared_ptr<DescriptorSet> skyboxDescriptorSet;
+		glm::mat4                      projView;
+	};
+
 	RenderGraph::RenderGraph()
 	{
 		renderers.resize(static_cast<int32_t>(RenderId::Length));
@@ -312,14 +320,14 @@ namespace maple
 		forwardData  = new ForwardData();
 		deferredData = new DeferredData();
 		previewData  = new PreviewData();
-
+		skyboxData   = new SkyboxData();
 		{
-			skyboxShader = Shader::create("shaders/Skybox.shader");
-			skyboxMesh   = Mesh::createCube();
+			skyboxData->skyboxShader = Shader::create("shaders/Skybox.shader");
+			skyboxData->skyboxMesh   = Mesh::createCube();
 			DescriptorInfo descriptorInfo{};
-			descriptorInfo.layoutIndex = 0;
-			descriptorInfo.shader      = skyboxShader.get();
-			skyboxDescriptorSet        = DescriptorSet::create(descriptorInfo);
+			descriptorInfo.layoutIndex      = 0;
+			descriptorInfo.shader           = skyboxData->skyboxShader.get();
+			skyboxData->skyboxDescriptorSet = DescriptorSet::create(descriptorInfo);
 		}
 
 		{
@@ -393,9 +401,9 @@ namespace maple
 					forwardData->irradianceMap  = nullptr;
 
 					DescriptorInfo descriptorDesc{};
-					descriptorDesc.layoutIndex = 0;
-					descriptorDesc.shader      = skyboxShader.get();
-					skyboxDescriptorSet        = DescriptorSet::create(descriptorDesc);
+					descriptorDesc.layoutIndex      = 0;
+					descriptorDesc.shader           = skyboxData->skyboxShader.get();
+					skyboxData->skyboxDescriptorSet = DescriptorSet::create(descriptorDesc);
 				}
 			}
 			else
@@ -411,10 +419,9 @@ namespace maple
 				}
 			}
 
-			auto inverseCamerm = view;
-			inverseCamerm[3]   = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-			auto projView      = proj * inverseCamerm;
-			skyboxDescriptorSet->setUniform("UniformBufferObject", "viewProj", &projView);
+			auto inverseCamerm   = view;
+			inverseCamerm[3]     = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+			skyboxData->projView = proj * inverseCamerm;
 			prefilterRenderer->beginScene(scene);
 		}
 
@@ -453,7 +460,7 @@ namespace maple
 			}
 
 			auto descriptorSet = settings.deferredRender ? deferredData->descriptorLightSet[0] : forwardData->descriptorSet[2];
-			descriptorSet->setUniform("UniformBufferLight", "lights", lights, sizeof(LightData) * numLights);
+			descriptorSet->setUniform("UniformBufferLight", "lights", lights, sizeof(LightData) * numLights,false);
 			auto cameraPos = glm::vec4{camera.second->getWorldPosition(), 1.f};
 			descriptorSet->setUniform("UniformBufferLight", "cameraPosition", &cameraPos);
 		}
@@ -1033,7 +1040,7 @@ namespace maple
 		}
 
 		PipelineInfo pipelineInfo{};
-		pipelineInfo.shader = skyboxShader;
+		pipelineInfo.shader = skyboxData->skyboxShader;
 
 		pipelineInfo.polygonMode         = PolygonMode::Fill;
 		pipelineInfo.cullMode            = CullMode::Front;
@@ -1046,21 +1053,26 @@ namespace maple
 		skyboxPipeline->bind(getCommandBuffer());
 		if (forwardData->cubeMapMode == 0)
 		{
-			skyboxDescriptorSet->setTexture("uCubeMap", forwardData->skybox);
+			skyboxData->skyboxDescriptorSet->setTexture("uCubeMap", forwardData->skybox);
 		}
 		else if (forwardData->cubeMapMode == 1)
 		{
-			skyboxDescriptorSet->setTexture("uCubeMap", forwardData->environmentMap);
+			skyboxData->skyboxDescriptorSet->setTexture("uCubeMap", forwardData->environmentMap);
 		}
 		else if (forwardData->cubeMapMode == 2)
 		{
-			skyboxDescriptorSet->setTexture("uCubeMap", forwardData->irradianceMap);
+			skyboxData->skyboxDescriptorSet->setTexture("uCubeMap", forwardData->irradianceMap);
 		}
 
-		skyboxDescriptorSet->setUniform("UniformBufferObjectLod", "lodLevel", &forwardData->cubeMapLevel);
-		skyboxDescriptorSet->update();
-		Renderer::bindDescriptorSets(skyboxPipeline.get(), getCommandBuffer(), 0, {skyboxDescriptorSet});
-		Renderer::drawMesh(getCommandBuffer(), skyboxPipeline.get(), skyboxMesh.get());
+		skyboxData->skyboxDescriptorSet->setUniform("UniformBufferObjectLod", "lodLevel", &forwardData->cubeMapLevel);
+		skyboxData->skyboxDescriptorSet->update();
+
+		auto &constants = skyboxData->skyboxShader->getPushConstants();
+		constants[0].setValue("projView", glm::value_ptr(skyboxData->projView));
+		skyboxData->skyboxShader->bindPushConstants(getCommandBuffer(), skyboxPipeline.get());
+
+		Renderer::bindDescriptorSets(skyboxPipeline.get(), getCommandBuffer(), 0, {skyboxData->skyboxDescriptorSet});
+		Renderer::drawMesh(getCommandBuffer(), skyboxPipeline.get(), skyboxData->skyboxMesh.get());
 		skyboxPipeline->end(getCommandBuffer());
 	}
 
@@ -1269,7 +1281,7 @@ namespace maple
 		Application::getRenderDevice()->bindDescriptorSets(pipeline.get(), getCommandBuffer(), 0, {finalDescriptorSet});
 
 		Renderer::bindDescriptorSets(pipeline.get(), getCommandBuffer(), 0, {finalDescriptorSet});
-		Renderer::drawMesh(getCommandBuffer(), skyboxPipeline.get(), skyboxMesh.get());
+		Renderer::drawMesh(getCommandBuffer(), skyboxPipeline.get(), skyboxData->skyboxMesh.get());
 
 		pipeline->end(getCommandBuffer());
 	}

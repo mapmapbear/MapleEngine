@@ -166,7 +166,8 @@ namespace maple
 			vkCmdPushConstants(
 			    static_cast<VulkanCommandBuffer *>(cmdBuffer)->getCommandBuffer(),
 			    static_cast<VulkanPipeline *>(pipeline)->getPipelineLayout(),
-			    VkConverter::shaderTypeToVK(pc.shaderStage), index, pc.size, pc.data.data());
+			    VkConverter::shaderTypeToVK(pc.shaderStage)
+				, index, pc.size, pc.data.data());
 		}
 	}
 

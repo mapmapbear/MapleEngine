@@ -64,7 +64,7 @@ namespace maple
 
 		shader      = info.shader;
 		descriptors = shader->getDescriptorInfo(info.layoutIndex);
-
+		uniformBuffers.resize(framesInFlight);
 		for (auto &descriptor : descriptors.descriptors)
 		{
 			if (descriptor.type == DescriptorType::UniformBuffer)
@@ -91,10 +91,10 @@ namespace maple
 			}
 		}
 
+		descriptorSet.resize(framesInFlight, nullptr);
 		for (uint32_t frame = 0; frame < framesInFlight; frame++)
 		{
 			descriptorDirty[frame] = true;
-			descriptorSet[frame]   = nullptr;
 			VK_CHECK_RESULT(vkAllocateDescriptorSets(*VulkanDevice::get(), &descriptorSetAllocateInfo, &descriptorSet[frame]));
 		}
 
@@ -118,7 +118,11 @@ namespace maple
 		{
 			if (bufferInfo.second.hasUpdated[currentFrame])
 			{
-				uniformBuffers[currentFrame][bufferInfo.first]->setData(bufferInfo.second.localStorage.data);
+				if (bufferInfo.second.dynamic)
+					uniformBuffers[currentFrame][bufferInfo.first]->setDynamicData(bufferInfo.second.localStorage.size, 0, bufferInfo.second.localStorage.data);
+				else
+					uniformBuffers[currentFrame][bufferInfo.first]->setData(bufferInfo.second.localStorage.data);
+
 				bufferInfo.second.hasUpdated[currentFrame] = false;
 			}
 		}
@@ -224,7 +228,7 @@ namespace maple
 		return nullptr;
 	}
 
-	auto VulkanDescriptorSet::setUniform(const std::string &bufferName, const std::string &uniformName, const void *data) -> void
+	auto VulkanDescriptorSet::setUniform(const std::string &bufferName, const std::string &uniformName, const void *data, bool dynamic) -> void
 	{
 		PROFILE_FUNCTION();
 		if (auto iter = uniformBuffersData.find(bufferName); iter != uniformBuffersData.end())
@@ -237,6 +241,7 @@ namespace maple
 					iter->second.hasUpdated[0] = true;
 					iter->second.hasUpdated[1] = true;
 					iter->second.hasUpdated[2] = true;
+					iter->second.dynamic       = dynamic;
 					return;
 				}
 			}
@@ -244,7 +249,7 @@ namespace maple
 		LOGW("Uniform not found {0}.{1}", bufferName, uniformName);
 	}
 
-	auto VulkanDescriptorSet::setUniform(const std::string &bufferName, const std::string &uniformName, const void *data, uint32_t size) -> void
+	auto VulkanDescriptorSet::setUniform(const std::string &bufferName, const std::string &uniformName, const void *data, uint32_t size, bool dynamic) -> void
 	{
 		PROFILE_FUNCTION();
 		if (auto iter = uniformBuffersData.find(bufferName); iter != uniformBuffersData.end())
@@ -257,6 +262,7 @@ namespace maple
 					iter->second.hasUpdated[0] = true;
 					iter->second.hasUpdated[1] = true;
 					iter->second.hasUpdated[2] = true;
+					iter->second.dynamic       = dynamic;
 					return;
 				}
 			}

@@ -1,4 +1,4 @@
 
 
 @echo off
-for %%i in (*.vert *.frag) do "C:\VulkanSDK\1.2.162.1\Bin\glslangValidator.exe " -V "%%~i" -o "../spv/%%~i.spv"
+for %%i in (*.vert *.frag) do "C:\VulkanSDK\1.2.141.2\Bin\glslangValidator.exe " -V "%%~i" -o "../spv/%%~i.spv"

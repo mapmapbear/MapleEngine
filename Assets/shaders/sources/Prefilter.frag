@@ -8,12 +8,12 @@ layout (location = 0) in vec3 fragPos;
 
 layout (location = 0) out vec4 outColor;
 
-layout (set = 0,binding = 1) uniform UniformBufferRoughness
+layout (set = 0,binding = 0) uniform UniformBufferRoughness
 {
     float constRoughness;
 } ubo;
 
-layout (set = 0,binding = 2) uniform samplerCube uCubeMapSampler;
+layout (set = 0,binding = 1) uniform samplerCube uCubeMapSampler;
 
 const float PI = 3.14159265359;
 
