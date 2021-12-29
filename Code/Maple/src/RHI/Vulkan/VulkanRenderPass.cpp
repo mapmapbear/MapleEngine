@@ -41,7 +41,7 @@ namespace maple
 		}
 		else if (texture->getType() == TextureType::Depth)
 		{
-			attachment.format        = VulkanHelper::getDepthFormat();
+			attachment.format        = std::static_pointer_cast<VulkanTextureDepth>(texture)->getVkFormat();
 			attachment.initialLayout = std::static_pointer_cast<VulkanTextureDepth>(texture)->getImageLayout();
 			attachment.finalLayout   = attachment.initialLayout;
 			MAPLE_ASSERT(attachment.format != VK_FORMAT_UNDEFINED, "");
@@ -116,7 +116,7 @@ namespace maple
 
 			if (texture->getType() == TextureType::Color)
 			{
-				VkImageLayout         layout              = std::static_pointer_cast<VulkanTexture2D>(texture)->getImageLayout();
+				VkImageLayout         layout             = std::static_pointer_cast<VulkanTexture2D>(texture)->getImageLayout();
 				VkAttachmentReference colorAttachmentRef = {};
 				colorAttachmentRef.attachment            = uint32_t(i);
 				colorAttachmentRef.layout                = layout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR ? VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL : layout;

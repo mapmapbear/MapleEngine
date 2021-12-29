@@ -14,7 +14,7 @@ namespace maple
 	{
 		static constexpr bool StandardValidationLayer = false;
 		static constexpr bool AssistanceLayer         = false;
-		static constexpr bool EnableValidationLayers  = false;
+		static constexpr bool EnableValidationLayers  = true;
 	};
 
 	class VulkanDevice;

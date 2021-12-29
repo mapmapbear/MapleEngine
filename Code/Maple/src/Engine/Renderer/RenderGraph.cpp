@@ -460,7 +460,7 @@ namespace maple
 			}
 
 			auto descriptorSet = settings.deferredRender ? deferredData->descriptorLightSet[0] : forwardData->descriptorSet[2];
-			descriptorSet->setUniform("UniformBufferLight", "lights", lights, sizeof(LightData) * numLights,false);
+			descriptorSet->setUniform("UniformBufferLight", "lights", lights, sizeof(LightData) * numLights, false);
 			auto cameraPos = glm::vec4{camera.second->getWorldPosition(), 1.f};
 			descriptorSet->setUniform("UniformBufferLight", "cameraPosition", &cameraPos);
 		}
@@ -1101,19 +1101,27 @@ namespace maple
 			Renderer::bindDescriptorSets(pipeline.get(), commandBuffer, 0, deferredData->descriptorColorSet);
 			Renderer::drawMesh(commandBuffer, pipeline.get(), command.mesh);
 
-			/*	if (command.stencilPipelineInfo.stencilTest)
+			if (command.stencilPipelineInfo.stencilTest)
 			{
 				auto stencilPipeline = Pipeline::get(command.stencilPipelineInfo);
-				stencilPipeline->bind(commandBuffer);
+
+				if (commandBuffer)
+					commandBuffer->bindPipeline(stencilPipeline.get());
+				else
+					stencilPipeline->bind(commandBuffer);
+
 				auto &pushConstants = stencilShader->getPushConstants()[0];
 				pushConstants.setValue("transform", &command.transform);
 				stencilShader->bindPushConstants(commandBuffer, stencilPipeline.get());
 
 				Renderer::bindDescriptorSets(stencilPipeline.get(), commandBuffer, 0, {stencilDescriptorSet});
 				Renderer::drawMesh(commandBuffer, stencilPipeline.get(), command.mesh);
-				stencilPipeline->end(commandBuffer);
-			}*/
-			//pipeline->end(commandBuffer);
+
+				if (commandBuffer)
+					commandBuffer->unbindPipeline();
+				else
+					stencilPipeline->end(commandBuffer);
+			}
 		}
 
 		if (commandBuffer)

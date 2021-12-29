@@ -182,15 +182,6 @@ namespace maple
 		}
 	};
 
-	enum TextureFlags : uint16_t
-	{
-		Texture_Sampled              = BIT(0),
-		Texture_Storage              = BIT(1),
-		Texture_RenderTarget         = BIT(2),
-		Texture_DepthStencil         = BIT(3),
-		Texture_DepthStencilReadOnly = BIT(4)
-	};
-
 	enum class ImageLayout
 	{
 		Undefined,
@@ -223,10 +214,16 @@ namespace maple
 	{
 		Equal,
 		Notequal,
+		Always,
+		Never,
+		Less,
+		LessOrEqual,
+		Greater,
+		GreaterOrEqual,
+
 		Keep,
 		Replace,
 		Zero,
-		Always
 	};
 
 	enum class PixelPackType : int32_t

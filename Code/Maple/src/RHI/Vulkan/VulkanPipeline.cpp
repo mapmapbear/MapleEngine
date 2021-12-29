@@ -23,25 +23,70 @@ namespace maple
 {
 	namespace
 	{
-		inline auto createDepthStencil(VkPipelineDepthStencilStateCreateInfo &ds) -> void
+		inline auto convertCompareOp(StencilType type)
+		{
+			switch (type)
+			{
+				case maple::StencilType::Equal:
+					return VK_COMPARE_OP_EQUAL;
+				case maple::StencilType::Notequal:
+					return VK_COMPARE_OP_NOT_EQUAL;
+				case maple::StencilType::Always:
+					return VK_COMPARE_OP_ALWAYS;
+				case StencilType::Never:
+					return VK_COMPARE_OP_NEVER;
+				case StencilType::Less:
+					return VK_COMPARE_OP_LESS;
+				case StencilType::LessOrEqual:
+					return VK_COMPARE_OP_LESS_OR_EQUAL;
+				case StencilType::Greater:
+					return VK_COMPARE_OP_GREATER;
+				case StencilType::GreaterOrEqual:
+					return VK_COMPARE_OP_GREATER_OR_EQUAL;
+				case maple::StencilType::Keep:
+				case maple::StencilType::Replace:
+				case maple::StencilType::Zero:
+					throw std::logic_error("Compare Op should not be Keep/Replace/Zero");
+			}
+
+			return VK_COMPARE_OP_LESS_OR_EQUAL;
+		}
+
+		inline auto convertStencilOp(StencilType type)
+		{
+			switch (type)
+			{
+				case maple::StencilType::Keep:
+					return VK_STENCIL_OP_KEEP;
+				case maple::StencilType::Replace:
+					return VK_STENCIL_OP_REPLACE;
+				case maple::StencilType::Zero:
+					return VK_STENCIL_OP_ZERO;
+			}
+			throw std::logic_error("Compare Op should be Keep/Replace/Zero");
+		}
+
+		inline auto createDepthStencil(VkPipelineDepthStencilStateCreateInfo &ds, const PipelineInfo &info) -> void
 		{
 			ds.sType                 = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
 			ds.pNext                 = NULL;
 			ds.depthTestEnable       = VK_TRUE;
-			ds.depthWriteEnable      = VK_TRUE;
+			ds.depthWriteEnable      = info.depthTest ? VK_TRUE : VK_FALSE;
 			ds.depthCompareOp        = VK_COMPARE_OP_LESS_OR_EQUAL;
 			ds.depthBoundsTestEnable = VK_FALSE;
-			ds.stencilTestEnable     = VK_FALSE;
-			ds.back.failOp           = VK_STENCIL_OP_KEEP;
-			ds.back.passOp           = VK_STENCIL_OP_KEEP;
-			ds.back.compareOp        = VK_COMPARE_OP_ALWAYS;
-			ds.back.compareMask      = 0;
-			ds.back.reference        = 0;
-			ds.back.depthFailOp      = VK_STENCIL_OP_KEEP;
-			ds.back.writeMask        = 0;
-			ds.minDepthBounds        = 0;
-			ds.maxDepthBounds        = 0;
-			ds.front                 = ds.back;
+			ds.stencilTestEnable     = info.stencilTest ? VK_TRUE : VK_FALSE;
+
+			ds.back.failOp      = convertStencilOp(info.stencilFail);
+			ds.back.passOp      = convertStencilOp(info.stencilDepthPass);
+			ds.back.compareOp   = convertCompareOp(info.stencilFunc);
+			ds.back.compareMask = 0xFF;
+			ds.back.reference   = 1;
+			ds.back.depthFailOp = convertStencilOp(info.stencilDepthFail);
+			ds.back.writeMask   = info.stencilMask;
+
+			ds.minDepthBounds = 0;
+			ds.maxDepthBounds = 0;
+			ds.front          = ds.back;
 		}
 
 		inline auto createMultisample(VkPipelineMultisampleStateCreateInfo &ms) -> void
@@ -233,7 +278,7 @@ namespace maple
 		}
 
 		VkPipelineDepthStencilStateCreateInfo ds{};
-		createDepthStencil(ds);
+		createDepthStencil(ds, info);
 		VkPipelineMultisampleStateCreateInfo ms{};
 		createMultisample(ms);
 

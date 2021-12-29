@@ -107,7 +107,7 @@ namespace maple
 
 		auto getSupportedDepthFormat(VkPhysicalDevice physicalDevice, VkFormat *depthFormat) -> VkBool32;
 		auto getSupportedFormat(const std::vector<VkFormat> &candidates, VkImageTiling tiling, VkFormatFeatureFlags features) -> VkFormat;
-		auto getDepthFormat() -> VkFormat;
+		auto getDepthFormat(bool stencil = false) -> VkFormat;
 
 		inline auto semaphoreCreateInfo()
 		{

@@ -53,23 +53,6 @@ namespace maple
 			return format == TextureFormat::STENCIL;
 		}
 
-		inline auto isSampled() const
-		{
-			return flags & Texture_Sampled;
-		}
-		inline auto isStorage() const
-		{
-			return flags & Texture_Storage;
-		}
-		inline auto isDepthStencil() const
-		{
-			return flags & Texture_DepthStencil;
-		}
-		inline auto isRenderTarget() const
-		{
-			return flags & Texture_RenderTarget;
-		}
-
 		virtual auto setName(const std::string &name) -> void
 		{
 			this->name = name;

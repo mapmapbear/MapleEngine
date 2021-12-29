@@ -504,7 +504,7 @@ namespace maple
 	auto VulkanTextureDepth::init(CommandBuffer *commandBuffer) -> void
 	{
 		PROFILE_FUNCTION();
-		vkFormat = VulkanHelper::getDepthFormat();
+		vkFormat = VulkanHelper::getDepthFormat(stencil);
 		format   = TextureFormat::DEPTH;
 
 #ifdef USE_VMA_ALLOCATOR

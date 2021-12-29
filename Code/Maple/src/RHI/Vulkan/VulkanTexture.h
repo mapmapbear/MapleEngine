@@ -215,6 +215,11 @@ namespace maple
 		}
 		auto updateDescriptor() -> void;
 
+		inline auto getVkFormat() const
+		{
+			return vkFormat;
+		}
+
 	  protected:
 		auto init(CommandBuffer *commandBuffer = nullptr) -> void;
 		auto release() -> void;
@@ -429,7 +434,6 @@ namespace maple
 		{
 			return imageLayout;
 		}
-
 
 		auto getHandleArray(uint32_t index) -> void * override;
 		auto updateDescriptor() -> void;

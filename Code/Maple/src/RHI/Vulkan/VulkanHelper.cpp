@@ -5,12 +5,12 @@
 #include "VulkanHelper.h"
 #include "Engine/Vertex.h"
 #include "Others/Console.h"
+#include "VulkanCommandBuffer.h"
 #include "VulkanCommandPool.h"
 #include "VulkanContext.h"
 #include "VulkanDescriptorSet.h"
 #include "VulkanDevice.h"
 #include "VulkanSwapChain.h"
-#include "VulkanCommandBuffer.h"
 
 #include <string>
 
@@ -381,7 +381,6 @@ namespace maple
 		return indices;
 	}
 
-
 	auto VulkanHelper::createBuffer(VkBuffer &buffer, VkDeviceMemory &bufferMemory, VkPhysicalDevice physicalDevice, VkDevice device, VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBufferCreateFlags flags /*= 0*/, VkSharingMode sharingMode /*= VK_SHARING_MODE_EXCLUSIVE*/, const std::vector<uint32_t> &queueFamilyIndices /*= {}*/) -> void
 	{
 		VkBufferCreateInfo bufferInfo    = {};
@@ -516,8 +515,15 @@ namespace maple
 		throw std::runtime_error("failed to find supported format!");
 	}
 
-	auto VulkanHelper::getDepthFormat() -> VkFormat
+	auto VulkanHelper::getDepthFormat(bool stencil) -> VkFormat
 	{
+		if (stencil)
+		{
+			return getSupportedFormat(
+			    {VK_FORMAT_D24_UNORM_S8_UINT, VK_FORMAT_D32_SFLOAT_S8_UINT},
+			    VK_IMAGE_TILING_OPTIMAL,
+			    VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
+		}
 		return getSupportedFormat(
 		    {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
 		    VK_IMAGE_TILING_OPTIMAL,
@@ -599,8 +605,6 @@ namespace maple
 		return actualExtent;
 	}
 
-
-	
 	auto VulkanHelper::createImageView(VkImage image, VkFormat format, uint32_t mipLevels, VkImageViewType viewType, VkImageAspectFlags aspectMask, uint32_t layerCount, uint32_t baseArrayLayer, uint32_t baseMipLevel) -> VkImageView
 	{
 		PROFILE_FUNCTION();
