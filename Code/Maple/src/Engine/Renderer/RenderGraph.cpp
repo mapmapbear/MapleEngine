@@ -592,15 +592,19 @@ namespace maple
 
 						if (registry.try_get<StencilComponent>(entity) != nullptr)
 						{
-							pipelineInfo.shader           = stencilShader;
-							pipelineInfo.stencilTest      = true;
-							pipelineInfo.stencilMask      = 0x00;
-							pipelineInfo.stencilFunc      = StencilType::Notequal;
-							pipelineInfo.stencilFail      = StencilType::Keep;
-							pipelineInfo.stencilDepthFail = StencilType::Keep;
-							pipelineInfo.stencilDepthPass = StencilType::Replace;
-							pipelineInfo.depthTest        = true;
-							cmd.stencilPipelineInfo       = pipelineInfo;
+							pipelineInfo.shader                     = stencilShader;
+							pipelineInfo.stencilTest                = true;
+							pipelineInfo.stencilMask                = 0x00;
+							pipelineInfo.stencilFunc                = StencilType::Notequal;
+							pipelineInfo.stencilFail                = StencilType::Keep;
+							pipelineInfo.stencilDepthFail           = StencilType::Keep;
+							pipelineInfo.stencilDepthPass           = StencilType::Replace;
+							pipelineInfo.depthTest                  = true;
+							cmd.stencilPipelineInfo                 = pipelineInfo;
+							cmd.stencilPipelineInfo.colorTargets[0] = forwardData->renderTexture;
+							cmd.stencilPipelineInfo.colorTargets[1] = nullptr;
+							cmd.stencilPipelineInfo.colorTargets[2] = nullptr;
+							cmd.stencilPipelineInfo.colorTargets[3] = nullptr;
 
 							pipelineInfo.shader           = settings.deferredRender ? deferredData->deferredColorShader : forwardData->shader;
 							pipelineInfo.stencilMask      = 0xFF;

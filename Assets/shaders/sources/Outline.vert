@@ -25,21 +25,14 @@ out gl_PerVertex
 };
 
 
-layout(location = 0) out vec3 fragColor;
-layout(location = 1) out vec2 fragTexCoord;
-layout(location = 2) out vec4 fragPosition;
-layout(location = 3) out vec3 fragNormal;
-layout(location = 4) out vec3 fragTangent;
-
-
 void main() 
 {
-    const float outlineWidth = 0.02;
+    const float outlineWidth = 0.03;
 	// Extrude along normal
-    fragNormal = transpose(inverse(mat3(pushConsts.transform))) * normalize(inNormal);
-    fragColor = inColor.xyz;
-	fragTexCoord = inTexCoord;
+    vec3 fragNormal = transpose(inverse(mat3(pushConsts.transform))) * normalize(inNormal);
+    vec3 fragColor = inColor.xyz;
+	vec2 fragTexCoord = inTexCoord;
 
-	fragPosition = vec4(inPosition + inNormal * outlineWidth,1.0);
+	vec4 fragPosition = vec4(inPosition + fragNormal * outlineWidth ,1.0);
 	gl_Position = ubo.projView * pushConsts.transform * fragPosition;
 }

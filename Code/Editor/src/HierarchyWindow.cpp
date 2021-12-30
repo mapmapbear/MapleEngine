@@ -2,26 +2,26 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #include "HierarchyWindow.h"
-#include "Engine/GBuffer.h"
 #include "Editor.h"
+#include "Engine/GBuffer.h"
 #include "IconsMaterialDesignIcons.h"
 #include "Scene/Scene.h"
 
 #include "Engine/Camera.h"
-#include "Scene/Component/Component.h"
-#include "Scene/SceneManager.h"
-#include "Scene/Scene.h"
-#include "Scene/Entity/EntityManager.h"
-#include "Scene/Entity/Entity.h"
-#include "Scene/Component/Light.h"
-#include "Scene/Component/Sprite.h"
-#include "Scene/Component/MeshRenderer.h"
 #include "Engine/Mesh.h"
+#include "Scene/Component/Component.h"
+#include "Scene/Component/Light.h"
+#include "Scene/Component/MeshRenderer.h"
+#include "Scene/Component/Sprite.h"
+#include "Scene/Entity/Entity.h"
+#include "Scene/Entity/EntityManager.h"
+#include "Scene/Scene.h"
+#include "Scene/SceneManager.h"
 
 #include "ImGui/ImGuiHelpers.h"
 
-#include "imgui_internal.h"
 #include "Others/Console.h"
+#include "imgui_internal.h"
 constexpr size_t INPUT_BUFFER = 256;
 
 namespace maple
@@ -31,31 +31,30 @@ namespace maple
 		title = "Hierarchy";
 	}
 
-	auto HierarchyWindow::onImGui() -> void 
+	auto HierarchyWindow::onImGui() -> void
 	{
 		const auto flags = ImGuiWindowFlags_NoCollapse;
 
-
 		ImGui::Begin(title.c_str(), &active, flags);
 		{
-			if (ImGui::IsMouseClicked(1) && ImGui::IsWindowFocused()) {
+			if (ImGui::IsMouseClicked(1) && ImGui::IsWindowFocused())
+			{
 				ImGui::OpenPopup("HierarchyWindow::PopupWindow");
 			}
 			popupWindow();
 			drawName();
 			drawFilter();
 			dragEntity();
-
 		}
 		ImGui::End();
 	}
 
-	auto HierarchyWindow::drawName()-> void
+	auto HierarchyWindow::drawName() -> void
 	{
-		auto scene = Application::get()->getSceneManager()->getCurrentScene();
-		auto& registry = scene->getRegistry();
+		auto  scene    = Application::get()->getSceneManager()->getCurrentScene();
+		auto &registry = scene->getRegistry();
 
-		const auto& sceneName = scene->getName();
+		const auto &sceneName = scene->getName();
 
 		static char objName[INPUT_BUFFER];
 		strcpy(objName, sceneName.c_str());
@@ -66,11 +65,11 @@ namespace maple
 		ImGui::Separator();
 	}
 
-	auto HierarchyWindow::popupWindow()-> void
+	auto HierarchyWindow::popupWindow() -> void
 	{
-		auto scene = Application::get()->getSceneManager()->getCurrentScene();
-		auto& registry = scene->getRegistry();
-		ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding,10.f);
+		auto  scene    = Application::get()->getSceneManager()->getCurrentScene();
+		auto &registry = scene->getRegistry();
+		ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 10.f);
 		if (ImGui::BeginPopupContextWindow("HierarchyWindow::PopupWindow"))
 		{
 			if (ImGui::Selectable("Add Empty Entity"))
@@ -85,7 +84,7 @@ namespace maple
 				entity.getOrAddComponent<Transform>();
 			}
 
-			const char* shapes[] = { "Sphere", "Cube", "Pyramid", "Capsule", "Cylinder", "Terrain", "Quad" };
+			const char *shapes[] = {"Sphere", "Cube", "Pyramid", "Capsule", "Cylinder", "Terrain", "Quad"};
 
 			ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 10.f);
 			if (ImGui::BeginMenu("Add 3D Object"))
@@ -94,16 +93,25 @@ namespace maple
 				{
 					if (ImGui::MenuItem(name))
 					{
-						if (strcmp("Cube", name) == 0) {
-							auto entity = scene->createEntity(name);
+						if (strcmp("Cube", name) == 0)
+						{
+							auto entity                       = scene->createEntity(name);
 							entity.addComponent<Model>().type = PrimitiveType::Cube;
-							auto& meshRender = entity.addComponent<MeshRenderer>(Mesh::createCube());
+							auto &meshRender                  = entity.addComponent<MeshRenderer>(Mesh::createCube());
 						}
 
-						if (strcmp("Sphere", name) == 0) {
-							auto entity = scene->createEntity(name);
+						if (strcmp("Sphere", name) == 0)
+						{
+							auto entity                       = scene->createEntity(name);
 							entity.addComponent<Model>().type = PrimitiveType::Sphere;
-							auto& meshRender = entity.addComponent<MeshRenderer>(Mesh::createSphere());
+							auto &meshRender                  = entity.addComponent<MeshRenderer>(Mesh::createSphere());
+						}
+
+						if (strcmp("Pyramid", name) == 0)
+						{
+							auto entity                       = scene->createEntity(name);
+							entity.addComponent<Model>().type = PrimitiveType::Pyramid;
+							auto &meshRender                  = entity.addComponent<MeshRenderer>(Mesh::createPyramid());
 						}
 					}
 				}
@@ -112,8 +120,8 @@ namespace maple
 			ImGui::PopStyleVar();
 			if (ImGui::Selectable("Add Camera"))
 			{
-				auto entity = scene->createEntity("Camera");
-				auto& camera = entity.addComponent<Camera>();
+				auto  entity = scene->createEntity("Camera");
+				auto &camera = entity.addComponent<Camera>();
 				camera.setFov(45.f);
 				camera.setFar(100);
 				camera.setNear(0.01);
@@ -133,7 +141,7 @@ namespace maple
 		ImGui::PopStyleVar();
 	}
 
-	auto HierarchyWindow::drawFilter()-> void
+	auto HierarchyWindow::drawFilter() -> void
 	{
 		ImGui::PushStyleColor(ImGuiCol_MenuBarBg, ImGui::GetStyleColorVec4(ImGuiCol_TabActive));
 		ImGui::TextUnformatted(ICON_MDI_MAGNIFY);
@@ -143,17 +151,17 @@ namespace maple
 		ImGui::Unindent();
 	}
 
-	auto HierarchyWindow::dragEntity()-> void
+	auto HierarchyWindow::dragEntity() -> void
 	{
-		auto scene = Application::get()->getSceneManager()->getCurrentScene();
-		auto& registry = scene->getRegistry();
+		auto  scene    = Application::get()->getSceneManager()->getCurrentScene();
+		auto &registry = scene->getRegistry();
 
 		if (ImGui::BeginDragDropTarget())
 		{
-			if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Drag_Entity"))
+			if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("Drag_Entity"))
 			{
-				MAPLE_ASSERT(payload->DataSize == sizeof(entt::entity*), "Error ImGUI drag entity");
-				auto entity = *reinterpret_cast<entt::entity*>(payload->Data);
+				MAPLE_ASSERT(payload->DataSize == sizeof(entt::entity *), "Error ImGUI drag entity");
+				auto entity             = *reinterpret_cast<entt::entity *>(payload->Data);
 				auto hierarchyComponent = registry.try_get<Hierarchy>(entity);
 				if (hierarchyComponent)
 				{
@@ -184,15 +192,15 @@ namespace maple
 		minSpace.y += ImGui::GetWindowPos().y + 1.0f + yOffset;
 		minSpace.x += ImGui::GetWindowPos().x - 1.0f;
 		minSpace.y += ImGui::GetWindowPos().y - 1.0f + ImGui::GetScrollY();
-		ImRect bb{ minSpace, maxSpace };
+		ImRect bb{minSpace, maxSpace};
 
-		const ImGuiPayload* payload = ImGui::GetDragDropPayload();
+		const ImGuiPayload *payload = ImGui::GetDragDropPayload();
 		if (payload != NULL && payload->IsDataType("Drag_Entity"))
 		{
 			bool acceptable = false;
 
-			MAPLE_ASSERT(payload->DataSize == sizeof(entt::entity*), "Error ImGUI drag entity");
-			auto entity = *reinterpret_cast<entt::entity*>(payload->Data);
+			MAPLE_ASSERT(payload->DataSize == sizeof(entt::entity *), "Error ImGUI drag entity");
+			auto entity             = *reinterpret_cast<entt::entity *>(payload->Data);
 			auto hierarchyComponent = registry.try_get<Hierarchy>(entity);
 			if (hierarchyComponent)
 			{
@@ -201,10 +209,10 @@ namespace maple
 
 			if (acceptable && ImGui::BeginDragDropTargetCustom(bb, ImGui::GetID("Panel Hierarchy")))
 			{
-				if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("Drag_Entity"))
+				if (const ImGuiPayload *payload = ImGui::AcceptDragDropPayload("Drag_Entity"))
 				{
-					MAPLE_ASSERT(payload->DataSize == sizeof(entt::entity*), "Error ImGUI drag entity");
-					auto entity = *reinterpret_cast<entt::entity*>(payload->Data);
+					MAPLE_ASSERT(payload->DataSize == sizeof(entt::entity *), "Error ImGUI drag entity");
+					auto entity             = *reinterpret_cast<entt::entity *>(payload->Data);
 					auto hierarchyComponent = registry.try_get<Hierarchy>(entity);
 					if (hierarchyComponent)
 					{
@@ -218,19 +226,18 @@ namespace maple
 		}
 	}
 
-	auto HierarchyWindow::drawNode(const entt::entity& node, entt::registry& registry) -> void
+	auto HierarchyWindow::drawNode(const entt::entity &node, entt::registry &registry) -> void
 	{
 		bool show = true;
 
 		if (!registry.valid(node))
 			return;
-		Editor* editor = static_cast<Editor*>(Application::get());
+		Editor *editor = static_cast<Editor *>(Application::get());
 
 		auto scene = editor->getSceneManager()->getCurrentScene();
 
-
-		const auto nameComponent = registry.try_get<NameComponent>(node);
-		std::string name = nameComponent ? nameComponent->name : std::to_string(entt::to_integral(node));
+		const auto  nameComponent = registry.try_get<NameComponent>(node);
+		std::string name          = nameComponent ? nameComponent->name : std::to_string(entt::to_integral(node));
 
 		if (hierarchyFilter.IsActive())
 		{
@@ -243,7 +250,7 @@ namespace maple
 		if (show)
 		{
 			auto hierarchyComponent = registry.try_get<Hierarchy>(node);
-			bool noChildren = true;
+			bool noChildren         = true;
 
 			if (hierarchyComponent != nullptr && hierarchyComponent->getFirst() != entt::null)
 				noChildren = false;
@@ -258,7 +265,7 @@ namespace maple
 			}
 
 			auto activeComponent = registry.try_get<ActiveComponent>(node);
-			bool active = activeComponent ? activeComponent->active : true;
+			bool active          = activeComponent ? activeComponent->active : true;
 
 			if (!active)
 				ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
@@ -270,7 +277,7 @@ namespace maple
 			}
 
 			if (doubleClicked)
-				ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, { 1.0f, 2.0f });
+				ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {1.0f, 2.0f});
 
 			if (recentDroppedEntity == node)
 			{
@@ -278,8 +285,8 @@ namespace maple
 				recentDroppedEntity = entt::null;
 			}
 
-			std::string icon = ICON_MDI_CUBE_OUTLINE;
-			auto& iconMap = editor->getComponentIconMap();
+			std::string icon    = ICON_MDI_CUBE_OUTLINE;
+			auto &      iconMap = editor->getComponentIconMap();
 
 			if (registry.has<Light>(node))
 			{
@@ -292,10 +299,7 @@ namespace maple
 					icon = iconMap[typeid(Camera).hash_code()];
 			}
 
-
-
-			bool nodeOpen = ImGui::TreeNodeEx((void*)(intptr_t)entt::to_integral(node), nodeFlags, (icon + " %s").c_str(), doubleClicked ? "" : (name).c_str());
-
+			bool nodeOpen = ImGui::TreeNodeEx((void *) (intptr_t) entt::to_integral(node), nodeFlags, (icon + " %s").c_str(), doubleClicked ? "" : (name).c_str());
 
 			if (doubleClicked)
 			{
@@ -308,7 +312,6 @@ namespace maple
 					registry.get_or_emplace<NameComponent>(node).name = objName;
 				ImGui::PopStyleVar();
 			}
-
 
 			if (!active)
 				ImGui::PopStyleColor();
@@ -326,14 +329,14 @@ namespace maple
 				{
 					if (ImGui::Selectable("Paste"))
 					{
-						Entity copiedEntity = { editor->getCopiedEntity(), scene };
+						Entity copiedEntity = {editor->getCopiedEntity(), scene};
 						if (!copiedEntity.valid())
 						{
 							editor->setCopiedEntity(entt::null);
 						}
 						else
 						{
-							scene->duplicateEntity(copiedEntity, { node, scene });
+							scene->duplicateEntity(copiedEntity, {node, scene});
 
 							if (editor->isCutCopyEntity())
 								deleteEntity = true;
@@ -349,12 +352,12 @@ namespace maple
 
 				if (ImGui::Selectable("Duplicate"))
 				{
-					scene->duplicateEntity({ node , scene });
+					scene->duplicateEntity({node, scene});
 				}
 				if (ImGui::Selectable("Delete"))
 					deleteEntity = true;
 				if (editor->getSelected() == node)
-					editor->setSelected((entt::entity)entt::null);
+					editor->setSelected((entt::entity) entt::null);
 				ImGui::Separator();
 				if (ImGui::Selectable("Rename"))
 					doubleClickedEntity = node;
@@ -364,7 +367,7 @@ namespace maple
 				{
 					auto child = scene->getEntityManager()->create();
 
-					child.setParent({ node, scene });
+					child.setParent({node, scene});
 				}
 				ImGui::EndPopup();
 			}
@@ -373,19 +376,19 @@ namespace maple
 			if (!doubleClicked && ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
 			{
 				auto ptr = node;
-				ImGui::SetDragDropPayload("Drag_Entity", &ptr, sizeof(entt::entity*));
+				ImGui::SetDragDropPayload("Drag_Entity", &ptr, sizeof(entt::entity *));
 				ImGui::Text(ICON_MDI_ARROW_UP);
 				ImGui::EndDragDropSource();
 				draging = true;
 			}
 
-			const ImGuiPayload* payload = ImGui::GetDragDropPayload();
+			const ImGuiPayload *payload = ImGui::GetDragDropPayload();
 			if (payload != NULL && payload->IsDataType("Drag_Entity"))
 			{
 				draging = true;
 				bool acceptable;
-				MAPLE_ASSERT(payload->DataSize == sizeof(entt::entity*), "Error ImGUI drag entity");
-				auto entity = *reinterpret_cast<entt::entity*>(payload->Data);
+				MAPLE_ASSERT(payload->DataSize == sizeof(entt::entity *), "Error ImGUI drag entity");
+				auto entity             = *reinterpret_cast<entt::entity *>(payload->Data);
 				auto hierarchyComponent = registry.try_get<Hierarchy>(entity);
 				if (hierarchyComponent != nullptr)
 				{
@@ -439,18 +442,17 @@ namespace maple
 				return;
 			}
 
-		
 			if (nodeOpen == false)
 			{
 				return;
 			}
 
 			const ImColor TreeLineColor = ImColor(128, 128, 128, 128);
-			const float SmallOffsetX = 6.0f;
-			ImDrawList* drawList = ImGui::GetWindowDrawList();
+			const float   SmallOffsetX  = 6.0f;
+			ImDrawList *  drawList      = ImGui::GetWindowDrawList();
 
 			ImVec2 verticalLineStart = ImGui::GetCursorScreenPos();
-			verticalLineStart.x += SmallOffsetX; //to nicely line up with the arrow symbol
+			verticalLineStart.x += SmallOffsetX;        //to nicely line up with the arrow symbol
 			ImVec2 verticalLineEnd = verticalLineStart;
 
 			if (!noChildren)
@@ -458,8 +460,8 @@ namespace maple
 				entt::entity child = hierarchyComponent->getFirst();
 				while (child != entt::null && registry.valid(child))
 				{
-					float HorizontalTreeLineSize = 16.0f; //chosen arbitrarily
-					auto currentPos = ImGui::GetCursorScreenPos();
+					float HorizontalTreeLineSize = 16.0f;        //chosen arbitrarily
+					auto  currentPos             = ImGui::GetCursorScreenPos();
 					ImGui::Indent(10.0f);
 
 					auto childHerarchyComponent = registry.try_get<Hierarchy>(child);
@@ -484,7 +486,7 @@ namespace maple
 					if (registry.valid(child))
 					{
 						auto hierarchyComponent = registry.try_get<Hierarchy>(child);
-						child = hierarchyComponent ? hierarchyComponent->getNext() : entt::null;
+						child                   = hierarchyComponent ? hierarchyComponent->getNext() : entt::null;
 					}
 				}
 			}
@@ -494,7 +496,7 @@ namespace maple
 		}
 	}
 
-	auto HierarchyWindow::isParentOfEntity(entt::entity entity, entt::entity child, entt::registry& registry)-> bool
+	auto HierarchyWindow::isParentOfEntity(entt::entity entity, entt::entity child, entt::registry &registry) -> bool
 	{
 		auto nodeHierarchyComponent = registry.try_get<Hierarchy>(child);
 		if (nodeHierarchyComponent)
@@ -509,11 +511,10 @@ namespace maple
 				else
 				{
 					nodeHierarchyComponent = registry.try_get<Hierarchy>(parent);
-					parent = nodeHierarchyComponent ? nodeHierarchyComponent->getParent() : entt::null;
+					parent                 = nodeHierarchyComponent ? nodeHierarchyComponent->getParent() : entt::null;
 				}
 			}
 		}
 		return false;
 	}
-};
-
+};        // namespace maple

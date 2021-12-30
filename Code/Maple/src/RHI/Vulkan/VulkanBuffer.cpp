@@ -6,6 +6,7 @@
 #include "VulkanContext.h"
 #include "VulkanDevice.h"
 #include "VulkanHelper.h"
+#include "VulkanSwapChain.h"
 
 namespace maple
 {
@@ -141,12 +142,14 @@ namespace maple
 		PROFILE_FUNCTION();
 		if (buffer)
 		{
-			auto &queue  = VulkanContext::getDeletionQueue();
-			auto  buffer = this->buffer;
-
+			auto &queue    = VulkanContext::getDeletionQueue();
+			auto  buffer   = this->buffer;
+			auto  bufferId = VulkanContext::get()->getSwapChain()->getCurrentBufferIndex();
 #ifdef USE_VMA_ALLOCATOR
 			auto alloc = allocation;
-			queue.emplace([buffer, alloc] { vmaDestroyBuffer(VulkanDevice::get()->getAllocator(), buffer, alloc); });
+			queue.emplace([buffer, alloc, bufferId] { 
+				LOGI("bufferId : {0}",bufferId);
+				vmaDestroyBuffer(VulkanDevice::get()->getAllocator(), buffer, alloc); });
 #else
 
 			auto memory = this->memory;

@@ -380,6 +380,8 @@ namespace maple
 		{
 			VK_CHECK_RESULT(error);
 		}
+
+		VulkanContext::getDeletionQueue(currentBuffer).flush();
 	}
 
 	auto VulkanSwapChain::getFrameData() -> FrameData &

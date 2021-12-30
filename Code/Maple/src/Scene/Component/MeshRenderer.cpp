@@ -44,6 +44,9 @@ namespace maple
 				case PrimitiveType::File:
 					mesh = model->resource->find(name);
 					break;
+				case PrimitiveType::Pyramid:
+					mesh = Mesh::createPyramid();
+					break;
 			}
 		}
 		else
