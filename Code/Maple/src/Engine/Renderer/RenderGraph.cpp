@@ -605,7 +605,7 @@ namespace maple
 							cmd.stencilPipelineInfo.colorTargets[1] = nullptr;
 							cmd.stencilPipelineInfo.colorTargets[2] = nullptr;
 							cmd.stencilPipelineInfo.colorTargets[3] = nullptr;
-
+							 
 							pipelineInfo.shader           = settings.deferredRender ? deferredData->deferredColorShader : forwardData->shader;
 							pipelineInfo.stencilMask      = 0xFF;
 							pipelineInfo.stencilFunc      = StencilType::Always;
@@ -1104,6 +1104,7 @@ namespace maple
 			deferredData->deferredColorShader->bindPushConstants(commandBuffer, pipeline.get());
 			Renderer::bindDescriptorSets(pipeline.get(), commandBuffer, 0, deferredData->descriptorColorSet);
 			Renderer::drawMesh(commandBuffer, pipeline.get(), command.mesh);
+
 
 			if (command.stencilPipelineInfo.stencilTest)
 			{

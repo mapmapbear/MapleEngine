@@ -29,10 +29,14 @@ void main()
 {
     const float outlineWidth = 0.03;
 	// Extrude along normal
-    vec3 fragNormal = transpose(inverse(mat3(pushConsts.transform))) * normalize(inNormal);
-    vec3 fragColor = inColor.xyz;
+	vec4 position = pushConsts.transform * vec4(inPosition ,1.0);
+
+    vec4 fragColor = inColor;
 	vec2 fragTexCoord = inTexCoord;
 
-	vec4 fragPosition = vec4(inPosition + fragNormal * outlineWidth ,1.0);
-	gl_Position = ubo.projView * pushConsts.transform * fragPosition;
+	vec4 fragPosition = vec4(position.xyz +  inNormal * outlineWidth ,1.0);
+
+   // vec3 fragNormal = transpose(inverse(mat3(pushConsts.transform))) * normal;
+
+	gl_Position = ubo.projView * fragPosition;
 }

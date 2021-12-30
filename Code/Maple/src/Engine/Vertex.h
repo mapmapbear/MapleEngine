@@ -10,7 +10,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/hash.hpp>
 #include <array>
-#include <vulkan/vulkan.h>
 namespace maple
 {
 	struct Vertex 

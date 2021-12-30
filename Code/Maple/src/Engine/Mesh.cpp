@@ -299,7 +299,7 @@ namespace maple
 		data[17].texCoord = glm::vec2(0.0f, 0.0f);
 		data[17].normal   = glm::vec3(0.0f, 0.0f, 0.0f);
 
-		std::vector<uint32_t> indices{
+		const std::vector<uint32_t> indices{
 		    0, 1, 2,
 		    3, 4, 5,
 		    6, 7, 8,

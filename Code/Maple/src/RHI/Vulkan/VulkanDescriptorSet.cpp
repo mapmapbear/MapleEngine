@@ -103,7 +103,7 @@ namespace maple
 
 	VulkanDescriptorSet::~VulkanDescriptorSet()
 	{
-		PROFILE_FUNCTION();
+		PROFILE_FUNCTION(); 
 	}
 
 	auto VulkanDescriptorSet::update() -> void
