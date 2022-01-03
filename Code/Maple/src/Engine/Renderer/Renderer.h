@@ -19,6 +19,7 @@ namespace maple
 		GridRender,
 		Geometry,
 		Render2D,
+		PostProcess,
 		Length
 	};
 

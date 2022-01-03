@@ -43,11 +43,11 @@ namespace maple
 			projectionDirty = true;
 		};
 
-		inline auto getFar() const
+		inline auto& getFar() const
 		{
 			return far_;
 		}
-		inline auto getNear() const
+		inline auto& getNear() const
 		{
 			return near_;
 		}

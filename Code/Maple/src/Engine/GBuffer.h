@@ -12,10 +12,12 @@ namespace maple
 	enum class TextureFormat;
 	enum GBufferTextures
 	{
-		COLOR    = 0,        //Main Render
-		POSITION = 1,        //Deferred Render - World Space Positions
-		NORMALS  = 2,        //Deferred Render - World Space Normals
-		PBR      = 3,
+		COLOR       = 0,        //Main Render
+		POSITION    = 1,        //Deferred Render - World Space Positions
+		NORMALS     = 2,        //Deferred Render - World Space Normals
+		PBR         = 3,
+		SSAO_SCREEN = 4,
+		SSAO_BLUR   = 5,
 		LENGTH
 	};
 
@@ -48,12 +50,17 @@ namespace maple
 			return formats[index];
 		}
 
+		inline auto getSSAONoise() const
+		{
+			return ssaoNoiseMap;
+		}
 		static auto getGBufferTextureName(GBufferTextures index) -> const char *;
 
 	  private:
 		std::array<std::shared_ptr<Texture2D>, GBufferTextures::LENGTH> screenTextures;
 		std::array<TextureFormat, GBufferTextures::LENGTH>              formats;
 		std::shared_ptr<TextureDepth>                                   depthBuffer;
+		std::shared_ptr<Texture2D>                                      ssaoNoiseMap;
 
 	  private:
 		uint32_t width;

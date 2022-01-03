@@ -250,7 +250,7 @@ namespace maple
 
 	auto VulkanTexture2D::update(int32_t x, int32_t y, int32_t w, int32_t h, const void *buffer) -> void
 	{
-		auto stagingBuffer = std::make_unique<VulkanBuffer>(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, w * h * 4, buffer);
+		auto stagingBuffer = std::make_unique<VulkanBuffer>(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, w * h * getFormatSize(parameters.format), buffer);
 		auto oldLayout     = imageLayout;
 		transitionImage(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 		VulkanHelper::copyBufferToImage(stagingBuffer->getVkBuffer(), textureImage, static_cast<uint32_t>(w), static_cast<uint32_t>(h), x, y);

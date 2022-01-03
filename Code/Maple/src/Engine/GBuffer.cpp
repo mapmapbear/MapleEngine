@@ -3,6 +3,7 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include "GBuffer.h"
+#include "Others/Randomizer.h"
 
 namespace maple
 {
@@ -30,13 +31,29 @@ namespace maple
 			}
 			depthBuffer = TextureDepth::create(width, height, true);
 			depthBuffer->setName("GBuffer-Depth");
+#if defined(__ANDROID__)
+			constexpr int32_t SSAO_NOISE_DIM = 8;
+#else
+			constexpr int32_t SSAO_NOISE_DIM = 4;
+#endif
+			std::vector<glm::vec4> ssaoNoise(SSAO_NOISE_DIM * SSAO_NOISE_DIM);
+			for (uint32_t i = 0; i < static_cast<uint32_t>(ssaoNoise.size()); i++)
+			{
+				ssaoNoise[i] = glm::vec4(Randomizer::random() * 2.0f - 1.0f, Randomizer::random() * 2.0f - 1.0f, 0.0f, 0.0f);
+			}
+			ssaoNoiseMap = Texture2D::create(SSAO_NOISE_DIM, SSAO_NOISE_DIM, ssaoNoise.data(), {TextureFormat::RGBA32, TextureFilter::Nearest});
+			ssaoNoiseMap->setName("SSAO-NoiseMap");
 		}
 
-		formats[COLOR]    = TextureFormat::RGBA8;
-		formats[POSITION] = TextureFormat::RGBA16;
-		formats[NORMALS]  = TextureFormat::RGBA16;
-		formats[PBR]      = TextureFormat::RGBA16;
+		formats[SSAO_SCREEN] = TextureFormat::RGB8;
+		formats[SSAO_BLUR]   = TextureFormat::RGB8;
+		formats[COLOR]       = TextureFormat::RGBA8;
+		formats[POSITION]    = TextureFormat::RGBA16;
+		formats[NORMALS]     = TextureFormat::RGBA16;
+		formats[PBR]         = TextureFormat::RGBA16;
 
+		screenTextures[SSAO_BLUR]->buildTexture(formats[SSAO_BLUR], width, height, false, false, false);
+		screenTextures[SSAO_SCREEN]->buildTexture(formats[SSAO_SCREEN], width, height, false, false, false);
 		screenTextures[COLOR]->buildTexture(formats[COLOR], width, height, false, false, false);
 		screenTextures[POSITION]->buildTexture(formats[POSITION], width, height, false, false, false);
 		screenTextures[NORMALS]->buildTexture(formats[NORMALS], width, height, false, false, false);

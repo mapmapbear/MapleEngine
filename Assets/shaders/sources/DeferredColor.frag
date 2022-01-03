@@ -39,6 +39,14 @@ layout(set = 1,binding = 6) uniform UniformMaterialData
 } materialProperties;
 
 
+layout(set = 2,binding = 0) uniform UBO
+{
+	float nearPlane;
+	float farPlane;
+	float padding;
+	float padding2;
+}ubo;
+
 //bind to framebuffer
 layout(location = 0) out vec4 outColor;
 layout(location = 1) out vec4 outPosition;
@@ -103,6 +111,13 @@ vec3 getNormalFromMap()
 	return normalize(TBN * tangentNormal);
 }
 
+
+float linearDepth(float depth)
+{
+	float z = depth * 2.0f - 1.0f; 
+	return (2.0f * ubo.nearPlane * ubo.farPlane) / (ubo.farPlane + ubo.nearPlane - z * (ubo.farPlane - ubo.nearPlane));	
+}
+
 void main()
 {
 	vec4 texColor = getAlbedo();
@@ -133,8 +148,8 @@ void main()
 	vec3 emissive   = getEmissive();
 	float ao		= getAO();
 
-    outColor    	= texColor;
-	outPosition		= vec4(fragPosition.xyz,emissive.x);
-	outNormal   	= vec4(getNormalFromMap(),emissive.y);
-	outPBR      	= vec4(metallic,roughness, ao, emissive.z);
+    outColor    	= texColor + vec4(emissive,0);
+	outPosition		= vec4(fragPosition.xyz, linearDepth(gl_FragCoord.z));
+	outNormal   	= vec4(getNormalFromMap(), 1);
+	outPBR      	= vec4(metallic, roughness, ao, 1);
 }

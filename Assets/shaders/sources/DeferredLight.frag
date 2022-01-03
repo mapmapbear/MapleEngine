@@ -33,7 +33,6 @@ struct Material
 	vec4 albedo;
 	vec3 metallic;
 	float roughness;
-	vec3 emissive;
 	vec3 normal;
 	float ao;
 	vec3 view;
@@ -41,8 +40,7 @@ struct Material
 };
 
 
-layout(location = 0) in vec3 fragColor;
-layout(location = 1) in vec2 fragTexCoord;
+layout(location = 0) in vec2 fragTexCoord;
 layout(location = 0) out vec4 outColor;
 
 layout(set = 0, binding = 0) uniform sampler2D uColorSampler;
@@ -394,7 +392,6 @@ void main()
     material.roughness		= pbr.y;
     material.normal			= normalTex.rgb;
 	material.ao				= pbr.z;
-	material.emissive		= vec3(fragPosXyzw.w, normalTex.w, pbr.w);
 
 	vec3 wsPos = fragPosXyzw.xyz;
 	material.view 			= normalize(ubo.cameraPosition.xyz -wsPos);
@@ -419,7 +416,7 @@ void main()
 	
 	vec3 lightContribution = lighting(F0, wsPos, material);
 	vec3 iblContribution = IBL(F0, Lr, material) * 2.0;
-	vec3 finalColor = lightContribution + iblContribution + material.emissive;
+	vec3 finalColor = lightContribution + iblContribution;
 	outColor = vec4(finalColor, 1.0);
 	//ubo.mode = 1;
 	if(ubo.mode > 0)
@@ -439,7 +436,7 @@ void main()
 			outColor = vec4(material.ao, material.ao, material.ao, 1.0);
 			break;
 			case 5:
-			outColor = vec4(material.emissive, 1.0);
+			outColor = vec4(fragPosXyzw.w);
 			break;
 			case 6:
 			outColor = vec4(material.normal,1.0);

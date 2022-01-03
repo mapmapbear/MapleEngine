@@ -49,6 +49,8 @@ namespace maple
 
 		auto executeDeferredOffScreenPass() -> void;
 		auto executeDeferredLightPass() -> void;
+		auto executeSSAOPass() -> void;
+		auto executeSSAOBlurPass() -> void;
 
 		auto executePreviewPasss() -> void;
 
