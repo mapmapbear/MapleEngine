@@ -95,12 +95,13 @@ namespace maple
 				glm::vec3 sample(
 				    Randomizer::random() * 2.0 - 1.0,
 				    Randomizer::random() * 2.0 - 1.0,
-				    Randomizer::random());
+				    Randomizer::random()
+				);
 				sample = glm::normalize(sample);
 				sample *= Randomizer::random();
 				float scale = float(i) / float(SSAO_KERNEL_SIZE);
-				scale       = MathUtils::lerp(0.1f, 1.0f, scale * scale);
-				ssaoKernels.emplace_back(glm::vec4(sample, 0));
+				scale       = MathUtils::lerp(0.1f, 1.0f, scale * scale,false);
+				ssaoKernels.emplace_back(glm::vec4(sample * scale, 0));
 			}
 			return ssaoKernels;
 		}
@@ -284,7 +285,7 @@ namespace maple
 
 			info.shader           = deferredLightShader.get();
 			info.layoutIndex      = 0;
-			descriptorLightSet[0] = DescriptorSet::create(info);
+			descriptorLightSet[0] = DescriptorSet::create(info); 
 
 			info.shader      = ssaoShader.get();
 			info.layoutIndex = 0;
@@ -433,6 +434,7 @@ namespace maple
 			descriptorSet->setUniform("UniformBufferObject", "projView", &projView);
 			stencilDescriptorSet->setUniform("UniformBufferObject", "projView", &projView);
 			deferredData->ssaoSet[0]->setUniform("UBO", "projection", &proj);
+			deferredData->ssaoSet[0]->setUniform("UBO", "view", &view);
 
 			auto nearPlane = camera.first->getNear();
 			auto farPlane  = camera.first->getFar();
@@ -1208,6 +1210,7 @@ namespace maple
 		descriptorSet->setTexture("uPreintegratedFG", forwardData->preintegratedFG);
 		descriptorSet->setTexture("uShadowMap", shadowData->shadowTexture);
 		descriptorSet->setTexture("uPrefilterMap", forwardData->environmentMap);
+		descriptorSet->setTexture("uSSAOSampler0", gBuffer->getBuffer(GBufferTextures::SSAO_SCREEN));
 		descriptorSet->update();
 
 		PipelineInfo pipeInfo;

@@ -88,7 +88,7 @@ namespace maple
 		auto winSize = window->getWidth() / (float) window->getHeight();
 
 		camera = std::make_unique<Camera>(
-		    60, 0.1, 32000, winSize);
+		    60, 0.1, 200, winSize);
 		editorCameraController.setCamera(camera.get());
 
 		setEditorState(EditorState::Preview);
@@ -857,6 +857,11 @@ namespace maple
 			if (mesh.getMesh() != nullptr)
 			{
 				auto &worldTransform = trans.getWorldMatrix();
+
+				if ( mesh.getMesh()->getBoundingBox() == nullptr)
+				{
+					continue;
+				}
 
 				auto  bbCopy = mesh.getMesh()->getBoundingBox()->transform(worldTransform);
 				float dist   = ray.hit(bbCopy);

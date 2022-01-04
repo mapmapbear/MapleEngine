@@ -134,10 +134,14 @@ namespace maple
 		{
 		}
 
-		constexpr TextureParameters(TextureFormat format, TextureFilter filter) :
-		    format(format), minFilter(filter), magFilter(filter), wrap(TextureWrap::Repeat)
+		constexpr TextureParameters(TextureFormat format, TextureFilter filter, TextureWrap wrap) :
+		    format(format), minFilter(filter), magFilter(filter), wrap(wrap)
 		{
 		}
+
+		constexpr TextureParameters(TextureFormat format, TextureFilter filter) :
+		    TextureParameters(format, filter, TextureWrap::Repeat)
+		{}
 
 		constexpr TextureParameters(TextureFormat format, TextureFilter minFilter, TextureFilter magFilter, TextureWrap wrap) :
 		    format(format), minFilter(minFilter), magFilter(magFilter), wrap(wrap)

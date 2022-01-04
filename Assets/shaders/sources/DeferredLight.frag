@@ -35,6 +35,7 @@ struct Material
 	float roughness;
 	vec3 normal;
 	float ao;
+	float ssao;
 	vec3 view;
 	float normalDotView;
 };
@@ -47,12 +48,13 @@ layout(set = 0, binding = 0) uniform sampler2D uColorSampler;
 layout(set = 0, binding = 1) uniform sampler2D uPositionSampler;
 layout(set = 0, binding = 2) uniform sampler2D uNormalSampler;
 layout(set = 0, binding = 3) uniform sampler2D uDepthSampler;
-layout(set = 0, binding = 4) uniform sampler2DArray uShadowMap;
-layout(set = 0, binding = 5) uniform sampler2D uPBRSampler;
-layout(set = 0, binding = 6) uniform samplerCube uIrradianceMap;
-layout(set = 0, binding = 7) uniform samplerCube uPrefilterMap;
-layout(set = 0, binding = 8) uniform sampler2D uPreintegratedFG;
-layout(set = 0, binding = 9) uniform UniformBufferLight
+layout(set = 0, binding = 4) uniform sampler2D uSSAOSampler;//blur
+layout(set = 0, binding = 5) uniform sampler2DArray uShadowMap;
+layout(set = 0, binding = 6) uniform sampler2D uPBRSampler;
+layout(set = 0, binding = 7) uniform samplerCube uIrradianceMap;
+layout(set = 0, binding = 8) uniform samplerCube uPrefilterMap;
+layout(set = 0, binding = 9) uniform sampler2D uPreintegratedFG;
+layout(set = 0, binding = 10) uniform UniformBufferLight
 {
 	Light lights[MAX_LIGHTS];
 	mat4 shadowTransform[MAX_SHADOWMAPS];
@@ -71,7 +73,7 @@ layout(set = 0, binding = 9) uniform UniformBufferLight
 	int cubeMapMipLevels;
 	float initialBias;
 } ubo;
-
+layout(set = 0, binding = 11) uniform sampler2D uSSAOSampler0;
 
 const vec2 PoissonDistribution16[16] = vec2[](
 	  vec2(-0.94201624, -0.39906216), vec2(0.94558609, -0.76890725), vec2(-0.094184101, -0.92938870), vec2(0.34495938, 0.29387760),
@@ -329,9 +331,10 @@ vec3 lighting(vec3 F0, vec3 wsPos, Material material)
 		// Cook-Torrance
 		vec3 specularBRDF = (F * D * G) / max(EPSILON, 4.0 * cosLi * material.normalDotView);
 		
-		result += (diffuseBRDF + specularBRDF) * Lradiance * cosLi * value * material.ao;
+		result += (diffuseBRDF + specularBRDF) * Lradiance * cosLi * value * material.ao * material.ssao;
 	}
-	return result;
+
+	return result ;
 }
 
 vec3 radianceIBLIntegration(float NdotV, float roughness, vec3 metallic)
@@ -356,7 +359,7 @@ vec3 IBL(vec3 F0, vec3 Lr, Material material)
 	vec2 specularBRDF = texture(uPreintegratedFG, vec2(material.normalDotView, material.roughness)).rg;
 	vec3 specularIBL = specularIrradiance * (F0 * specularBRDF.x + specularBRDF.y);
 	
-	return (kd * diffuseIBL + specularIBL) * material.ao;
+	return (kd * diffuseIBL + specularIBL) * material.ao  * material.ssao;
 }
 
 vec3 finalGamma(vec3 color)
@@ -384,15 +387,15 @@ void main()
 	}
 	vec4 fragPosXyzw = texture(uPositionSampler, fragTexCoord);
 	vec4 normalTex	 = texture(uNormalSampler, fragTexCoord);
-	vec4 pbr		 = texture(uPBRSampler,fragTexCoord);
-
+	vec4 pbr		 = texture(uPBRSampler,	fragTexCoord);
+	float ssao 		 = texture(uSSAOSampler, fragTexCoord).r ;
 	Material material;
     material.albedo			= albedo;
     material.metallic		= vec3(pbr.x);
     material.roughness		= pbr.y;
     material.normal			= normalTex.rgb;
 	material.ao				= pbr.z;
-
+	material.ssao 			= ssao;
 	vec3 wsPos = fragPosXyzw.xyz;
 	material.view 			= normalize(ubo.cameraPosition.xyz -wsPos);
 	material.normalDotView  = max(dot(material.normal, material.view), 0.0);
@@ -416,6 +419,7 @@ void main()
 	
 	vec3 lightContribution = lighting(F0, wsPos, material);
 	vec3 iblContribution = IBL(F0, Lr, material) * 2.0;
+
 	vec3 finalColor = lightContribution + iblContribution;
 	outColor = vec4(finalColor, 1.0);
 	//ubo.mode = 1;
@@ -436,7 +440,7 @@ void main()
 			outColor = vec4(material.ao, material.ao, material.ao, 1.0);
 			break;
 			case 5:
-			outColor = vec4(fragPosXyzw.w);
+			outColor = vec4(vec3(material.ssao),1.0);
 			break;
 			case 6:
 			outColor = vec4(material.normal,1.0);
@@ -459,6 +463,9 @@ void main()
 			break;
 			case 10:
 			outColor = texture(uPBRSampler,fragTexCoord);
+			break;			
+			case 11:
+			outColor = vec4(texture(uSSAOSampler0,fragTexCoord).rrr,1);
 			break;
 		}
 	}
