@@ -26,6 +26,7 @@ namespace maple
 
 	  public:
 		BufferLayout();
+		auto reset() -> void;
 
 		template <typename T>
 		auto push(const std::string &name, uint32_t level, bool normalized = false) -> void

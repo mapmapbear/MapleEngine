@@ -45,6 +45,7 @@ layout(set = 2,binding = 0) uniform UBO
 	float farPlane;
 	float padding;
 	float padding2;
+	mat4 view;
 }ubo;
 
 //bind to framebuffer
@@ -53,6 +54,8 @@ layout(location = 1) out vec4 outPosition;
 layout(location = 2) out vec4 outNormal;
 layout(location = 3) out vec4 outPBR;
 
+layout(location = 4) out vec4 outViewPosition;
+layout(location = 5) out vec4 outViewNormal;
 
 vec4 gammaCorrectTexture(vec4 samp)
 {
@@ -149,7 +152,10 @@ void main()
 	float ao		= getAO();
 
     outColor    	= texColor + vec4(emissive,0);
-	outPosition		= vec4(fragPosition.xyz, linearDepth(gl_FragCoord.z));
+	outPosition		= vec4(fragPosition.xyz, 1);
 	outNormal   	= vec4(getNormalFromMap(), 1);
 	outPBR      	= vec4(metallic, roughness, ao, 1);
+
+	outViewPosition = ubo.view * outPosition;
+	outViewNormal   = vec4(transpose(inverse(mat3(ubo.view))) * outNormal.xyz, 1);
 }

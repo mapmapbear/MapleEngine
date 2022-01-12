@@ -81,6 +81,24 @@ namespace maple
 	GLShader::GLShader(const std::string &filePath, bool loadSPV) :
 	    loadSPV(loadSPV), name(StringUtils::getFileName(filePath)), filePath(filePath)
 	{
+		reload();
+	}
+
+	auto GLShader::reload() -> void
+	{
+		descriptorInfos.clear();
+		uniformLocations.clear();
+		sampledLocations.clear();
+		sources.clear();
+		shaderCompilers.clear();
+		pushConstants.clear();
+		layout.reset();
+
+		if (handle != -1)
+		{
+			GLCall(glDeleteProgram(handle));
+			handle = -1;
+		}
 		auto bytes = File::read(filePath);
 		source     = {bytes->begin(), bytes->end()};
 		init();

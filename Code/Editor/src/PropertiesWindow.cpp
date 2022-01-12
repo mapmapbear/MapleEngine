@@ -33,7 +33,7 @@ namespace MM
 	using namespace maple;
 
 	template <>
-	void ComponentEditorWidget<Transform>(entt::registry &reg, entt::registry::entity_type e)
+	auto ComponentEditorWidget<Transform>(entt::registry &reg, entt::registry::entity_type e) -> void
 	{
 		auto &transform = reg.get<Transform>(e);
 
@@ -462,6 +462,8 @@ namespace MM
 		{
 			ImGuiHelper::image(env.getEquirectangularMap().get(), {64, 64});
 		}
+
+
 
 		/*ImGui::Columns(1);
 		ImGui::Separator();

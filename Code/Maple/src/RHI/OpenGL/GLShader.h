@@ -32,6 +32,8 @@ namespace maple
 
 		~GLShader();
 
+		auto reload() -> void override;
+
 		auto init() -> void;
 		auto bind() const -> void override;
 		auto unbind() const -> void override;

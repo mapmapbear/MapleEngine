@@ -5,6 +5,7 @@
 layout(set = 0,binding = 0) uniform UniformBufferObject 
 {    
 	mat4 projView;
+    mat4 view;
 } ubo;
 
 layout(push_constant) uniform PushConsts
@@ -34,12 +35,12 @@ out gl_PerVertex
 
 void main() 
 {
-	fragPosition =  pushConsts.transform * vec4(inPosition, 1.0);
+	fragPosition = pushConsts.transform * vec4(inPosition, 1.0);
     gl_Position = ubo.projView * fragPosition;
     
     fragColor = inColor.xyz;
 	fragTexCoord = inTexCoord;
-    fragNormal = transpose(inverse(mat3(pushConsts.transform))) * normalize(inNormal);
+    fragNormal =  transpose(inverse(mat3(pushConsts.transform))) * normalize(inNormal);
     
     fragTangent = inTangent;
 }

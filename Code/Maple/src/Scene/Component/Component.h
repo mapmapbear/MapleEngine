@@ -154,6 +154,7 @@ namespace maple
 		std::string filePath;
 
 	  public:
+
 		inline auto &getEnvironment() const
 		{
 			return environment;

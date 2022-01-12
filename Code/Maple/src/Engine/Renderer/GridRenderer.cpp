@@ -61,7 +61,7 @@ namespace maple
 			pipeInfo.depthBiasEnabled    = false;
 			pipeInfo.clearTargets        = false;
 			pipeInfo.depthTarget         = gbuffer->getDepthBuffer();
-			pipeInfo.colorTargets[0]     = renderTexture;
+			pipeInfo.colorTargets[0]     = gbuffer->getBuffer(GBufferTextures::DISPLYA_0);
 			pipeInfo.blendMode           = BlendMode::SrcAlphaOneMinusSrcAlpha;
 			pipeline                     = Pipeline::get(pipeInfo);
 		}

@@ -34,6 +34,11 @@ namespace maple
 			return std::static_pointer_cast<T>(iter->second);
 		}
 
+		inline auto& getCache() const
+		{
+			return cache;
+		}
+	
 	  private:
 		std::unordered_map<size_t, std::shared_ptr<IResource>> cache;
 	};

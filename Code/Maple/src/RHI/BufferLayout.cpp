@@ -10,6 +10,12 @@ namespace maple
 	{
 	}
 
+	auto BufferLayout::reset() -> void
+	{
+		size = 0;
+		layouts.clear();
+	}
+
 	auto BufferLayout::push(const std::string &name, Format format, uint32_t s, uint32_t location, bool normalized) -> void
 	{
 		layouts[location] = {name, format, s, normalized};

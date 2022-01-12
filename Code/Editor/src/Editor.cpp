@@ -88,7 +88,7 @@ namespace maple
 		auto winSize = window->getWidth() / (float) window->getHeight();
 
 		camera = std::make_unique<Camera>(
-		    60, 0.1, 200, winSize);
+		    60, 0.1, 30000, winSize);
 		editorCameraController.setCamera(camera.get());
 
 		setEditorState(EditorState::Preview);

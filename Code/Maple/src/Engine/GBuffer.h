@@ -12,12 +12,15 @@ namespace maple
 	enum class TextureFormat;
 	enum GBufferTextures
 	{
-		COLOR       = 0,        //Main Render
-		POSITION    = 1,        //Deferred Render - World Space Positions
-		NORMALS     = 2,        //Deferred Render - World Space Normals
-		PBR         = 3,
-		SSAO_SCREEN = 4,
-		SSAO_BLUR   = 5,
+		COLOR         = 0,        //Main Render
+		POSITION      = 1,        //Deferred Render - World Space Positions
+		NORMALS       = 2,        //Deferred Render - World Space Normals
+		PBR           = 3,
+		SSAO_SCREEN   = 4,
+		SSAO_BLUR     = 5,
+		DISPLYA_0     = 6,
+		VIEW_POSITION = 7,        //Deferred Render - View Space Positions  need to be optimized. they can be performed very well in post processing
+		VIEW_NORMALS  = 8,
 		LENGTH
 	};
 

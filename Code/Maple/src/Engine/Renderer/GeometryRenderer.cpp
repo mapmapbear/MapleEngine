@@ -4,6 +4,7 @@
 //////////////////////////////////////////////////////////////////////////////
 #include "GeometryRenderer.h"
 #include "Engine/Camera.h"
+#include "Engine/GBuffer.h"
 #include "Engine/Profiler.h"
 #include "Engine/Vertex.h"
 #include "Math/BoundingBox.h"
@@ -110,8 +111,8 @@ namespace maple
 
 	auto GeometryRenderer::init(const std::shared_ptr<GBuffer> &buffer) -> void
 	{
-		gbuffer = buffer;
-		renderData   = std::make_shared<RenderData>();
+		gbuffer    = buffer;
+		renderData = std::make_shared<RenderData>();
 	}
 
 	auto GeometryRenderer::renderScene() -> void
@@ -220,7 +221,7 @@ namespace maple
 			pipelineInfo.transparencyEnabled = false;
 			pipelineInfo.clearTargets        = false;
 			pipelineInfo.drawType            = DrawType::Lines;
-			pipelineInfo.colorTargets[0]     = renderTexture;
+			pipelineInfo.colorTargets[0]     = gbuffer->getBuffer(GBufferTextures::DISPLYA_0);
 
 			auto pipeline = Pipeline::get(pipelineInfo);
 
@@ -272,7 +273,7 @@ namespace maple
 			pipelineInfo.transparencyEnabled = true;
 			pipelineInfo.drawType            = DrawType::Triangle;
 			pipelineInfo.blendMode           = BlendMode::SrcAlphaOneMinusSrcAlpha;
-			pipelineInfo.colorTargets[0]     = renderTexture;
+			pipelineInfo.colorTargets[0]     = gbuffer->getBuffer(GBufferTextures::DISPLYA_0);
 
 			auto pipeline = Pipeline::get(pipelineInfo);
 

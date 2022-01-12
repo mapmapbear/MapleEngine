@@ -54,7 +54,7 @@ namespace maple
 				case 4:
 					return "AO";
 				case 5:
-					return "SSAO";
+					return "SSAO-Blur";
 				case 6:
 					return "Normal";
 				case 7:
@@ -66,7 +66,13 @@ namespace maple
 				case 10:
 					return "PBR Sampler";
 				case 11:
-					return "SSAO Depth";
+					return "SSAO ";
+				case 12:
+					return "SSR - UV";
+				case 13:
+					return "Position - ViewSpace";
+				case 14:
+					return "Normal - ViewSpace";
 				default:
 					return "Lighting";
 			}
@@ -95,12 +101,11 @@ namespace maple
 				glm::vec3 sample(
 				    Randomizer::random() * 2.0 - 1.0,
 				    Randomizer::random() * 2.0 - 1.0,
-				    Randomizer::random()
-				);
+				    Randomizer::random());
 				sample = glm::normalize(sample);
 				sample *= Randomizer::random();
 				float scale = float(i) / float(SSAO_KERNEL_SIZE);
-				scale       = MathUtils::lerp(0.1f, 1.0f, scale * scale,false);
+				scale       = MathUtils::lerp(0.1f, 1.0f, scale * scale, false);
 				ssaoKernels.emplace_back(glm::vec4(sample * scale, 0));
 			}
 			return ssaoKernels;
@@ -236,13 +241,9 @@ namespace maple
 		std::shared_ptr<Material>                   defaultMaterial;
 		std::vector<std::shared_ptr<DescriptorSet>> descriptorColorSet;
 		std::vector<std::shared_ptr<DescriptorSet>> descriptorLightSet;
-		std::vector<std::shared_ptr<DescriptorSet>> ssaoSet;
-		std::vector<std::shared_ptr<DescriptorSet>> ssaoBlurSet;
 
 		std::shared_ptr<Shader> deferredColorShader;        //stage 0 get all color information
 		std::shared_ptr<Shader> deferredLightShader;        //stage 1 process lighting
-		std::shared_ptr<Shader> ssaoShader;
-		std::shared_ptr<Shader> ssaoBlurShader;
 
 		std::shared_ptr<Pipeline> deferredLightPipeline;
 
@@ -254,8 +255,7 @@ namespace maple
 		{
 			deferredColorShader = Shader::create("shaders/DeferredColor.shader");
 			deferredLightShader = Shader::create("shaders/DeferredLight.shader");
-			ssaoShader          = Shader::create("shaders/SSAO.shader");
-			ssaoBlurShader      = Shader::create("shaders/SSAOBlur.shader");
+
 			commandQueue.reserve(1000);
 
 			MaterialProperties properties;
@@ -273,8 +273,6 @@ namespace maple
 			DescriptorInfo info{};
 			descriptorColorSet.resize(3);
 			descriptorLightSet.resize(1);
-			ssaoSet.resize(1);
-			ssaoBlurSet.resize(1);
 
 			info.shader           = deferredColorShader.get();
 			info.layoutIndex      = 0;
@@ -285,7 +283,30 @@ namespace maple
 
 			info.shader           = deferredLightShader.get();
 			info.layoutIndex      = 0;
-			descriptorLightSet[0] = DescriptorSet::create(info); 
+			descriptorLightSet[0] = DescriptorSet::create(info);
+
+			screenQuad = Mesh::createQuad(true);
+		}
+	};
+
+	struct RenderGraph::SSAOData
+	{
+		std::shared_ptr<Shader>                     ssaoShader;
+		std::shared_ptr<Shader>                     ssaoBlurShader;
+		std::vector<std::shared_ptr<DescriptorSet>> ssaoSet;
+		std::vector<std::shared_ptr<DescriptorSet>> ssaoBlurSet;
+
+		bool  enable = true;
+		float bias   = 0.025;
+
+		SSAOData()
+		{
+			ssaoShader     = Shader::create("shaders/SSAO.shader");
+			ssaoBlurShader = Shader::create("shaders/SSAOBlur.shader");
+
+			DescriptorInfo info{};
+			ssaoSet.resize(1);
+			ssaoBlurSet.resize(1);
 
 			info.shader      = ssaoShader.get();
 			info.layoutIndex = 0;
@@ -297,8 +318,6 @@ namespace maple
 
 			auto ssao = ssaoKernel();
 			ssaoSet[0]->setUniformBufferData("UBOSSAOKernel", ssao.data());
-
-			screenQuad = Mesh::createQuad(true);
 		}
 	};
 
@@ -345,6 +364,18 @@ namespace maple
 		glm::mat4                      projView;
 	};
 
+	struct RenderGraph::SSRData
+	{
+		bool                           enable = true;
+		std::shared_ptr<DescriptorSet> ssrDescriptorSet;
+		std::shared_ptr<Shader>        ssrShader;
+		SSRData()
+		{
+			ssrShader        = Shader::create("shaders/SSR.shader");
+			ssrDescriptorSet = DescriptorSet::create({0, ssrShader.get()});
+		}
+	};
+
 	RenderGraph::RenderGraph()
 	{
 		renderers.resize(static_cast<int32_t>(RenderId::Length));
@@ -355,6 +386,8 @@ namespace maple
 		delete shadowData;
 		delete forwardData;
 		delete previewData;
+		delete ssaoData;
+		delete ssrData;
 	}
 
 	auto RenderGraph::init(uint32_t width, uint32_t height) -> void
@@ -367,6 +400,8 @@ namespace maple
 		deferredData = new DeferredData();
 		previewData  = new PreviewData();
 		skyboxData   = new SkyboxData();
+		ssaoData     = new SSAOData();
+		ssrData      = new SSRData();
 		{
 			skyboxData->skyboxShader = Shader::create("shaders/Skybox.shader");
 			skyboxData->skyboxMesh   = Mesh::createCube();
@@ -432,14 +467,28 @@ namespace maple
 		{
 			auto descriptorSet = settings.deferredRender ? deferredData->descriptorColorSet[0] : forwardData->descriptorSet[0];
 			descriptorSet->setUniform("UniformBufferObject", "projView", &projView);
+			descriptorSet->setUniform("UniformBufferObject", "view", &view);
 			stencilDescriptorSet->setUniform("UniformBufferObject", "projView", &projView);
-			deferredData->ssaoSet[0]->setUniform("UBO", "projection", &proj);
-			deferredData->ssaoSet[0]->setUniform("UBO", "view", &view);
-
 			auto nearPlane = camera.first->getNear();
 			auto farPlane  = camera.first->getFar();
+			if (ssaoData->enable)
+			{
+				ssaoData->ssaoSet[0]->setUniform("UBO", "projection", &proj);
+				ssaoData->ssaoSet[0]->setUniform("UBO", "view", &view);
+				//ssaoData->ssaoSet[0]->setUniform("UBO", "bias", &ssaoData->bias);
+				ssaoData->ssaoSet[0]->setUniform("UBO", "nearPlane", &nearPlane);
+				ssaoData->ssaoSet[0]->setUniform("UBO", "farPlane", &farPlane);
+			}
+
+			if (ssrData->enable)
+			{
+				ssrData->ssrDescriptorSet->setUniform("UniformBufferObject", "view", &view);
+				ssrData->ssrDescriptorSet->setUniform("UniformBufferObject", "projection", &proj);
+			}
+
 			deferredData->descriptorColorSet[2]->setUniform("UBO", "nearPlane", &nearPlane);
 			deferredData->descriptorColorSet[2]->setUniform("UBO", "farPlane", &farPlane);
+			deferredData->descriptorColorSet[2]->setUniform("UBO", "view", &view);
 		}
 
 		if (settings.renderSkybox || settings.render3D)
@@ -541,8 +590,6 @@ namespace maple
 		glm::vec4 *splitDepth       = shadowData->splitDepth;
 		glm::mat4  lightView        = shadowData->lightMatrix;
 
-		float bias = shadowData->initialBias;
-
 		float maxShadowDistance = shadowData->maxShadowDistance;
 		float shadowMapSize     = shadowData->shadowMapSize;
 		float transitionFade    = shadowData->cascadeTransitionFade;
@@ -561,7 +608,7 @@ namespace maple
 			descriptorSet->setUniform("UniformBufferLight", "shadowFade", &shadowFade);
 			descriptorSet->setUniform("UniformBufferLight", "cascadeTransitionFade", &transitionFade);
 			descriptorSet->setUniform("UniformBufferLight", "maxShadowDistance", &maxShadowDistance);
-			descriptorSet->setUniform("UniformBufferLight", "initialBias", &bias);
+			descriptorSet->setUniform("UniformBufferLight", "initialBias", &shadowData->initialBias);
 
 			auto numShadows       = shadowData->shadowMapNum;
 			auto cubeMapMipLevels = forwardData->environmentMap ? forwardData->environmentMap->getMipMapLevels() - 1 : 0;
@@ -569,6 +616,8 @@ namespace maple
 			descriptorSet->setUniform("UniformBufferLight", "shadowCount", &numShadows);
 			descriptorSet->setUniform("UniformBufferLight", "mode", &forwardData->renderMode);
 			descriptorSet->setUniform("UniformBufferLight", "cubeMapMipLevels", &cubeMapMipLevels);
+			int32_t ssao = ssaoData->enable ? 1 : 0;
+			descriptorSet->setUniform("UniformBufferLight", "ssaoEnable", &ssao);
 
 			descriptorSet->setTexture("uPreintegratedFG", forwardData->preintegratedFG);
 			descriptorSet->setTexture("uShadowMap", shadowData->shadowTexture);
@@ -630,6 +679,8 @@ namespace maple
 							pipelineInfo.colorTargets[1] = gBuffer->getBuffer(GBufferTextures::POSITION);
 							pipelineInfo.colorTargets[2] = gBuffer->getBuffer(GBufferTextures::NORMALS);
 							pipelineInfo.colorTargets[3] = gBuffer->getBuffer(GBufferTextures::PBR);
+							pipelineInfo.colorTargets[4] = gBuffer->getBuffer(GBufferTextures::VIEW_POSITION);
+							pipelineInfo.colorTargets[5] = gBuffer->getBuffer(GBufferTextures::VIEW_NORMALS);
 						}
 						else
 						{
@@ -655,7 +706,7 @@ namespace maple
 							pipelineInfo.stencilDepthPass           = StencilType::Replace;
 							pipelineInfo.depthTest                  = true;
 							cmd.stencilPipelineInfo                 = pipelineInfo;
-							cmd.stencilPipelineInfo.colorTargets[0] = forwardData->renderTexture;
+							cmd.stencilPipelineInfo.colorTargets[0] = gBuffer->getBuffer(GBufferTextures::DISPLYA_0);
 							cmd.stencilPipelineInfo.colorTargets[1] = nullptr;
 							cmd.stencilPipelineInfo.colorTargets[2] = nullptr;
 							cmd.stencilPipelineInfo.colorTargets[3] = nullptr;
@@ -757,7 +808,9 @@ namespace maple
 
 		const auto &settings      = Application::getCurrentScene()->getSettings();
 		auto        swapChain     = Application::getGraphicsContext()->getSwapChain();
-		auto        renderTargert = forwardData->renderTexture ? forwardData->renderTexture : swapChain->getCurrentImage();
+		auto        renderTargert = gBuffer->getBuffer(GBufferTextures::DISPLYA_0);
+
+		//forwardData->renderTexture ? forwardData->renderTexture : swapChain->getCurrentImage();
 
 		if ((settings.deferredRender && deferredData->depthTest) || forwardData->depthTest)
 		{
@@ -770,6 +823,9 @@ namespace maple
 		Application::getRenderDevice()->clearRenderTarget(gBuffer->getBuffer(GBufferTextures::NORMALS), getCommandBuffer(), {0, 0, 0, 0});
 		Application::getRenderDevice()->clearRenderTarget(gBuffer->getBuffer(GBufferTextures::PBR), getCommandBuffer(), {0, 0, 0, 0});
 
+		Application::getRenderDevice()->clearRenderTarget(gBuffer->getBuffer(GBufferTextures::VIEW_POSITION), getCommandBuffer(), {0, 0, 0, 0});
+		Application::getRenderDevice()->clearRenderTarget(gBuffer->getBuffer(GBufferTextures::VIEW_NORMALS), getCommandBuffer(), {0, 0, 0, 0});
+
 		if (settings.renderShadow)
 			executeShadowPass();
 
@@ -778,8 +834,13 @@ namespace maple
 			if (settings.deferredRender)
 			{
 				executeDeferredOffScreenPass();
-				executeSSAOPass();
-				executeSSAOBlurPass();
+
+				if (ssaoData->enable)
+				{
+					executeSSAOPass();
+					executeSSAOBlurPass();
+				}
+
 				executeDeferredLightPass();
 			}
 			else
@@ -812,6 +873,11 @@ namespace maple
 		if (auto render = renderers[static_cast<int32_t>(RenderId::PostProcess)]; render != nullptr)
 		{
 			render->renderScene();
+		}
+
+		if (ssrData->enable)
+		{
+			executeReflectionPass();
 		}
 
 		transform = nullptr;
@@ -957,7 +1023,7 @@ namespace maple
 		ImGui::PushItemWidth(-1);
 		if (ImGui::BeginMenu(renderOutputMode(forwardData->renderMode).c_str()))
 		{
-			constexpr int32_t numRenderModes = 12;
+			constexpr int32_t numRenderModes = 15;
 
 			for (int32_t i = 0; i < numRenderModes; i++)
 			{
@@ -991,6 +1057,33 @@ namespace maple
 			ImGui::EndMenu();
 		}
 
+		ImGui::Separator();
+		ImGui::TextUnformatted("SSAO Options");
+		ImGui::Checkbox("SSAO Enabled", &ssaoData->enable);
+		ImGui::DragFloat("SSAO Depth Bias", &ssaoData->bias, 0.00005f, 0.0f, 1.0f, "%.6f");
+
+		ImGui::Separator();
+
+		ImGui::Columns(2);
+		for (auto shader : Application::getCache()->getCache())
+		{
+			if (shader.second->getResourceType() == FileType::Shader)
+			{
+				ImGui::PushID(shader.second.get());
+				if (ImGui::Button("Reload"))
+				{
+					std::static_pointer_cast<Shader>(shader.second)->reload();
+				}
+				ImGui::PopID();
+				ImGui::NextColumn();
+				ImGui::TextUnformatted(shader.second->getPath().c_str());
+				ImGui::NextColumn();
+				ImGui::Separator();
+			}
+		}
+
+		ImGui::Columns(1);
+		ImGui::Separator();
 		/*ImGui::TextUnformatted("2D renderer");
 		ImGui::Columns(2);
 
@@ -1112,7 +1205,7 @@ namespace maple
 		pipelineInfo.transparencyEnabled = false;
 
 		pipelineInfo.depthTarget     = gBuffer->getDepthBuffer();
-		pipelineInfo.colorTargets[0] = forwardData->renderTexture;
+		pipelineInfo.colorTargets[0] = gBuffer->getBuffer(GBufferTextures::DISPLYA_0);
 
 		skyboxPipeline = Pipeline::get(pipelineInfo);
 		skyboxPipeline->bind(getCommandBuffer());
@@ -1211,6 +1304,8 @@ namespace maple
 		descriptorSet->setTexture("uShadowMap", shadowData->shadowTexture);
 		descriptorSet->setTexture("uPrefilterMap", forwardData->environmentMap);
 		descriptorSet->setTexture("uSSAOSampler0", gBuffer->getBuffer(GBufferTextures::SSAO_SCREEN));
+		descriptorSet->setTexture("uViewPositionSampler", gBuffer->getBuffer(GBufferTextures::VIEW_POSITION));
+		descriptorSet->setTexture("uViewNormalSampler", gBuffer->getBuffer(GBufferTextures::VIEW_NORMALS));
 		descriptorSet->update();
 
 		PipelineInfo pipeInfo;
@@ -1220,7 +1315,7 @@ namespace maple
 		pipeInfo.transparencyEnabled        = false;
 		pipeInfo.depthBiasEnabled           = false;
 		pipeInfo.clearTargets               = false;
-		pipeInfo.colorTargets[0]            = deferredData->renderTexture;
+		pipeInfo.colorTargets[0]            = gBuffer->getBuffer(GBufferTextures::DISPLYA_0);
 		deferredData->deferredLightPipeline = Pipeline::get(pipeInfo);
 
 		deferredData->deferredLightPipeline->bind(getCommandBuffer());
@@ -1232,16 +1327,17 @@ namespace maple
 	auto RenderGraph::executeSSAOPass() -> void
 	{
 		PROFILE_FUNCTION();
-		auto descriptorSet = deferredData->ssaoSet[0];
+		auto descriptorSet = ssaoData->ssaoSet[0];
 		descriptorSet->setTexture("uPositionSampler", gBuffer->getBuffer(GBufferTextures::POSITION));
 		descriptorSet->setTexture("uNormalSampler", gBuffer->getBuffer(GBufferTextures::NORMALS));
+		descriptorSet->setTexture("uDepthSampler", gBuffer->getDepthBuffer());
 		descriptorSet->setTexture("uSsaoNoise", gBuffer->getSSAONoise());
 		descriptorSet->update();
 
 		auto commandBuffer = getCommandBuffer();
 
 		PipelineInfo pipeInfo;
-		pipeInfo.shader              = deferredData->ssaoShader;
+		pipeInfo.shader              = ssaoData->ssaoShader;
 		pipeInfo.polygonMode         = PolygonMode::Fill;
 		pipeInfo.cullMode            = CullMode::None;
 		pipeInfo.transparencyEnabled = false;
@@ -1256,7 +1352,7 @@ namespace maple
 		else
 			pipeline->bind(getCommandBuffer());
 
-		Renderer::bindDescriptorSets(pipeline.get(), getCommandBuffer(), 0, deferredData->ssaoSet);
+		Renderer::bindDescriptorSets(pipeline.get(), getCommandBuffer(), 0, ssaoData->ssaoSet);
 		Renderer::drawMesh(getCommandBuffer(), pipeline.get(), deferredData->screenQuad.get());
 
 		if (commandBuffer)
@@ -1268,14 +1364,14 @@ namespace maple
 	auto RenderGraph::executeSSAOBlurPass() -> void
 	{
 		PROFILE_FUNCTION();
-		auto descriptorSet = deferredData->ssaoBlurSet[0];
+		auto descriptorSet = ssaoData->ssaoBlurSet[0];
 		descriptorSet->setTexture("uSsaoSampler", gBuffer->getBuffer(GBufferTextures::SSAO_SCREEN));
 		descriptorSet->update();
 
 		auto commandBuffer = getCommandBuffer();
 
 		PipelineInfo pipeInfo;
-		pipeInfo.shader              = deferredData->ssaoBlurShader;
+		pipeInfo.shader              = ssaoData->ssaoBlurShader;
 		pipeInfo.polygonMode         = PolygonMode::Fill;
 		pipeInfo.cullMode            = CullMode::None;
 		pipeInfo.transparencyEnabled = false;
@@ -1290,13 +1386,54 @@ namespace maple
 		else
 			pipeline->bind(getCommandBuffer());
 
-		Renderer::bindDescriptorSets(pipeline.get(), getCommandBuffer(), 0, deferredData->ssaoBlurSet);
+		Renderer::bindDescriptorSets(pipeline.get(), getCommandBuffer(), 0, ssaoData->ssaoBlurSet);
 		Renderer::drawMesh(getCommandBuffer(), pipeline.get(), deferredData->screenQuad.get());
 
 		if (commandBuffer)
 			commandBuffer->unbindPipeline();
 		else
 			pipeline->end(getCommandBuffer());
+	}
+
+	auto RenderGraph::executeReflectionPass() -> void
+	{
+		PROFILE_FUNCTION();
+		if (gBuffer->getWidth() == 0 || gBuffer->getHeight() == 0)
+		{
+			return;
+		}
+		ssrData->ssrDescriptorSet->setTexture("uViewPositionSampler", gBuffer->getBuffer(GBufferTextures::VIEW_POSITION));
+		ssrData->ssrDescriptorSet->setTexture("uViewNormalSampler", gBuffer->getBuffer(GBufferTextures::VIEW_NORMALS));
+		ssrData->ssrDescriptorSet->setTexture("uPBRSampler", gBuffer->getBuffer(GBufferTextures::PBR));
+		ssrData->ssrDescriptorSet->setTexture("uScreenSampler", gBuffer->getBuffer(GBufferTextures::DISPLYA_0));
+		ssrData->ssrDescriptorSet->update();
+
+		auto commandBuffer = getCommandBuffer();
+
+		PipelineInfo pipeInfo;
+		pipeInfo.shader              = ssrData->ssrShader;
+		pipeInfo.polygonMode         = PolygonMode::Fill;
+		pipeInfo.cullMode            = CullMode::None;
+		pipeInfo.transparencyEnabled = false;
+		pipeInfo.depthBiasEnabled    = false;
+		pipeInfo.clearTargets        = true;
+		pipeInfo.depthTest           = false;
+		pipeInfo.colorTargets[0]     = deferredData->renderTexture;
+
+		auto pipeline = Pipeline::get(pipeInfo);
+
+		if (commandBuffer)
+			commandBuffer->bindPipeline(pipeline.get());
+		else
+			pipeline->bind(getCommandBuffer());
+
+		Renderer::bindDescriptorSets(pipeline.get(), getCommandBuffer(), 0, {ssrData->ssrDescriptorSet});
+		Renderer::drawMesh(getCommandBuffer(), pipeline.get(), deferredData->screenQuad.get());
+
+		if (commandBuffer)
+			commandBuffer->unbindPipeline();
+		else
+			pipeline->end(commandBuffer);
 	}
 
 	auto RenderGraph::updateCascades(Scene *scene, Light *light) -> void

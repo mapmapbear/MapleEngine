@@ -44,17 +44,20 @@ struct Material
 layout(location = 0) in vec2 fragTexCoord;
 layout(location = 0) out vec4 outColor;
 
-layout(set = 0, binding = 0) uniform sampler2D uColorSampler;
-layout(set = 0, binding = 1) uniform sampler2D uPositionSampler;
-layout(set = 0, binding = 2) uniform sampler2D uNormalSampler;
-layout(set = 0, binding = 3) uniform sampler2D uDepthSampler;
-layout(set = 0, binding = 4) uniform sampler2D uSSAOSampler;//blur
-layout(set = 0, binding = 5) uniform sampler2DArray uShadowMap;
-layout(set = 0, binding = 6) uniform sampler2D uPBRSampler;
-layout(set = 0, binding = 7) uniform samplerCube uIrradianceMap;
-layout(set = 0, binding = 8) uniform samplerCube uPrefilterMap;
-layout(set = 0, binding = 9) uniform sampler2D uPreintegratedFG;
-layout(set = 0, binding = 10) uniform UniformBufferLight
+layout(set = 0, binding = 0)  uniform sampler2D uColorSampler;
+layout(set = 0, binding = 1)  uniform sampler2D uPositionSampler;
+layout(set = 0, binding = 2)  uniform sampler2D uNormalSampler;
+layout(set = 0, binding = 3)  uniform sampler2D uDepthSampler;
+layout(set = 0, binding = 4)  uniform sampler2D uSSAOSampler;//blur
+layout(set = 0, binding = 5)  uniform sampler2DArray uShadowMap;
+layout(set = 0, binding = 6)  uniform sampler2D uPBRSampler;
+layout(set = 0, binding = 7)  uniform samplerCube uIrradianceMap;
+layout(set = 0, binding = 8)  uniform samplerCube uPrefilterMap;
+layout(set = 0, binding = 9)  uniform sampler2D uPreintegratedFG;
+layout(set = 0, binding = 10) uniform sampler2D uSSAOSampler0;
+layout(set = 0, binding = 11)  uniform sampler2D uViewPositionSampler;
+layout(set = 0, binding = 12)  uniform sampler2D uViewNormalSampler;
+layout(set = 0, binding = 13) uniform UniformBufferLight
 {
 	Light lights[MAX_LIGHTS];
 	mat4 shadowTransform[MAX_SHADOWMAPS];
@@ -72,8 +75,10 @@ layout(set = 0, binding = 10) uniform UniformBufferLight
 	int mode;
 	int cubeMapMipLevels;
 	float initialBias;
+	int ssaoEnable;
+	int padding1;
+	int padding2;
 } ubo;
-layout(set = 0, binding = 11) uniform sampler2D uSSAOSampler0;
 
 const vec2 PoissonDistribution16[16] = vec2[](
 	  vec2(-0.94201624, -0.39906216), vec2(0.94558609, -0.76890725), vec2(-0.094184101, -0.92938870), vec2(0.34495938, 0.29387760),
@@ -388,14 +393,24 @@ void main()
 	vec4 fragPosXyzw = texture(uPositionSampler, fragTexCoord);
 	vec4 normalTex	 = texture(uNormalSampler, fragTexCoord);
 	vec4 pbr		 = texture(uPBRSampler,	fragTexCoord);
-	float ssao 		 = texture(uSSAOSampler, fragTexCoord).r ;
+	
 	Material material;
     material.albedo			= albedo;
     material.metallic		= vec3(pbr.x);
     material.roughness		= pbr.y;
     material.normal			= normalTex.rgb;
 	material.ao				= pbr.z;
-	material.ssao 			= ssao;
+
+	if(ubo.ssaoEnable == 1)
+	{
+		float ssao = texture(uSSAOSampler, fragTexCoord).r ;
+		material.ssao = ssao;
+	}
+	else
+	{
+		material.ssao = 1.0;
+	}
+		
 	vec3 wsPos = fragPosXyzw.xyz;
 	material.view 			= normalize(ubo.cameraPosition.xyz -wsPos);
 	material.normalDotView  = max(dot(material.normal, material.view), 0.0);
@@ -466,6 +481,12 @@ void main()
 			break;			
 			case 11:
 			outColor = vec4(texture(uSSAOSampler0,fragTexCoord).rrr,1);
+			break;
+			case 12:
+			outColor = texture(uViewPositionSampler,fragTexCoord);
+			break;
+			case 13:
+			outColor = texture(uViewNormalSampler,fragTexCoord);
 			break;
 		}
 	}

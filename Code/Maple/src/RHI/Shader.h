@@ -112,6 +112,7 @@ namespace maple
 
 		auto spirvTypeToDataType(const spirv_cross::SPIRType &type) -> ShaderDataType;
 
+		virtual auto reload() -> void {};
 
 	  protected:
 		auto parseSource(const std::vector<std::string> &lines, std::unordered_map<ShaderType, std::string> &shaders) -> void;

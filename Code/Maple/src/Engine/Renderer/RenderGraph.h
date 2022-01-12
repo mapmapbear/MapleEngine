@@ -52,6 +52,8 @@ namespace maple
 		auto executeSSAOPass() -> void;
 		auto executeSSAOBlurPass() -> void;
 
+		auto executeReflectionPass() -> void;
+
 		auto executePreviewPasss() -> void;
 
 		auto updateCascades(Scene *scene, Light *light) -> void;
@@ -104,6 +106,8 @@ namespace maple
 		struct DeferredData;
 		struct PreviewData;
 		struct SkyboxData;
+		struct SSAOData;
+		struct SSRData;
 
 		auto getCommandBuffer() -> CommandBuffer *;
 
@@ -124,8 +128,8 @@ namespace maple
 		DeferredData *deferredData = nullptr;
 		PreviewData * previewData  = nullptr;
 		SkyboxData *  skyboxData   = nullptr;
-
-	
+		SSAOData *    ssaoData     = nullptr;
+		SSRData *     ssrData      = nullptr;
 
 		std::shared_ptr<Shader>        finalShader;
 		std::shared_ptr<DescriptorSet> finalDescriptorSet;
