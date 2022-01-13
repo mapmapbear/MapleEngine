@@ -19,8 +19,10 @@ namespace maple
 		SSAO_SCREEN   = 4,
 		SSAO_BLUR     = 5,
 		DISPLYA_0     = 6,
-		VIEW_POSITION = 7,        //Deferred Render - View Space Positions  need to be optimized. they can be performed very well in post processing
-		VIEW_NORMALS  = 8,
+		PREV_DISPLAY  = 7,
+		VIEW_POSITION = 8,        //Deferred Render - View Space Positions  need to be optimized. they can be performed very well in post processing
+		VIEW_NORMALS  = 9,
+		VELOCITY      = 10,
 		LENGTH
 	};
 
@@ -58,6 +60,8 @@ namespace maple
 			return ssaoNoiseMap;
 		}
 		static auto getGBufferTextureName(GBufferTextures index) -> const char *;
+
+		auto swapScreenBuffer() -> void;
 
 	  private:
 		std::array<std::shared_ptr<Texture2D>, GBufferTextures::LENGTH> screenTextures;

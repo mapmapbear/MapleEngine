@@ -43,11 +43,11 @@ namespace maple
 			projectionDirty = true;
 		};
 
-		inline auto& getFar() const
+		inline auto &getFar() const
 		{
 			return far_;
 		}
-		inline auto& getNear() const
+		inline auto &getNear() const
 		{
 			return near_;
 		}
@@ -81,6 +81,10 @@ namespace maple
 		}
 
 		auto getProjectionMatrix() -> const glm::mat4 &;
+		inline auto getProjectionMatrixOld() -> const glm::mat4 &
+		{
+			return projMatrixOld;
+		}
 		auto getFrustum(const glm::mat4 &viewMatrix) -> const Frustum &;
 		auto sendRay(float x, float y, const glm::mat4 &viewMatrix, bool invertY = false) const -> Ray;
 
@@ -105,6 +109,7 @@ namespace maple
 		float zoom        = 1.0f;
 
 		glm::mat4 projMatrix      = glm::mat4(1.f);
+		glm::mat4 projMatrixOld   = glm::mat4(1.f);
 		bool      projectionDirty = false;
 
 		float mouseSensitivity = 0.1f;

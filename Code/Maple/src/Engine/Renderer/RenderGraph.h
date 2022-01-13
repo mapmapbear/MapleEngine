@@ -53,6 +53,7 @@ namespace maple
 		auto executeSSAOBlurPass() -> void;
 
 		auto executeReflectionPass() -> void;
+		auto executeTAAPass() -> void;
 
 		auto executePreviewPasss() -> void;
 
@@ -108,6 +109,7 @@ namespace maple
 		struct SkyboxData;
 		struct SSAOData;
 		struct SSRData;
+		struct TAAData;
 
 		auto getCommandBuffer() -> CommandBuffer *;
 
@@ -130,6 +132,7 @@ namespace maple
 		SkyboxData *  skyboxData   = nullptr;
 		SSAOData *    ssaoData     = nullptr;
 		SSRData *     ssrData      = nullptr;
+		TAAData *     taaData      = nullptr;
 
 		std::shared_ptr<Shader>        finalShader;
 		std::shared_ptr<DescriptorSet> finalDescriptorSet;

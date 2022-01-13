@@ -45,19 +45,23 @@ namespace maple
 			ssaoNoiseMap->setName("SSAO-NoiseMap");
 		}
 
-		formats[DISPLYA_0]     = TextureFormat::RGBA8;
-		formats[SSAO_SCREEN]   = TextureFormat::RGB8;
-		formats[SSAO_BLUR]     = TextureFormat::RGB8;
-		formats[COLOR]         = TextureFormat::RGBA8;
-		formats[POSITION]      = TextureFormat::RGBA16;
-		formats[NORMALS]       = TextureFormat::RGBA16;
+		formats[DISPLYA_0]    = TextureFormat::RGBA8;
+		formats[PREV_DISPLAY] = TextureFormat::RGBA8;
+		formats[SSAO_SCREEN]  = TextureFormat::RGB8;
+		formats[SSAO_BLUR]    = TextureFormat::RGB8;
+		formats[COLOR]        = TextureFormat::RGBA8;
+		formats[POSITION]     = TextureFormat::RGBA16;
+		formats[NORMALS]      = TextureFormat::RGBA16;
 
 		formats[VIEW_POSITION] = TextureFormat::RGBA16;
 		formats[VIEW_NORMALS]  = TextureFormat::RGBA16;
+		formats[VELOCITY]      = TextureFormat::RGBA8;
 
 		formats[PBR] = TextureFormat::RGBA16;
 
+		screenTextures[VELOCITY]->buildTexture(formats[VELOCITY], width, height, false, false, false);
 		screenTextures[DISPLYA_0]->buildTexture(formats[DISPLYA_0], width, height, false, false, false);
+		screenTextures[PREV_DISPLAY]->buildTexture(formats[PREV_DISPLAY], width, height, false, false, false);
 		screenTextures[SSAO_BLUR]->buildTexture(formats[SSAO_BLUR], width, height, false, false, false);
 		screenTextures[SSAO_SCREEN]->buildTexture(formats[SSAO_SCREEN], width, height, false, false, false);
 		screenTextures[COLOR]->buildTexture(formats[COLOR], width, height, false, false, false);
@@ -86,6 +90,13 @@ namespace maple
 			default:
 				return "UNKNOWN_ERROR";
 		}
+	}
+
+	auto GBuffer::swapScreenBuffer() -> void
+	{
+		auto display                 = screenTextures[DISPLYA_0];
+		screenTextures[DISPLYA_0]    = screenTextures[PREV_DISPLAY];
+		screenTextures[PREV_DISPLAY] = display;
 	}
 
 }        // namespace maple

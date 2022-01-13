@@ -25,6 +25,7 @@ namespace maple
 	{
 		if (projectionDirty)
 		{
+			projMatrixOld = projMatrix;
 			updateProjectionMatrix();
 			projectionDirty = false;
 		}
