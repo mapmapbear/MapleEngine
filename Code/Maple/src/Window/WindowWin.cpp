@@ -64,7 +64,7 @@ namespace maple
 
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 		//glfwWindowHint(GLFW_SCALE_TO_MONITOR, 1);
-
+		glfwWindowHint(GLFW_SAMPLES, 4);
 #ifdef MAPLE_OPENGL
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);

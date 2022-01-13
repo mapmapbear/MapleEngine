@@ -2,17 +2,27 @@
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
 
-layout(location = 0) in vec2 outTexCoord;
+layout(location = 0) in vec2 inUV;
 
 layout(set = 0, binding = 0) uniform UniformBuffer
 {
-	float Exposure;
-	float BloomIntensity;
-	 int ToneMapIndex;
+	float exposure;
+	float bloomIntensity;
+	int toneMapIndex;
+	int ssaoEnable;
+	int reflectEnable;
+	
 	float p1;
+	float p2;
+	float p3;
+	
 } ubo;
 
-layout(set = 0, binding = 1) uniform sampler2D uTexture;
+layout(set = 0, binding = 0)  uniform sampler2D uScreenSampler;
+//layout(set = 0, binding = 1)  uniform sampler2D uSSAOSampler;//blur
+layout(set = 0, binding = 1)  uniform sampler2D uReflectionSampler;
+
+
 layout(location = 0) out vec4 outFrag;
 
 const float gamma = 1;//2.2;
@@ -110,18 +120,32 @@ vec3 Uncharted2ToneMapping(vec3 color)
 
 void main()
 {
-	vec3 colour = texture(uTexture, outTexCoord).rgb;
-	colour *= ubo.Exposure;
+	vec4 albedo = texture(uScreenSampler, inUV);
+	vec3 color = albedo.rgb;
 	
-	int i = ubo.ToneMapIndex;
-	if (i == 1) colour = linearToneMapping(colour);
-	if (i == 2) colour = simpleReinhardToneMapping(colour);
-	if (i == 3) colour = lumaBasedReinhardToneMapping(colour);
-	if (i == 4) colour = whitePreservingLumaBasedReinhardToneMapping(colour);
-	if (i == 5) colour = RomBinDaHouseToneMapping(colour);		
-	if (i == 6) colour = filmicToneMapping(colour);
-	if (i == 7) colour = Uncharted2ToneMapping(colour);
-	if (i == 8) colour = ACESTonemap(colour);
+	if( ubo.ssaoEnable == 1 && albedo.a >= 0.1)
+	{
+		//float ssao = texture(uSSAOSampler,inUV).r;
+		//color = color * ssao;
+	}
 	
-	outFrag = vec4(colour, 1.0);
+	if( ubo.reflectEnable == 1 )
+	{
+		vec4 SSR = texture(uReflectionSampler,inUV);
+		color = SSR.rgb * SSR.a + color * (1.0 - SSR.a);
+	}
+
+	color *= ubo.exposure;
+	
+	/*int i = ubo.toneMapIndex;
+	if (i == 1) color = linearToneMapping(color);
+	if (i == 2) color = simpleReinhardToneMapping(color);
+	if (i == 3) color = lumaBasedReinhardToneMapping(color);
+	if (i == 4) color = whitePreservingLumaBasedReinhardToneMapping(color);
+	if (i == 5) color = RomBinDaHouseToneMapping(color);		
+	if (i == 6) color = filmicToneMapping(color);
+	if (i == 7) color = Uncharted2ToneMapping(color);
+	if (i == 8) color = ACESTonemap(color);*/
+	
+	outFrag = vec4(color.rgb, 1.0);
 }

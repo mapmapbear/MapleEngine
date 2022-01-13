@@ -68,10 +68,8 @@ namespace maple
 				case 11:
 					return "SSAO ";
 				case 12:
-					return "SSR - UV";
-				case 13:
 					return "Position - ViewSpace";
-				case 14:
+				case 13:
 					return "Normal - ViewSpace";
 				default:
 					return "Lighting";
@@ -490,15 +488,12 @@ namespace maple
 			descriptorSet->setUniform("UniformBufferObject", "projViewOld", &camera.first->getProjectionMatrixOld());
 
 			stencilDescriptorSet->setUniform("UniformBufferObject", "projView", &projView);
-			auto nearPlane = camera.first->getNear();
-			auto farPlane  = camera.first->getFar();
+			const auto nearPlane = camera.first->getNear();
+			const auto farPlane  = camera.first->getFar();
 			if (ssaoData->enable)
 			{
 				ssaoData->ssaoSet[0]->setUniform("UBO", "projection", &proj);
-				ssaoData->ssaoSet[0]->setUniform("UBO", "view", &view);
 				//ssaoData->ssaoSet[0]->setUniform("UBO", "bias", &ssaoData->bias);
-				ssaoData->ssaoSet[0]->setUniform("UBO", "nearPlane", &nearPlane);
-				ssaoData->ssaoSet[0]->setUniform("UBO", "farPlane", &farPlane);
 			}
 
 			if (ssrData->enable)
@@ -507,9 +502,9 @@ namespace maple
 				ssrData->ssrDescriptorSet->setUniform("UniformBufferObject", "projection", &proj);
 			}
 
+			deferredData->descriptorColorSet[2]->setUniform("UBO", "view", &view);
 			deferredData->descriptorColorSet[2]->setUniform("UBO", "nearPlane", &nearPlane);
 			deferredData->descriptorColorSet[2]->setUniform("UBO", "farPlane", &farPlane);
-			deferredData->descriptorColorSet[2]->setUniform("UBO", "view", &view);
 		}
 
 		if (settings.renderSkybox || settings.render3D)
@@ -728,7 +723,7 @@ namespace maple
 							pipelineInfo.stencilDepthPass           = StencilType::Replace;
 							pipelineInfo.depthTest                  = true;
 							cmd.stencilPipelineInfo                 = pipelineInfo;
-							cmd.stencilPipelineInfo.colorTargets[0] = gBuffer->getBuffer(GBufferTextures::DISPLYA_0);
+							cmd.stencilPipelineInfo.colorTargets[0] = gBuffer->getBuffer(GBufferTextures::SCREEN);
 							cmd.stencilPipelineInfo.colorTargets[1] = nullptr;
 							cmd.stencilPipelineInfo.colorTargets[2] = nullptr;
 							cmd.stencilPipelineInfo.colorTargets[3] = nullptr;
@@ -830,7 +825,7 @@ namespace maple
 
 		const auto &settings      = Application::getCurrentScene()->getSettings();
 		auto        swapChain     = Application::getGraphicsContext()->getSwapChain();
-		auto        renderTargert = gBuffer->getBuffer(GBufferTextures::DISPLYA_0);
+		auto        renderTargert = gBuffer->getBuffer(GBufferTextures::SCREEN);
 
 		//forwardData->renderTexture ? forwardData->renderTexture : swapChain->getCurrentImage();
 
@@ -857,13 +852,11 @@ namespace maple
 			if (settings.deferredRender)
 			{
 				executeDeferredOffScreenPass();
-
 				if (ssaoData->enable)
 				{
 					executeSSAOPass();
 					executeSSAOBlurPass();
 				}
-
 				executeDeferredLightPass();
 			}
 			else
@@ -888,11 +881,6 @@ namespace maple
 			executeSkyboxPass();
 		}
 
-		if (auto render = renderers[static_cast<int32_t>(RenderId::GridRender)]; render != nullptr)
-		{
-			render->renderScene();
-		}
-
 		if (auto render = renderers[static_cast<int32_t>(RenderId::PostProcess)]; render != nullptr)
 		{
 			render->renderScene();
@@ -902,12 +890,18 @@ namespace maple
 		{
 			executeReflectionPass();
 		}
+
+		if (auto render = renderers[static_cast<int32_t>(RenderId::GridRender)]; render != nullptr)
+		{
+			render->renderScene();
+		}
+
 		if (taaData->enable)
 		{
 			//executeTAAPass();
 		}
 
-		//executeFinalPass();
+		executeFinalPass();
 
 		transform = nullptr;
 	}
@@ -1092,6 +1086,9 @@ namespace maple
 		ImGui::DragFloat("SSAO Depth Bias", &ssaoData->bias, 0.00005f, 0.0f, 1.0f, "%.6f");
 
 		ImGui::Separator();
+		ImGui::TextUnformatted("SSR Options");
+		ImGui::Checkbox("SSR Enabled", &ssrData->enable);
+		ImGui::Separator();
 
 		ImGui::Columns(2);
 		for (auto shader : Application::getCache()->getCache())
@@ -1234,7 +1231,7 @@ namespace maple
 		pipelineInfo.transparencyEnabled = false;
 
 		pipelineInfo.depthTarget     = gBuffer->getDepthBuffer();
-		pipelineInfo.colorTargets[0] = gBuffer->getBuffer(GBufferTextures::DISPLYA_0);
+		pipelineInfo.colorTargets[0] = gBuffer->getBuffer(GBufferTextures::SCREEN);
 
 		skyboxPipeline = Pipeline::get(pipelineInfo);
 		skyboxPipeline->bind(getCommandBuffer());
@@ -1344,7 +1341,7 @@ namespace maple
 		pipeInfo.transparencyEnabled        = false;
 		pipeInfo.depthBiasEnabled           = false;
 		pipeInfo.clearTargets               = false;
-		pipeInfo.colorTargets[0]            = gBuffer->getBuffer(GBufferTextures::DISPLYA_0);
+		pipeInfo.colorTargets[0]            = gBuffer->getBuffer(GBufferTextures::SCREEN);
 		deferredData->deferredLightPipeline = Pipeline::get(pipeInfo);
 
 		deferredData->deferredLightPipeline->bind(getCommandBuffer());
@@ -1357,9 +1354,8 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 		auto descriptorSet = ssaoData->ssaoSet[0];
-		descriptorSet->setTexture("uPositionSampler", gBuffer->getBuffer(GBufferTextures::POSITION));
-		descriptorSet->setTexture("uNormalSampler", gBuffer->getBuffer(GBufferTextures::NORMALS));
-		descriptorSet->setTexture("uDepthSampler", gBuffer->getDepthBuffer());
+		descriptorSet->setTexture("uViewPositionSampler", gBuffer->getBuffer(GBufferTextures::VIEW_POSITION));
+		descriptorSet->setTexture("uViewNormalSampler", gBuffer->getBuffer(GBufferTextures::VIEW_NORMALS));
 		descriptorSet->setTexture("uSsaoNoise", gBuffer->getSSAONoise());
 		descriptorSet->update();
 
@@ -1424,6 +1420,11 @@ namespace maple
 			pipeline->end(getCommandBuffer());
 	}
 
+	auto RenderGraph::executeFXAA() -> void
+	{
+
+	}
+
 	auto RenderGraph::executeReflectionPass() -> void
 	{
 		PROFILE_FUNCTION();
@@ -1434,7 +1435,7 @@ namespace maple
 		ssrData->ssrDescriptorSet->setTexture("uViewPositionSampler", gBuffer->getBuffer(GBufferTextures::VIEW_POSITION));
 		ssrData->ssrDescriptorSet->setTexture("uViewNormalSampler", gBuffer->getBuffer(GBufferTextures::VIEW_NORMALS));
 		ssrData->ssrDescriptorSet->setTexture("uPBRSampler", gBuffer->getBuffer(GBufferTextures::PBR));
-		ssrData->ssrDescriptorSet->setTexture("uScreenSampler", gBuffer->getBuffer(GBufferTextures::DISPLYA_0));
+		ssrData->ssrDescriptorSet->setTexture("uScreenSampler", gBuffer->getBuffer(GBufferTextures::SCREEN));
 		ssrData->ssrDescriptorSet->update();
 
 		auto commandBuffer = getCommandBuffer();
@@ -1447,7 +1448,7 @@ namespace maple
 		pipeInfo.depthBiasEnabled    = false;
 		pipeInfo.clearTargets        = true;
 		pipeInfo.depthTest           = false;
-		pipeInfo.colorTargets[0]     = deferredData->renderTexture;
+		pipeInfo.colorTargets[0]     = gBuffer->getBuffer(GBufferTextures::SSR_SCREEN);
 
 		//deferredData->renderTexture;
 
@@ -1465,9 +1466,6 @@ namespace maple
 			commandBuffer->unbindPipeline();
 		else
 			pipeline->end(commandBuffer);
-
-		//gBuffer->swapScreenBuffer();
-
 	}
 
 	auto RenderGraph::executeTAAPass() -> void
@@ -1484,7 +1482,7 @@ namespace maple
 
 		taaData->taaDescriptorSet->setTexture("uViewPositionSampler", gBuffer->getBuffer(GBufferTextures::VIEW_POSITION));
 		taaData->taaDescriptorSet->setTexture("uNormalVelocity", gBuffer->getBuffer(GBufferTextures::VELOCITY));
-		taaData->taaDescriptorSet->setTexture("uScreenSampler", gBuffer->getBuffer(GBufferTextures::DISPLYA_0));
+		taaData->taaDescriptorSet->setTexture("uScreenSampler", gBuffer->getBuffer(GBufferTextures::SCREEN));
 		taaData->taaDescriptorSet->setTexture("uPreviousScreenSampler", gBuffer->getBuffer(GBufferTextures::PREV_DISPLAY));
 		taaData->taaDescriptorSet->update();
 
@@ -1651,8 +1649,13 @@ namespace maple
 
 		finalDescriptorSet->setUniform("UniformBuffer", "exposure", &exposure);
 		finalDescriptorSet->setUniform("UniformBuffer", "toneMapIndex", &toneMapIndex);
+		auto ssaoEnable    = ssaoData->enable ? 1 : 0;
+		auto reflectEnable = ssrData->enable ? 1 : 0;
+		finalDescriptorSet->setUniform("UniformBuffer", "ssaoEnable", &ssaoEnable);
+		finalDescriptorSet->setUniform("UniformBuffer", "reflectEnable", &reflectEnable);
 
-		finalDescriptorSet->setTexture("uScreenSampler", gBuffer->getBuffer(GBufferTextures::DISPLYA_0));
+		finalDescriptorSet->setTexture("uScreenSampler", gBuffer->getBuffer(GBufferTextures::SCREEN));
+		finalDescriptorSet->setTexture("uReflectionSampler", gBuffer->getBuffer(GBufferTextures::SSR_SCREEN));
 		finalDescriptorSet->update();
 
 		PipelineInfo pipelineDesc{};

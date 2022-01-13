@@ -77,9 +77,8 @@ void main()
  
     // Get color
     vec4 SSR = vec4(textureLod(uScreenSampler, coords.xy, 0).rgb, clamp(ReflectionMultiplier * Fresnel * strength, 0.0, 0.9));  
-
-    vec3 blending =  SSR.rgb * SSR.a + albedo * (1.0 - SSR.a);
-    outColor = vec4(blending, 1.0);
+   // vec3 blending =  SSR.rgb * SSR.a + albedo * (1.0 - SSR.a);
+    outColor = SSR;//vec4(blending, 1.0);
 }
 
 vec3 binarySearch(inout vec3 dir, inout vec3 hitCoord, inout float dDepth)

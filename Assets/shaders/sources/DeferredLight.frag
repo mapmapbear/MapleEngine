@@ -331,12 +331,12 @@ vec3 lighting(vec3 F0, vec3 wsPos, Material material)
 		float G = gaSchlickGGX(cosLi, material.normalDotView, material.roughness);
 		
 		vec3 kd = (1.0 - F) * (1.0 - material.metallic.x);
-		vec3 diffuseBRDF = kd * material.albedo.xyz;
+		vec3 diffuseBRDF = kd * material.albedo.xyz / PI;
 		
 		// Cook-Torrance
 		vec3 specularBRDF = (F * D * G) / max(EPSILON, 4.0 * cosLi * material.normalDotView);
 		
-		result += (diffuseBRDF + specularBRDF) * Lradiance * cosLi * value * material.ao * material.ssao;
+		result += (diffuseBRDF + specularBRDF) * Lradiance * cosLi * value;
 	}
 
 	return result ;
@@ -364,7 +364,7 @@ vec3 IBL(vec3 F0, vec3 Lr, Material material)
 	vec2 specularBRDF = texture(uPreintegratedFG, vec2(material.normalDotView, material.roughness)).rg;
 	vec3 specularIBL = specularIrradiance * (F0 * specularBRDF.x + specularBRDF.y);
 	
-	return (kd * diffuseIBL + specularIBL) * material.ao  * material.ssao;
+	return (kd * diffuseIBL + specularIBL);
 }
 
 vec3 finalGamma(vec3 color)
@@ -400,17 +400,13 @@ void main()
     material.roughness		= pbr.y;
     material.normal			= normalTex.rgb;
 	material.ao				= pbr.z;
+	material.ssao			= 1;
 
 	if(ubo.ssaoEnable == 1)
 	{
-		float ssao = texture(uSSAOSampler, fragTexCoord).r ;
-		material.ssao = ssao;
+		material.ssao = texture(uSSAOSampler,fragTexCoord).r;
 	}
-	else
-	{
-		material.ssao = 1.0;
-	}
-		
+
 	vec3 wsPos = fragPosXyzw.xyz;
 	material.view 			= normalize(ubo.cameraPosition.xyz -wsPos);
 	material.normalDotView  = max(dot(material.normal, material.view), 0.0);
@@ -433,10 +429,12 @@ void main()
 	vec3 F0 = mix(Fdielectric, material.albedo.xyz, material.metallic.x);
 	
 	vec3 lightContribution = lighting(F0, wsPos, material);
-	vec3 iblContribution = IBL(F0, Lr, material) * 2.0;
+	vec3 iblContribution = IBL(F0, Lr, material);
 
-	vec3 finalColor = lightContribution + iblContribution;
-	outColor = vec4(finalColor, 1.0);
+	vec3 finalColor = (lightContribution + iblContribution) * material.ao * material.ssao;
+
+
+	outColor = vec4(finalGamma(finalColor), 1.0);
 	//ubo.mode = 1;
 	if(ubo.mode > 0)
 	{
@@ -455,7 +453,7 @@ void main()
 			outColor = vec4(material.ao, material.ao, material.ao, 1.0);
 			break;
 			case 5:
-			outColor = vec4(vec3(material.ssao),1.0);
+			outColor = vec4(texture(uSSAOSampler, fragTexCoord).rrr,1.0);
 			break;
 			case 6:
 			outColor = vec4(material.normal,1.0);

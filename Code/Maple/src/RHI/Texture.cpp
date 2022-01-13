@@ -12,6 +12,8 @@
 #	include "RHI/Vulkan/VulkanTexture.h"
 #endif        // MAPLE_OPENGL
 
+#include "Application.h"
+
 namespace maple
 {
 	auto Texture::getStrideFromFormat(TextureFormat format) -> uint8_t
@@ -90,10 +92,10 @@ namespace maple
 	auto Texture2D::create(const std::string &name, const std::string &filePath, TextureParameters parameters, TextureLoadOptions loadOptions) -> std::shared_ptr<Texture2D>
 	{
 #ifdef MAPLE_OPENGL
-		return std::make_shared<GLTexture2D>(name, filePath, parameters, loadOptions);
+		return Application::getCache()->emplace<GLTexture2D>(name, filePath, parameters, loadOptions);
 #endif        // MAPLE_OPENGL
 #ifdef MAPLE_VULKAN
-		return std::make_shared<VulkanTexture2D>(name, filePath, parameters, loadOptions);
+		return Application::getCache()->emplace<VulkanTexture2D>(name, filePath, parameters, loadOptions);
 #endif        // MAPLE_VULKAN
 	}
 

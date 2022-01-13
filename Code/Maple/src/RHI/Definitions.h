@@ -3,6 +3,7 @@
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "Engine/Core.h"
+#include "Others/HashCode.h"
 #include <cstdint>
 #include <glm/glm.hpp>
 #include <memory>
@@ -130,7 +131,7 @@ namespace maple
 		uint16_t      msaaLevel = 1;
 
 		constexpr TextureParameters() :
-		    format(TextureFormat::RGBA8), minFilter(TextureFilter::Nearest), magFilter(TextureFilter::Nearest), wrap(TextureWrap::Repeat)
+		    format(TextureFormat::RGBA8), minFilter(TextureFilter::Linear), magFilter(TextureFilter::Linear), wrap(TextureWrap::Repeat)
 		{
 		}
 
@@ -312,3 +313,28 @@ namespace maple
 		glm::mat4 transform;
 	};
 }        // namespace maple
+
+namespace std
+{
+	template <>
+	struct hash<maple::TextureParameters>
+	{
+		size_t operator()(const maple::TextureParameters &param) const
+		{
+			size_t seed = 0;
+			maple::HashCode::hashCode(seed, param.format, param.magFilter, param.minFilter, param.srgb, param.wrap);
+			return seed;
+		}
+	};
+
+	template <>
+	struct hash<maple::TextureLoadOptions>
+	{
+		size_t operator()(const maple::TextureLoadOptions &param) const
+		{
+			size_t seed = 0;
+			maple::HashCode::hashCode(seed, param.flipX, param.flipY, param.generateMipMaps);
+			return seed;
+		}
+	};
+}        // namespace std

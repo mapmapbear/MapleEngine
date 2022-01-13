@@ -221,7 +221,7 @@ namespace maple
 			pipelineInfo.transparencyEnabled = false;
 			pipelineInfo.clearTargets        = false;
 			pipelineInfo.drawType            = DrawType::Lines;
-			pipelineInfo.colorTargets[0]     = gbuffer->getBuffer(GBufferTextures::DISPLYA_0);
+			pipelineInfo.colorTargets[0]     = gbuffer->getBuffer(GBufferTextures::SCREEN);
 
 			auto pipeline = Pipeline::get(pipelineInfo);
 
@@ -273,7 +273,7 @@ namespace maple
 			pipelineInfo.transparencyEnabled = true;
 			pipelineInfo.drawType            = DrawType::Triangle;
 			pipelineInfo.blendMode           = BlendMode::SrcAlphaOneMinusSrcAlpha;
-			pipelineInfo.colorTargets[0]     = gbuffer->getBuffer(GBufferTextures::DISPLYA_0);
+			pipelineInfo.colorTargets[0]     = gbuffer->getBuffer(GBufferTextures::SCREEN);
 
 			auto pipeline = Pipeline::get(pipelineInfo);
 

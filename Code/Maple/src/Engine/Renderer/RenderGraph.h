@@ -52,6 +52,8 @@ namespace maple
 		auto executeSSAOPass() -> void;
 		auto executeSSAOBlurPass() -> void;
 
+		auto executeFXAA() -> void;
+
 		auto executeReflectionPass() -> void;
 		auto executeTAAPass() -> void;
 

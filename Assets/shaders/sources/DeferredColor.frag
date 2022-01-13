@@ -13,7 +13,9 @@ layout(location = 1) in vec2 fragTexCoord;
 layout(location = 2) in vec4 fragPosition;
 layout(location = 3) in vec3 fragNormal;
 layout(location = 4) in vec3 fragTangent;
-
+layout(location = 5) in vec4 fragProjPosition;
+layout(location = 6) in vec4 fragOldProjPosition;
+layout(location = 7) in vec4 fragViewPosition;
 
 layout(set = 1, binding = 0) uniform sampler2D uAlbedoMap;
 layout(set = 1, binding = 1) uniform sampler2D uMetallicMap;
@@ -41,11 +43,11 @@ layout(set = 1,binding = 6) uniform UniformMaterialData
 
 layout(set = 2,binding = 0) uniform UBO
 {
+	mat4 view;
 	float nearPlane;
 	float farPlane;
 	float padding;
 	float padding2;
-	mat4 view;
 }ubo;
 
 //bind to framebuffer
@@ -56,6 +58,7 @@ layout(location = 3) out vec4 outPBR;
 
 layout(location = 4) out vec4 outViewPosition;
 layout(location = 5) out vec4 outViewNormal;
+layout(location = 6) out vec4 outVelocity;
 
 vec4 gammaCorrectTexture(vec4 samp)
 {
@@ -71,27 +74,27 @@ vec3 gammaCorrectTextureRGB(vec4 samp)
 
 vec4 getAlbedo()
 {
-	return (1.0 - materialProperties.usingAlbedoMap) * materialProperties.albedoColor + materialProperties.usingAlbedoMap * gammaCorrectTexture(texture(uAlbedoMap, fragTexCoord));
+	return (1.0 - materialProperties.usingAlbedoMap) * materialProperties.albedoColor + materialProperties.usingAlbedoMap * texture(uAlbedoMap, fragTexCoord);
 }
 
 vec3 getMetallic()
 {
-	return (1.0 - materialProperties.usingMetallicMap) * materialProperties.metallicColor.rgb + materialProperties.usingMetallicMap * gammaCorrectTextureRGB(texture(uMetallicMap, fragTexCoord)).rgb;
+	return (1.0 - materialProperties.usingMetallicMap) * materialProperties.metallicColor.rgb + materialProperties.usingMetallicMap * texture(uMetallicMap, fragTexCoord).rgb;
 }
 
 float getRoughness()
 {
-	return (1.0 - materialProperties.usingRoughnessMap) *  materialProperties.roughnessColor.r + materialProperties.usingRoughnessMap * gammaCorrectTextureRGB(texture(uRoughnessMap, fragTexCoord)).r;
+	return (1.0 - materialProperties.usingRoughnessMap) *  materialProperties.roughnessColor.r + materialProperties.usingRoughnessMap * texture(uRoughnessMap, fragTexCoord).r;
 }
 
 float getAO()
 {
-	return (1.0 - materialProperties.usingAOMap) + materialProperties.usingAOMap * gammaCorrectTextureRGB(texture(uAOMap, fragTexCoord)).r;
+	return (1.0 - materialProperties.usingAOMap) + materialProperties.usingAOMap * texture(uAOMap, fragTexCoord).r;
 }
 
 vec3 getEmissive()
 {
-	return (1.0 - materialProperties.usingEmissiveMap) * materialProperties.emissiveColor.rgb + materialProperties.usingEmissiveMap * gammaCorrectTextureRGB(texture(uEmissiveMap, fragTexCoord));
+	return (1.0 - materialProperties.usingEmissiveMap) * materialProperties.emissiveColor.rgb + materialProperties.usingEmissiveMap * texture(uEmissiveMap, fragTexCoord).rgb;
 }
 
 vec3 getNormalFromMap()
@@ -124,8 +127,8 @@ float linearDepth(float depth)
 void main()
 {
 	vec4 texColor = getAlbedo();
-	//if(texColor.w < 0.1)
-	//	discard;
+	if(texColor.w < 0.01)
+		discard;
 
 	float metallic = 0.0;
 	float roughness = 0.0;
@@ -137,13 +140,13 @@ void main()
 	}
 	else if( materialProperties.workflow == PBR_WORKFLOW_METALLIC_ROUGHNESS)
 	{
-		vec3 tex = gammaCorrectTextureRGB(texture(uMetallicMap, fragTexCoord));
+		vec3 tex = texture(uMetallicMap, fragTexCoord).rgb;
 		metallic = tex.b;
 		roughness = tex.g;
 	}
 	else if( materialProperties.workflow == PBR_WORKFLOW_SPECULAR_GLOSINESS)
 	{
-		vec3 tex = gammaCorrectTextureRGB(texture(uMetallicMap, fragTexCoord));
+		vec3 tex = texture(uMetallicMap, fragTexCoord).rgb;
 		metallic = tex.b;
 		roughness = tex.g;
 	}
@@ -156,6 +159,10 @@ void main()
 	outNormal   	= vec4(getNormalFromMap(), 1);
 	outPBR      	= vec4(metallic, roughness, ao, 1);
 
-	outViewPosition = ubo.view * outPosition;
+	outViewPosition = fragViewPosition;
 	outViewNormal   = vec4(transpose(inverse(mat3(ubo.view))) * outNormal.xyz, 1);
+	//outViewNormal   = ubo.view * outNormal;
+    vec2 a = (fragProjPosition.xy / fragProjPosition.w) * 0.5 + 0.5;
+    vec2 b = (fragOldProjPosition.xy / fragOldProjPosition.w) * 0.5 + 0.5;
+    outVelocity.xy = a - b;
 }

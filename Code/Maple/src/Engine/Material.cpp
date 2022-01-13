@@ -112,8 +112,8 @@ namespace maple
 		}
 		else
 		{
-			descriptorSet->setTexture("uAlbedoMap", Texture2D::getDefaultTexture());
-			materialProperties.usingAlbedoMap = 0.0f;
+			descriptorSet->setTexture("uAlbedoMap", Texture2D::create("albedo", "textures/default/default_albedo.png"));
+			materialProperties.usingAlbedoMap = 1.0f;
 		}
 
 		if (pbrMaterialTextures.metallic)
@@ -122,8 +122,8 @@ namespace maple
 		}
 		else
 		{
-			materialProperties.usingMetallicMap = 0.0f;
-			descriptorSet->setTexture("uMetallicMap", Texture2D::getDefaultTexture());
+			materialProperties.usingMetallicMap = 1.0f;
+			descriptorSet->setTexture("uMetallicMap", Texture2D::create("metallic", "textures/default/default_specular.png"));
 		}
 
 		if (pbrMaterialTextures.roughness)
@@ -132,8 +132,8 @@ namespace maple
 		}
 		else
 		{
-			descriptorSet->setTexture("uRoughnessMap", Texture2D::getDefaultTexture());
-			materialProperties.usingRoughnessMap = 0.0f;
+			descriptorSet->setTexture("uRoughnessMap", Texture2D::create("roughness", "textures/default/default_roughness.png"));
+			materialProperties.usingRoughnessMap = 1.0f;
 		}
 
 		if (pbrMaterialTextures.normal != nullptr)
@@ -142,8 +142,8 @@ namespace maple
 		}
 		else
 		{
-			descriptorSet->setTexture("uNormalMap", Texture2D::getDefaultTexture());
-			materialProperties.usingNormalMap = 0.0f;
+			descriptorSet->setTexture("uNormalMap", Texture2D::create("normal", "textures/default/default_normal.png"));
+			materialProperties.usingNormalMap = 1.0f;
 		}
 
 		if (pbrMaterialTextures.ao != nullptr)
@@ -152,8 +152,8 @@ namespace maple
 		}
 		else
 		{
-			descriptorSet->setTexture("uAOMap", Texture2D::getDefaultTexture());
-			materialProperties.usingAOMap = 0.0f;
+			descriptorSet->setTexture("uAOMap", Texture2D::create("ao", "textures/default/default_ao.png"));
+			materialProperties.usingAOMap = 1.0f;
 		}
 
 		if (pbrMaterialTextures.emissive != nullptr)
@@ -162,8 +162,8 @@ namespace maple
 		}
 		else
 		{
-			descriptorSet->setTexture("uEmissiveMap", Texture2D::getDefaultTexture());
-			materialProperties.usingEmissiveMap = 0.0f;
+			descriptorSet->setTexture("uEmissiveMap", Texture2D::create("emission", "textures/default/default_emission.png"));
+			materialProperties.usingEmissiveMap = 1.0f;
 		}
 
 		updateUniformBuffer();
