@@ -120,8 +120,7 @@ namespace MM
 			{
 				if (ImGui::Button(tex ? "" : "Empty", ImVec2{64, 64}))
 				{
-					/*Lumos::Editor::GetEditor()->GetFileBrowserWindow().Open();
-					Lumos::Editor::GetEditor()->GetFileBrowserWindow().SetCallback(callback);*/
+					
 				}
 			}
 
