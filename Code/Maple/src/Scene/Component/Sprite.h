@@ -66,6 +66,8 @@ namespace maple
 	class MAPLE_EXPORT AnimatedSprite : public Sprite
 	{
 	  public:
+		constexpr static char *ICON = ICON_MDI_IMAGE_AREA;
+
 		struct AnimationFrame
 		{
 			uint32_t    width;

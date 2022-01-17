@@ -11,6 +11,7 @@
 #include "Scene/Component/MeshRenderer.h"
 #include "Scene/Component/Sprite.h"
 #include "Scene/Component/Transform.h"
+#include "Scene/Component/VolumetricCloud.h"
 
 #include "Scene/Entity/Entity.h"
 #include "Scene/Scene.h"
@@ -682,6 +683,34 @@ namespace MM
 		}
 	}
 
+	template <>
+	void ComponentEditorWidget<VolumetricCloud>(entt::registry &reg, entt::registry::entity_type e)
+	{
+		auto &cloud = reg.get<VolumetricCloud>(e);
+
+		ImGui::Checkbox("Post Processing (Gaussian Blur)", &cloud.postProcess);
+		ImGui::Checkbox("Light Scatter", &cloud.enableGodRays);
+		ImGui::Checkbox("Enable sugar powder effect", &cloud.enablePowder);
+
+		ImGui::SliderFloat("Coverage", &cloud.coverage, 0.0f, 1.0f);
+		ImGui::SliderFloat("Speed", &cloud.cloudSpeed, 0.0f, 5.0E3);
+		ImGui::SliderFloat("Crispiness", &cloud.crispiness, 0.0f, 120.0f);
+		ImGui::SliderFloat("Curliness", &cloud.curliness, 0.0f, 3.0f);
+		ImGui::SliderFloat("Density", &cloud.density, 0.0f, 0.1f);
+		ImGui::SliderFloat("Light Absorption", &cloud.absorption, 0.0f, 1.5f);
+
+		if (ImGui::SliderFloat("Clouds frequency", &cloud.perlinFrequency, 0.0f, 4.0f))
+		{
+			// -> noise map
+		}
+
+		ImGui::SliderFloat("Sky dome radius", &cloud.earthRadius, 10000.0f, 5000000.0f);
+		ImGui::SliderFloat("Clouds bottom height", &cloud.sphereInnerRadius, 1000.0f, 15000.0f);
+		ImGui::SliderFloat("Clouds top height", &cloud.sphereOuterRadius, 1000.0f, 40000.0f);
+
+
+	}
+
 };        // namespace MM
 
 namespace maple
@@ -785,6 +814,7 @@ namespace maple
 		TRIVIAL_COMPONENT(AnimatedSprite, true, "Animation Sprite");
 		TRIVIAL_COMPONENT(MeshRenderer, false, "Mesh Renderer");
 		TRIVIAL_COMPONENT(Atmosphere, true, "");
+		TRIVIAL_COMPONENT(VolumetricCloud, true, "Volumetric Cloud");
 
 		MM::EntityEditor<entt::entity>::ComponentInfo info;
 		info.hasChildren = true;
