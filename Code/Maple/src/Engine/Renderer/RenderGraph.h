@@ -46,6 +46,7 @@ namespace maple
 		auto executeForwardPass() -> void;
 		auto executeShadowPass() -> void;
 		auto executeSkyboxPass() -> void;
+		auto executeAtmospherePass() -> void;
 
 		auto executeDeferredOffScreenPass() -> void;
 		auto executeDeferredLightPass() -> void;
@@ -112,6 +113,7 @@ namespace maple
 		struct SSAOData;
 		struct SSRData;
 		struct TAAData;
+		struct AtmosphereData;
 
 		auto getCommandBuffer() -> CommandBuffer *;
 
@@ -127,14 +129,15 @@ namespace maple
 		uint32_t screenBufferWidth  = 0;
 		uint32_t screenBufferHeight = 0;
 
-		ShadowData *  shadowData   = nullptr;
-		ForwardData * forwardData  = nullptr;
-		DeferredData *deferredData = nullptr;
-		PreviewData * previewData  = nullptr;
-		SkyboxData *  skyboxData   = nullptr;
-		SSAOData *    ssaoData     = nullptr;
-		SSRData *     ssrData      = nullptr;
-		TAAData *     taaData      = nullptr;
+		ShadowData *    shadowData    = nullptr;
+		ForwardData *   forwardData   = nullptr;
+		DeferredData *  deferredData  = nullptr;
+		PreviewData *   previewData   = nullptr;
+		SkyboxData *    skyboxData    = nullptr;
+		SSAOData *      ssaoData      = nullptr;
+		SSRData *       ssrData       = nullptr;
+		TAAData *       taaData       = nullptr;
+		AtmosphereData *atmophereData = nullptr;
 
 		std::shared_ptr<Shader>        finalShader;
 		std::shared_ptr<DescriptorSet> finalDescriptorSet;

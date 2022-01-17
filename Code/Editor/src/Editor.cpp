@@ -75,14 +75,6 @@ namespace maple
 		addWindow(RenderCapture);
 		addWindow(PreviewWindow);
 
-		iconMap[typeid(Transform).hash_code()]     = ICON_MDI_VECTOR_LINE;
-		iconMap[typeid(Editor).hash_code()]        = ICON_MDI_SQUARE;
-		iconMap[typeid(Light).hash_code()]         = ICON_MDI_LIGHTBULB;
-		iconMap[typeid(Camera).hash_code()]        = ICON_MDI_CAMERA;
-		iconMap[typeid(MeshRenderer).hash_code()]  = ICON_MDI_SHAPE;
-		iconMap[typeid(Environment).hash_code()]   = ICON_MDI_EARTH;
-		iconMap[typeid(Sprite).hash_code()]        = ICON_MDI_IMAGE;
-		iconMap[typeid(MonoComponent).hash_code()] = ICON_MDI_LANGUAGE_CSHARP;
 
 		ImGuizmo::SetGizmoSizeClipSpace(0.25f);
 		auto winSize = window->getWidth() / (float) window->getHeight();

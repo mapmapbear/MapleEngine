@@ -17,6 +17,7 @@
 #include "RHI/Pipeline.h"
 #include "RHI/VertexBuffer.h"
 
+#include "Scene/Component/Atmosphere.h"
 #include "Scene/Component/Light.h"
 #include "Scene/Component/MeshRenderer.h"
 #include "Scene/Scene.h"
@@ -392,6 +393,23 @@ namespace maple
 		}
 	};
 
+	struct RenderGraph::AtmosphereData
+	{
+		bool                                        enable = false;
+		std::vector<std::shared_ptr<DescriptorSet>> descriptorSets;
+		std::shared_ptr<Shader>                     shader;
+		std::shared_ptr<Mesh>                       sphere;
+		glm::mat4                                   transform = glm::mat4(1);
+		AtmosphereData()
+		{
+			shader = Shader::create("shaders/Atmosphere.shader");
+			descriptorSets.resize(2);
+			descriptorSets[0] = DescriptorSet::create({0, shader.get()});
+			descriptorSets[1] = DescriptorSet::create({1, shader.get()});
+			sphere            = Mesh::createSphere();
+		}
+	};
+
 	RenderGraph::RenderGraph()
 	{
 		renderers.resize(static_cast<int32_t>(RenderId::Length));
@@ -411,14 +429,15 @@ namespace maple
 		setScreenBufferSize(width, height);
 		gBuffer = std::make_shared<GBuffer>(width, height);
 		reset();
-		shadowData   = new ShadowData();
-		forwardData  = new ForwardData();
-		deferredData = new DeferredData();
-		previewData  = new PreviewData();
-		skyboxData   = new SkyboxData();
-		ssaoData     = new SSAOData();
-		ssrData      = new SSRData();
-		taaData      = new TAAData();
+		shadowData    = new ShadowData();
+		forwardData   = new ForwardData();
+		deferredData  = new DeferredData();
+		previewData   = new PreviewData();
+		skyboxData    = new SkyboxData();
+		ssaoData      = new SSAOData();
+		ssrData       = new SSRData();
+		taaData       = new TAAData();
+		atmophereData = new AtmosphereData();
 		{
 			skyboxData->skyboxShader = Shader::create("shaders/Skybox.shader");
 			skyboxData->skyboxMesh   = Mesh::createCube();
@@ -505,6 +524,8 @@ namespace maple
 			deferredData->descriptorColorSet[2]->setUniform("UBO", "view", &view);
 			deferredData->descriptorColorSet[2]->setUniform("UBO", "nearPlane", &nearPlane);
 			deferredData->descriptorColorSet[2]->setUniform("UBO", "farPlane", &farPlane);
+
+			atmophereData->descriptorSets[0]->setUniform("UniformBufferObject", "projView", &projView);
 		}
 
 		if (settings.renderSkybox || settings.render3D)
@@ -749,6 +770,21 @@ namespace maple
 				renderer->beginScene(scene, projView);
 			}
 		}
+
+		auto atmosphere = registry.group<Atmosphere>(entt::get<Transform>);
+
+		for (auto atmo : atmosphere)
+		{
+			auto &asphere = registry.get<Atmosphere>(atmo);
+			auto &trans   = registry.get<Transform>(atmo);
+
+			asphere.getData().viewPos = camera.second->getWorldPosition();
+			//
+			atmophereData->descriptorSets[1]->setUniformBufferData("UniformBuffer", &asphere.getData());
+			atmophereData->transform = trans.getWorldMatrix();
+			break;
+		}
+		atmophereData->enable = atmosphere.size() > 0;
 	}
 
 	auto RenderGraph::beginPreviewScene(Scene *scene) -> void
@@ -843,6 +879,11 @@ namespace maple
 		Application::getRenderDevice()->clearRenderTarget(gBuffer->getBuffer(GBufferTextures::VIEW_POSITION), getCommandBuffer(), {0, 0, 0, 0});
 		Application::getRenderDevice()->clearRenderTarget(gBuffer->getBuffer(GBufferTextures::VIEW_NORMALS), getCommandBuffer(), {0, 0, 0, 0});
 		Application::getRenderDevice()->clearRenderTarget(gBuffer->getBuffer(GBufferTextures::VELOCITY), getCommandBuffer(), {0, 0, 0, 0});
+
+		if (atmophereData->enable)
+		{
+			executeAtmospherePass();
+		}
 
 		if (settings.renderShadow)
 			executeShadowPass();
@@ -1260,6 +1301,39 @@ namespace maple
 		skyboxPipeline->end(getCommandBuffer());
 	}
 
+	auto RenderGraph::executeAtmospherePass() -> void
+	{
+		PROFILE_FUNCTION();
+		GPUProfile("Atmosphere Pass");
+		if (atmophereData->sphere == nullptr)
+		{
+			return;
+		}
+		atmophereData->descriptorSets[0]->update();
+		atmophereData->descriptorSets[1]->update();
+
+		PipelineInfo pipelineInfo{};
+		pipelineInfo.shader = atmophereData->shader;
+
+		pipelineInfo.polygonMode         = PolygonMode::Fill;
+		pipelineInfo.cullMode            = CullMode::Front;
+		pipelineInfo.transparencyEnabled = false;
+
+		pipelineInfo.depthTarget     = gBuffer->getDepthBuffer();
+		pipelineInfo.colorTargets[0] = gBuffer->getBuffer(GBufferTextures::SCREEN);
+
+		auto pipeline = Pipeline::get(pipelineInfo);
+		pipeline->bind(getCommandBuffer());
+
+		auto &constants = atmophereData->shader->getPushConstants();
+		constants[0].setValue("transform", glm::value_ptr(atmophereData->transform));
+		atmophereData->shader->bindPushConstants(getCommandBuffer(), pipeline.get());
+
+		Renderer::bindDescriptorSets(pipeline.get(), getCommandBuffer(), 0, atmophereData->descriptorSets);
+		Renderer::drawMesh(getCommandBuffer(), pipeline.get(), atmophereData->sphere.get());
+		pipeline->end(getCommandBuffer());
+	}
+
 	auto RenderGraph::executeDeferredOffScreenPass() -> void
 	{
 		PROFILE_FUNCTION();
@@ -1422,7 +1496,6 @@ namespace maple
 
 	auto RenderGraph::executeFXAA() -> void
 	{
-
 	}
 
 	auto RenderGraph::executeReflectionPass() -> void

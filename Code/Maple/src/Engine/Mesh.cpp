@@ -76,6 +76,50 @@ namespace maple
 		return std::make_shared<Mesh>(indices, data);
 	}
 
+	auto Mesh::createQuaterScreenQuad() -> std::shared_ptr<Mesh>
+	{
+		std::vector<Vertex> data(4);
+
+		data[0].pos      = glm::vec3(-1.0f, -1.0f, 0.0f);
+		data[0].texCoord = glm::vec2(0.0f, 0.0f);
+		data[0].color    = glm::vec4(0.0f);
+
+		data[1].pos      = glm::vec3(0.f, -1.0f, 0.0f);
+		data[1].texCoord = glm::vec2(1.0f, 0.0f);
+		data[1].color    = glm::vec4(1.f);
+
+		data[2].pos      = glm::vec3(0.f, 0.f, 0.0f);
+		data[2].texCoord = glm::vec2(1.0f, 1.0f);
+		data[2].color    = glm::vec4(0.5f);
+
+		data[3].pos      = glm::vec3(-1.0f, 0.f, 0.0f);
+		data[3].texCoord = glm::vec2(0.0f, 1.0f);
+		data[3].color    = glm::vec4(0.2f);
+
+		std::vector<uint32_t> indices = {
+		    0,
+		    1,
+		    2,
+		    2,
+		    3,
+		    0,
+		};
+#ifdef MAPLE_VULKAN
+		if (screen)
+		{
+			indices = {
+			    0,
+			    3,
+			    2,
+			    2,
+			    1,
+			    0,
+			};
+		}
+#endif        // MAPLE_VULKAN
+		return std::make_shared<Mesh>(indices, data);
+	}
+
 	auto Mesh::createCube() -> std::shared_ptr<Mesh>
 	{
 		std::vector<Vertex> data;

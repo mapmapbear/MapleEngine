@@ -14,7 +14,8 @@ namespace maple
 	class MAPLE_EXPORT Camera : public Component
 	{
 	  public:
-		Camera() = default;
+		constexpr static char *ICON = ICON_MDI_CAMERA;
+		Camera()                    = default;
 		Camera(float fov, float near, float far, float aspect);
 		Camera(float aspectRatio, float scale);
 		Camera(float pitch, float yaw, const glm::vec3 &position, float fov, float near, float far, float aspect);
@@ -80,7 +81,7 @@ namespace maple
 			projectionDirty = true;
 		}
 
-		auto getProjectionMatrix() -> const glm::mat4 &;
+		auto        getProjectionMatrix() -> const glm::mat4 &;
 		inline auto getProjectionMatrixOld() -> const glm::mat4 &
 		{
 			return projMatrixOld;

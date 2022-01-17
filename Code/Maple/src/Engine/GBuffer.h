@@ -24,6 +24,7 @@ namespace maple
 		VIEW_POSITION,        //Deferred Render - View Space Positions  need to be optimized. they can be performed very well in post processing
 		VIEW_NORMALS,
 		VELOCITY,
+		VOLUMETRIC_LIGHT,
 		LENGTH
 	};
 

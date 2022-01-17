@@ -4,12 +4,14 @@
 #include "PropertiesWindow.h"
 #include "Editor.h"
 #include "Engine/GBuffer.h"
+#include "Scene/Component/Atmosphere.h"
 #include "Scene/Component/CameraControllerComponent.h"
 #include "Scene/Component/Component.h"
 #include "Scene/Component/Light.h"
 #include "Scene/Component/MeshRenderer.h"
 #include "Scene/Component/Sprite.h"
 #include "Scene/Component/Transform.h"
+
 #include "Scene/Entity/Entity.h"
 #include "Scene/Scene.h"
 #include "Scene/SceneManager.h"
@@ -23,13 +25,44 @@
 #include "Engine/Material.h"
 #include "Engine/Mesh.h"
 #include "ImGui/ImGuiHelpers.h"
-#include "Others/StringUtils.h"
 #include "Others/Serialization.h"
+#include "Others/StringUtils.h"
 
 #include "ImGui/ImNotification.h"
 
 namespace MM
 {
+	namespace
+	{
+		std::string lightTypeToString(maple::LightType type)
+		{
+			switch (type)
+			{
+				case maple::LightType::DirectionalLight:
+					return "Directional Light";
+				case maple::LightType::SpotLight:
+					return "Spot Light";
+				case maple::LightType::PointLight:
+					return "Point Light";
+				default:
+					return "ERROR";
+			}
+		}
+
+		int32_t stringToLightType(const std::string &type)
+		{
+			if (type == "Directional")
+				return int32_t(maple::LightType::DirectionalLight);
+
+			if (type == "Point")
+				return int32_t(maple::LightType::PointLight);
+
+			if (type == "Spot")
+				return int32_t(maple::LightType::SpotLight);
+			return 0;
+		}
+	}        // namespace
+
 	using namespace maple;
 
 	template <>
@@ -120,7 +153,6 @@ namespace MM
 			{
 				if (ImGui::Button(tex ? "" : "Empty", ImVec2{64, 64}))
 				{
-					
 				}
 			}
 
@@ -399,7 +431,44 @@ namespace MM
 	void ComponentEditorWidget<Light>(entt::registry &reg, entt::registry::entity_type e)
 	{
 		auto &light = reg.get<Light>(e);
-		light.onImGui();
+		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
+		ImGui::Columns(2);
+		ImGui::Separator();
+
+		if (static_cast<LightType>(light.lightData.type) != LightType::DirectionalLight)
+			ImGuiHelper::property("Radius", light.lightData.radius, 1.0f, 100.0f);
+
+		ImGuiHelper::property("Color", light.lightData.color, true, ImGuiHelper::PropertyFlag::ColorProperty);
+		ImGuiHelper::property("Intensity", light.lightData.intensity, 0.0f, 10.0f);
+
+		if (static_cast<LightType>(light.lightData.type) == LightType::SpotLight)
+			ImGuiHelper::property("Angle", light.lightData.angle, -1.0f, 1.0f);
+
+		ImGuiHelper::property("Show Frustum", light.showFrustum);
+
+		ImGui::AlignTextToFramePadding();
+		ImGui::TextUnformatted("Light Type");
+		ImGui::NextColumn();
+		ImGui::PushItemWidth(-1);
+
+		const char *lights[]  = {"Directional Light", "Spot Light", "Point Light"};
+		auto        currLight = lightTypeToString(LightType(int32_t(light.lightData.type)));
+
+		if (ImGui::BeginCombo("LightType", currLight.c_str(), 0))
+		{
+			for (auto n = 0; n < 3; n++)
+			{
+				if (ImGui::Selectable(lights[n]))
+				{
+					light.lightData.type = n;
+				}
+			}
+			ImGui::EndCombo();
+		}
+
+		ImGui::Columns(1);
+		ImGui::Separator();
+		ImGui::PopStyleVar();
 	}
 
 	template <>
@@ -461,8 +530,6 @@ namespace MM
 		{
 			ImGuiHelper::image(env.getEquirectangularMap().get(), {64, 64});
 		}
-
-
 
 		/*ImGui::Columns(1);
 		ImGui::Separator();
@@ -554,6 +621,67 @@ namespace MM
 		ImGui::PopStyleVar();
 	}
 
+	template <>
+	void ComponentEditorWidget<Atmosphere>(entt::registry &reg, entt::registry::entity_type e)
+	{
+		auto &atmosphere = reg.get<Atmosphere>(e);
+		auto &data       = atmosphere.getData();
+		auto  transform  = reg.try_get<Transform>(e);
+
+		if (ImGui::SliderFloat("Sun Intensity", &data.inensitySun, 0.01, 100.))
+		{
+		}
+
+		auto angle = atmosphere.getAngle();
+		if (ImGui::SliderAngle("Sun Angle", &angle, -10.f, 190.f))
+		{
+			atmosphere.setAngle(angle);
+		}
+
+		ImGui::Separator();
+		ImGui::TextUnformatted("Rayleigh Scattering");
+
+		if (ImGui::DragFloat3("Coefficient", glm::value_ptr(data.beta_R),
+		                      1e-4f, 0.0, 1.0, "%.4f"))
+		{
+		}
+
+		if (ImGui::SliderFloat("Scale Height", &data.H_R, 1.0, data.R_a - data.R_e))
+		{
+		}
+
+		ImGui::Separator();
+
+		ImGui::TextUnformatted("Mie Scattering");
+
+		if (ImGui::DragFloat("Coefficient", &data.beta_M, 1e-4f, 0.f, 1.0f, "%.4f"))
+		{
+		}
+
+		if (ImGui::SliderFloat("Scale Height##mie", &data.H_M, 1.0f, data.R_a - data.R_e))
+		{
+		}
+
+		if (ImGui::SliderFloat("Anisotropy", &data.g, 0.01f, 1.0f))
+		{
+		}
+
+		ImGui::Separator();
+		ImGui::TextUnformatted("Render Options");
+
+		if (ImGui::SliderInt("View Samples", &data.viewSamples, 1, 64))
+		{
+		}
+		if (ImGui::SliderInt("Light Samples", &data.lightSamples, 1, 64))
+		{
+		}
+
+		if (transform)
+		{
+			transform->setLocalScale(glm::vec3{data.R_a});
+		}
+	}
+
 };        // namespace MM
 
 namespace maple
@@ -618,7 +746,7 @@ namespace maple
 					ImGui::EndDragDropTarget();
 				}
 			}
-			else if(selectedResource != "")
+			else if (selectedResource != "")
 			{
 				drawResource(selectedResource);
 			}
@@ -633,23 +761,19 @@ namespace maple
 		auto &editor  = static_cast<Editor &>(*Application::get());
 		auto &iconMap = editor.getComponentIconMap();
 
-#define TRIVIAL_COMPONENT(ComponentType, show, showName)                      \
-	{                                                                         \
-		std::string name;                                                     \
-		if (iconMap.find(typeid(ComponentType).hash_code()) != iconMap.end()) \
-			name += iconMap[typeid(ComponentType).hash_code()];               \
-		else                                                                  \
-			name += iconMap[typeid(Editor).hash_code()];                      \
-		name += "\t";                                                         \
-		if (showName != std::string(""))                                      \
-		{                                                                     \
-			name += showName;                                                 \
-		}                                                                     \
-		else                                                                  \
-		{                                                                     \
-			name += ## #ComponentType;                                        \
-		}                                                                     \
-		enttEditor.registerComponent<ComponentType>(name, show);              \
+#define TRIVIAL_COMPONENT(ComponentType, show, showName)         \
+	{                                                            \
+		std::string name = ComponentType::ICON;                  \
+		name += "\t";                                            \
+		if (showName != std::string(""))                         \
+		{                                                        \
+			name += showName;                                    \
+		}                                                        \
+		else                                                     \
+		{                                                        \
+			name += ## #ComponentType;                           \
+		}                                                        \
+		enttEditor.registerComponent<ComponentType>(name, show); \
 	}
 
 		TRIVIAL_COMPONENT(Transform, true, "");
@@ -660,6 +784,7 @@ namespace maple
 		TRIVIAL_COMPONENT(Sprite, true, "");
 		TRIVIAL_COMPONENT(AnimatedSprite, true, "Animation Sprite");
 		TRIVIAL_COMPONENT(MeshRenderer, false, "Mesh Renderer");
+		TRIVIAL_COMPONENT(Atmosphere, true, "");
 
 		MM::EntityEditor<entt::entity>::ComponentInfo info;
 		info.hasChildren = true;

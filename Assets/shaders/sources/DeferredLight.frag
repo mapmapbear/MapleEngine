@@ -107,6 +107,61 @@ const vec2 PoissonDistribution[64] = vec2[](
 	vec2(0.183621, -0.713242),vec2(0.265220, -0.596716),vec2(-0.009628, -0.483058),vec2(-0.018516, 0.435703)
 );
 
+float calculateShadow(vec3 wsPos, int cascadeIndex, vec3 lightDirection, vec3 normal);
+int calculateCascadeIndex(vec3 wsPos);
+
+float RayMarch(vec3 startPos, vec3 viewDir, vec3 normal, vec3 cameraPos, Light light)
+{
+    // 观察到的点与观察位置之间的向量
+    vec3 view2DestDir = startPos - cameraPos;
+
+    // 观察到的点与观察位置之间的距离
+    float view2DestDist= length(view2DestDir);
+
+    // 以观察点与观察位置之间的距离为总的循环次数，每次递进 距离的倒数
+    // 两种步进规则
+    const int stepNum = 25;    //floor(view2DestDist)+1;
+    float oneStep = view2DestDist / stepNum;    // 1 / stepNum
+
+    float finalLight = 0;
+
+    for (int k = 0; k < stepNum; k++)
+    {
+        // 采样的位置点
+        vec3 samplePos = startPos + viewDir * oneStep * k;     // * k ;
+
+        // 累计递进的距离
+        float stepDist = length(viewDir * oneStep * k);
+        // 采样点到体积光源的位置的向量  指向光源
+        vec3 sample2Light = samplePos - light.position.xyz;
+        vec3 sample2LightNorm = normalize(sample2Light);
+
+        // 体积光源的照射方向和采样点到体积光源的方向的点积
+        float litfrwdDotSmp2lit = dot(sample2LightNorm, -light.direction.xyz);
+        
+        // angle为体积光的张角的一半，如果 litfrwdDotSmp2lit 大于 cos(angle) ，则表示该采样点在体积光范围内
+        float isInLight = smoothstep((1.0f - light.angle), 1, litfrwdDotSmp2lit);
+
+        // 采样点到体积光源的距离
+        float sample2LightDist = length(sample2Light) + 1;
+        // 当距离小于于1 时 取倒数后光强会非常大，因此将得到得距离+1
+        float sample2LightDistInv = 1.0 / sample2LightDist;
+        
+        // 采样点的光强， 与采样点到体积光源的距离平方成反比
+        float sampleLigheIntensity = sample2LightDistInv * sample2LightDistInv * light.intensity;
+
+        // shadow
+       // float shadow = 1;//ShadowCalculation(float4(samplePos, 1));
+		//int cascadeIndex = calculateCascadeIndex(samplePos);
+		float shadow = 1;//calculateShadow(samplePos, cascadeIndex, light.direction.xyz, normal);
+        // final
+        finalLight += sampleLigheIntensity * isInLight * shadow; 
+    }
+
+    return finalLight;
+}
+
+
 
 vec2 samplePoisson(int index)
 {
@@ -277,7 +332,7 @@ vec3 lighting(vec3 F0, vec3 wsPos, Material material)
 	{
 		Light light = ubo.lights[i];
 		float value = 0.0;
-		
+		vec3 lightColor = light.color.xyz * light.intensity;
 		if(light.type == 2.0)
 		{
 		    // Vector to light
@@ -308,16 +363,22 @@ vec3 lighting(vec3 F0, vec3 wsPos, Material material)
 			//float intensity 	= attenuation * attenuation;
 			// Erase light if there is no need to compute it
 			//intensity *= step(theta, cutoffAngle);
-			value = clamp(attenuation, 0.0, 1.0);
+			value = 1;//;;clamp(attenuation, 0.0, 1.0);
+
+			value = RayMarch(wsPos, material.view, material.normal,ubo.cameraPosition.xyz,light);
 		}
 		else
 		{
 			int cascadeIndex = calculateCascadeIndex(wsPos);
-			value = calculateShadow(wsPos,cascadeIndex, light.direction.xyz, material.normal);
+			float shadow = calculateShadow(wsPos,cascadeIndex, light.direction.xyz, material.normal);
+
+			float distance    = length(light.position.xyz - wsPos) + 0.000001;
+    		float attenuation = 1.0 / (distance * distance);
+			value= attenuation * shadow;
 		}
 		
 		vec3 Li = light.direction.xyz;
-		vec3 Lradiance = light.color.xyz * light.intensity;
+		vec3 Lradiance = lightColor;
 		vec3 Lh = normalize(Li + material.view);
 		
 		// Calculate angles between surface normal and various light vectors.

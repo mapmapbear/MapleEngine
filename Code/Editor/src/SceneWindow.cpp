@@ -336,6 +336,7 @@ namespace maple
 		ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);
 		ImGui::SameLine();
 
+
 		auto &camera = editor.getCamera();
 
 		bool ortho = camera->isOrthographic();

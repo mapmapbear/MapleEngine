@@ -24,6 +24,7 @@ namespace maple
 	class Editor final : public Application
 	{
 	  public:
+
 		Editor(AppDelegate *appDelegate);
 		auto init() -> void override;
 		auto onImGui() -> void override;

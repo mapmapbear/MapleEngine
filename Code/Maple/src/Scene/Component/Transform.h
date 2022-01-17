@@ -23,6 +23,8 @@ namespace maple
 	class MAPLE_EXPORT Transform final : public Component
 	{
 	  public:
+		constexpr static char *ICON = ICON_MDI_VECTOR_LINE;
+
 		Transform();
 		Transform(const glm::mat4 &matrix);
 		Transform(const glm::vec3 &position);

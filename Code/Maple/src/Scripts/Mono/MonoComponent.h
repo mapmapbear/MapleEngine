@@ -12,11 +12,17 @@ namespace maple
 	class MonoSystem;
 	class MAPLE_EXPORT MonoComponent : public Component
 	{
-	public:
-		auto addScript(const std::string& name, MonoSystem * system) -> void;
-		inline auto getScripts() const { return scripts; }
-		auto remove(const std::string& script) -> void;
-	private:
+	  public:
+		constexpr static char *ICON = ICON_MDI_LANGUAGE_CSHARP;
+
+		auto        addScript(const std::string &name, MonoSystem *system) -> void;
+		inline auto getScripts() const
+		{
+			return scripts;
+		}
+		auto remove(const std::string &script) -> void;
+
+	  private:
 		std::unordered_map<std::string, std::shared_ptr<MonoScript>> scripts;
 	};
-};
+};        // namespace maple

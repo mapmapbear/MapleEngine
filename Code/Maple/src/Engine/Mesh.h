@@ -96,6 +96,7 @@ namespace maple
 		}
 
 		static auto createQuad(bool screen = false) -> std::shared_ptr<Mesh>;
+		static auto createQuaterScreenQuad() -> std::shared_ptr<Mesh>;
 		static auto createCube() -> std::shared_ptr<Mesh>;
 		static auto createPyramid() -> std::shared_ptr<Mesh>;
 		static auto createSphere(uint32_t xSegments = 64, uint32_t ySegments = 64) -> std::shared_ptr<Mesh>;

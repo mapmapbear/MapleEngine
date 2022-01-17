@@ -59,6 +59,8 @@ namespace maple
 	class MAPLE_EXPORT MeshRenderer : public Component
 	{
 	  public:
+		constexpr static char *ICON = ICON_MDI_SHAPE;
+
 		MeshRenderer() = default;
 		MeshRenderer(const std::shared_ptr<Mesh> &mesh);
 

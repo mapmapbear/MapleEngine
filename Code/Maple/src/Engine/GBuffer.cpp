@@ -10,19 +10,19 @@ namespace maple
 	GBuffer::GBuffer(uint32_t width, uint32_t height) :
 	    width(width), height(height)
 	{
-		formats[PREV_DISPLAY]  = TextureFormat::RGBA8;
-		formats[SCREEN]        = TextureFormat::RGBA8;
-		formats[SSAO_SCREEN]   = TextureFormat::RGB8;
-		formats[SSAO_BLUR]     = TextureFormat::RGB8;
-		formats[SSR_SCREEN]    = TextureFormat::RGBA8;
-		formats[COLOR]         = TextureFormat::RGBA8;
-		formats[POSITION]      = TextureFormat::RGBA16;
-		formats[NORMALS]       = TextureFormat::RGBA16;
-		formats[VIEW_POSITION] = TextureFormat::RGBA16;
-		formats[VIEW_NORMALS]  = TextureFormat::RGBA16;
-		formats[VELOCITY]      = TextureFormat::RGBA8;
-		formats[PBR]           = TextureFormat::RGBA16;
-
+		formats[PREV_DISPLAY]     = TextureFormat::RGBA8;
+		formats[SCREEN]           = TextureFormat::RGBA8;
+		formats[SSAO_SCREEN]      = TextureFormat::RGB8;
+		formats[SSAO_BLUR]        = TextureFormat::RGB8;
+		formats[SSR_SCREEN]       = TextureFormat::RGBA8;
+		formats[COLOR]            = TextureFormat::RGBA8;
+		formats[POSITION]         = TextureFormat::RGBA16;
+		formats[NORMALS]          = TextureFormat::RGBA16;
+		formats[VIEW_POSITION]    = TextureFormat::RGBA16;
+		formats[VIEW_NORMALS]     = TextureFormat::RGBA16;
+		formats[VELOCITY]         = TextureFormat::RGBA8;
+		formats[PBR]              = TextureFormat::RGBA16;
+		formats[VOLUMETRIC_LIGHT] = TextureFormat::RGB8;
 		buildTexture();
 	}
 
@@ -60,7 +60,14 @@ namespace maple
 
 		for (int32_t i = COLOR; i < LENGTH; i++)
 		{
-			screenTextures[i]->buildTexture(formats[i], width, height, false, false, false);
+			if (i == VOLUMETRIC_LIGHT)
+			{
+				screenTextures[i]->buildTexture(formats[i], width / 2.f, height / 2.f, false, false, false);
+			}
+			else
+			{
+				screenTextures[i]->buildTexture(formats[i], width, height, false, false, false);
+			}
 		}
 		depthBuffer->resize(width, height, commandBuffer);
 	}
