@@ -54,6 +54,8 @@ namespace maple
 		auto setUniform4f(const std::string &name, const glm::vec4 &vector) -> void;
 		auto setUniformMat4(const std::string &name, const glm::mat4 &matrix) -> void;
 		auto bindUniformBuffer(const GLUniformBuffer *buffer, uint32_t slot, const std::string &name) -> void;
+		auto dispatch(uint32_t x, uint32_t y, uint32_t z) -> void;
+		
 
 		inline auto getPushConstants() -> std::vector<PushConstant> & override
 		{
@@ -113,5 +115,11 @@ namespace maple
 		BufferLayout              layout;
 		std::vector<PushConstant> pushConstants;
 		const std::string         filePath;
+
+		uint32_t localSizeX = 1;
+		uint32_t localSizeY = 1;
+		uint32_t localSizeZ = 1;
+
+		bool computeShader = false;
 	};
 }        // namespace maple

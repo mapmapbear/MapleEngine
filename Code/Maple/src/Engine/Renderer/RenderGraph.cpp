@@ -27,6 +27,7 @@
 
 #include "Window/NativeWindow.h"
 
+#include "CloudRenderer.h"
 #include "PostProcessRenderer.h"
 #include "PrefilterRenderer.h"
 #include "Renderer2D.h"
@@ -474,6 +475,7 @@ namespace maple
 		}
 
 		addRender(std::make_shared<Renderer2D>(), RenderId::Render2D);
+		addRender(std::make_shared<CloudRenderer>(), RenderId::Cloud);
 		addRender(std::make_shared<PostProcessRenderer>(), RenderId::PostProcess);
 	}
 
@@ -904,6 +906,11 @@ namespace maple
 			{
 				executeForwardPass();
 			}
+		}
+
+		if (auto render = renderers[static_cast<int32_t>(RenderId::Cloud)]; render != nullptr)
+		{
+			render->renderScene();
 		}
 
 		if (auto render = renderers[static_cast<int32_t>(RenderId::Render2D)]; render != nullptr)

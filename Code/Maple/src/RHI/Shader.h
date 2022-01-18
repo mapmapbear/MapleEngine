@@ -96,6 +96,7 @@ namespace maple
 		virtual auto getHandle() const -> void *                                                 = 0;
 		virtual auto getPushConstants() -> std::vector<PushConstant> &                           = 0;
 		virtual auto bindPushConstants(CommandBuffer *commandBuffer, Pipeline *pipeline) -> void = 0;
+		virtual auto dispatch(uint32_t x, uint32_t y, uint32_t z) -> void                        = 0;
 		virtual auto getPushConstant(uint32_t index) -> PushConstant *
 		{
 			return nullptr;
@@ -112,7 +113,7 @@ namespace maple
 
 		auto spirvTypeToDataType(const spirv_cross::SPIRType &type) -> ShaderDataType;
 
-		virtual auto reload() -> void {};
+		virtual auto reload() -> void{};
 
 	  protected:
 		auto parseSource(const std::vector<std::string> &lines, std::unordered_map<ShaderType, std::string> &shaders) -> void;

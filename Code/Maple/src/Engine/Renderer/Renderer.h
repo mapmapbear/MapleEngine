@@ -18,6 +18,7 @@ namespace maple
 	{
 		GridRender,
 		Geometry,
+		Cloud,
 		Render2D,
 		PostProcess,
 		Length

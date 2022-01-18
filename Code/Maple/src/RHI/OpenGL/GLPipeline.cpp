@@ -233,6 +233,7 @@ namespace maple
 
 		renderPass->beginRenderPass(commandBuffer, description.clearColor, frameBuffer.get(), SubPassContents::Inline, getWidth() * mipScale, getHeight() * mipScale, cubeFace, mipMapLevel);
 		description.shader->bind();
+		description.shader->dispatch(getWidth(), getHeight(), 1);
 
 		RenderDevice::setStencilTest(description.stencilTest);
 		RenderDevice::setDepthTest(description.depthTest);

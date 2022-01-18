@@ -210,6 +210,7 @@ namespace maple
 		HashCode::hashCode(hash, desc.depthTarget);
 		HashCode::hashCode(hash, desc.depthArrayTarget);
 		HashCode::hashCode(hash, desc.swapChainTarget);
+		HashCode::hashCode(hash, desc.groupCountX, desc.groupCountY, desc.groupCountZ);
 
 		if (desc.swapChainTarget)
 		{

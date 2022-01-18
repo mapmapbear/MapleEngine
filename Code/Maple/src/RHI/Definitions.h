@@ -300,6 +300,10 @@ namespace maple
 		std::shared_ptr<Texture> depthArrayTarget = nullptr;
 
 		std::array<std::shared_ptr<Texture>, MAX_RENDER_TARGETS> colorTargets = {};
+
+		uint32_t groupCountX = 1;
+		uint32_t groupCountY = 1;
+		uint32_t groupCountZ = 1;
 	};
 
 	struct RenderCommand
