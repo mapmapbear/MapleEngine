@@ -160,6 +160,13 @@ namespace maple
 		GLCall(glClear(rendererBufferToGL(bufferMask)));
 	}
 
+	auto GLRenderDevice::dispatch(CommandBuffer *commandBuffer, uint32_t x, uint32_t y, uint32_t z) -> void
+	{
+		PROFILE_FUNCTION();
+		GLCall(glDispatchCompute(x,y,z));
+		GLCall(glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT));
+	}
+
 	auto GLRenderDevice::presentInternal() -> void
 	{
 	}

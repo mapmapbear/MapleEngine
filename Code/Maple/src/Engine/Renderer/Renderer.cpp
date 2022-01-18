@@ -17,6 +17,11 @@ namespace maple
 		Application::getRenderDevice()->drawIndexed(commandBuffer, type, count, start);
 	}
 
+	auto Renderer::dispatch(CommandBuffer *commandBuffer, uint32_t x, uint32_t y, uint32_t z) -> void
+	{
+		Application::getRenderDevice()->dispatch(commandBuffer, x, y, z);
+	}
+
 	auto Renderer::getCommandBuffer() -> CommandBuffer *
 	{
 		return Application::getGraphicsContext()->getSwapChain()->getCurrentCommandBuffer();

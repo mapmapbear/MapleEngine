@@ -32,6 +32,9 @@ namespace maple
 
 		virtual auto presentInternal() -> void{};
 		virtual auto presentInternal(CommandBuffer *commandBuffer) -> void{};
+
+		virtual auto dispatch(CommandBuffer *commandBuffer,uint32_t x,uint32_t y,uint32_t z) -> void{};
+
 		virtual auto drawIndexedInternal(CommandBuffer *commandBuffer, DrawType type, uint32_t count, uint32_t start = 0) const -> void{};
 		virtual auto drawInternal(CommandBuffer *commandBuffer, DrawType type, uint32_t count, DataType dataType = DataType::UnsignedInt, const void *indices = nullptr) const -> void{};
 		virtual auto bindDescriptorSetsInternal(Pipeline *pipeline, CommandBuffer *commandBuffer, uint32_t dynamicOffset, const std::vector<std::shared_ptr<DescriptorSet>> &descriptorSets) -> void{};

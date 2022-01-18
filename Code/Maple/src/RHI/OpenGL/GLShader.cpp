@@ -355,16 +355,6 @@ namespace maple
 		}
 	}
 
-	auto GLShader::dispatch(uint32_t x, uint32_t y, uint32_t z) -> void
-	{
-		PROFILE_FUNCTION();
-		if (computeShader)
-		{
-			GLCall(glDispatchCompute(x / localSizeX, y / localSizeY, z / localSizeZ));
-			GLCall(glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT));
-		}
-	}
-
 	auto GLShader::getDescriptorInfo(uint32_t index) -> const DescriptorSetInfo
 	{
 		if (descriptorInfos.find(index) != descriptorInfos.end())

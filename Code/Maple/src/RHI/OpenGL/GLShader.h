@@ -54,8 +54,6 @@ namespace maple
 		auto setUniform4f(const std::string &name, const glm::vec4 &vector) -> void;
 		auto setUniformMat4(const std::string &name, const glm::mat4 &matrix) -> void;
 		auto bindUniformBuffer(const GLUniformBuffer *buffer, uint32_t slot, const std::string &name) -> void;
-		auto dispatch(uint32_t x, uint32_t y, uint32_t z) -> void;
-		
 
 		inline auto getPushConstants() -> std::vector<PushConstant> & override
 		{
@@ -89,9 +87,22 @@ namespace maple
 			return handle;
 		}
 
-		auto getPath() const -> std::string override
+		inline auto getPath() const->std::string override
 		{
 			return filePath;
+		};
+
+		inline auto getLocalSizeX() const -> uint32_t override
+		{
+			return localSizeX;
+		};
+		inline auto getLocalSizeY() const -> uint32_t override
+		{
+			return localSizeY;
+		};
+		inline auto getLocalSizeZ() const -> uint32_t override
+		{
+			return localSizeZ;
 		};
 
 	  private:

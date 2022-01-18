@@ -46,7 +46,7 @@ namespace maple
 		auto clearRenderTarget(const std::shared_ptr<Texture> &texture, CommandBuffer *commandBuffer, const glm::vec4 &clearColor) -> void override;
 
 		auto clearInternal(uint32_t bufferMask) -> void override;
-
+		auto dispatch(CommandBuffer *commandBuffer, uint32_t x, uint32_t y, uint32_t z) -> void override;
 	  protected:
 		const std::string rendererName = "OpenGL-Renderer";
 	};
