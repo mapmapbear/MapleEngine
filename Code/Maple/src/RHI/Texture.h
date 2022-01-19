@@ -24,6 +24,7 @@ namespace maple
 		virtual auto getType() const -> TextureType             = 0;
 		virtual auto getFormat() const -> TextureFormat         = 0;
 
+		virtual auto bindImageTexture(uint32_t unit, bool read = false, bool write = false, uint32_t level = 0, uint32_t layer = 0) -> void{};
 		virtual auto getSize() const -> uint32_t
 		{
 			return 0;
@@ -93,9 +94,11 @@ namespace maple
 		static auto  create() -> std::shared_ptr<Texture2D>;
 		static auto  create(uint32_t width, uint32_t height, void *data, TextureParameters parameters = TextureParameters(), TextureLoadOptions loadOptions = TextureLoadOptions()) -> std::shared_ptr<Texture2D>;
 		static auto  create(const std::string &name, const std::string &filePath, TextureParameters parameters = TextureParameters(), TextureLoadOptions loadOptions = TextureLoadOptions()) -> std::shared_ptr<Texture2D>;
-		virtual auto update(int32_t x, int32_t y, int32_t w, int32_t h, const void *buffer) -> void                                                                                              = 0;
-		virtual auto buildTexture(TextureFormat internalformat, uint32_t width, uint32_t height, bool srgb = false, bool depth = false, bool samplerShadow = false, bool mipmap = false) -> void = 0;
-		inline auto  getType() const -> TextureType override
+		virtual auto update(int32_t x, int32_t y, int32_t w, int32_t h, const void *buffer) -> void = 0;
+
+		virtual auto buildTexture(TextureFormat internalformat, uint32_t width, uint32_t height, bool srgb = false, bool depth = false, bool samplerShadow = false, bool mipmap = false, bool image = false, uint32_t accessFlag = 0) -> void = 0;
+
+		inline auto getType() const -> TextureType override
 		{
 			return TextureType::Color;
 		};

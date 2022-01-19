@@ -2,6 +2,7 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -14,12 +15,14 @@ namespace maple
 	class UniformBuffer;
 	enum class TextureType : int32_t;
 	enum class ShaderType : int32_t;
+	enum class TextureFormat : int32_t;
 
 	enum class DescriptorType
 	{
 		UniformBuffer,
 		UniformBufferDynamic,
-		ImageSampler
+		ImageSampler,
+		Image
 	};
 
 	enum class Format
@@ -116,6 +119,9 @@ namespace maple
 
 		DescriptorType type = DescriptorType::ImageSampler;
 		ShaderType     shaderType;
+
+		TextureFormat format;
+		uint32_t      accessFlag = 0;
 
 		std::vector<BufferMemberInfo> members;
 	};

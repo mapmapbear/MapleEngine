@@ -105,7 +105,7 @@ namespace maple
 
 		auto load() -> bool;
 		auto updateDescriptor() -> void;
-		auto buildTexture(TextureFormat internalformat, uint32_t width, uint32_t height, bool srgb, bool depth, bool samplerShadow, bool mipmap) -> void override;
+		auto buildTexture(TextureFormat internalformat, uint32_t width, uint32_t height, bool srgb, bool depth, bool samplerShadow, bool mipmap,bool image, uint32_t accessFlag) -> void override;
 
 		auto transitionImage(VkImageLayout newLayout, const VulkanCommandBuffer *commandBuffer = nullptr) -> void override;
 

@@ -10,6 +10,7 @@ namespace maple
 	class CloudRenderer : public Renderer
 	{
 	  public:
+		CloudRenderer();
 		virtual ~CloudRenderer();
 		auto init(const std::shared_ptr<GBuffer> &buffer) -> void override;
 		auto renderScene() -> void override;

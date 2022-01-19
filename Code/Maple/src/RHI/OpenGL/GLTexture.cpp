@@ -180,13 +180,14 @@ namespace maple
 		GLCall(glBindTexture(GL_TEXTURE_2D, 0));
 	}
 
-	auto GLTexture2D::buildTexture(TextureFormat internalformat, uint32_t w, uint32_t h, bool srgb, bool depth, bool samplerShadow, bool mipmap) -> void
+	auto GLTexture2D::buildTexture(TextureFormat internalformat, uint32_t w, uint32_t h, bool srgb, bool depth, bool samplerShadow, bool mipmap, bool image, uint32_t accessFlag) -> void
 	{
 		PROFILE_FUNCTION();
-		format = internalformat;
-		width  = w;
-		height = h;
-		name   = "Attachment";
+		format      = internalformat;
+		width       = w;
+		height      = h;
+		name        = "Attachment";
+		storedImage = image;
 
 		uint32_t glFormat  = textureFormatToGL(internalformat, srgb);
 		uint32_t glFormat2 = textureFormatToInternalFormat(glFormat);
@@ -206,8 +207,23 @@ namespace maple
 
 		GLCall(glTexImage2D(GL_TEXTURE_2D, 0, glFormat, width, height, 0, glFormat2, depth ? GL_UNSIGNED_BYTE : GL_FLOAT, nullptr));
 
+		if (image)
+		{
+			bindImageTexture(0, accessFlag == 0 || accessFlag == 2, accessFlag == 1 || accessFlag == 2, 0, 0);        //should use mask
+		}
+
 		if (mipmap)
 			GLCall(glGenerateMipmap(GL_TEXTURE_2D));
+	}
+
+	auto GLTexture2D::bindImageTexture(uint32_t unit, bool read /*= false*/, bool write /*= false*/, uint32_t level /*= 0*/, uint32_t layer /*= 0*/) -> void
+	{
+		PROFILE_FUNCTION();
+		auto flag = read && write ? GL_READ_WRITE :
+		            read          ? GL_READ_ONLY :
+		            write         ? GL_WRITE_ONLY :
+                                    GL_READ_WRITE;
+		GLCall(glBindImageTexture(unit, handle, level, false, layer, flag, textureFormatToGL(format, false)));
 	}
 
 	auto GLTexture2D::update(int32_t x, int32_t y, int32_t w, int32_t h, const void *buffer) -> void

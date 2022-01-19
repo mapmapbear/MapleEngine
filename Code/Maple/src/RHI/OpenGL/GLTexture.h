@@ -14,7 +14,8 @@ namespace maple
 
 		auto bind(uint32_t slot) const -> void override;
 		auto unbind(uint32_t slot) const -> void override;
-		auto buildTexture(TextureFormat internalformat, uint32_t width, uint32_t height, bool srgb, bool depth, bool samplerShadow, bool mipmap) -> void override;
+		auto buildTexture(TextureFormat internalformat, uint32_t width, uint32_t height, bool srgb, bool depth, bool samplerShadow, bool mipmap,bool image, uint32_t accessFlag) -> void override;
+		auto bindImageTexture(uint32_t unit, bool read = false, bool write = false, uint32_t level = 0, uint32_t layer = 0) -> void override;
 		auto update(int32_t x, int32_t y, int32_t w, int32_t h, const void *buffer) -> void override;
 
 		auto setData(const void *pixels) -> void;
@@ -64,6 +65,7 @@ namespace maple
 		TextureFormat      format;
 		TextureParameters  parameters;
 		TextureLoadOptions loadOptions;
+		bool               storedImage = false;
 	};
 
 	class GLTextureCube : public TextureCube

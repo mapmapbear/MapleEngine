@@ -65,6 +65,8 @@ typedef uint32_t AccessChainFlags;
 class CompilerGLSL : public Compiler
 {
 public:
+	const char *format_to_glsl(spv::ImageFormat format);
+
 	struct Options
 	{
 		// The shading language version. Corresponds to #version $VALUE.
@@ -626,7 +628,7 @@ protected:
 	const char *to_precision_qualifiers_glsl(uint32_t id);
 	virtual const char *to_storage_qualifiers_glsl(const SPIRVariable &var);
 	const char *flags_to_qualifiers_glsl(const SPIRType &type, const Bitset &flags);
-	const char *format_to_glsl(spv::ImageFormat format);
+	//const char *format_to_glsl(spv::ImageFormat format);
 	virtual std::string layout_for_member(const SPIRType &type, uint32_t index);
 	virtual std::string to_interpolation_qualifiers(const Bitset &flags);
 	std::string layout_for_variable(const SPIRVariable &variable);

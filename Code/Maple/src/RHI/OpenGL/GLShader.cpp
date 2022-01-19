@@ -398,8 +398,35 @@ namespace maple
 			localSizeX    = glsl->get_execution_mode_argument(spv::ExecutionMode::ExecutionModeLocalSize, 0);
 			localSizeY    = glsl->get_execution_mode_argument(spv::ExecutionMode::ExecutionModeLocalSize, 1);
 			localSizeZ    = glsl->get_execution_mode_argument(spv::ExecutionMode::ExecutionModeLocalSize, 2);
-			//todo...reflect the image 
+			//todo...reflect the image
 		}
+
+		for (auto &resource : resources.storage_images)
+		{
+			auto &glslType = glsl->get_type(resource.base_type_id);
+
+			if (glslType.basetype == spirv_cross::SPIRType::Image)
+			{
+				const char *fmt     = glsl->format_to_glsl(glslType.image.format);
+				uint32_t    set     = glsl->get_decoration(resource.id, spv::DecorationDescriptorSet);
+				uint32_t    binding = glsl->get_decoration(resource.id, spv::DecorationBinding);
+
+				LOGV("Load Image, type {0}, set {1}, binding {2}, name {3}", fmt, set, binding, resource.name);
+
+				auto &descriptorInfo = descriptorInfos[set];
+				auto &descriptor     = descriptorInfo.descriptors.emplace_back();
+
+				descriptor.offset     = 0;
+				descriptor.size       = 0;
+				descriptor.binding    = binding;
+				descriptor.name       = resource.name;
+				descriptor.shaderType = type;
+				descriptor.type       = DescriptorType::Image;
+				descriptor.accessFlag = glslType.image.access;
+				descriptor.format     = spirvTypeToTextureType(glslType.image.format);
+			}
+		}
+
 		for (auto &resource : resources.sampled_images)
 		{
 			uint32_t set     = glsl->get_decoration(resource.id, spv::DecorationDescriptorSet);

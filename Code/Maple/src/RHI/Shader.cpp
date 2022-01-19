@@ -2,9 +2,10 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #include "Shader.h"
-#include <spirv_cross.hpp>
-#include "Others/StringUtils.h"
 #include "Others/Console.h"
+#include "Others/StringUtils.h"
+#include "RHI/Definitions.h"
+#include <spirv_cross.hpp>
 
 namespace maple
 {
@@ -32,8 +33,7 @@ namespace maple
 			}
 			return ShaderType::Unknown;
 		}
-	}
-
+	}        // namespace
 
 	auto Shader::spirvTypeToDataType(const spirv_cross::SPIRType &type) -> ShaderDataType
 	{
@@ -74,6 +74,20 @@ namespace maple
 		return ShaderDataType::None;
 	}
 
+	auto Shader::spirvTypeToTextureType(const spv::ImageFormat &format) -> TextureFormat
+	{
+		switch (format)
+		{
+			case spv::ImageFormatRgba32f:
+				return TextureFormat::RGBA32;
+			case spv::ImageFormatRgba16f:
+				return TextureFormat::RGBA16;
+			case spv::ImageFormatRgba8:
+				return TextureFormat::RGBA8;
+		}
+		LOGW("unsupported spv::ImageFormat : {0}",format);
+	}
+
 	auto Shader::parseSource(const std::vector<std::string> &lines, std::unordered_map<ShaderType, std::string> &shaders) -> void
 	{
 		for (uint32_t i = 0; i < lines.size(); i++)
@@ -87,7 +101,7 @@ namespace maple
 				{
 					StringUtils::trim(path[1], "\r");
 					shaders[type] = path[1];
-					LOGV("{0} : {1}",path[0],path[1]);
+					LOGV("{0} : {1}", path[0], path[1]);
 				}
 			}
 		}

@@ -25,14 +25,14 @@ namespace maple
 		std::shared_ptr<DescriptorSet>          descriptorSet;
 		RenderData()
 		{
-			cloudShader = Shader::create("shaders/Cloud.shader");
-			for (int32_t i = 0; i < CloudsTextures::Length; i++)
-			{
-				computeInputs.emplace_back(Texture2D::create());
-			}
+			cloudShader   = Shader::create("shaders/Cloud.shader");
 			descriptorSet = DescriptorSet::create({0, cloudShader.get()});
 		}
 	};
+
+	CloudRenderer::CloudRenderer()
+	{
+	}
 
 	CloudRenderer::~CloudRenderer()
 	{
@@ -48,14 +48,14 @@ namespace maple
 	auto CloudRenderer::renderScene() -> void
 	{
 		PROFILE_FUNCTION();
-		PipelineInfo info;
+		/*	PipelineInfo info;
 
 		auto pipeline = Pipeline::get(info);
 
 		pipeline->bind(getCommandBuffer());
 		Renderer::bindDescriptorSets(pipeline.get(), getCommandBuffer(), 0, {data->descriptorSet});
 		Renderer::dispatch(getCommandBuffer(), 1,1,1);
-		pipeline->end(getCommandBuffer());
+		pipeline->end(getCommandBuffer());*/
 	}
 
 	auto CloudRenderer::beginScene(Scene *scene, const glm::mat4 &projView) -> void
@@ -69,9 +69,17 @@ namespace maple
 
 	auto CloudRenderer::onResize(uint32_t width, uint32_t height) -> void
 	{
-		for (auto &input : data->computeInputs)
+		if (data->computeInputs.empty())
 		{
-			input->buildTexture(TextureFormat::RGBA32, width, height);
+			for (auto i = 0; i < data->cloudShader->getDescriptorInfo(0).descriptors.size(); i++)
+			{
+				data->computeInputs.emplace_back(Texture2D::create());
+			}
+		}
+		for (auto &desc : data->cloudShader->getDescriptorInfo(0).descriptors)
+		{
+			auto &binding = data->computeInputs[desc.binding];
+			binding->buildTexture(TextureFormat::RGBA32, width, height, false, true, false, false, true, desc.accessFlag);
 		}
 	}
 };        // namespace maple

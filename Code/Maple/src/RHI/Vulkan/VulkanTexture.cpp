@@ -192,7 +192,7 @@ namespace maple
 	{
 		vkFormat = VkConverter::textureFormatToVK(parameters.format, parameters.srgb);
 
-		buildTexture(parameters.format, width, height, parameters.srgb, false, false, loadOptions.generateMipMaps);
+		buildTexture(parameters.format, width, height, parameters.srgb, false, false, loadOptions.generateMipMaps, false, 0);
 		update(0, 0, width, height, data);
 	}
 
@@ -318,7 +318,7 @@ namespace maple
 		descriptor.imageLayout = imageLayout;
 	}
 
-	auto VulkanTexture2D::buildTexture(TextureFormat internalformat, uint32_t width, uint32_t height, bool srgb, bool depth, bool samplerShadow, bool mipmap) -> void
+	auto VulkanTexture2D::buildTexture(TextureFormat internalformat, uint32_t width, uint32_t height, bool srgb, bool depth, bool samplerShadow, bool mipmap, bool image, uint32_t accessFlag) -> void
 	{
 		PROFILE_FUNCTION();
 

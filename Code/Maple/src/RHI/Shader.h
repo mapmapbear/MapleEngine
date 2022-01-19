@@ -7,6 +7,10 @@
 #include "FileSystem/IResource.h"
 #include "Resources/Cache.h"
 
+namespace spv
+{
+	enum ImageFormat;
+};
 namespace spirv_cross
 {
 	struct SPIRType;
@@ -111,6 +115,8 @@ namespace maple
 		}
 
 		auto spirvTypeToDataType(const spirv_cross::SPIRType &type) -> ShaderDataType;
+		auto spirvTypeToTextureType(const spv::ImageFormat &format) -> TextureFormat;
+
 
 		virtual auto reload() -> void{};
 
