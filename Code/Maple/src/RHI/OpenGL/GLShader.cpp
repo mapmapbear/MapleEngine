@@ -404,6 +404,7 @@ namespace maple
 		for (auto &resource : resources.storage_images)
 		{
 			auto &glslType = glsl->get_type(resource.base_type_id);
+			auto &glslType2 = glsl->get_type(resource.type_id);
 
 			if (glslType.basetype == spirv_cross::SPIRType::Image)
 			{
@@ -422,7 +423,8 @@ namespace maple
 				descriptor.name       = resource.name;
 				descriptor.shaderType = type;
 				descriptor.type       = DescriptorType::Image;
-				descriptor.accessFlag = glslType.image.access;
+				//descriptor.accessFlag = glslType.image.access;
+				descriptor.accessFlag = spv::AccessQualifierReadWrite;
 				descriptor.format     = spirvTypeToTextureType(glslType.image.format);
 			}
 		}
@@ -547,7 +549,7 @@ namespace maple
 		}
 
 		spirv_cross::CompilerGLSL::Options options;
-		options.version                              = 410;
+		options.version                              = 450;
 		options.es                                   = false;
 		options.vulkan_semantics                     = false;
 		options.separate_shader_objects              = false;

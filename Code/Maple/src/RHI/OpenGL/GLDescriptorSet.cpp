@@ -169,7 +169,6 @@ namespace maple
 						if (descriptor.type == DescriptorType::ImageSampler)
 						{
 							descriptor.textures[0]->bind(descriptor.binding);
-							shader->setUniform1i(descriptor.name, descriptor.binding);
 						}
 						else
 						{
@@ -177,6 +176,7 @@ namespace maple
 							auto write = descriptor.accessFlag == 1 || descriptor.accessFlag == 2;
 							descriptor.textures[0]->bindImageTexture(descriptor.binding, read, write, 0, 0);
 						}
+						shader->setUniform1i(descriptor.name, descriptor.binding);
 					}
 				}
 				else

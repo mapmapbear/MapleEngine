@@ -64,7 +64,8 @@ namespace maple
 	GLPipeline::~GLPipeline()
 	{
 		PROFILE_FUNCTION();
-		glDeleteVertexArrays(1, &vertexArray);
+		if (!shader->isComputeShader())
+			glDeleteVertexArrays(1, &vertexArray);
 	}
 
 	auto GLPipeline::init(const PipelineInfo &pipelineDesc) -> bool
@@ -73,8 +74,11 @@ namespace maple
 		transparencyEnabled = pipelineDesc.transparencyEnabled;
 		description         = pipelineDesc;
 		shader              = description.shader;
-		GLCall(glGenVertexArrays(1, &vertexArray));
-		createFrameBuffers();
+		if (!shader->isComputeShader())
+		{
+			GLCall(glGenVertexArrays(1, &vertexArray));
+			createFrameBuffers();
+		}
 		return true;
 	}
 
@@ -213,97 +217,103 @@ namespace maple
 	auto GLPipeline::bind(CommandBuffer *commandBuffer, uint32_t layer, int32_t cubeFace, int32_t mipMapLevel) -> FrameBuffer *
 	{
 		PROFILE_FUNCTION();
-		std::shared_ptr<FrameBuffer> frameBuffer;
-
-		if (description.swapChainTarget)
+		if (!shader->isComputeShader())
 		{
-			auto swapChain = Application::getGraphicsContext()->getSwapChain();
-			frameBuffer    = frameBuffers[swapChain->getCurrentBufferIndex()];
-		}
-		else if (description.depthArrayTarget)
-		{
-			frameBuffer = frameBuffers[layer];
-		}
-		else
-		{
-			frameBuffer = frameBuffers[0];
-		}
+			std::shared_ptr<FrameBuffer> frameBuffer;
 
-		auto mipScale = std::pow(0.5, mipMapLevel);
-
-		renderPass->beginRenderPass(commandBuffer, description.clearColor, frameBuffer.get(), SubPassContents::Inline, getWidth() * mipScale, getHeight() * mipScale, cubeFace, mipMapLevel);
-		description.shader->bind();
-
-		RenderDevice::setStencilTest(description.stencilTest);
-		RenderDevice::setDepthTest(description.depthTest);
-		//RenderDevice::setStencilMask(0xFF);
-
-		if (description.stencilTest)
-		{
-			RenderDevice::setStencilOp(description.stencilFail, description.stencilDepthFail, description.stencilDepthPass);
-			RenderDevice::setStencilFunction(description.stencilFunc, 1, 0xff);
-			RenderDevice::setStencilMask(description.stencilMask);
-		}
-		else
-		{
-			RenderDevice::setStencilMask(0xFF);
-			RenderDevice::setStencilOp(StencilType::Keep, StencilType::Keep, StencilType::Keep);
-		}
-
-		if (transparencyEnabled)
-		{
-			glEnable(GL_BLEND);
-
-			GLCall(glBlendEquation(GL_FUNC_ADD));
-
-			if (description.blendMode == BlendMode::SrcAlphaOneMinusSrcAlpha)
+			if (description.swapChainTarget)
 			{
-				GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+				auto swapChain = Application::getGraphicsContext()->getSwapChain();
+				frameBuffer    = frameBuffers[swapChain->getCurrentBufferIndex()];
 			}
-			else if (description.blendMode == BlendMode::ZeroSrcColor)
+			else if (description.depthArrayTarget)
 			{
-				GLCall(glBlendFunc(GL_ZERO, GL_SRC_COLOR));
-			}
-			else if (description.blendMode == BlendMode::OneZero)
-			{
-				GLCall(glBlendFunc(GL_ONE, GL_ZERO));
+				frameBuffer = frameBuffers[layer];
 			}
 			else
 			{
-				GLCall(glBlendFunc(GL_NONE, GL_NONE));
+				frameBuffer = frameBuffers[0];
 			}
+
+			auto mipScale = std::pow(0.5, mipMapLevel);
+
+			renderPass->beginRenderPass(commandBuffer, description.clearColor, frameBuffer.get(), SubPassContents::Inline, getWidth() * mipScale, getHeight() * mipScale, cubeFace, mipMapLevel);
+			description.shader->bind();
+
+			RenderDevice::setStencilTest(description.stencilTest);
+			RenderDevice::setDepthTest(description.depthTest);
+			//RenderDevice::setStencilMask(0xFF);
+
+			if (description.stencilTest)
+			{
+				RenderDevice::setStencilOp(description.stencilFail, description.stencilDepthFail, description.stencilDepthPass);
+				RenderDevice::setStencilFunction(description.stencilFunc, 1, 0xff);
+				RenderDevice::setStencilMask(description.stencilMask);
+			}
+			else
+			{
+				RenderDevice::setStencilMask(0xFF);
+				RenderDevice::setStencilOp(StencilType::Keep, StencilType::Keep, StencilType::Keep);
+			}
+
+			if (transparencyEnabled)
+			{
+				glEnable(GL_BLEND);
+
+				GLCall(glBlendEquation(GL_FUNC_ADD));
+
+				if (description.blendMode == BlendMode::SrcAlphaOneMinusSrcAlpha)
+				{
+					GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+				}
+				else if (description.blendMode == BlendMode::ZeroSrcColor)
+				{
+					GLCall(glBlendFunc(GL_ZERO, GL_SRC_COLOR));
+				}
+				else if (description.blendMode == BlendMode::OneZero)
+				{
+					GLCall(glBlendFunc(GL_ONE, GL_ZERO));
+				}
+				else
+				{
+					GLCall(glBlendFunc(GL_NONE, GL_NONE));
+				}
+			}
+			else
+				glDisable(GL_BLEND);
+
+			glEnable(GL_CULL_FACE);
+
+			switch (description.cullMode)
+			{
+				case CullMode::Back:
+					glCullFace(GL_BACK);
+					break;
+				case CullMode::Front:
+					glCullFace(GL_FRONT);
+					break;
+				case CullMode::FrontAndBack:
+					glCullFace(GL_FRONT_AND_BACK);
+					break;
+				case CullMode::None:
+					glDisable(GL_CULL_FACE);
+					break;
+			}
+
+			GLCall(glFrontFace(GL_CCW));
+
+			return frameBuffer.get();
 		}
-		else
-			glDisable(GL_BLEND);
-
-		glEnable(GL_CULL_FACE);
-
-		switch (description.cullMode)
-		{
-			case CullMode::Back:
-				glCullFace(GL_BACK);
-				break;
-			case CullMode::Front:
-				glCullFace(GL_FRONT);
-				break;
-			case CullMode::FrontAndBack:
-				glCullFace(GL_FRONT_AND_BACK);
-				break;
-			case CullMode::None:
-				glDisable(GL_CULL_FACE);
-				break;
-		}
-
-		GLCall(glFrontFace(GL_CCW));
-
-		return frameBuffer.get();
+		return nullptr;
 	}
 
 	auto GLPipeline::end(CommandBuffer *commandBuffer) -> void
 	{
 		PROFILE_FUNCTION();
-		renderPass->endRenderPass(commandBuffer);
-		//shader->unbind();
+		if (!shader->isComputeShader())
+		{
+			renderPass->endRenderPass(commandBuffer);
+		}
 	}
 
 	auto GLPipeline::clearRenderTargets(CommandBuffer *commandBuffer) -> void

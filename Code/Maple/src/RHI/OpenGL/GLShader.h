@@ -87,22 +87,9 @@ namespace maple
 			return handle;
 		}
 
-		inline auto getPath() const->std::string override
+		inline auto getPath() const -> std::string override
 		{
 			return filePath;
-		};
-
-		inline auto getLocalSizeX() const -> uint32_t override
-		{
-			return localSizeX;
-		};
-		inline auto getLocalSizeY() const -> uint32_t override
-		{
-			return localSizeY;
-		};
-		inline auto getLocalSizeZ() const -> uint32_t override
-		{
-			return localSizeZ;
 		};
 
 	  private:
@@ -126,11 +113,5 @@ namespace maple
 		BufferLayout              layout;
 		std::vector<PushConstant> pushConstants;
 		const std::string         filePath;
-
-		uint32_t localSizeX = 1;
-		uint32_t localSizeY = 1;
-		uint32_t localSizeZ = 1;
-
-		bool computeShader = false;
 	};
 }        // namespace maple

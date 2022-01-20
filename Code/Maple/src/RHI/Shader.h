@@ -117,12 +117,26 @@ namespace maple
 		auto spirvTypeToDataType(const spirv_cross::SPIRType &type) -> ShaderDataType;
 		auto spirvTypeToTextureType(const spv::ImageFormat &format) -> TextureFormat;
 
-
 		virtual auto reload() -> void{};
 
-		virtual auto getLocalSizeX() const-> uint32_t = 0;
-		virtual auto getLocalSizeY() const-> uint32_t = 0;
-		virtual auto getLocalSizeZ() const-> uint32_t = 0;
+		inline auto getLocalSizeX() const
+		{
+			return localSizeX;
+		};
+
+		inline auto getLocalSizeY() const
+		{
+			return localSizeY;
+		};
+		inline auto getLocalSizeZ() const
+		{
+			return localSizeZ;
+		};
+
+		inline auto isComputeShader() const
+		{
+			return computeShader;
+		}
 
 	  protected:
 		auto parseSource(const std::vector<std::string> &lines, std::unordered_map<ShaderType, std::string> &shaders) -> void;
@@ -130,5 +144,11 @@ namespace maple
 	  public:
 		static auto create(const std::string &filepath) -> std::shared_ptr<Shader>;
 		static auto create(const std::vector<uint32_t> &vertData, const std::vector<uint32_t> &fragData) -> std::shared_ptr<Shader>;
+
+	  protected:
+		bool     computeShader = false;
+		uint32_t localSizeX    = 1;
+		uint32_t localSizeY    = 1;
+		uint32_t localSizeZ    = 1;
 	};
 }        // namespace maple

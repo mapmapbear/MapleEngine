@@ -10,6 +10,8 @@
 #include "Scene/Component/MeshRenderer.h"
 #include "Scene/Component/Sprite.h"
 #include "Scene/Component/Transform.h"
+#include "Scene/Component/VolumetricCloud.h"
+
 #include "SceneGraph.h"
 
 #include "Devices/Input.h"
@@ -40,6 +42,9 @@ namespace maple
 		entityManager->addDependency<Model, Transform>();
 		entityManager->addDependency<Sprite, Transform>();
 		entityManager->addDependency<AnimatedSprite, Transform>();
+
+		entityManager->addDependency<VolumetricCloud, Light>();
+
 		sceneGraph = std::make_shared<SceneGraph>();
 		sceneGraph->init(entityManager->getRegistry());
 	}
@@ -138,7 +143,7 @@ namespace maple
 		auto camsEttView = entityManager->getEntitiesWithTypes<Camera, Transform>();
 		if (!camsEttView.empty() && useSceneCamera)
 		{
-			Entity entity(camsEttView.front(), this);
+			Entity     entity(camsEttView.front(), this);
 			Camera &   sceneCam   = entity.getComponent<Camera>();
 			Transform &sceneCamTr = entity.getComponent<Transform>();
 			return {&sceneCam, &sceneCamTr};
