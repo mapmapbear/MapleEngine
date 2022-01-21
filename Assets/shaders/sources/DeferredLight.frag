@@ -54,9 +54,7 @@ layout(set = 0, binding = 6)  uniform sampler2D uPBRSampler;
 layout(set = 0, binding = 7)  uniform samplerCube uIrradianceMap;
 layout(set = 0, binding = 8)  uniform samplerCube uPrefilterMap;
 layout(set = 0, binding = 9)  uniform sampler2D uPreintegratedFG;
-layout(set = 0, binding = 10) uniform sampler2D uSSAOSampler0;
-layout(set = 0, binding = 11)  uniform sampler2D uViewPositionSampler;
-layout(set = 0, binding = 12)  uniform sampler2D uViewNormalSampler;
+layout(set = 0, binding = 10) uniform sampler2D uOutputSampler;
 layout(set = 0, binding = 13) uniform UniformBufferLight
 {
 	Light lights[MAX_LIGHTS];
@@ -539,13 +537,7 @@ void main()
 			outColor = texture(uPBRSampler,fragTexCoord);
 			break;			
 			case 11:
-			outColor = vec4(texture(uSSAOSampler0,fragTexCoord).rrr,1);
-			break;
-			case 12:
-			outColor = texture(uViewPositionSampler,fragTexCoord);
-			break;
-			case 13:
-			outColor = texture(uViewNormalSampler,fragTexCoord);
+			outColor = vec4(texture(uOutputSampler,fragTexCoord).rgb,1);
 			break;
 		}
 	}

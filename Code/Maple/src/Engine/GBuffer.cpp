@@ -23,6 +23,7 @@ namespace maple
 		formats[VELOCITY]         = TextureFormat::RGBA8;
 		formats[PBR]              = TextureFormat::RGBA16;
 		formats[VOLUMETRIC_LIGHT] = TextureFormat::RGB8;
+		formats[PSEUDO_SKY]       = TextureFormat::RGBA8;
 		buildTexture();
 	}
 

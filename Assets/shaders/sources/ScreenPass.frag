@@ -19,8 +19,9 @@ layout(set = 0, binding = 0) uniform UniformBuffer
 } ubo;
 
 layout(set = 0, binding = 0)  uniform sampler2D uScreenSampler;
-//layout(set = 0, binding = 1)  uniform sampler2D uSSAOSampler;//blur
 layout(set = 0, binding = 1)  uniform sampler2D uReflectionSampler;
+layout(set = 0, binding = 2)  uniform sampler2D uCloudSampler;
+layout(set = 0, binding = 3)  uniform sampler2D uDepthSampler;
 
 
 layout(location = 0) out vec4 outFrag;
@@ -135,8 +136,14 @@ void main()
 		color = SSR.rgb * SSR.a + color * (1.0 - SSR.a);
 	}
 
-	color *= ubo.exposure;
-	
+
+	vec3 cloud = texture(uCloudSampler, inUV).xyz;
+	float mixVal = (texture(uDepthSampler, inUV).r < 1.0 ? 0.0 : 1.0);
+	vec3 col = mix(color.xyz, cloud, mixVal);
+
+	col *= ubo.exposure;
+
+
 	/*int i = ubo.toneMapIndex;
 	if (i == 1) color = linearToneMapping(color);
 	if (i == 2) color = simpleReinhardToneMapping(color);
@@ -147,5 +154,5 @@ void main()
 	if (i == 7) color = Uncharted2ToneMapping(color);
 	if (i == 8) color = ACESTonemap(color);*/
 	
-	outFrag = vec4(color.rgb, 1.0);
+	outFrag = vec4(col, 1.0);
 }

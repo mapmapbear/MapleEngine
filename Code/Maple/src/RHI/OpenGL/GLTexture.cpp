@@ -234,6 +234,7 @@ namespace maple
 
 	auto GLTexture2D::setData(const void *pixels) -> void
 	{
+		PROFILE_FUNCTION();
 		auto floatData = parameters.format == TextureFormat::RGB16 || parameters.format == TextureFormat::RGB32 || parameters.format == TextureFormat::RGBA16 || parameters.format == TextureFormat::RGBA32;
 
 		GLCall(glBindTexture(GL_TEXTURE_2D, handle));
@@ -243,6 +244,7 @@ namespace maple
 
 	GLTextureCube::GLTextureCube(uint32_t size)
 	{
+		PROFILE_FUNCTION();
 		numMips = Texture::calculateMipMapCount(size, size);
 
 		GLCall(glGenTextures(1, &handle));
@@ -297,6 +299,7 @@ namespace maple
 	GLTextureCube::GLTextureCube(uint32_t size, TextureFormat format, int32_t numMips) :
 	    numMips(numMips)
 	{
+		PROFILE_FUNCTION();
 		GLCall(glGenTextures(1, &handle));
 		GLCall(glBindTexture(GL_TEXTURE_CUBE_MAP, handle));
 
@@ -334,22 +337,26 @@ namespace maple
 
 	auto GLTextureCube::bind(uint32_t slot) const -> void
 	{
+		PROFILE_FUNCTION();
 		GLCall(glActiveTexture(GL_TEXTURE0 + slot));
 		GLCall(glBindTexture(GL_TEXTURE_CUBE_MAP, handle));
 	}
 
 	auto GLTextureCube::unbind(uint32_t slot) const -> void
 	{
+		PROFILE_FUNCTION();
 		GLCall(glActiveTexture(GL_TEXTURE0 + slot));
 		GLCall(glBindTexture(GL_TEXTURE_CUBE_MAP, 0));
 	}
 
 	auto GLTextureCube::update(CommandBuffer *commandBuffer, FrameBuffer *framebuffer, int32_t cubeIndex, int32_t mipmapLevel /*= 0*/) -> void
 	{
+		PROFILE_FUNCTION();
 	}
 
 	auto GLTextureCube::generateMipmap(const CommandBuffer *commandBuffer) -> void
 	{
+		PROFILE_FUNCTION();
 		GLCall(glBindTexture(GL_TEXTURE_CUBE_MAP, handle));
 		GLCall(glGenerateMipmap(GL_TEXTURE_CUBE_MAP));
 	}
@@ -361,6 +368,7 @@ namespace maple
 
 	auto GLTextureCube::loadFromFiles() -> uint32_t
 	{
+		PROFILE_FUNCTION();
 		const auto &xPos = files[0];
 		const auto &xNeg = files[1];
 		const auto &yPos = files[2];
@@ -405,6 +413,7 @@ namespace maple
 
 	auto GLTextureCube::loadFromVCross(uint32_t mips) -> uint32_t
 	{
+		PROFILE_FUNCTION();
 		uint32_t   srcWidth        = 0;
 		uint32_t   srcHeight       = 0;
 		uint32_t   bits            = 0;
@@ -511,6 +520,7 @@ namespace maple
 	GLTextureDepth::GLTextureDepth(uint32_t width, uint32_t height, bool stencil) :
 	    width(width), height(height), stencil(stencil)
 	{
+		PROFILE_FUNCTION();
 		GLCall(glGenTextures(1, &handle));
 		format = TextureFormat::DEPTH;
 		init();
@@ -523,12 +533,14 @@ namespace maple
 
 	auto GLTextureDepth::bind(uint32_t slot) const -> void
 	{
+		PROFILE_FUNCTION();
 		GLCall(glActiveTexture(GL_TEXTURE0 + slot));
 		GLCall(glBindTexture(GL_TEXTURE_2D, handle));
 	}
 
 	auto GLTextureDepth::unbind(uint32_t slot) const -> void
 	{
+		PROFILE_FUNCTION();
 		GLCall(glActiveTexture(GL_TEXTURE0 + slot));
 		GLCall(glBindTexture(GL_TEXTURE_2D, 0));
 	}
@@ -543,6 +555,7 @@ namespace maple
 
 	auto GLTextureDepth::init() -> void
 	{
+		PROFILE_FUNCTION();
 		GLCall(glBindTexture(GL_TEXTURE_2D, handle));
 		if (format == TextureFormat::DEPTH_STENCIL)
 		{
@@ -577,18 +590,21 @@ namespace maple
 
 	auto GLTextureDepthArray::bind(uint32_t slot) const -> void
 	{
+		PROFILE_FUNCTION();
 		GLCall(glActiveTexture(GL_TEXTURE0 + slot));
 		GLCall(glBindTexture(GL_TEXTURE_2D_ARRAY, handle));
 	}
 
 	auto GLTextureDepthArray::unbind(uint32_t slot) const -> void
 	{
+		PROFILE_FUNCTION();
 		GLCall(glActiveTexture(GL_TEXTURE0 + slot));
 		GLCall(glBindTexture(GL_TEXTURE_2D_ARRAY, 0));
 	}
 
 	auto GLTextureDepthArray::resize(uint32_t width, uint32_t height, uint32_t count) -> void
 	{
+		PROFILE_FUNCTION();
 		this->width  = width;
 		this->height = height;
 		this->count  = count;
@@ -622,5 +638,66 @@ namespace maple
 #endif
 		GLCall(glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL));
 		GLCall(glBindTexture(GL_TEXTURE_2D_ARRAY, 0));
+	}
+
+	GLTexture3D::GLTexture3D(uint32_t width, uint32_t height, uint32_t depth) :
+	    width(width), height(height), depth(depth)
+	{
+		init(width, height, depth);
+	}
+
+	GLTexture3D::~GLTexture3D()
+	{
+		GLCall(glDeleteTextures(1, &handle));
+	}
+
+	auto GLTexture3D::init(uint32_t width, uint32_t height, uint32_t depth) -> void
+	{
+		PROFILE_FUNCTION();
+		GLCall(glGenTextures(1, &handle));
+		GLCall(glBindTexture(GL_TEXTURE_3D, handle));
+
+		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_REPEAT));
+		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_REPEAT));
+		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR));
+
+		GLCall(glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA8, width, height, depth, 0, GL_RGBA, GL_FLOAT, NULL));
+		GLCall(glGenerateMipmap(GL_TEXTURE_3D));
+		GLCall(glBindImageTexture(0, handle, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8));
+	}
+
+	auto GLTexture3D::bind(uint32_t slot) const -> void
+	{
+		PROFILE_FUNCTION();
+		GLCall(glActiveTexture(GL_TEXTURE0 + slot));
+		GLCall(glBindTexture(GL_TEXTURE_3D, handle));
+	}
+
+	auto GLTexture3D::unbind(uint32_t slot) const -> void
+	{
+		PROFILE_FUNCTION();
+		GLCall(glActiveTexture(GL_TEXTURE0 + slot));
+		GLCall(glBindTexture(GL_TEXTURE_3D, handle));
+	}
+
+	auto GLTexture3D::generateMipmaps() -> void
+	{
+		PROFILE_FUNCTION();
+		GLCall(glBindTexture(GL_TEXTURE_3D, handle));
+		GLCall(glGenerateMipmap(GL_TEXTURE_3D));
+		GLCall(glBindTexture(GL_TEXTURE_3D, 0));
+	}
+
+	auto GLTexture3D::bindImageTexture(uint32_t unit, bool read, bool write, uint32_t level, uint32_t layer) -> void
+	{
+		PROFILE_FUNCTION();
+		auto flag = read && write ? GL_READ_WRITE :
+		            read          ? GL_READ_ONLY :
+		            write         ? GL_WRITE_ONLY :
+                                    GL_READ_WRITE;
+		bind(unit);
+		GLCall(glBindImageTexture(unit, handle, level, true, layer, flag, textureFormatToGL(format, false)));
 	}
 }        // namespace maple

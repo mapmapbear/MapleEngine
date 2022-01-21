@@ -30,5 +30,11 @@ namespace maple
 		bool  enableGodRays;
 		bool  enablePowder;
 		bool  postProcess;
+
+
+		std::shared_ptr<Texture> perlinNoise;
+		std::shared_ptr<Texture> worley32;
+
+		bool weathDirty = true;
 	};
 };        // namespace maple

@@ -105,20 +105,23 @@ namespace maple
 			return;
 		}
 
-		if (envComponent && envComponent->getEnvironment() == nullptr)
+		if (!envComponent->isPseudoSky())
 		{
-			envComponent->setEnvironmnet(skyboxCube);
+			if (envComponent && envComponent->getEnvironment() == nullptr)
+			{
+				envComponent->setEnvironmnet(skyboxCube);
+			}
+
+			generateSkybox();
+
+			updateIrradianceDescriptor();
+			generateIrradianceMap();
+
+			updatePrefilterDescriptor();
+			generatePrefilterMap();
+
+			envComponent = nullptr;
 		}
-
-		generateSkybox();
-
-		updateIrradianceDescriptor();
-		generateIrradianceMap();
-
-		updatePrefilterDescriptor();
-		generatePrefilterMap();
-
-		envComponent = nullptr;
 	}
 
 	auto PrefilterRenderer::present() -> void
@@ -132,7 +135,7 @@ namespace maple
 		if (!view.empty())
 		{
 			auto env = &view.get<Environment>(view.front());
-			if (equirectangularMap != env->getEquirectangularMap())
+			if (equirectangularMap != env->getEquirectangularMap() && !env->isPseudoSky())
 			{
 				equirectangularMap = env->getEquirectangularMap();
 				envComponent       = env;

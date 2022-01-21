@@ -177,4 +177,14 @@ namespace maple
 #endif        // MAPLE_VULKAN
 	}
 
+	auto Texture3D::create(uint32_t width, uint32_t height, uint32_t depth) -> std::shared_ptr<Texture3D>
+	{
+#ifdef MAPLE_OPENGL
+		return Application::getCache()->emplace<GLTexture3D>(width, height, depth);
+#endif        // MAPLE_OPENGL
+#ifdef MAPLE_VULKAN
+		return Application::getCache()->emplace<VulkanTexture3D>(width, height, depth);
+#endif        // MAPLE_VULKAN
+	}
+
 }        // namespace maple

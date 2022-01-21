@@ -104,6 +104,28 @@ namespace maple
 		};
 	};
 
+	class MAPLE_EXPORT Texture3D : public Texture2D
+	{
+	  public:
+		static auto create(uint32_t width, uint32_t height, uint32_t depth) -> std::shared_ptr<Texture3D>;
+
+		virtual auto update(int32_t x, int32_t y, int32_t w, int32_t h, const void *buffer) -> void
+		{}
+
+		virtual auto buildTexture(TextureFormat internalformat, uint32_t width, uint32_t height, bool srgb = false, bool depth = false, bool samplerShadow = false, bool mipmap = false, bool image = false, uint32_t accessFlag = 0) -> void
+		{}
+
+		virtual auto setData(const void *data) -> void override
+		{}
+
+		virtual auto generateMipmaps() -> void = 0;
+
+		inline auto getType() const -> TextureType override
+		{
+			return TextureType::Color;
+		};
+	};
+
 	class MAPLE_EXPORT TextureCube : public Texture
 	{
 	  protected:

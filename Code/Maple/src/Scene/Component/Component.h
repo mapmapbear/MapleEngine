@@ -3,9 +3,10 @@
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "Engine/Core.h"
+#include <IconsMaterialDesignIcons.h>
 #include <entt/entt.hpp>
 #include <string>
-#include <IconsMaterialDesignIcons.h>
+#include <glm/vec3.hpp>
 
 namespace maple
 {
@@ -135,13 +136,13 @@ namespace maple
 		template <class Archive>
 		auto save(Archive &archive) const -> void
 		{
-			archive(filePath, entity);
+			archive(filePath, entity, pseudoSky);
 		}
 
 		template <class Archive>
 		auto load(Archive &archive) -> void
 		{
-			archive(filePath, entity);
+			archive(filePath, entity, pseudoSky);
 			init(filePath);
 		}
 
@@ -151,13 +152,25 @@ namespace maple
 		std::shared_ptr<TextureCube> prefilteredEnvironment;
 		std::shared_ptr<TextureCube> irradianceMap;
 
+		bool pseudoSky = false;
+
 		uint32_t    numMips = 0;
 		uint32_t    width   = 0;
 		uint32_t    height  = 0;
 		std::string filePath;
 
-	  public:
+		glm::vec3 skyColorTop = glm::vec3(0.5, 0.7, 0.8);
+		glm::vec3 skyColorBottom    = glm::vec3(0.9, 0.9, 0.95);
 
+	  public:
+		inline auto &getSkyColorBottom()
+		{
+			return skyColorBottom;
+		}
+		inline auto &getSkyColorTop()
+		{
+			return skyColorTop;
+		}
 		inline auto &getEnvironment() const
 		{
 			return environment;
@@ -206,6 +219,15 @@ namespace maple
 		inline auto setWidth(uint32_t width)
 		{
 			this->width = width;
+		}
+
+		inline auto isPseudoSky() const
+		{
+			return pseudoSky;
+		}
+		inline auto setPseudoSky(bool pseudoSky)
+		{
+			this->pseudoSky = pseudoSky;
 		}
 
 		inline auto &getHeight() const

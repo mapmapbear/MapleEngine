@@ -14,7 +14,7 @@ namespace maple
 
 		auto bind(uint32_t slot) const -> void override;
 		auto unbind(uint32_t slot) const -> void override;
-		auto buildTexture(TextureFormat internalformat, uint32_t width, uint32_t height, bool srgb, bool depth, bool samplerShadow, bool mipmap,bool image, uint32_t accessFlag) -> void override;
+		auto buildTexture(TextureFormat internalformat, uint32_t width, uint32_t height, bool srgb, bool depth, bool samplerShadow, bool mipmap, bool image, uint32_t accessFlag) -> void override;
 		auto bindImageTexture(uint32_t unit, bool read = false, bool write = false, uint32_t level = 0, uint32_t layer = 0) -> void override;
 		auto update(int32_t x, int32_t y, int32_t w, int32_t h, const void *buffer) -> void override;
 
@@ -66,6 +66,60 @@ namespace maple
 		TextureParameters  parameters;
 		TextureLoadOptions loadOptions;
 		bool               storedImage = false;
+	};
+
+	class GLTexture3D : public Texture3D
+	{
+	  public:
+		GLTexture3D(uint32_t width, uint32_t height, uint32_t depth);
+		~GLTexture3D();
+
+		auto init(uint32_t width, uint32_t height, uint32_t depth) -> void;
+
+		auto bind(uint32_t slot = 0) const -> void override;
+
+		auto unbind(uint32_t slot = 0) const -> void override;
+
+		auto generateMipmaps() -> void override;
+
+		auto bindImageTexture(uint32_t unit, bool read, bool write, uint32_t level, uint32_t layer) -> void override;
+
+		virtual auto getFilePath() const -> const std::string & override
+		{
+			return filePath;
+		};
+
+		auto getHandle() const -> void * override
+		{
+			return (void *) (size_t) handle;
+		}
+
+		inline auto getWidth() const -> uint32_t override
+		{
+			return width;
+		}
+
+		inline auto getHeight() const -> uint32_t override
+		{
+			return height;
+		}
+
+		inline auto getDepth() const -> uint32_t
+		{
+			return height;
+		}
+		inline auto getFormat() const -> TextureFormat override
+		{
+			return format;
+		}
+
+	  private:
+		uint32_t      handle = 0;
+		uint32_t      width  = 0;
+		uint32_t      height = 0;
+		uint32_t      depth  = 0;
+		TextureFormat format = TextureFormat::RGBA8;
+		std::string   filePath;
 	};
 
 	class GLTextureCube : public TextureCube

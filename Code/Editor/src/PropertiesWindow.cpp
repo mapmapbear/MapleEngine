@@ -501,47 +501,67 @@ namespace MM
 	void ComponentEditorWidget<Environment>(entt::registry &reg, entt::registry::entity_type e)
 	{
 		auto &env = reg.get<Environment>(e);
+
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
 		ImGui::Columns(2);
 		ImGui::Separator();
 
-		auto label = env.getFilePath();
-		if (ImGuiHelper::property("File", label, true))
-		{
-		}
+		ImGui::TextUnformatted("Skybox type");
+		ImGui::NextColumn();
+		ImGui::PushItemWidth(-1);
 
-		if (ImGui::BeginDragDropTarget())
+		static char *boxItems[2] = {"Environment", "PseudoSky"};
+		if (ImGui::BeginCombo("", !env.isPseudoSky() ? "Environment" : "PseudoSky", 0))
 		{
-			auto data = ImGui::AcceptDragDropPayload("AssetFile", ImGuiDragDropFlags_None);
-			if (data)
+			for (auto n = 0; n < 2; n++)
 			{
-				std::string file = (char *) data->Data;
-				if (StringUtils::isTextureFile(file))
+				if (ImGui::Selectable(boxItems[n], true))
 				{
-					env.init(file);
+					env.setPseudoSky(n == 1);
 				}
 			}
-			ImGui::EndDragDropTarget();
+			ImGui::EndCombo();
+		}
+
+		ImGui::PopItemWidth();
+		ImGui::NextColumn();
+
+		if (!env.isPseudoSky())
+		{
+			auto label = env.getFilePath();
+			if (ImGuiHelper::property("File", label, true))
+			{
+				if (ImGui::BeginDragDropTarget())
+				{
+					auto data = ImGui::AcceptDragDropPayload("AssetFile", ImGuiDragDropFlags_None);
+					if (data)
+					{
+						std::string file = (char *) data->Data;
+						if (StringUtils::isTextureFile(file))
+						{
+							env.init(file);
+						}
+					}
+					ImGui::EndDragDropTarget();
+				}
+
+				ImGui::Columns(1);
+				ImGui::Separator();
+
+				if (env.getEquirectangularMap())
+				{
+					ImGuiHelper::image(env.getEquirectangularMap().get(), {64, 64});
+				}
+			}
+		}
+		else
+		{
+			ImGuiHelper::property("SkyColor Top", env.getSkyColorTop(), ImGuiHelper::PropertyFlag::ColorProperty);
+			ImGuiHelper::property("SkyColor Bottom", env.getSkyColorBottom(), ImGuiHelper::PropertyFlag::ColorProperty);
 		}
 
 		ImGui::Columns(1);
 		ImGui::Separator();
-
-		if (env.getEquirectangularMap())
-		{
-			ImGuiHelper::image(env.getEquirectangularMap().get(), {64, 64});
-		}
-
-		/*ImGui::Columns(1);
-		ImGui::Separator();
-
-		if (env.getEquirectangularMap()) {
-			ImGuiHelper::image(
-				env.getEquirectangularMap().get()
-				, { 100,100 });
-		}
-*/
-
 		ImGui::PopStyleVar();
 	}
 
@@ -688,27 +708,35 @@ namespace MM
 	{
 		auto &cloud = reg.get<VolumetricCloud>(e);
 
-		ImGui::Checkbox("Post Processing (Gaussian Blur)", &cloud.postProcess);
-		ImGui::Checkbox("Light Scatter", &cloud.enableGodRays);
-		ImGui::Checkbox("Enable sugar powder effect", &cloud.enablePowder);
+		ImGui::Columns(2);
+		ImGui::Separator();
 
-		ImGui::SliderFloat("Coverage", &cloud.coverage, 0.0f, 1.0f);
-		ImGui::SliderFloat("Speed", &cloud.cloudSpeed, 0.0f, 5.0E3);
-		ImGui::SliderFloat("Crispiness", &cloud.crispiness, 0.0f, 120.0f);
-		ImGui::SliderFloat("Curliness", &cloud.curliness, 0.0f, 3.0f);
-		ImGui::SliderFloat("Density", &cloud.density, 0.0f, 0.1f);
-		ImGui::SliderFloat("Light Absorption", &cloud.absorption, 0.0f, 1.5f);
+		ImGuiHelper::property("Post Processing (Gaussian Blur)", cloud.postProcess);
+		ImGuiHelper::property("Light Scatter", cloud.enableGodRays);
+		ImGuiHelper::property("Enable sugar powder effect", cloud.enablePowder);
 
-		if (ImGui::SliderFloat("Clouds frequency", &cloud.perlinFrequency, 0.0f, 4.0f))
+		ImGuiHelper::property("Coverage", cloud.coverage, 0.0f, 1.0f);
+		if (ImGuiHelper::property("Speed", cloud.cloudSpeed, 0.0f, 5.0E3))
+		{
+			cloud.weathDirty = true;
+		}
+		ImGuiHelper::property("Crispiness", cloud.crispiness, 0.0f, 120.0f);
+		ImGuiHelper::property("Curliness", cloud.curliness, 0.0f, 3.0f);
+		ImGuiHelper::property("Density", cloud.density, 0.0f, 0.1f);
+		ImGuiHelper::property("Light Absorption", cloud.absorption, 0.0f, 1.5f);
+
+		if (ImGuiHelper::property("Clouds frequency", cloud.perlinFrequency, 0.0f, 4.0f))
 		{
 			// -> noise map
+			cloud.weathDirty = true;
 		}
 
-		ImGui::SliderFloat("Sky dome radius", &cloud.earthRadius, 10000.0f, 5000000.0f);
-		ImGui::SliderFloat("Clouds bottom height", &cloud.sphereInnerRadius, 1000.0f, 15000.0f);
-		ImGui::SliderFloat("Clouds top height", &cloud.sphereOuterRadius, 1000.0f, 40000.0f);
+		ImGuiHelper::property("Sky dome radius", cloud.earthRadius, 10000.0f, 5000000.0f);
+		ImGuiHelper::property("Clouds bottom height", cloud.sphereInnerRadius, 1000.0f, 15000.0f);
+		ImGuiHelper::property("Clouds top height", cloud.sphereOuterRadius, 1000.0f, 40000.0f);
 
-
+		ImGui::Columns(1);
+		ImGui::Separator();
 	}
 
 };        // namespace MM

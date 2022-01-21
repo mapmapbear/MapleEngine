@@ -25,6 +25,7 @@ namespace maple
 		VIEW_NORMALS,
 		VELOCITY,
 		VOLUMETRIC_LIGHT,
+		PSEUDO_SKY,
 		LENGTH
 	};
 

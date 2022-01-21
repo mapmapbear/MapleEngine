@@ -73,6 +73,8 @@ namespace maple
 					return "Position - ViewSpace";
 				case 13:
 					return "Normal - ViewSpace";
+				case 14:
+					return "PseudoSky";
 				default:
 					return "Lighting";
 			}
@@ -653,7 +655,16 @@ namespace maple
 			auto cubeMapMipLevels = forwardData->environmentMap ? forwardData->environmentMap->getMipMapLevels() - 1 : 0;
 			descriptorSet->setUniform("UniformBufferLight", "lightCount", &numLights);
 			descriptorSet->setUniform("UniformBufferLight", "shadowCount", &numShadows);
-			descriptorSet->setUniform("UniformBufferLight", "mode", &forwardData->renderMode);
+			if (forwardData->renderMode >= 11)
+			{
+				const int32_t i = 11;
+				descriptorSet->setUniform("UniformBufferLight", "mode", &i);
+			}
+			else
+			{
+				descriptorSet->setUniform("UniformBufferLight", "mode", &forwardData->renderMode);
+			}
+
 			descriptorSet->setUniform("UniformBufferLight", "cubeMapMipLevels", &cubeMapMipLevels);
 			int32_t ssao = ssaoData->enable ? 1 : 0;
 			descriptorSet->setUniform("UniformBufferLight", "ssaoEnable", &ssao);
@@ -1101,6 +1112,22 @@ namespace maple
 				if (ImGui::MenuItem(renderOutputMode(i).c_str(), "", forwardData->renderMode == i, true))
 				{
 					forwardData->renderMode = i;
+					auto descriptorSet      = deferredData->descriptorLightSet[0];
+					switch (i)
+					{
+						case 11:
+							descriptorSet->setTexture("uOutputSampler", gBuffer->getBuffer(GBufferTextures::SSAO_SCREEN));
+							break;
+						case 12:
+							descriptorSet->setTexture("uOutputSampler", gBuffer->getBuffer(GBufferTextures::VIEW_POSITION));
+							break;
+						case 13:
+							descriptorSet->setTexture("uOutputSampler", gBuffer->getBuffer(GBufferTextures::VIEW_NORMALS));
+							break;
+						case 14:
+							descriptorSet->setTexture("uOutputSampler", gBuffer->getBuffer(GBufferTextures::PSEUDO_SKY));
+							break;
+					}
 				}
 			}
 			ImGui::EndMenu();
@@ -1410,9 +1437,7 @@ namespace maple
 		descriptorSet->setTexture("uPreintegratedFG", forwardData->preintegratedFG);
 		descriptorSet->setTexture("uShadowMap", shadowData->shadowTexture);
 		descriptorSet->setTexture("uPrefilterMap", forwardData->environmentMap);
-		descriptorSet->setTexture("uSSAOSampler0", gBuffer->getBuffer(GBufferTextures::SSAO_SCREEN));
-		descriptorSet->setTexture("uViewPositionSampler", gBuffer->getBuffer(GBufferTextures::VIEW_POSITION));
-		descriptorSet->setTexture("uViewNormalSampler", gBuffer->getBuffer(GBufferTextures::VIEW_NORMALS));
+
 		descriptorSet->update();
 
 		PipelineInfo pipeInfo;
@@ -1734,8 +1759,15 @@ namespace maple
 		finalDescriptorSet->setUniform("UniformBuffer", "ssaoEnable", &ssaoEnable);
 		finalDescriptorSet->setUniform("UniformBuffer", "reflectEnable", &reflectEnable);
 
+		if (auto render = renderers[static_cast<int32_t>(RenderId::Cloud)]; render != nullptr)
+		{
+			auto cloud = std::static_pointer_cast<CloudRenderer>(render);
+			finalDescriptorSet->setTexture("uCloudSampler", cloud->getTexture(CloudsTextures::FragColor));
+		}
 		finalDescriptorSet->setTexture("uScreenSampler", gBuffer->getBuffer(GBufferTextures::SCREEN));
+		finalDescriptorSet->setTexture("uDepthSampler", gBuffer->getDepthBuffer());
 		finalDescriptorSet->setTexture("uReflectionSampler", gBuffer->getBuffer(GBufferTextures::SSR_SCREEN));
+
 		finalDescriptorSet->update();
 
 		PipelineInfo pipelineDesc{};
