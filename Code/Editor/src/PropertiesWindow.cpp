@@ -529,22 +529,23 @@ namespace MM
 		if (!env.isPseudoSky())
 		{
 			auto label = env.getFilePath();
-			if (ImGuiHelper::property("File", label, true))
-			{
-				if (ImGui::BeginDragDropTarget())
-				{
-					auto data = ImGui::AcceptDragDropPayload("AssetFile", ImGuiDragDropFlags_None);
-					if (data)
-					{
-						std::string file = (char *) data->Data;
-						if (StringUtils::isTextureFile(file))
-						{
-							env.init(file);
-						}
-					}
-					ImGui::EndDragDropTarget();
-				}
 
+			auto updated = ImGuiHelper::property("File", label, true);
+			if (ImGui::BeginDragDropTarget())
+			{
+				auto data = ImGui::AcceptDragDropPayload("AssetFile", ImGuiDragDropFlags_None);
+				if (data)
+				{
+					std::string file = (char *) data->Data;
+					if (StringUtils::isTextureFile(file))
+					{
+						env.init(file);
+					}
+				}
+				ImGui::EndDragDropTarget();
+			}
+			if (updated)
+			{
 				ImGui::Columns(1);
 				ImGui::Separator();
 

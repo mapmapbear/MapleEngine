@@ -67,7 +67,16 @@ namespace maple
 					transform = &registry.get<Transform>(cameraView.front());
 				}
 			}
-			bool click = drawToolBar();
+			bool click = false;
+			//drawToolBar();
+			glm::quat quat = glm::identity<glm::quat>();
+
+			if (transform != nullptr)
+			{
+				quat = glm::inverse(transform->getWorldOrientation());
+			}
+
+			drawToolbarOverlay(quat);
 
 			if (transform != nullptr)
 			{
@@ -78,8 +87,6 @@ namespace maple
 				sceneViewSize.x -= static_cast<int>(sceneViewSize.x) % 2 != 0 ? 1.0f : 0.0f;
 				sceneViewSize.y -= static_cast<int>(sceneViewSize.y) % 2 != 0 ? 1.0f : 0.0f;
 				resize(static_cast<uint32_t>(sceneViewSize.x), static_cast<uint32_t>(sceneViewSize.y));
-
-				auto quat = glm::inverse(transform->getWorldOrientation());
 
 				ImGuiHelper::image(previewTexture.get(), {static_cast<uint32_t>(sceneViewSize.x), static_cast<uint32_t>(sceneViewSize.y)});
 
@@ -110,10 +117,6 @@ namespace maple
 
 					float viewManipulateRight = sceneViewPosition.x + sceneViewSize.x;
 					float viewManipulateTop   = sceneViewPosition.y + 20;
-
-					ImGui::SetItemAllowOverlap();
-					ImGui::SetCursorPos({sceneViewSize.x - 96, viewManipulateTop});
-					ImGui::gizmo3D("##gizmo1", quat, 96, imguiGizmo::sphereAtOrigin | imguiGizmo::modeFullAxes);
 
 					editor.onImGuizmo();
 
@@ -181,6 +184,203 @@ namespace maple
 	{
 	}
 
+	auto SceneWindow::drawToolbarOverlay(glm::quat &quat) -> bool
+	{
+		constexpr float  DISTANCE    = 30.0f;
+		constexpr int    corner      = 0;
+		ImGuiIO &        io          = ImGui::GetIO();
+		ImGuiWindowFlags windowFlags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
+		if (corner != -1)
+		{
+			windowFlags |= ImGuiWindowFlags_NoMove;
+			const ImGuiViewport *viewport         = ImGui::GetWindowViewport();
+			const ImVec2         workAreaPos    = ImGui::GetCurrentWindow()->Pos;        // Instead of using viewport->Pos we use GetWorkPos() to avoid menu bars, if any!
+			const ImVec2         workAreaSize   = ImGui::GetCurrentWindow()->Size;
+			const ImVec2         windowPos       = ImVec2((corner & 1) ? (workAreaPos.x + workAreaSize.x - DISTANCE / 2) : (workAreaPos.x + DISTANCE / 2), (corner & 2) ? (workAreaPos.y + workAreaSize.y - DISTANCE) : (workAreaPos.y + DISTANCE));
+			const ImVec2         windowPosPivot = ImVec2((corner & 1) ? 1.0f : 0.0f, (corner & 2) ? 1.0f : 0.0f);
+			ImGui::SetNextWindowPos(windowPos, ImGuiCond_Always, windowPosPivot);
+			ImGui::SetNextWindowViewport(viewport->ID);
+		}
+		ImGui::SetNextWindowBgAlpha(0.35f);        // Transparent background
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 32.0f);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {5, 5});
+		bool  selected = false;
+		bool  clicked  = false;
+		auto &editor   = *static_cast<Editor *>(Application::get());
+
+		if (ImGui::Begin("Example: Simple overlay", &showOverlay, windowFlags))
+		{
+			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 100);
+			//ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {6, 6});
+
+			{
+				selected = editor.getImGuizmoOperation() == 4;
+				if (selected)
+					ImGui::PushStyleColor(ImGuiCol_Text, SelectedColor);
+				if (ImGui::Button(ICON_MDI_CURSOR_DEFAULT))
+				{
+					editor.setImGuizmoOperation(4);
+					clicked = true;
+				}
+
+				if (selected)
+					ImGui::PopStyleColor();
+				ImGuiHelper::tooltip("Select");
+			}
+			ImGui::SameLine();
+
+			if (!collapsed)
+			{
+				{
+					selected = editor.getImGuizmoOperation() == ImGuizmo::TRANSLATE;
+					if (selected)
+						ImGui::PushStyleColor(ImGuiCol_Text, SelectedColor);
+					if (ImGui::Button(ICON_MDI_ARROW_ALL))
+					{
+						clicked = true;
+						editor.setImGuizmoOperation(ImGuizmo::TRANSLATE);
+					}
+
+					if (selected)
+						ImGui::PopStyleColor();
+					ImGuiHelper::tooltip("Translate");
+				}
+				ImGui::SameLine();
+
+				{
+					selected = editor.getImGuizmoOperation() == ImGuizmo::ROTATE;
+					if (selected)
+						ImGui::PushStyleColor(ImGuiCol_Text, SelectedColor);
+
+					if (ImGui::Button(ICON_MDI_ROTATE_ORBIT))
+					{
+						clicked = true;
+						editor.setImGuizmoOperation(ImGuizmo::ROTATE);
+					}
+
+					if (selected)
+						ImGui::PopStyleColor();
+					ImGuiHelper::tooltip("Rotate");
+				}
+
+				ImGui::SameLine();
+				{
+					selected = editor.getImGuizmoOperation() == ImGuizmo::SCALE;
+					if (selected)
+						ImGui::PushStyleColor(ImGuiCol_Text, SelectedColor);
+					if (ImGui::Button(ICON_MDI_ARROW_EXPAND_ALL))
+					{
+						clicked = true;
+						editor.setImGuizmoOperation(ImGuizmo::SCALE);
+					}
+
+					if (selected)
+						ImGui::PopStyleColor();
+					ImGuiHelper::tooltip("Scale");
+				}
+
+				ImGui::SameLine();
+				ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);
+				ImGui::SameLine();
+
+				{
+					selected = editor.getImGuizmoOperation() == ImGuizmo::BOUNDS;
+					if (selected)
+						ImGui::PushStyleColor(ImGuiCol_Text, SelectedColor);
+
+					if (ImGui::Button(ICON_MDI_BORDER_NONE))
+					{
+						clicked = true;
+						editor.setImGuizmoOperation(ImGuizmo::BOUNDS);
+					}
+
+					if (selected)
+						ImGui::PopStyleColor();
+					ImGuiHelper::tooltip("Bounds");
+				}
+
+				ImGui::SameLine();
+				ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);
+				ImGui::SameLine();
+				auto &camera = editor.getCamera();
+				bool  ortho  = camera->isOrthographic();
+				{
+					selected = !ortho;
+					if (selected)
+						ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 0.4, 0.4, 1.f));
+					if (ImGui::Button(ICON_MDI_AXIS_ARROW " 3D"))
+					{
+						clicked = true;
+						if (ortho)
+						{
+							camera->setOrthographic(false);
+							editor.getEditorCameraController().setTwoDMode(false);
+						}
+					}
+					if (selected)
+						ImGui::PopStyleColor();
+					selected = ortho;
+				}
+
+				ImGui::SameLine();
+
+				{
+					if (selected)
+						ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 0.4, 0.4, 1.f));
+					if (ImGui::Button(ICON_MDI_ANGLE_RIGHT "2D"))
+					{
+						clicked = true;
+						if (!ortho)
+						{
+							camera->setOrthographic(true);
+							editor.getEditorCameraController().setTwoDMode(true);
+							editor.getEditorCameraTransform().setLocalOrientation({0, 0, 0});
+						}
+					}
+					if (selected)
+						ImGui::PopStyleColor();
+				}
+
+				ImGui::SameLine();
+
+				if (ImGui::Button(ICON_MDI_ARROW_LEFT))
+				{
+					collapsed = true;
+				}
+			}
+			else
+			{
+				if (ImGui::Button(ICON_MDI_ARROW_RIGHT))
+				{
+					collapsed = false;
+				}
+			}
+			ImGui::PopStyleVar();
+		}
+		ImGui::PopStyleVar();
+		ImGui::PopStyleVar();
+		ImGui::End();
+
+		constexpr int32_t corner2 = 1;
+
+		windowFlags |= ImGuiWindowFlags_NoMove;
+		windowFlags |= ImGuiWindowFlags_NoBackground;
+
+		const ImGuiViewport *viewport       = ImGui::GetWindowViewport();
+		const ImVec2         workAreaPos    = ImGui::GetCurrentWindow()->Pos;        // Instead of using viewport->Pos we use GetWorkPos() to avoid menu bars, if any!
+		const ImVec2         workAreaSize   = ImGui::GetCurrentWindow()->Size;
+		const ImVec2         windowPos      = ImVec2((corner2 & 1) ? (workAreaPos.x + workAreaSize.x - DISTANCE / 2) : (workAreaPos.x + DISTANCE / 2), (corner2 & 2) ? (workAreaPos.y + workAreaSize.y - DISTANCE) : (workAreaPos.y + DISTANCE));
+		const ImVec2         windowPosPivot = ImVec2((corner2 & 1) ? 1.0f : 0.0f, (corner2 & 2) ? 1.0f : 0.0f);
+		ImGui::SetNextWindowPos(windowPos, ImGuiCond_Always, windowPosPivot);
+		ImGui::SetNextWindowViewport(viewport->ID);
+		if (ImGui::Begin("Controls", &showOverlay, windowFlags))
+		{
+			ImGui::gizmo3D("##gizmo1", quat, 96, imguiGizmo::sphereAtOrigin | imguiGizmo::modeFullAxes);
+		}
+		ImGui::End();
+		return clicked;
+	}
+
 	auto SceneWindow::draw2DGrid(ImDrawList *drawList, const ImVec2 &cameraPos, const ImVec2 &windowPos, const ImVec2 &canvasSize, const float factor, const float thickness) -> void
 	{
 		static const auto graduation = 10;
@@ -232,152 +432,6 @@ namespace maple
 				}
 			}
 		}
-	}
-
-	auto SceneWindow::drawToolBar() -> bool
-	{
-		bool clicked = false;
-		ImGui::Indent();
-		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.8f));
-		bool  selected = false;
-		auto &editor   = *static_cast<Editor *>(Application::get());
-		{
-			selected = editor.getImGuizmoOperation() == 4;
-			if (selected)
-				ImGui::PushStyleColor(ImGuiCol_Text, SelectedColor);
-			ImGui::SameLine();
-			if (ImGui::Button(ICON_MDI_CURSOR_DEFAULT))
-			{
-				editor.setImGuizmoOperation(4);
-				clicked = true;
-			}
-
-			if (selected)
-				ImGui::PopStyleColor();
-			ImGuiHelper::tooltip("Select");
-		}
-
-		ImGui::SameLine();
-		ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);
-		ImGui::SameLine();
-
-		{
-			selected = editor.getImGuizmoOperation() == ImGuizmo::TRANSLATE;
-			if (selected)
-				ImGui::PushStyleColor(ImGuiCol_Text, SelectedColor);
-			ImGui::SameLine();
-			if (ImGui::Button(ICON_MDI_ARROW_ALL))
-			{
-				clicked = true;
-				editor.setImGuizmoOperation(ImGuizmo::TRANSLATE);
-			}
-
-			if (selected)
-				ImGui::PopStyleColor();
-			ImGuiHelper::tooltip("Translate");
-		}
-
-		{
-			selected = editor.getImGuizmoOperation() == ImGuizmo::ROTATE;
-			if (selected)
-				ImGui::PushStyleColor(ImGuiCol_Text, SelectedColor);
-
-			ImGui::SameLine();
-			if (ImGui::Button(ICON_MDI_ROTATE_ORBIT))
-			{
-				clicked = true;
-				editor.setImGuizmoOperation(ImGuizmo::ROTATE);
-			}
-
-			if (selected)
-				ImGui::PopStyleColor();
-			ImGuiHelper::tooltip("Rotate");
-		}
-
-		{
-			selected = editor.getImGuizmoOperation() == ImGuizmo::SCALE;
-			if (selected)
-				ImGui::PushStyleColor(ImGuiCol_Text, SelectedColor);
-
-			ImGui::SameLine();
-			if (ImGui::Button(ICON_MDI_ARROW_EXPAND_ALL))
-			{
-				clicked = true;
-				editor.setImGuizmoOperation(ImGuizmo::SCALE);
-			}
-
-			if (selected)
-				ImGui::PopStyleColor();
-			ImGuiHelper::tooltip("Scale");
-		}
-
-		ImGui::SameLine();
-		ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);
-		ImGui::SameLine();
-
-		{
-			selected = editor.getImGuizmoOperation() == ImGuizmo::BOUNDS;
-			if (selected)
-				ImGui::PushStyleColor(ImGuiCol_Text, SelectedColor);
-
-			ImGui::SameLine();
-			if (ImGui::Button(ICON_MDI_BORDER_NONE))
-			{
-				clicked = true;
-				editor.setImGuizmoOperation(ImGuizmo::BOUNDS);
-			}
-
-			if (selected)
-				ImGui::PopStyleColor();
-			ImGuiHelper::tooltip("Bounds");
-		}
-
-		ImGui::SameLine();
-		ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);
-		ImGui::SameLine();
-
-
-		auto &camera = editor.getCamera();
-
-		bool ortho = camera->isOrthographic();
-
-		selected = !ortho;
-		if (selected)
-			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 0.4, 0.4, 1.f));
-		if (ImGui::Button(ICON_MDI_AXIS_ARROW " 3D"))
-		{
-			clicked = true;
-			if (ortho)
-			{
-				camera->setOrthographic(false);
-				editor.getEditorCameraController().setTwoDMode(false);
-			}
-		}
-		if (selected)
-			ImGui::PopStyleColor();
-		ImGui::SameLine();
-
-		selected = ortho;
-		if (selected)
-			ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 0.4, 0.4, 1.f));
-		if (ImGui::Button(ICON_MDI_ANGLE_RIGHT "2D"))
-		{
-			clicked = true;
-			if (!ortho)
-			{
-				camera->setOrthographic(true);
-				editor.getEditorCameraController().setTwoDMode(true);
-				editor.getEditorCameraTransform().setLocalOrientation({0, 0, 0});
-			}
-		}
-
-		if (selected)
-			ImGui::PopStyleColor();
-
-		ImGui::PopStyleColor();
-		ImGui::Unindent();
-
-		return clicked;
 	}
 
 };        // namespace maple

@@ -10,6 +10,8 @@
 #include "Engine/CameraController.h"
 #include "Scene/Component/Transform.h"
 
+#include <glm/gtc/quaternion.hpp>
+
 namespace maple
 {
 	class Texture2D;
@@ -22,10 +24,10 @@ namespace maple
 
 		auto handleInput(float dt) -> void override;
 
-
 	  private:
-		auto drawToolBar() -> bool;
 		auto drawGizmos(float width, float height, float xpos, float ypos, Scene *scene) -> void;
+
+		auto drawToolbarOverlay(glm::quat & quat) -> bool;
 
 		auto draw2DGrid(ImDrawList *  drawList,
 		                const ImVec2 &cameraPos,
@@ -34,10 +36,12 @@ namespace maple
 		                const float   factor,
 		                const float   thickness) -> void;
 
-		bool                       showCamera = false;
+		bool showCamera  = false;
+		bool showOverlay = true;
+		bool collapsed   = true;
+
 		uint32_t                   width;
 		uint32_t                   height;
 		std::shared_ptr<Texture2D> previewTexture;
-
 	};
 };        // namespace maple

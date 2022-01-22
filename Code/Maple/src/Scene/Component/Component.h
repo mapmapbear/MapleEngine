@@ -5,8 +5,8 @@
 #include "Engine/Core.h"
 #include <IconsMaterialDesignIcons.h>
 #include <entt/entt.hpp>
-#include <string>
 #include <glm/vec3.hpp>
+#include <string>
 
 namespace maple
 {
@@ -159,8 +159,8 @@ namespace maple
 		uint32_t    height  = 0;
 		std::string filePath;
 
-		glm::vec3 skyColorTop = glm::vec3(0.5, 0.7, 0.8);
-		glm::vec3 skyColorBottom    = glm::vec3(0.9, 0.9, 0.95);
+		glm::vec3 skyColorTop    = glm::vec3(0.5, 0.7, 0.8) * 1.05f;
+		glm::vec3 skyColorBottom = glm::vec3(0.9, 0.9, 0.95);
 
 	  public:
 		inline auto &getSkyColorBottom()
