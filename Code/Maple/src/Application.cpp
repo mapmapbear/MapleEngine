@@ -93,12 +93,14 @@ namespace maple
 				imGuiManager->onRender(sceneManager->getCurrentScene());
 				renderDevice->present();        //present all data
 				window->swapBuffers();
+				frames++;
 			}
 			graphicsContext->clearUnused();
 			lastFrameTime += timestep;
 			if (lastFrameTime - secondTimer > 1.0f)        //tick later
 			{
 				secondTimer += 1.0f;
+				LOGV("frames : {0}",frames);
 				frames  = 0;
 				updates = 0;
 			}

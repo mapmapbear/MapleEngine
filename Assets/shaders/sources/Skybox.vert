@@ -28,4 +28,5 @@ void main() {
 	texCoords = inPosition;
 	vec4 pos = pushConsts.projView * vec4(inPosition, 1.0);
 	gl_Position = pos.xyww;
+	gl_Position.z = 1.0;
 }

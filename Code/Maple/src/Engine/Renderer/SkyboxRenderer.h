@@ -7,35 +7,19 @@
 
 namespace maple
 {
-	enum CloudsTextures
-	{
-		FragColor,
-		Bloom,
-		Alphaness,
-		CloudDistance,
-		Length
-	};
-
-	class CloudRenderer : public Renderer
+	class SkyboxRenderer : public Renderer
 	{
 	  public:
-		CloudRenderer();
-		virtual ~CloudRenderer();
+		SkyboxRenderer();
+		virtual ~SkyboxRenderer();
 		auto init(const std::shared_ptr<GBuffer> &buffer) -> void override;
 		auto renderScene() -> void override;
 		auto beginScene(Scene *scene, const glm::mat4 &projView) -> void override;
 		auto onResize(uint32_t width, uint32_t height) -> void override;
 
-		auto getTexture(CloudsTextures id) -> std::shared_ptr<Texture>;
-
 	  private:
 		auto onImGui() -> void override;
-
-		struct RenderData;
-		struct PseudoSkyboxData;
-		struct WeatherPass;
-		RenderData *      data        = nullptr;
-		PseudoSkyboxData *skyData     = nullptr;
-		WeatherPass *     weatherPass = nullptr;
+		struct SkyboxData;
+		SkyboxData *skyboxData = nullptr;
 	};
 }        // namespace maple

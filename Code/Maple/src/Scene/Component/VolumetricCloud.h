@@ -13,7 +13,7 @@ namespace maple
 	{
 	  public:
 		constexpr static char *ICON = ICON_MDI_WEATHER_CLOUDY;
-		
+
 		float cloudSpeed = 450.0;
 		float coverage   = 0.45;
 		float crispiness = 40.;
@@ -21,19 +21,35 @@ namespace maple
 		float density    = 0.02;
 		float absorption = 0.35;
 
-		float earthRadius  = 600000.0;
+		float earthRadius       = 600000.0;
 		float sphereInnerRadius = 5000.0;
 		float sphereOuterRadius = 17000.0;
 
 		float perlinFrequency = 0.8;
 
-		bool  enableGodRays;
-		bool  enablePowder;
-		bool  postProcess;
+		bool enableGodRays;
+		bool enablePowder;
+		bool postProcess;
 
-
-		std::shared_ptr<Texture> perlinNoise;
-		std::shared_ptr<Texture> worley32;
+		template <class Archive>
+		inline auto serialize(Archive &archive) -> void
+		{
+			archive(
+			    cloudSpeed,
+			    coverage,
+			    crispiness,
+			    curliness,
+			    density,
+			    absorption,
+			    earthRadius,
+			    sphereInnerRadius,
+			    sphereOuterRadius,
+			    perlinFrequency,
+			    enableGodRays,
+			    enablePowder,
+			    postProcess,
+			    entity);
+		}
 
 		bool weathDirty = true;
 	};

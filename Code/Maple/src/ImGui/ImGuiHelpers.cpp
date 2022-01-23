@@ -41,7 +41,7 @@ namespace maple
 			return updated;
 		}
 
-		auto property(const std::string &name, float &value, float min, float max, PropertyFlag flags) -> bool
+		auto property(const std::string &name, float &value, float min, float max, PropertyFlag flags, const char *format) -> bool
 		{
 			bool updated = false;
 			ImGui::TextUnformatted(name.c_str());
@@ -49,7 +49,7 @@ namespace maple
 			ImGui::PushItemWidth(-1);
 
 			std::string id = "##" + name;
-			if (ImGui::SliderFloat(id.c_str(), &value, min, max))
+			if (ImGui::SliderFloat(id.c_str(), &value, min, max, format))
 				updated = true;
 
 			ImGui::PopItemWidth();

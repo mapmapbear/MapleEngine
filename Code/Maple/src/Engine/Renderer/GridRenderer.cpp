@@ -3,6 +3,7 @@
 //////////////////////////////////////////////////////////////////////////////
 #include "GridRenderer.h"
 #include "FileSystem/File.h"
+
 #include "RHI/CommandBuffer.h"
 #include "RHI/FrameBuffer.h"
 #include "RHI/GraphicsContext.h"
@@ -15,19 +16,20 @@
 #include "RHI/UniformBuffer.h"
 #include "RHI/VertexBuffer.h"
 
+#include "Engine/Camera.h"
 #include "Engine/GBuffer.h"
 #include "Engine/Mesh.h"
+#include "Engine/Profiler.h"
 
-#include "Engine/Camera.h"
 #include "Scene/Component/Transform.h"
-
 #include "Scene/Scene.h"
+
+#include "ImGui/ImGuiHelpers.h"
+
+#include <glm/gtc/type_ptr.hpp>
 
 #include "Application.h"
 
-#include "Engine/Profiler.h"
-
-#include <glm/gtc/type_ptr.hpp>
 namespace maple
 {
 	GridRenderer::GridRenderer(uint32_t width, uint32_t height)
@@ -51,6 +53,9 @@ namespace maple
 	auto GridRenderer::renderScene() -> void
 	{
 		PROFILE_FUNCTION();
+
+		if (!active)
+			return;
 
 		if (pipeline == nullptr && renderTexture)
 		{
@@ -85,7 +90,7 @@ namespace maple
 		PROFILE_FUNCTION();
 		auto camera = scene->getCamera();
 
-		if (camera.first == nullptr || camera.second == nullptr || pipeline == nullptr)
+		if (camera.first == nullptr || camera.second == nullptr || pipeline == nullptr || !active)
 		{
 			return;
 		}
@@ -112,4 +117,17 @@ namespace maple
 		Renderer::setRenderTarget(texture, rebuildFramebuffer);
 		pipeline = nullptr;
 	}
+
+	auto GridRenderer::onImGui() -> void
+	{
+		ImGui::Separator();
+		ImGui::TextUnformatted(" GridRenderer ");
+		ImGui::Separator();
+		ImGui::Columns(2);
+		ImGuiHelper::property("Active", active);
+
+		ImGui::Columns(1);
+		ImGui::Separator();
+	}
+
 };        // namespace maple

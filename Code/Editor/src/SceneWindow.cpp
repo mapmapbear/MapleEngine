@@ -80,28 +80,30 @@ namespace maple
 
 			if (transform != nullptr)
 			{
-				ImVec2 offset            = {0.0f, 0.0f};
-				auto   sceneViewSize     = ImGui::GetWindowContentRegionMax() - ImGui::GetWindowContentRegionMin() - offset / 2.0f;        // - offset * 0.5f;
-				auto   sceneViewPosition = ImGui::GetWindowPos() + offset;
+				ImVec2 vMin          = ImGui::GetWindowContentRegionMin();
+				ImVec2 vMax          = ImGui::GetWindowContentRegionMax();
+				auto   sceneViewSize = vMax - vMin;        // - offset * 0.5f;
 
 				sceneViewSize.x -= static_cast<int>(sceneViewSize.x) % 2 != 0 ? 1.0f : 0.0f;
 				sceneViewSize.y -= static_cast<int>(sceneViewSize.y) % 2 != 0 ? 1.0f : 0.0f;
 				resize(static_cast<uint32_t>(sceneViewSize.x), static_cast<uint32_t>(sceneViewSize.y));
-
 				ImGuiHelper::image(previewTexture.get(), {static_cast<uint32_t>(sceneViewSize.x), static_cast<uint32_t>(sceneViewSize.y)});
 
-				auto   windowSize = ImGui::GetWindowSize();
-				ImVec2 minBound   = sceneViewPosition;
+				bool updateCamera = false;
 
-				ImVec2 maxBound     = {minBound.x + windowSize.x, minBound.y + windowSize.y};
-				bool   updateCamera = ImGui::IsMouseHoveringRect(minBound, maxBound);
+				{
+					vMin.x += ImGui::GetWindowPos().x;
+					vMin.y += ImGui::GetWindowPos().y;
+					vMax.x += ImGui::GetWindowPos().x;
+					vMax.y += ImGui::GetWindowPos().y;
+					updateCamera = ImGui::IsMouseHoveringRect(vMin, vMax);
+				}
 
 				focused = ImGui::IsWindowFocused() && !ImGuizmo::IsUsing() && updateCamera;
 
 				editor.setSceneActive(ImGui::IsWindowFocused() && !ImGuizmo::IsUsing() && updateCamera);
 
-				ImGuizmo::SetRect(sceneViewPosition.x, sceneViewPosition.y, sceneViewSize.x, sceneViewSize.y);
-				ImGui::GetWindowDrawList()->PushClipRect(sceneViewPosition, {sceneViewSize.x + sceneViewPosition.x, sceneViewSize.y + sceneViewPosition.y - 2.0f});
+				ImGuizmo::SetRect(vMin.x, vMin.y, sceneViewSize.x, sceneViewSize.y);
 
 				if (editor.getEditorState() == EditorState::Preview && !showCamera && transform != nullptr)
 				{
@@ -110,22 +112,16 @@ namespace maple
 					if (camera->isOrthographic())
 					{
 						draw2DGrid(ImGui::GetWindowDrawList(),
-						           {transform->getWorldPosition().x, transform->getWorldPosition().y}, sceneViewPosition, {sceneViewSize.x, sceneViewSize.y}, 1.0f, 1.5f);
+						           {transform->getWorldPosition().x, transform->getWorldPosition().y}, vMin, sceneViewSize, 1.0f, 1.5f);
 					}
-
-					ImGui::GetWindowDrawList()->PushClipRect(sceneViewPosition, {sceneViewSize.x + sceneViewPosition.x, sceneViewSize.y + sceneViewPosition.y - 2.0f});
-
-					float viewManipulateRight = sceneViewPosition.x + sceneViewSize.x;
-					float viewManipulateTop   = sceneViewPosition.y + 20;
 
 					editor.onImGuizmo();
 
 					if (editor.isSceneActive() && !ImGuizmo::IsUsing() && ImGui::IsMouseReleased(ImGuiMouseButton_Left) && !click)
 					{
-						auto clickPos = Input::getInput()->getMousePosition() - glm::vec2(sceneViewPosition.x, sceneViewPosition.y);
+						auto clickPos = Input::getInput()->getMousePosition() - glm::vec2(vMin.x, vMin.y);
 						editor.clickObject(editor.getScreenRay(int32_t(clickPos.x), int32_t(clickPos.y), camera, int32_t(sceneViewSize.x), int32_t(sceneViewSize.y)));
 					}
-					drawGizmos(sceneViewSize.x, sceneViewSize.y, offset.x, offset.y, currentScene);
 				}
 
 				if (ImGui::BeginDragDropTarget())
@@ -193,17 +189,17 @@ namespace maple
 		if (corner != -1)
 		{
 			windowFlags |= ImGuiWindowFlags_NoMove;
-			const ImGuiViewport *viewport         = ImGui::GetWindowViewport();
+			const ImGuiViewport *viewport       = ImGui::GetWindowViewport();
 			const ImVec2         workAreaPos    = ImGui::GetCurrentWindow()->Pos;        // Instead of using viewport->Pos we use GetWorkPos() to avoid menu bars, if any!
 			const ImVec2         workAreaSize   = ImGui::GetCurrentWindow()->Size;
-			const ImVec2         windowPos       = ImVec2((corner & 1) ? (workAreaPos.x + workAreaSize.x - DISTANCE / 2) : (workAreaPos.x + DISTANCE / 2), (corner & 2) ? (workAreaPos.y + workAreaSize.y - DISTANCE) : (workAreaPos.y + DISTANCE));
+			const ImVec2         windowPos      = ImVec2((corner & 1) ? (workAreaPos.x + workAreaSize.x - DISTANCE / 2) : (workAreaPos.x + DISTANCE / 2), (corner & 2) ? (workAreaPos.y + workAreaSize.y - DISTANCE) : (workAreaPos.y + DISTANCE));
 			const ImVec2         windowPosPivot = ImVec2((corner & 1) ? 1.0f : 0.0f, (corner & 2) ? 1.0f : 0.0f);
 			ImGui::SetNextWindowPos(windowPos, ImGuiCond_Always, windowPosPivot);
 			ImGui::SetNextWindowViewport(viewport->ID);
 		}
 		ImGui::SetNextWindowBgAlpha(0.35f);        // Transparent background
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 32.0f);
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {5, 5});
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 35.0f);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, {5, 4.5});
 		bool  selected = false;
 		bool  clicked  = false;
 		auto &editor   = *static_cast<Editor *>(Application::get());
@@ -211,8 +207,6 @@ namespace maple
 		if (ImGui::Begin("Example: Simple overlay", &showOverlay, windowFlags))
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 100);
-			//ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, {6, 6});
-
 			{
 				selected = editor.getImGuizmoOperation() == 4;
 				if (selected)
@@ -350,6 +344,8 @@ namespace maple
 			}
 			else
 			{
+				ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);
+				ImGui::SameLine();
 				if (ImGui::Button(ICON_MDI_ARROW_RIGHT))
 				{
 					collapsed = false;
@@ -361,7 +357,8 @@ namespace maple
 		ImGui::PopStyleVar();
 		ImGui::End();
 
-		constexpr int32_t corner2 = 1;
+		constexpr int32_t corner2   = 1;
+		constexpr float   DISTANCE2 = 20.0f;
 
 		windowFlags |= ImGuiWindowFlags_NoMove;
 		windowFlags |= ImGuiWindowFlags_NoBackground;
@@ -369,7 +366,7 @@ namespace maple
 		const ImGuiViewport *viewport       = ImGui::GetWindowViewport();
 		const ImVec2         workAreaPos    = ImGui::GetCurrentWindow()->Pos;        // Instead of using viewport->Pos we use GetWorkPos() to avoid menu bars, if any!
 		const ImVec2         workAreaSize   = ImGui::GetCurrentWindow()->Size;
-		const ImVec2         windowPos      = ImVec2((corner2 & 1) ? (workAreaPos.x + workAreaSize.x - DISTANCE / 2) : (workAreaPos.x + DISTANCE / 2), (corner2 & 2) ? (workAreaPos.y + workAreaSize.y - DISTANCE) : (workAreaPos.y + DISTANCE));
+		const ImVec2         windowPos      = ImVec2((corner2 & 1) ? (workAreaPos.x + workAreaSize.x - DISTANCE2 / 2) : (workAreaPos.x + DISTANCE2 / 2), (corner2 & 2) ? (workAreaPos.y + workAreaSize.y - DISTANCE2) : (workAreaPos.y + DISTANCE2));
 		const ImVec2         windowPosPivot = ImVec2((corner2 & 1) ? 1.0f : 0.0f, (corner2 & 2) ? 1.0f : 0.0f);
 		ImGui::SetNextWindowPos(windowPos, ImGuiCond_Always, windowPosPivot);
 		ImGui::SetNextWindowViewport(viewport->ID);

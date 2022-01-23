@@ -426,11 +426,6 @@ vec3 IBL(vec3 F0, vec3 Lr, Material material)
 	return (kd * diffuseIBL + specularIBL);
 }
 
-vec3 finalGamma(vec3 color)
-{
-	return pow(color, vec3(1.0 / GAMMA));
-}
-
 vec3 gammaCorrectTextureRGB(vec3 texCol)
 {
 	return vec3(pow(texCol.rgb, vec3(GAMMA)));
@@ -492,8 +487,7 @@ void main()
 
 	vec3 finalColor = (lightContribution + iblContribution) * material.ao * material.ssao;
 
-
-	outColor = vec4(finalGamma(finalColor), 1.0);
+	outColor = vec4(finalColor, 1.0);
 	//ubo.mode = 1;
 	if(ubo.mode > 0)
 	{

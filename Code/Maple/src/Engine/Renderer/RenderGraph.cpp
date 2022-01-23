@@ -20,6 +20,7 @@
 #include "Scene/Component/Atmosphere.h"
 #include "Scene/Component/Light.h"
 #include "Scene/Component/MeshRenderer.h"
+#include "Scene/Component/VolumetricCloud.h"
 #include "Scene/Scene.h"
 
 #include "Math/BoundingBox.h"
@@ -29,13 +30,14 @@
 
 #include "CloudRenderer.h"
 #include "PostProcessRenderer.h"
-#include "PrefilterRenderer.h"
 #include "Renderer2D.h"
+#include "SkyboxRenderer.h"
 
 #include "Others/Randomizer.h"
 
 #include <chrono>
-#include <imgui/imgui.h>
+
+#include "ImGui/ImGuiHelpers.h"
 
 namespace maple
 {
@@ -78,20 +80,6 @@ namespace maple
 				default:
 					return "Lighting";
 			}
-		}
-
-		inline auto cubeMapModeToString(int32_t mode) -> const std::string
-		{
-			switch (mode)
-			{
-				case 0:
-					return "CubeMap";
-				case 1:
-					return "Prefilter";
-				case 2:
-					return "Irradiance";
-			}
-			return "";
 		}
 
 		inline auto ssaoKernel() -> const std::vector<glm::vec4>
@@ -176,10 +164,8 @@ namespace maple
 
 	struct RenderGraph::ForwardData
 	{
-		std::shared_ptr<Texture>   defaultTexture;
-		std::shared_ptr<Texture>   skybox;
-		std::shared_ptr<Texture>   environmentMap;
-		std::shared_ptr<Texture>   irradianceMap;
+		std::shared_ptr<Texture> defaultTexture;
+
 		std::shared_ptr<Texture>   renderTexture;
 		std::shared_ptr<Texture>   depthTexture;
 		std::shared_ptr<Material>  defaultMaterial;
@@ -197,8 +183,6 @@ namespace maple
 		uint32_t  renderMode      = 0;
 		uint32_t  currentBufferID = 0;
 		bool      depthTest       = true;
-		float     cubeMapLevel    = 0;
-		uint32_t  cubeMapMode     = 0;
 
 		ForwardData()
 		{
@@ -230,9 +214,6 @@ namespace maple
 			defaultMaterial->setRenderFlag(Material::RenderFlags::ForwardRender);
 			defaultMaterial->removeRenderFlag(Material::RenderFlags::DeferredRender);
 			defaultMaterial->setAlbedo(Texture2D::getDefaultTexture());
-
-			irradianceMap  = TextureCube::create(1);
-			environmentMap = irradianceMap;
 		}
 	};
 
@@ -358,14 +339,6 @@ namespace maple
 		}
 	};
 
-	struct RenderGraph::SkyboxData
-	{
-		std::shared_ptr<Mesh>          skyboxMesh;
-		std::shared_ptr<Shader>        skyboxShader;
-		std::shared_ptr<DescriptorSet> skyboxDescriptorSet;
-		glm::mat4                      projView;
-	};
-
 	struct RenderGraph::SSRData
 	{
 		bool                           enable = true;
@@ -413,6 +386,14 @@ namespace maple
 		}
 	};
 
+	struct RenderGraph::EnvironmentData
+	{
+		std::shared_ptr<Texture> skybox;
+		std::shared_ptr<Texture> environmentMap;
+		std::shared_ptr<Texture> irradianceMap;
+		bool                     cloud = false;
+	};
+
 	RenderGraph::RenderGraph()
 	{
 		renderers.resize(static_cast<int32_t>(RenderId::Length));
@@ -436,19 +417,11 @@ namespace maple
 		forwardData   = new ForwardData();
 		deferredData  = new DeferredData();
 		previewData   = new PreviewData();
-		skyboxData    = new SkyboxData();
 		ssaoData      = new SSAOData();
 		ssrData       = new SSRData();
 		taaData       = new TAAData();
 		atmophereData = new AtmosphereData();
-		{
-			skyboxData->skyboxShader = Shader::create("shaders/Skybox.shader");
-			skyboxData->skyboxMesh   = Mesh::createCube();
-			DescriptorInfo descriptorInfo{};
-			descriptorInfo.layoutIndex      = 0;
-			descriptorInfo.shader           = skyboxData->skyboxShader.get();
-			skyboxData->skyboxDescriptorSet = DescriptorSet::create(descriptorInfo);
-		}
+		envData       = new EnvironmentData();
 
 		{
 			finalShader = Shader::create("shaders/ScreenPass.shader");
@@ -465,9 +438,6 @@ namespace maple
 			stencilDescriptorSet       = DescriptorSet::create(descriptorInfo);
 		}
 
-		prefilterRenderer = std::make_unique<PrefilterRenderer>();
-		prefilterRenderer->init();
-
 		for (auto renderer : renderers)
 		{
 			if (renderer)
@@ -478,6 +448,7 @@ namespace maple
 
 		addRender(std::make_shared<Renderer2D>(), RenderId::Render2D);
 		addRender(std::make_shared<CloudRenderer>(), RenderId::Cloud);
+		addRender(std::make_shared<SkyboxRenderer>(), RenderId::Skybox);
 		addRender(std::make_shared<PostProcessRenderer>(), RenderId::PostProcess);
 	}
 
@@ -531,43 +502,19 @@ namespace maple
 
 			atmophereData->descriptorSets[0]->setUniform("UniformBufferObject", "projView", &projView);
 		}
-
-		if (settings.renderSkybox || settings.render3D)
+		auto envView = scene->getRegistry().view<Environment>();
+		if (envView.size() > 0)
 		{
-			auto envView = registry.view<Environment>();
-
-			if (envView.size() == 0)
+			auto &env = envView.get(envView[0]);
+			if (envData->skybox != env.getEnvironment())
 			{
-				if (forwardData->skybox)
-				{
-					forwardData->environmentMap = nullptr;
-					forwardData->skybox         = nullptr;
-					forwardData->irradianceMap  = nullptr;
-
-					DescriptorInfo descriptorDesc{};
-					descriptorDesc.layoutIndex      = 0;
-					descriptorDesc.shader           = skyboxData->skyboxShader.get();
-					skyboxData->skyboxDescriptorSet = DescriptorSet::create(descriptorDesc);
-				}
+				envData->environmentMap = env.getPrefilteredEnvironment();
+				envData->irradianceMap  = env.getIrradianceMap();
+				envData->skybox         = env.getEnvironment();
 			}
-			else
-			{
-				//Just use first
-				const auto &env = envView.get<Environment>(envView.front());
-
-				if (forwardData->skybox != env.getEnvironment())
-				{
-					forwardData->environmentMap = env.getPrefilteredEnvironment();
-					forwardData->irradianceMap  = env.getIrradianceMap();
-					forwardData->skybox         = env.getEnvironment();
-				}
-			}
-
-			auto inverseCamerm   = view;
-			inverseCamerm[3]     = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-			skyboxData->projView = proj * inverseCamerm;
-			prefilterRenderer->beginScene(scene);
 		}
+
+		envData->cloud = !scene->getRegistry().view<VolumetricCloud>().empty();
 
 		Light *directionaLight = nullptr;
 
@@ -652,7 +599,8 @@ namespace maple
 			descriptorSet->setUniform("UniformBufferLight", "initialBias", &shadowData->initialBias);
 
 			auto numShadows       = shadowData->shadowMapNum;
-			auto cubeMapMipLevels = forwardData->environmentMap ? forwardData->environmentMap->getMipMapLevels() - 1 : 0;
+			auto cubeMapMipLevels = envData->environmentMap ? envData->environmentMap->getMipMapLevels() - 1 : 0;
+
 			descriptorSet->setUniform("UniformBufferLight", "lightCount", &numLights);
 			descriptorSet->setUniform("UniformBufferLight", "shadowCount", &numShadows);
 			if (forwardData->renderMode >= 11)
@@ -671,8 +619,8 @@ namespace maple
 
 			descriptorSet->setTexture("uPreintegratedFG", forwardData->preintegratedFG);
 			descriptorSet->setTexture("uShadowMap", shadowData->shadowTexture);
-			descriptorSet->setTexture("uPrefilterMap", forwardData->environmentMap);
-			descriptorSet->setTexture("uIrradianceMap", forwardData->irradianceMap);
+			descriptorSet->setTexture("uPrefilterMap", envData->environmentMap);
+			descriptorSet->setTexture("uIrradianceMap", envData->irradianceMap);
 		}
 
 		auto group = registry.group<MeshRenderer>(entt::get<Transform>);
@@ -884,6 +832,8 @@ namespace maple
 		}
 
 		Application::getRenderDevice()->clearRenderTarget(renderTargert, getCommandBuffer());
+
+		Application::getRenderDevice()->clearRenderTarget(gBuffer->getBuffer(GBufferTextures::PSEUDO_SKY), getCommandBuffer());
 		Application::getRenderDevice()->clearRenderTarget(gBuffer->getBuffer(GBufferTextures::COLOR), getCommandBuffer(), {0, 0, 0, 0});
 		Application::getRenderDevice()->clearRenderTarget(gBuffer->getBuffer(GBufferTextures::POSITION), getCommandBuffer(), {0, 0, 0, 0});
 		Application::getRenderDevice()->clearRenderTarget(gBuffer->getBuffer(GBufferTextures::NORMALS), getCommandBuffer(), {0, 0, 0, 0});
@@ -919,6 +869,11 @@ namespace maple
 			}
 		}
 
+		if (auto render = renderers[static_cast<int32_t>(RenderId::Skybox)]; render != nullptr)
+		{
+			render->renderScene();
+		}
+
 		if (auto render = renderers[static_cast<int32_t>(RenderId::Cloud)]; render != nullptr)
 		{
 			render->renderScene();
@@ -934,17 +889,6 @@ namespace maple
 			render->renderScene();
 		}
 
-		if (settings.renderSkybox)
-		{
-			prefilterRenderer->renderScene();
-			executeSkyboxPass();
-		}
-
-		if (auto render = renderers[static_cast<int32_t>(RenderId::PostProcess)]; render != nullptr)
-		{
-			render->renderScene();
-		}
-
 		if (ssrData->enable)
 		{
 			executeReflectionPass();
@@ -955,9 +899,9 @@ namespace maple
 			render->renderScene();
 		}
 
-		if (taaData->enable)
+		if (auto render = renderers[static_cast<int32_t>(RenderId::PostProcess)]; render != nullptr)
 		{
-			//executeTAAPass();
+			render->renderScene();
 		}
 
 		executeFinalPass();
@@ -1072,7 +1016,6 @@ namespace maple
 	auto RenderGraph::onImGui() -> void
 	{
 		PROFILE_FUNCTION();
-
 		ImGui::TextUnformatted("Shadow Renderer");
 
 		ImGui::DragFloat("Initial Bias", &shadowData->initialBias, 0.00005f, 0.0f, 1.0f, "%.6f");
@@ -1081,7 +1024,6 @@ namespace maple
 		ImGui::DragFloat("Shadow Fade", &shadowData->shadowFade, 0.0005f, 0.0f, 500.0f);
 		ImGui::DragFloat("Cascade Transition Fade", &shadowData->cascadeTransitionFade, 0.0005f, 0.0f, 5.0f);
 		ImGui::DragFloat("Cascade Split Lambda", &shadowData->cascadeSplitLambda, 0.005f, 0.0f, 3.0f);
-		//ImGui::DragFloat("Scene Radius Multiplier", &shadowData->sceneRadiusMultiplier, 0.005f, 0.0f, 5.0f);
 
 		ImGui::Separator();
 
@@ -1138,34 +1080,25 @@ namespace maple
 		ImGui::Columns(1);
 
 		ImGui::Separator();
-		ImGui::TextUnformatted("CubeMap");
-		ImGui::DragFloat("CubeMap LodLevel", &forwardData->cubeMapLevel, 0.5f, 0.0f, 4.0f);
-
-		if (ImGui::BeginMenu(cubeMapModeToString(forwardData->cubeMapMode).c_str()))
-		{
-			constexpr int32_t numModes = 3;
-
-			for (int32_t i = 0; i < numModes; i++)
-			{
-				if (ImGui::MenuItem(cubeMapModeToString(i).c_str(), "", forwardData->cubeMapMode == i, true))
-				{
-					forwardData->cubeMapMode = i;
-				}
-			}
-			ImGui::EndMenu();
-		}
-
-		ImGui::Separator();
 		ImGui::TextUnformatted("SSAO Options");
-		ImGui::Checkbox("SSAO Enabled", &ssaoData->enable);
-		ImGui::DragFloat("SSAO Depth Bias", &ssaoData->bias, 0.00005f, 0.0f, 1.0f, "%.6f");
-
-		ImGui::Separator();
-		ImGui::TextUnformatted("SSR Options");
-		ImGui::Checkbox("SSR Enabled", &ssrData->enable);
 		ImGui::Separator();
 
 		ImGui::Columns(2);
+		ImGuiHelper::property("SSAO Enabled", ssaoData->enable);
+		ImGuiHelper::property("SSAO Depth Bias", ssaoData->bias, 0.0f, 1.0f, ImGuiHelper::PropertyFlag::None);
+		ImGui::Columns(1);
+
+		ImGui::Separator();
+		ImGui::TextUnformatted("SSR Options");
+		ImGui::Separator();
+
+		ImGui::Columns(2);
+		ImGuiHelper::property("SSR Enabled", ssrData->enable);
+		ImGui::Columns(1);
+
+		ImGui::Separator();
+		ImGui::Columns(2);
+
 		for (auto shader : Application::getCache()->getCache())
 		{
 			if (shader.second->getResourceType() == FileType::Shader)
@@ -1179,24 +1112,26 @@ namespace maple
 				ImGui::NextColumn();
 				ImGui::TextUnformatted(shader.second->getPath().c_str());
 				ImGui::NextColumn();
-				ImGui::Separator();
 			}
 		}
 
 		ImGui::Columns(1);
 		ImGui::Separator();
-		/*ImGui::TextUnformatted("2D renderer");
+
+		ImGui::TextUnformatted("Final Pass");
+
 		ImGui::Columns(2);
-
-		ImGuiHelpers::Property("Number of draw calls", (int &) m_Renderer2DData.m_BatchDrawCallIndex, ImGuiHelpers::PropertyFlag::ReadOnly);
-		ImGuiHelpers::Property("Max textures Per draw call", (int &) m_Renderer2DData.m_Limits.MaxTextures, 1, 16);
-		ImGuiHelpers::Property("ToneMap Index", m_ToneMapIndex);
-		ImGuiHelpers::Property("Exposure", m_Exposure);
-
-		ImGui::Columns(1);*/
+		ImGuiHelper::property("ToneMap Index", toneMapIndex, 0, 8);
+		ImGuiHelper::property("Gamma", gamma, 1.0, 10.0);
+		ImGui::Columns(1);
 
 		ImGui::Separator();
 		ImGui::PopStyleVar();
+
+		for (auto render : renderers)
+		{
+			render->onImGui();
+		}
 	}
 
 	auto RenderGraph::executeForwardPass() -> void
@@ -1291,48 +1226,6 @@ namespace maple
 
 	auto RenderGraph::executeSkyboxPass() -> void
 	{
-		PROFILE_FUNCTION();
-		GPUProfile("SkyBox Pass");
-		if (forwardData->skybox == nullptr)
-		{
-			return;
-		}
-
-		PipelineInfo pipelineInfo{};
-		pipelineInfo.shader = skyboxData->skyboxShader;
-
-		pipelineInfo.polygonMode         = PolygonMode::Fill;
-		pipelineInfo.cullMode            = CullMode::Front;
-		pipelineInfo.transparencyEnabled = false;
-
-		pipelineInfo.depthTarget     = gBuffer->getDepthBuffer();
-		pipelineInfo.colorTargets[0] = gBuffer->getBuffer(GBufferTextures::SCREEN);
-
-		skyboxPipeline = Pipeline::get(pipelineInfo);
-		skyboxPipeline->bind(getCommandBuffer());
-		if (forwardData->cubeMapMode == 0)
-		{
-			skyboxData->skyboxDescriptorSet->setTexture("uCubeMap", forwardData->skybox);
-		}
-		else if (forwardData->cubeMapMode == 1)
-		{
-			skyboxData->skyboxDescriptorSet->setTexture("uCubeMap", forwardData->environmentMap);
-		}
-		else if (forwardData->cubeMapMode == 2)
-		{
-			skyboxData->skyboxDescriptorSet->setTexture("uCubeMap", forwardData->irradianceMap);
-		}
-
-		skyboxData->skyboxDescriptorSet->setUniform("UniformBufferObjectLod", "lodLevel", &forwardData->cubeMapLevel);
-		skyboxData->skyboxDescriptorSet->update();
-
-		auto &constants = skyboxData->skyboxShader->getPushConstants();
-		constants[0].setValue("projView", glm::value_ptr(skyboxData->projView));
-		skyboxData->skyboxShader->bindPushConstants(getCommandBuffer(), skyboxPipeline.get());
-
-		Renderer::bindDescriptorSets(skyboxPipeline.get(), getCommandBuffer(), 0, {skyboxData->skyboxDescriptorSet});
-		Renderer::drawMesh(getCommandBuffer(), skyboxPipeline.get(), skyboxData->skyboxMesh.get());
-		skyboxPipeline->end(getCommandBuffer());
 	}
 
 	auto RenderGraph::executeAtmospherePass() -> void
@@ -1433,10 +1326,11 @@ namespace maple
 		descriptorSet->setTexture("uPBRSampler", gBuffer->getBuffer(GBufferTextures::PBR));
 		descriptorSet->setTexture("uSSAOSampler", gBuffer->getBuffer(GBufferTextures::SSAO_BLUR));
 		descriptorSet->setTexture("uDepthSampler", gBuffer->getDepthBuffer());
-		descriptorSet->setTexture("uIrradianceMap", forwardData->irradianceMap);
-		descriptorSet->setTexture("uPreintegratedFG", forwardData->preintegratedFG);
 		descriptorSet->setTexture("uShadowMap", shadowData->shadowTexture);
-		descriptorSet->setTexture("uPrefilterMap", forwardData->environmentMap);
+
+		descriptorSet->setTexture("uIrradianceMap", envData->irradianceMap);
+		descriptorSet->setTexture("uPreintegratedFG", forwardData->preintegratedFG);
+		descriptorSet->setTexture("uPrefilterMap", envData->environmentMap);
 
 		descriptorSet->update();
 
@@ -1752,18 +1646,23 @@ namespace maple
 		PROFILE_FUNCTION();
 		//GPUProfile("Final Pass");
 
-		finalDescriptorSet->setUniform("UniformBuffer", "exposure", &exposure);
+		finalDescriptorSet->setUniform("UniformBuffer", "gamma", &gamma);
 		finalDescriptorSet->setUniform("UniformBuffer", "toneMapIndex", &toneMapIndex);
 		auto ssaoEnable    = ssaoData->enable ? 1 : 0;
 		auto reflectEnable = ssrData->enable ? 1 : 0;
 		finalDescriptorSet->setUniform("UniformBuffer", "ssaoEnable", &ssaoEnable);
 		finalDescriptorSet->setUniform("UniformBuffer", "reflectEnable", &reflectEnable);
 
-		if (auto render = renderers[static_cast<int32_t>(RenderId::Cloud)]; render != nullptr)
+		if (auto render = renderers[static_cast<int32_t>(RenderId::Cloud)]; render != nullptr && envData->cloud)
 		{
 			auto cloud = std::static_pointer_cast<CloudRenderer>(render);
 			finalDescriptorSet->setTexture("uCloudSampler", cloud->getTexture(CloudsTextures::FragColor));
 		}
+		else
+		{
+			finalDescriptorSet->setTexture("uCloudSampler", gBuffer->getBuffer(GBufferTextures::PSEUDO_SKY));
+		}
+
 		finalDescriptorSet->setTexture("uScreenSampler", gBuffer->getBuffer(GBufferTextures::SCREEN));
 		finalDescriptorSet->setTexture("uDepthSampler", gBuffer->getDepthBuffer());
 		finalDescriptorSet->setTexture("uReflectionSampler", gBuffer->getBuffer(GBufferTextures::SSR_SCREEN));

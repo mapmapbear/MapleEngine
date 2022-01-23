@@ -15,6 +15,8 @@
 
 #include "Others/Randomizer.h"
 
+#include "ImGui/ImGuiHelpers.h"
+
 #include "Application.h"
 
 namespace maple
@@ -27,7 +29,6 @@ namespace maple
 		glm::vec4 lightColor;
 		glm::vec4 lightDirection;
 		glm::vec4 cameraPosition;
-
 
 		float FOV;
 		float iTime;
@@ -42,7 +43,12 @@ namespace maple
 		float curliness;
 		float absorption;
 		float densityFactor;
-		int   enablePowder = 0;
+		float steps;
+
+		float padding1;
+		float padding2;
+		float padding3;
+		int32_t enablePowder;
 	};
 
 	struct CloudRenderer::RenderData
@@ -58,19 +64,7 @@ namespace maple
 			cloudShader   = Shader::create("shaders/Cloud.shader");
 			descriptorSet = DescriptorSet::create({0, cloudShader.get()});
 			memset(&uniformObject, 0, sizeof(UniformBufferObject));
-		}
-	};
-
-	struct CloudRenderer::PseudoSkyboxData
-	{
-		std::shared_ptr<Shader>        shader;
-		std::shared_ptr<DescriptorSet> descriptorSet;
-		std::shared_ptr<Mesh>          screenMesh;
-		PseudoSkyboxData()
-		{
-			shader        = Shader::create("shaders/PseudoSky.shader");
-			descriptorSet = DescriptorSet::create({0, shader.get()});
-			screenMesh    = Mesh::createQuad(true);
+			uniformObject.steps = 64;
 		}
 	};
 
@@ -172,7 +166,6 @@ namespace maple
 	auto CloudRenderer::init(const std::shared_ptr<GBuffer> &buffer) -> void
 	{
 		data        = new RenderData();
-		skyData     = new PseudoSkyboxData();
 		weatherPass = new WeatherPass();
 		gbuffer     = buffer;
 
@@ -183,24 +176,6 @@ namespace maple
 	auto CloudRenderer::renderScene() -> void
 	{
 		PROFILE_FUNCTION();
-		{
-			PipelineInfo info;
-			info.shader              = skyData->shader;
-			info.colorTargets[0]     = gbuffer->getBuffer(GBufferTextures::PSEUDO_SKY);
-			info.polygonMode         = PolygonMode::Fill;
-			info.clearTargets        = true;
-			info.transparencyEnabled = false;
-
-			auto pipeline = Pipeline::get(info);
-
-			skyData->descriptorSet->setTexture("uPositionSampler", gbuffer->getBuffer(GBufferTextures::POSITION));
-			skyData->descriptorSet->update();
-
-			pipeline->bind(getCommandBuffer());
-			Renderer::bindDescriptorSets(pipeline.get(), getCommandBuffer(), 0, {skyData->descriptorSet});
-			Renderer::drawMesh(getCommandBuffer(), pipeline.get(), skyData->screenMesh.get());
-			pipeline->end(getCommandBuffer());
-		}
 
 		if (data->pipeline)
 		{
@@ -232,8 +207,8 @@ namespace maple
 	{
 		auto group = scene->getRegistry().group<VolumetricCloud>(entt::get<Light, Transform>);
 
-		auto &camera = scene->getCamera();
-		static auto begin  = Application::getTimer().current(); 
+		auto &      camera = scene->getCamera();
+		static auto begin  = Application::getTimer().current();
 
 		for (auto entity : group)
 		{
@@ -247,14 +222,10 @@ namespace maple
 
 			data->uniformObject.invProj        = glm::inverse(camera.first->getProjectionMatrix());
 			data->uniformObject.invView        = camera.second->getWorldMatrix();
-			data->uniformObject.lightDirection = glm::vec4(glm::normalize(transform.getWorldOrientation() * maple::FORWARD),1);
+			data->uniformObject.lightDirection = glm::vec4(glm::normalize(transform.getWorldOrientation() * maple::FORWARD), 1);
 			data->uniformObject.lightColor     = light.lightData.color;
-			data->uniformObject.cameraPosition = glm::vec4(camera.second->getWorldPosition(),1.f);
+			data->uniformObject.cameraPosition = glm::vec4(camera.second->getWorldPosition(), 1.f);
 
-			skyData->descriptorSet->setUniform("UniformBufferObject", "lightDirection", &data->uniformObject.lightDirection);
-			skyData->descriptorSet->setUniform("UniformBufferObject", "viewPos", &data->uniformObject.cameraPosition);
-			skyData->descriptorSet->setUniform("UniformBufferObject", "invView", &data->uniformObject.invView);
-			skyData->descriptorSet->setUniform("UniformBufferObject", "invProj", &data->uniformObject.invProj);
 
 			data->uniformObject.FOV   = camera.first->getFov();
 			data->uniformObject.iTime = Application::getTimer().elapsed(begin, Application::getTimer().current()) / 1000000.f;
@@ -265,7 +236,7 @@ namespace maple
 			data->uniformObject.coverageMultiplier = cloud.coverage;
 			data->uniformObject.cloudSpeed         = cloud.cloudSpeed;
 			data->uniformObject.curliness          = cloud.curliness;
-			data->uniformObject.absorption         = cloud.absorption * 0.1;
+			data->uniformObject.absorption         = cloud.absorption * 0.01;
 			data->uniformObject.densityFactor      = cloud.density;
 			data->uniformObject.crispiness         = cloud.crispiness;
 
@@ -277,17 +248,6 @@ namespace maple
 				weatherPass->execute(getCommandBuffer());
 			}
 			break;
-		}
-
-		auto view = scene->getRegistry().view<Environment>();
-		if (view.size() > 0)
-		{
-			auto &env = view.get<Environment>(view[0]);
-			if (env.isPseudoSky())
-			{
-				skyData->descriptorSet->setUniform("UniformBufferObject", "skyColorBottom", &env.getSkyColorBottom());
-				skyData->descriptorSet->setUniform("UniformBufferObject", "skyColorTop", &env.getSkyColorTop());
-			}
 		}
 	}
 
@@ -310,6 +270,15 @@ namespace maple
 	auto CloudRenderer::getTexture(CloudsTextures id) -> std::shared_ptr<Texture>
 	{
 		return data->computeInputs[id];
+	}
+
+	auto CloudRenderer::onImGui() -> void
+	{
+		ImGui::TextUnformatted("Cloud Renderer");
+		ImGui::Separator();
+		ImGui::Columns(2);
+		ImGuiHelper::property("Cloud : Steps", data->uniformObject.steps, 1, 64);
+		ImGui::Columns(1);
 	}
 
 };        // namespace maple

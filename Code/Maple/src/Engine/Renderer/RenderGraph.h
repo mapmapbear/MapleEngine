@@ -109,11 +109,11 @@ namespace maple
 		struct Renderer2DData;
 		struct DeferredData;
 		struct PreviewData;
-		struct SkyboxData;
 		struct SSAOData;
 		struct SSRData;
 		struct TAAData;
 		struct AtmosphereData;
+		struct EnvironmentData;
 
 		auto getCommandBuffer() -> CommandBuffer *;
 
@@ -129,15 +129,15 @@ namespace maple
 		uint32_t screenBufferWidth  = 0;
 		uint32_t screenBufferHeight = 0;
 
-		ShadowData *    shadowData    = nullptr;
-		ForwardData *   forwardData   = nullptr;
-		DeferredData *  deferredData  = nullptr;
-		PreviewData *   previewData   = nullptr;
-		SkyboxData *    skyboxData    = nullptr;
-		SSAOData *      ssaoData      = nullptr;
-		SSRData *       ssrData       = nullptr;
-		TAAData *       taaData       = nullptr;
-		AtmosphereData *atmophereData = nullptr;
+		ShadowData *     shadowData    = nullptr;
+		ForwardData *    forwardData   = nullptr;
+		DeferredData *   deferredData  = nullptr;
+		PreviewData *    previewData   = nullptr;
+		SSAOData *       ssaoData      = nullptr;
+		SSRData *        ssrData       = nullptr;
+		TAAData *        taaData       = nullptr;
+		AtmosphereData * atmophereData = nullptr;
+		EnvironmentData *envData       = nullptr;
 
 		std::shared_ptr<Shader>        finalShader;
 		std::shared_ptr<DescriptorSet> finalDescriptorSet;
@@ -147,10 +147,8 @@ namespace maple
 
 		std::shared_ptr<Pipeline> skyboxPipeline;
 
-		int32_t toneMapIndex = 4;
-		float   exposure     = 1.0f;
-
-		std::shared_ptr<PrefilterRenderer> prefilterRenderer;
+		int32_t toneMapIndex = 7;
+		float   gamma     = 2.2f;
 
 		Transform *transform = nullptr;
 	};

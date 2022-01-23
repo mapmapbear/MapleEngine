@@ -1,21 +1,16 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
+#define GAMMA 2.2
 
 layout(location = 0) in vec2 inUV;
 
 layout(set = 0, binding = 0) uniform UniformBuffer
 {
-	float exposure;
-	float bloomIntensity;
+	float gamma;
 	int toneMapIndex;
 	int ssaoEnable;
 	int reflectEnable;
-	
-	float p1;
-	float p2;
-	float p3;
-	
 } ubo;
 
 layout(set = 0, binding = 0)  uniform sampler2D uScreenSampler;
@@ -26,12 +21,6 @@ layout(set = 0, binding = 3)  uniform sampler2D uDepthSampler;
 
 layout(location = 0) out vec4 outFrag;
 
-const float gamma = 1;//2.2;
-
-vec3 GammaCorrect(vec3 color, float gamma)
-{
-	return pow(color, vec3(1.0f / gamma));
-}
 
 // Based on http://www.oscars.org/science-technology/sci-tech-projects/aces
 vec3 ACESTonemap(vec3 color)
@@ -52,19 +41,11 @@ vec3 ACESTonemap(vec3 color)
 	return clamp(m2 * (a / b), 0.0, 1.0);
 }
 
-vec3 linearToneMapping(vec3 color)
-{
-	float exposure = 1.;
-	color = clamp(exposure * color, 0., 1.);
-	color = pow(color, vec3(1. / gamma));
-	return color;
-}
-
 vec3 simpleReinhardToneMapping(vec3 color)
 {
 	float exposure = 1.5;
 	color *= exposure/(1. + color / exposure);
-	color = pow(color, vec3(1. / gamma));
+	color = pow(color, vec3(1. / ubo.gamma));
 	return color;
 }
 
@@ -73,7 +54,7 @@ vec3 lumaBasedReinhardToneMapping(vec3 color)
 	float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));
 	float toneMappedLuma = luma / (1. + luma);
 	color *= toneMappedLuma / luma;
-	color = pow(color, vec3(1. / gamma));
+	color = pow(color, vec3(1. / ubo.gamma));
 	return color;
 }
 
@@ -83,14 +64,14 @@ vec3 whitePreservingLumaBasedReinhardToneMapping(vec3 color)
 	float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));
 	float toneMappedLuma = luma * (1. + luma / (white*white)) / (1. + luma);
 	color *= toneMappedLuma / luma;
-	color = pow(color, vec3(1. / gamma));
+	color = pow(color, vec3(1. / ubo.gamma));
 	return color;
 }
 
 vec3 RomBinDaHouseToneMapping(vec3 color)
 {
     color = exp( -1.0 / ( 2.72*color + 0.15 ) );
-	color = pow(color, vec3(1. / gamma));
+	color = pow(color, vec3(1. / ubo.gamma));
 	return color;
 }
 
@@ -115,9 +96,16 @@ vec3 Uncharted2ToneMapping(vec3 color)
 	color = ((color * (A * color + C * B) + D * E) / (color * (A * color + B) + D * F)) - E / F;
 	float white = ((W * (A * W + C * B) + D * E) / (W * (A * W + B) + D * F)) - E / F;
 	color /= white;
-	color = pow(color, vec3(1. / gamma));
+	color = pow(color, vec3(1. / ubo.gamma));
 	return color;
 }
+
+
+vec3 finalGamma(vec3 color)
+{
+	return pow(color, vec3(1.0 / ubo.gamma));
+}
+
 
 void main()
 {
@@ -139,20 +127,19 @@ void main()
 
 	vec3 cloud = texture(uCloudSampler, inUV).xyz;
 	float mixVal = (texture(uDepthSampler, inUV).r < 1.0 ? 0.0 : 1.0);
-	vec3 col = mix(color.xyz, cloud, mixVal);
+	color = mix(color.xyz, cloud, mixVal);
 
-	col *= ubo.exposure;
+	//col *= ubo.exposure;
 
-
-	/*int i = ubo.toneMapIndex;
-	if (i == 1) color = linearToneMapping(color);
+	int i = ubo.toneMapIndex;
+	if (i == 1) color = finalGamma(color);
 	if (i == 2) color = simpleReinhardToneMapping(color);
 	if (i == 3) color = lumaBasedReinhardToneMapping(color);
 	if (i == 4) color = whitePreservingLumaBasedReinhardToneMapping(color);
 	if (i == 5) color = RomBinDaHouseToneMapping(color);		
 	if (i == 6) color = filmicToneMapping(color);
 	if (i == 7) color = Uncharted2ToneMapping(color);
-	if (i == 8) color = ACESTonemap(color);*/
+	if (i == 8) color = ACESTonemap(color);
 	
-	outFrag = vec4(col, 1.0);
+	outFrag = vec4(color, 1.0);
 }

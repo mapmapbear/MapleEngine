@@ -19,6 +19,7 @@ namespace maple
 		GridRender,
 		Geometry,
 		Cloud,
+		Skybox,
 		Render2D,
 		PostProcess,
 		Length

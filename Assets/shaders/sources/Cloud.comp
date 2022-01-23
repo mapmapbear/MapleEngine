@@ -33,16 +33,22 @@ layout(binding = 9) uniform UniformBufferObject
 	float iTime;
 	float coverageMultiplier;
 	float cloudSpeed;
-	float crispiness;
 
+	float crispiness;
 	float earthRadius;
 	float sphereInnerRadius;
 	float sphereOuterRadius;
+
 	float curliness;
 	float absorption;
 	float densityFactor;
-	int   enablePowder;
+	float steps;
+
 	float padding1;
+	float padding2;
+	float padding3;
+
+	int enablePowder;
 
 }ubo;
 
@@ -375,7 +381,7 @@ vec4 raymarchToCloud(vec3 startPos, vec3 endPos, vec3 bg, out vec4 cloudPos){
 
 	//float volumeHeight = planeMax.y - planeMin.y;
 
-	const int nSteps = 64;//int(mix(48.0, 96.0, clamp( len/SPHERE_DELTA - 1.0,0.0,1.0) ));
+	const int nSteps = int(ubo.steps);//int(mix(48.0, 96.0, clamp( len/SPHERE_DELTA - 1.0,0.0,1.0) ));
 	
 	float ds = len/nSteps;
 	vec3 dir = path/len;

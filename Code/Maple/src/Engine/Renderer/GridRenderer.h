@@ -31,6 +31,8 @@ namespace maple
 		auto setRenderTarget(std::shared_ptr<Texture> texture, bool rebuildFramebuffer) -> void override;
 
 	  private:
+		auto onImGui() -> void override;
+
 		std::shared_ptr<Mesh> quad;
 
 		std::shared_ptr<Shader> gridShader;
@@ -47,5 +49,7 @@ namespace maple
 			float     maxDistance = 600.0f;
 			float     p1;
 		} systemBuffer;
+
+		bool active = true;
 	};
 };        // namespace maple

@@ -7,12 +7,12 @@ layout(location = 0) in vec2 inUV;
 
 layout(set = 0,binding = 0) uniform UniformBufferObject
 {
-    vec3 skyColorBottom;
-    vec3 skyColorTop;
-    vec3 lightDirection;
-    vec3 viewPos;
 	mat4 invProj;
 	mat4 invView;
+    vec4 skyColorBottom;
+    vec4 skyColorTop;
+    vec4 lightDirection;
+    vec4 viewPos;
 } ubo;
 
 layout(set = 0, binding = 1)  uniform sampler2D uPositionSampler;
@@ -40,7 +40,7 @@ void raySphereintersectionSkyMap(vec3 rd, float radius, out vec3 startPos)
 
 vec3 getSun(const vec3 d, float powExp)
 {
-	float sun = clamp( dot(ubo.lightDirection,d), 0.0, 1.0 );
+	float sun = clamp( dot(ubo.lightDirection.xyz,d), 0.0, 1.0 );
 	vec3 col = 0.8*vec3(1.0,.6,0.1)*pow( sun, powExp );
 	return col;
 }
@@ -48,7 +48,7 @@ vec3 getSun(const vec3 d, float powExp)
 vec4 colorCubeMap(vec3 endPos, const vec3 d)
 {
     // background sky     
-	vec3 col = mix(ubo.skyColorBottom, ubo.skyColorTop, clamp(1 - exp(8.5-17.*clamp(normalize(d).y*0.5 + 0.5,0.0,1.0)),0.0,1.0));
+	vec3 col = mix(ubo.skyColorBottom.rgb, ubo.skyColorTop.rgb, clamp(1 - exp(8.5-17.*clamp(normalize(d).y*0.5 + 0.5,0.0,1.0)),0.0,1.0));
 	
 	col += getSun(d, 350.0);
 

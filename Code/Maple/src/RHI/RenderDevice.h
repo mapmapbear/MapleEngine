@@ -38,7 +38,7 @@ namespace maple
 		virtual auto drawIndexedInternal(CommandBuffer *commandBuffer, DrawType type, uint32_t count, uint32_t start = 0) const -> void{};
 		virtual auto drawInternal(CommandBuffer *commandBuffer, DrawType type, uint32_t count, DataType dataType = DataType::UnsignedInt, const void *indices = nullptr) const -> void{};
 		virtual auto bindDescriptorSetsInternal(Pipeline *pipeline, CommandBuffer *commandBuffer, uint32_t dynamicOffset, const std::vector<std::shared_ptr<DescriptorSet>> &descriptorSets) -> void{};
-		virtual auto clearRenderTarget(const std::shared_ptr<Texture> &texture, CommandBuffer *commandBuffer, const glm::vec4 &clearColor = {0.5f, 0.5f, 0.5f, 1.0f}) -> void{};
+		virtual auto clearRenderTarget(const std::shared_ptr<Texture> &texture, CommandBuffer *commandBuffer, const glm::vec4 &clearColor = {0.3f, 0.3f, 0.3f, 1.0f}) -> void{};
 		virtual auto clearInternal(uint32_t bufferMask) -> void{};
 
 		static auto clear(uint32_t bufferMask) -> void;
