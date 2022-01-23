@@ -45,9 +45,9 @@ namespace maple
 		float densityFactor;
 		float steps;
 
-		float padding1;
-		float padding2;
-		float padding3;
+		float   padding1;
+		float   padding2;
+		float   padding3;
 		int32_t enablePowder;
 	};
 
@@ -59,12 +59,20 @@ namespace maple
 		std::vector<std::shared_ptr<Texture2D>> computeInputs;
 		UniformBufferObject                     uniformObject;
 
+		std::shared_ptr<Shader>        screenCloudShader;
+		std::shared_ptr<DescriptorSet> screenDescriptorSet;
+		std::shared_ptr<Mesh>          screenMesh;
+
 		RenderData()
 		{
 			cloudShader   = Shader::create("shaders/Cloud.shader");
 			descriptorSet = DescriptorSet::create({0, cloudShader.get()});
 			memset(&uniformObject, 0, sizeof(UniformBufferObject));
 			uniformObject.steps = 64;
+
+			screenCloudShader   = Shader::create("shaders/CloudScreen.shader");
+			screenDescriptorSet = DescriptorSet::create({0, screenCloudShader.get()});
+			screenMesh          = Mesh::createQuad(true);
 		}
 	};
 
@@ -179,27 +187,49 @@ namespace maple
 
 		if (data->pipeline)
 		{
-			data->descriptorSet->setUniformBufferData("UniformBufferObject", &data->uniformObject);
-			data->descriptorSet->setTexture("fragColor", data->computeInputs[0]);
-			data->descriptorSet->setTexture("bloom", data->computeInputs[1]);
-			data->descriptorSet->setTexture("alphaness", data->computeInputs[2]);
-			data->descriptorSet->setTexture("cloudDistance", data->computeInputs[3]);
-			data->descriptorSet->setTexture("uDepthSampler", gbuffer->getDepthBuffer());
-			data->descriptorSet->setTexture("uSky", gbuffer->getBuffer(GBufferTextures::PSEUDO_SKY));
+			{
+				data->descriptorSet->setUniformBufferData("UniformBufferObject", &data->uniformObject);
+				data->descriptorSet->setTexture("fragColor", data->computeInputs[0]);
+				data->descriptorSet->setTexture("bloom", data->computeInputs[1]);
+				data->descriptorSet->setTexture("alphaness", data->computeInputs[2]);
+				data->descriptorSet->setTexture("cloudDistance", data->computeInputs[3]);
+				data->descriptorSet->setTexture("uDepthSampler", gbuffer->getDepthBuffer());
+				data->descriptorSet->setTexture("uSky", gbuffer->getBuffer(GBufferTextures::PSEUDO_SKY));
 
-			data->descriptorSet->setTexture("uWeatherTex", weatherPass->weather);
-			data->descriptorSet->setTexture("uCloud", weatherPass->perlin3D);
-			data->descriptorSet->setTexture("uWorley32", weatherPass->worley3D);
+				data->descriptorSet->setTexture("uWeatherTex", weatherPass->weather);
+				data->descriptorSet->setTexture("uCloud", weatherPass->perlin3D);
+				data->descriptorSet->setTexture("uWorley32", weatherPass->worley3D);
 
-			data->descriptorSet->update();
+				data->descriptorSet->update();
 
-			data->pipeline->bind(getCommandBuffer());
-			Renderer::bindDescriptorSets(data->pipeline.get(), getCommandBuffer(), 0, {data->descriptorSet});
-			Renderer::dispatch(getCommandBuffer(),
-			                   gbuffer->getWidth() / data->cloudShader->getLocalSizeX(),
-			                   gbuffer->getHeight() / data->cloudShader->getLocalSizeY(),
-			                   1);
-			data->pipeline->end(getCommandBuffer());
+				data->pipeline->bind(getCommandBuffer());
+				Renderer::bindDescriptorSets(data->pipeline.get(), getCommandBuffer(), 0, {data->descriptorSet});
+				Renderer::dispatch(getCommandBuffer(),
+				                   gbuffer->getWidth() / data->cloudShader->getLocalSizeX(),
+				                   gbuffer->getHeight() / data->cloudShader->getLocalSizeY(),
+				                   1);
+				data->pipeline->end(getCommandBuffer());
+			}
+
+			{
+				data->screenDescriptorSet->update();
+				PipelineInfo info;
+				info.shader              = data->screenCloudShader;
+				info.colorTargets[0]     = gbuffer->getBuffer(GBufferTextures::SCREEN);
+				info.polygonMode         = PolygonMode::Fill;
+				info.clearTargets        = false;
+				info.transparencyEnabled = false;
+
+				auto pipeline = Pipeline::get(info);
+
+				data->screenDescriptorSet->setTexture("uCloudSampler", data->computeInputs[0]);
+				data->screenDescriptorSet->update();
+
+				pipeline->bind(getCommandBuffer());
+				Renderer::bindDescriptorSets(pipeline.get(), getCommandBuffer(), 0, {data->screenDescriptorSet});
+				Renderer::drawMesh(getCommandBuffer(), pipeline.get(), data->screenMesh.get());
+				pipeline->end(getCommandBuffer());
+			}
 		}
 	}
 
@@ -225,7 +255,6 @@ namespace maple
 			data->uniformObject.lightDirection = glm::vec4(glm::normalize(transform.getWorldOrientation() * maple::FORWARD), 1);
 			data->uniformObject.lightColor     = light.lightData.color;
 			data->uniformObject.cameraPosition = glm::vec4(camera.second->getWorldPosition(), 1.f);
-
 
 			data->uniformObject.FOV   = camera.first->getFov();
 			data->uniformObject.iTime = Application::getTimer().elapsed(begin, Application::getTimer().current()) / 1000000.f;

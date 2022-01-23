@@ -11,12 +11,17 @@ layout(set = 0, binding = 0) uniform UniformBuffer
 	int toneMapIndex;
 	int ssaoEnable;
 	int reflectEnable;
+
+	int cloudEnable;
+	int padding;
+	int padding1;
+	int padding2;
 } ubo;
 
 layout(set = 0, binding = 0)  uniform sampler2D uScreenSampler;
 layout(set = 0, binding = 1)  uniform sampler2D uReflectionSampler;
-layout(set = 0, binding = 2)  uniform sampler2D uCloudSampler;
-layout(set = 0, binding = 3)  uniform sampler2D uDepthSampler;
+//layout(set = 0, binding = 2)  uniform sampler2D uDepthSampler;
+//layout(set = 0, binding = 2)  uniform sampler2D uCloudSampler;
 
 
 layout(location = 0) out vec4 outFrag;
@@ -124,10 +129,15 @@ void main()
 		color = SSR.rgb * SSR.a + color * (1.0 - SSR.a);
 	}
 
+	//ivec2 size = textureSize(uCloudSampler,0);
 
-	vec3 cloud = texture(uCloudSampler, inUV).xyz;
-	float mixVal = (texture(uDepthSampler, inUV).r < 1.0 ? 0.0 : 1.0);
-	color = mix(color.xyz, cloud, mixVal);
+	if(ubo.cloudEnable == 1)
+	{
+		//vec3 cloud = texture(uCloudSampler, inUV).xyz;
+		//float mixVal = (texture(uDepthSampler, inUV).r < 1.0 ? 0.0 : 1.0);
+		//color = mix(color.xyz, cloud, mixVal);
+	}
+
 
 	//col *= ubo.exposure;
 

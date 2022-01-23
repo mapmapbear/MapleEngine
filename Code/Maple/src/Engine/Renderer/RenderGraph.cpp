@@ -833,7 +833,6 @@ namespace maple
 
 		Application::getRenderDevice()->clearRenderTarget(renderTargert, getCommandBuffer());
 
-		Application::getRenderDevice()->clearRenderTarget(gBuffer->getBuffer(GBufferTextures::PSEUDO_SKY), getCommandBuffer());
 		Application::getRenderDevice()->clearRenderTarget(gBuffer->getBuffer(GBufferTextures::COLOR), getCommandBuffer(), {0, 0, 0, 0});
 		Application::getRenderDevice()->clearRenderTarget(gBuffer->getBuffer(GBufferTextures::POSITION), getCommandBuffer(), {0, 0, 0, 0});
 		Application::getRenderDevice()->clearRenderTarget(gBuffer->getBuffer(GBufferTextures::NORMALS), getCommandBuffer(), {0, 0, 0, 0});
@@ -869,16 +868,6 @@ namespace maple
 			}
 		}
 
-		if (auto render = renderers[static_cast<int32_t>(RenderId::Skybox)]; render != nullptr)
-		{
-			render->renderScene();
-		}
-
-		if (auto render = renderers[static_cast<int32_t>(RenderId::Cloud)]; render != nullptr)
-		{
-			render->renderScene();
-		}
-
 		if (auto render = renderers[static_cast<int32_t>(RenderId::Render2D)]; render != nullptr)
 		{
 			render->renderScene();
@@ -889,6 +878,15 @@ namespace maple
 			render->renderScene();
 		}
 
+		if (auto render = renderers[static_cast<int32_t>(RenderId::Skybox)]; render != nullptr)
+		{
+			render->renderScene();
+		}
+
+		if (auto render = renderers[static_cast<int32_t>(RenderId::Cloud)]; render != nullptr)
+		{
+			render->renderScene();
+		}
 		if (ssrData->enable)
 		{
 			executeReflectionPass();
@@ -1650,21 +1648,14 @@ namespace maple
 		finalDescriptorSet->setUniform("UniformBuffer", "toneMapIndex", &toneMapIndex);
 		auto ssaoEnable    = ssaoData->enable ? 1 : 0;
 		auto reflectEnable = ssrData->enable ? 1 : 0;
+		auto cloudEnable   = envData->cloud ? 1 : 0;
+
 		finalDescriptorSet->setUniform("UniformBuffer", "ssaoEnable", &ssaoEnable);
 		finalDescriptorSet->setUniform("UniformBuffer", "reflectEnable", &reflectEnable);
+		finalDescriptorSet->setUniform("UniformBuffer", "cloudEnable", &cloudEnable);
 
-		if (auto render = renderers[static_cast<int32_t>(RenderId::Cloud)]; render != nullptr && envData->cloud)
-		{
-			auto cloud = std::static_pointer_cast<CloudRenderer>(render);
-			finalDescriptorSet->setTexture("uCloudSampler", cloud->getTexture(CloudsTextures::FragColor));
-		}
-		else
-		{
-			finalDescriptorSet->setTexture("uCloudSampler", gBuffer->getBuffer(GBufferTextures::PSEUDO_SKY));
-		}
-
+	
 		finalDescriptorSet->setTexture("uScreenSampler", gBuffer->getBuffer(GBufferTextures::SCREEN));
-		finalDescriptorSet->setTexture("uDepthSampler", gBuffer->getDepthBuffer());
 		finalDescriptorSet->setTexture("uReflectionSampler", gBuffer->getBuffer(GBufferTextures::SSR_SCREEN));
 
 		finalDescriptorSet->update();

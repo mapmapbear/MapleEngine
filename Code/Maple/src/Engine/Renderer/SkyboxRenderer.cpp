@@ -155,10 +155,10 @@ namespace maple
 			pipelineInfo.polygonMode         = PolygonMode::Fill;
 			pipelineInfo.cullMode            = CullMode::Front;
 			pipelineInfo.transparencyEnabled = false;
-			pipelineInfo.clearTargets        = true;
+			//pipelineInfo.clearTargets        = false;
 
-			//pipelineInfo.depthTarget     = gbuffer->getDepthBuffer();
-			pipelineInfo.colorTargets[0] = gbuffer->getBuffer(GBufferTextures::PSEUDO_SKY);
+			pipelineInfo.depthTarget     = gbuffer->getDepthBuffer();
+			pipelineInfo.colorTargets[0] = gbuffer->getBuffer(GBufferTextures::SCREEN);
 
 			auto skyboxPipeline = Pipeline::get(pipelineInfo);
 			skyboxPipeline->bind(getCommandBuffer());
