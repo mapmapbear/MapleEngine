@@ -145,9 +145,10 @@ namespace maple
 
 		auto clickObject(const Ray &ray) -> void;
 		auto focusCamera(const glm::vec3 &point, float distance, float speed = 1.0f) -> void;
+		auto drawPlayButtons() -> void;
 
 	  private:
-		auto drawPlayButtons() -> void;
+		  
 		auto drawMenu() -> void;
 		auto beginDockSpace() -> void;
 		auto endDockSpace() -> void;

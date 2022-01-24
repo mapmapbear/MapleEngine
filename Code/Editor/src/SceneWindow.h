@@ -25,7 +25,7 @@ namespace maple
 		auto handleInput(float dt) -> void override;
 
 	  private:
-		auto drawGizmos(float width, float height, float xpos, float ypos, Scene *scene) -> void;
+		auto drawGizmos(float width, float height, float xpos, float ypos, Scene *scene) -> bool;
 
 		auto drawToolbarOverlay(glm::quat & quat) -> bool;
 

@@ -28,6 +28,9 @@ namespace maple
 		C_SHARP,
 		Shader,
 		Material,
+		//for gizmo
+		Lighting,
+		Camera,
 		Length
 	};
 

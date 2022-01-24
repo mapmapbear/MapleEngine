@@ -13,7 +13,10 @@
 #include "Event/WindowEvent.h"
 #include "IconsMaterialDesignIcons.h"
 #include "ImGui/ImGuiHelpers.h"
+#include "Math/MathUtils.h"
 #include "Others/Console.h"
+
+#include "Scene/Component/Light.h"
 #include "Scene/Scene.h"
 
 #include "imgui_internal.h"
@@ -24,6 +27,44 @@
 
 namespace maple
 {
+	template <typename T>
+	inline auto showGizmo(float width, float height, float xpos, float ypos, const glm::mat4 &viewProj, const Frustum &frustum, entt::registry &registry, FileType type)
+	{
+		auto &editor = *static_cast<Editor *>(Application::get());
+
+		auto group = registry.group(entt::get<T, Transform>);
+		bool click = false;
+		for (auto entity : group)
+		{
+			const auto &[component, trans] = group.template get<T, Transform>(entity);
+
+			auto pos = trans.getWorldPosition();
+
+			auto inside = frustum.isInside(pos);
+
+			if (inside)
+			{
+				const auto scale     = glm::vec2{0.5, 0.5};
+				glm::vec2  screenPos = MathUtils::worldToScreen(pos, viewProj, width, height, xpos, ypos);
+				auto       quad      = editor.getIcon(type);
+
+				ImGui::SetCursorPos({screenPos.x - quad->getWidth() * scale.x * 0.5f, screenPos.y});
+
+				ImGui::PushID(&component);
+				ImGui::PushStyleColor(ImGuiCol_Button, {0, 0, 0, 0});
+				if (ImGuiHelper::imageButton(quad, scale))
+				{
+					editor.setSelected(entity);
+					editor.setImGuizmoOperation(ImGuizmo::TRANSLATE);
+					click = true;
+				}
+				ImGui::PopStyleColor();
+				ImGui::PopID();
+			}
+		}
+		return click;
+	}
+
 	const ImVec4 SelectedColor(0.28f, 0.56f, 0.9f, 1.0f);
 	SceneWindow::SceneWindow()
 	{
@@ -67,9 +108,8 @@ namespace maple
 					transform = &registry.get<Transform>(cameraView.front());
 				}
 			}
-			bool click = false;
-			//drawToolBar();
-			glm::quat quat = glm::identity<glm::quat>();
+			bool      click = false;
+			glm::quat quat  = glm::identity<glm::quat>();
 
 			if (transform != nullptr)
 			{
@@ -89,6 +129,18 @@ namespace maple
 				resize(static_cast<uint32_t>(sceneViewSize.x), static_cast<uint32_t>(sceneViewSize.y));
 				ImGuiHelper::image(previewTexture.get(), {static_cast<uint32_t>(sceneViewSize.x), static_cast<uint32_t>(sceneViewSize.y)});
 
+				if (ImGui::BeginDragDropTarget())
+				{
+					auto data = ImGui::AcceptDragDropPayload("AssetFile");
+					if (data)
+					{
+						std::string file = (char *) data->Data;
+						LOGV("Receive file from assets window : {0}", file);
+						editor.openFileInEditor(file);
+					}
+					ImGui::EndDragDropTarget();
+				}
+
 				bool updateCamera = false;
 
 				{
@@ -98,6 +150,8 @@ namespace maple
 					vMax.y += ImGui::GetWindowPos().y;
 					updateCamera = ImGui::IsMouseHoveringRect(vMin, vMax);
 				}
+
+				click = click || drawGizmos(sceneViewSize.x, sceneViewSize.y, vMin.x, vMin.y, editor.getCurrentScene());
 
 				focused = ImGui::IsWindowFocused() && !ImGuizmo::IsUsing() && updateCamera;
 
@@ -122,18 +176,6 @@ namespace maple
 						auto clickPos = Input::getInput()->getMousePosition() - glm::vec2(vMin.x, vMin.y);
 						editor.clickObject(editor.getScreenRay(int32_t(clickPos.x), int32_t(clickPos.y), camera, int32_t(sceneViewSize.x), int32_t(sceneViewSize.y)));
 					}
-				}
-
-				if (ImGui::BeginDragDropTarget())
-				{
-					auto data = ImGui::AcceptDragDropPayload("AssetFile");
-					if (data)
-					{
-						std::string file = (char *) data->Data;
-						LOGV("Receive file from assets window : {0}", file);
-						editor.openFileInEditor(file);
-					}
-					ImGui::EndDragDropTarget();
 				}
 			}
 			ImGui::End();
@@ -176,8 +218,22 @@ namespace maple
 		editor.getEditorCameraController().handleKeyboard(editor.getEditorCameraTransform(), dt);
 	}
 
-	auto SceneWindow::drawGizmos(float width, float height, float xpos, float ypos, Scene *scene) -> void
+	auto SceneWindow::drawGizmos(float width, float height, float xpos, float ypos, Scene *scene) -> bool
 	{
+		auto &editor    = *static_cast<Editor *>(Application::get());
+		auto &camera    = editor.getCamera();
+		auto &transform = editor.getEditorCameraTransform();
+		auto &registry  = scene->getRegistry();
+
+		const auto &view = transform.getWorldMatrixInverse();
+		const auto &proj = camera->getProjectionMatrix();
+		const auto &f    = camera->getFrustum(view);
+
+		const auto viewProj = proj * view;
+
+		bool click = showGizmo<Light>(width, height, xpos, ypos, viewProj, f, registry, FileType::Lighting);
+		click      = click || showGizmo<Camera>(width, height, xpos, ypos, viewProj, f, registry, FileType::Camera);
+		return click;
 	}
 
 	auto SceneWindow::drawToolbarOverlay(glm::quat &quat) -> bool
@@ -335,6 +391,15 @@ namespace maple
 						ImGui::PopStyleColor();
 				}
 
+				ImGui::SameLine();
+
+				ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);
+				ImGui::SameLine();
+
+				editor.drawPlayButtons();
+
+				ImGui::SameLine();
+				ImGui::SeparatorEx(ImGuiSeparatorFlags_Vertical);
 				ImGui::SameLine();
 
 				if (ImGui::Button(ICON_MDI_ARROW_LEFT))

@@ -2,11 +2,12 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #include "ImGuiHelpers.h"
-#include <glm/gtc/type_ptr.hpp>
 
+#include "Engine/Quad2D.h"
 #include "RHI/Texture.h"
 
 #include <IconsMaterialDesignIcons.h>
+#include <glm/gtc/type_ptr.hpp>
 #include <imgui_impl_vulkan.h>
 
 namespace maple
@@ -271,7 +272,7 @@ namespace maple
 
 		auto propertyWithDefault(const std::string &name, glm::vec3 &value, float min /*= -1.0f*/, float max /*= 1.0f*/, const glm::vec3 &defaultValue /*= {}*/, PropertyFlag flags, float speed) -> bool
 		{
-			auto ret = property(name, value, min, max, flags,speed);
+			auto ret = property(name, value, min, max, flags, speed);
 
 			ImGui::PushItemWidth(-1);
 
@@ -311,6 +312,17 @@ namespace maple
 		{
 			bool flipImage = true;        //opengl is true
 			ImGui::Image(texture ? texture->getHandle() : nullptr, ImVec2(size.x, size.y), ImVec2(0.0f, flipImage ? 1.0f : 0.0f), ImVec2(1.0f, flipImage ? 0.0f : 1.0f));
+		}
+
+		auto imageButton(const Quad2D *icon, const glm::vec2 &scale) -> bool
+		{
+			auto &uv  = icon->getTexCoords();
+			auto  img = icon && icon->getTexture() ? icon->getTexture()->getHandle() : nullptr;
+
+			return ImGui::ImageButton(img,
+			                          {icon->getHeight() * scale.x, icon->getWidth() * scale.y},
+			                          ImVec2(uv[3].x, uv[1].y),
+			                          ImVec2(uv[1].x, uv[3].y), -1);
 		}
 
 	};        // namespace ImGuiHelper

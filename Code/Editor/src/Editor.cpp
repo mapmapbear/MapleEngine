@@ -75,7 +75,6 @@ namespace maple
 		addWindow(RenderCapture);
 		addWindow(PreviewWindow);
 
-
 		ImGuizmo::SetGizmoSizeClipSpace(0.25f);
 		auto winSize = window->getWidth() / (float) window->getHeight();
 
@@ -105,6 +104,7 @@ namespace maple
 		drawMenu();
 		dialog.onImGui();
 		beginDockSpace();
+		//drawPlayButtons();
 		for (auto &win : editorWindows)
 		{
 			win.second->onImGui();
@@ -311,72 +311,78 @@ namespace maple
 
 	auto Editor::drawPlayButtons() -> void
 	{
-		auto x = (ImGui::GetWindowContentRegionMax().x / 2.0f) - (1.5f * (ImGui::GetFontSize() + ImGui::GetStyle().ItemSpacing.x));
-
-		ImGui::SameLine(x);
-
-		ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.1f, 0.2f, 0.7f, 0.0f));
-
-		if (getEditorState() == EditorState::Next)
-			setEditorState(EditorState::Paused);
-
-		bool selected;
+		//ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 35.0f);
+		//if (ImGui::Begin("Toolbar-", 0, ImGuiWindowFlags_NoScrollbar | ImGuiDockNodeFlags_AutoHideTabBar | ImGuiWindowFlags_NoDecoration))
 		{
-			selected = getEditorState() == EditorState::Play;
-			if (selected)
-				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.28f, 0.56f, 0.9f, 1.0f));
+			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.1f, 0.2f, 0.7f, 0.0f));
+			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 100);
 
-			if (ImGui::Button(selected ? ICON_MDI_STOP : ICON_MDI_PLAY))
+			if (getEditorState() == EditorState::Next)
+				setEditorState(EditorState::Paused);
+
+			bool selected;
 			{
-				setEditorState(selected ? EditorState::Preview : EditorState::Play);
-
-				setSelected((entt::entity) entt::null);
-
+				selected = getEditorState() == EditorState::Play;
 				if (selected)
-					loadCachedScene();
-				else
+					ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.28f, 0.56f, 0.9f, 1.0f));
+
+				if (ImGui::Button(selected ? ICON_MDI_STOP : ICON_MDI_PLAY))
 				{
-					cacheScene();
-					sceneManager->getCurrentScene()->onInit();
+					setEditorState(selected ? EditorState::Preview : EditorState::Play);
+
+					setSelected((entt::entity) entt::null);
+
+					if (selected)
+						loadCachedScene();
+					else
+					{
+						cacheScene();
+						sceneManager->getCurrentScene()->onInit();
+					}
 				}
+
+				ImGuiHelper::tooltip("Play");
+				if (selected)
+					ImGui::PopStyleColor();
 			}
 
-			ImGuiHelper::tooltip("Play");
-			if (selected)
-				ImGui::PopStyleColor();
+			ImGui::SameLine();
+
+			{
+				selected = getEditorState() == EditorState::Paused;
+				if (selected)
+					ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.28f, 0.56f, 0.9f, 1.0f));
+
+				if (ImGui::Button(ICON_MDI_PAUSE))
+					setEditorState(selected ? EditorState::Play : EditorState::Paused);
+
+				ImGuiHelper::tooltip("Pause");
+
+				if (selected)
+					ImGui::PopStyleColor();
+			}
+
+			ImGui::SameLine();
+
+			{
+				selected = getEditorState() == EditorState::Next;
+				if (selected)
+					ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.28f, 0.56f, 0.9f, 1.0f));
+
+				if (ImGui::Button(ICON_MDI_STEP_FORWARD))
+					setEditorState(EditorState::Next);
+
+				ImGuiHelper::tooltip("Next");
+
+				if (selected)
+					ImGui::PopStyleColor();
+			}
+
+			ImGui::PopStyleVar();
+			ImGui::PopStyleColor();
 		}
-
-		//ImGui::SameLine();
-
-		{
-			selected = getEditorState() == EditorState::Paused;
-			if (selected)
-				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.28f, 0.56f, 0.9f, 1.0f));
-
-			if (ImGui::Button(ICON_MDI_PAUSE))
-				setEditorState(selected ? EditorState::Play : EditorState::Paused);
-
-			ImGuiHelper::tooltip("Pause");
-
-			if (selected)
-				ImGui::PopStyleColor();
-		}
-
-		{
-			selected = getEditorState() == EditorState::Next;
-			if (selected)
-				ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.28f, 0.56f, 0.9f, 1.0f));
-
-			if (ImGui::Button(ICON_MDI_STEP_FORWARD))
-				setEditorState(EditorState::Next);
-
-			ImGuiHelper::tooltip("Next");
-
-			if (selected)
-				ImGui::PopStyleColor();
-		}
-
-		ImGui::PopStyleColor();
+		//ImGui::PopStyleVar();
+		//ImGui::End();
 	}
 
 	auto Editor::drawMenu() -> void
@@ -464,8 +470,6 @@ namespace maple
 
 				ImGui::EndMenu();
 			}
-
-			drawPlayButtons();
 
 			ImGui::EndMainMenuBar();
 		}
@@ -774,16 +778,12 @@ namespace maple
 
 	auto Editor::getIcon(FileType type) -> Quad2D *
 	{
-#ifdef MAPLE_VULKAN
-		constexpr bool flipY = true;
-#else
-		constexpr bool flipY = false;
-#endif        // MAPLE_VULKAN
 		if (auto iter = cacheIcons.find(type); iter != cacheIcons.end())
 		{
-			return textureAtlas->addSprite(iter->second, flipY);
+			return textureAtlas->addSprite(iter->second);
 		}
-		return textureAtlas->addSprite(cacheIcons[FileType::Normal], flipY);
+
+		return textureAtlas->addSprite(cacheIcons[FileType::Normal]);
 	}
 
 	auto Editor::processIcons() -> void
@@ -806,8 +806,18 @@ namespace maple
 		        "editor-icons/icons8-wav-100.png",
 		        "editor-icons/icons8-ttf-100.png",
 		        "editor-icons/icons8-cs-80.png",
-		    };
 
+		        "editor-icons/shader.png",//shader
+		        "editor-icons/material.png",//material
+
+		        "editor-icons/light.png",
+		        "editor-icons/camera.png",
+		    };
+#ifdef MAPLE_VULKAN
+		constexpr bool flipY = false;
+#else
+		constexpr bool flipY = true;
+#endif        // MAPLE_VULKAN
 		textureAtlas = std::make_shared<TextureAtlas>(4096, 4096);
 		int32_t i    = 0;
 		for (auto &str : files)
@@ -815,11 +825,6 @@ namespace maple
 			if (str != "")
 			{
 				cacheIcons[static_cast<FileType>(i++)] = str;
-#ifdef MAPLE_VULKAN
-				constexpr bool flipY = true;
-#else
-				constexpr bool flipY = false;
-#endif        // MAPLE_VULKAN
 				textureAtlas->addSprite(str, flipY);
 			}
 		}
@@ -850,7 +855,7 @@ namespace maple
 			{
 				auto &worldTransform = trans.getWorldMatrix();
 
-				if ( mesh.getMesh()->getBoundingBox() == nullptr)
+				if (mesh.getMesh()->getBoundingBox() == nullptr)
 				{
 					continue;
 				}
