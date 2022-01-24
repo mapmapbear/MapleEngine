@@ -20,6 +20,7 @@ namespace maple
 		Geometry,
 		Cloud,
 		Skybox,
+		Atmosphere,
 		Render2D,
 		PostProcess,
 		Length

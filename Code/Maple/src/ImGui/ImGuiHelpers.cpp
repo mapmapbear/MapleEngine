@@ -6,6 +6,7 @@
 
 #include "RHI/Texture.h"
 
+#include <IconsMaterialDesignIcons.h>
 #include <imgui_impl_vulkan.h>
 
 namespace maple
@@ -41,7 +42,7 @@ namespace maple
 			return updated;
 		}
 
-		auto property(const std::string &name, float &value, float min, float max, PropertyFlag flags, const char *format) -> bool
+		auto property(const std::string &name, float &value, float min, float max, PropertyFlag flags, const char *format, float speed) -> bool
 		{
 			bool updated = false;
 			ImGui::TextUnformatted(name.c_str());
@@ -49,8 +50,16 @@ namespace maple
 			ImGui::PushItemWidth(-1);
 
 			std::string id = "##" + name;
-			if (ImGui::SliderFloat(id.c_str(), &value, min, max, format))
-				updated = true;
+			if ((int32_t) flags & (int32_t) PropertyFlag::InputFloat)
+			{
+				if (ImGui::DragFloat(id.c_str(), &value, speed, min, max, format))
+					updated = true;
+			}
+			else
+			{
+				if (ImGui::SliderFloat(id.c_str(), &value, min, max, format))
+					updated = true;
+			}
 
 			ImGui::PopItemWidth();
 			ImGui::NextColumn();
@@ -103,7 +112,7 @@ namespace maple
 			return ImGuiHelper::property(name, value, -1.0f, 1.0f, flags);
 		}
 
-		auto property(const std::string &name, glm::vec3 &value, float min, float max, PropertyFlag flags) -> bool
+		auto property(const std::string &name, glm::vec3 &value, float min, float max, PropertyFlag flags, float speed) -> bool
 		{
 			bool updated = false;
 
@@ -112,9 +121,14 @@ namespace maple
 			ImGui::PushItemWidth(-1);
 
 			std::string id = "##" + name;
-			if ((int) flags & (int) PropertyFlag::ColorProperty)
+			if ((int32_t) flags & (int32_t) PropertyFlag::ColorProperty)
 			{
 				if (ImGui::ColorEdit3(id.c_str(), glm::value_ptr(value), ImGuiColorEditFlags_NoInputs))
+					updated = true;
+			}
+			else if ((int32_t) flags & (int32_t) PropertyFlag::InputFloat)
+			{
+				if (ImGui::DragFloat3(id.c_str(), glm::value_ptr(value), speed, min, max))
 					updated = true;
 			}
 			else
@@ -232,6 +246,48 @@ namespace maple
 			ImGui::NextColumn();
 
 			return updated;
+		}
+
+		auto propertyWithDefault(const std::string &name, float &value, float min /*= -1.0f*/, float max /*= 1.0f*/, float defaultValue /*= 0.f*/, PropertyFlag flags /*= PropertyFlag::None*/, float speed) -> bool
+		{
+			auto ret = property(name, value, min, max, flags, "%.3f", speed);
+
+			ImGui::PushItemWidth(-1);
+
+			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1, 1, 1, 0));
+			std::string resetCenterPoint = ICON_MDI_UNDO + std::string("##" + name);
+			if (ImGui::Button(resetCenterPoint.c_str()))
+			{
+				ret   = true;
+				value = defaultValue;
+			}
+			ImGui::PopStyleColor();
+
+			ImGui::PopItemWidth();
+			ImGui::NextColumn();
+
+			return ret;
+		}
+
+		auto propertyWithDefault(const std::string &name, glm::vec3 &value, float min /*= -1.0f*/, float max /*= 1.0f*/, const glm::vec3 &defaultValue /*= {}*/, PropertyFlag flags, float speed) -> bool
+		{
+			auto ret = property(name, value, min, max, flags,speed);
+
+			ImGui::PushItemWidth(-1);
+
+			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(1, 1, 1, 0));
+			std::string resetCenterPoint = ICON_MDI_UNDO + std::string("##" + name);
+			if (ImGui::Button(resetCenterPoint.c_str()))
+			{
+				ret   = true;
+				value = defaultValue;
+			}
+			ImGui::PopStyleColor();
+
+			ImGui::PopItemWidth();
+			ImGui::NextColumn();
+
+			return ret;
 		}
 
 		auto inputFloat(const std::string &name, float &value, float min /*= -1.0f*/, float max /*= 1.0f*/) -> bool

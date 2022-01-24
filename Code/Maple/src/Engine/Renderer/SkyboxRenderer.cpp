@@ -211,7 +211,7 @@ namespace maple
 				{
 					auto &light                                 = sunLight.get<Light>(sunLight[0]);
 					auto &transform                             = sunLight.get<Transform>(sunLight[0]);
-					skyboxData->skyUniformObject.lightDirection = glm::vec4(glm::normalize(transform.getWorldOrientation() * maple::FORWARD), 1);
+					skyboxData->skyUniformObject.lightDirection = light.lightData.direction;
 				}
 
 				skyboxData->pseudoSkydescriptorSet->setUniformBufferData("UniformBufferObject", &skyboxData->skyUniformObject);

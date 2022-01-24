@@ -46,7 +46,6 @@ namespace maple
 		auto executeForwardPass() -> void;
 		auto executeShadowPass() -> void;
 		auto executeSkyboxPass() -> void;
-		auto executeAtmospherePass() -> void;
 
 		auto executeDeferredOffScreenPass() -> void;
 		auto executeDeferredLightPass() -> void;
@@ -112,7 +111,6 @@ namespace maple
 		struct SSAOData;
 		struct SSRData;
 		struct TAAData;
-		struct AtmosphereData;
 		struct EnvironmentData;
 
 		auto getCommandBuffer() -> CommandBuffer *;
@@ -136,7 +134,6 @@ namespace maple
 		SSAOData *       ssaoData      = nullptr;
 		SSRData *        ssrData       = nullptr;
 		TAAData *        taaData       = nullptr;
-		AtmosphereData * atmophereData = nullptr;
 		EnvironmentData *envData       = nullptr;
 
 		std::shared_ptr<Shader>        finalShader;

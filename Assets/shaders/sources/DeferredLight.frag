@@ -370,9 +370,9 @@ vec3 lighting(vec3 F0, vec3 wsPos, Material material)
 			int cascadeIndex = calculateCascadeIndex(wsPos);
 			float shadow = calculateShadow(wsPos,cascadeIndex, light.direction.xyz, material.normal);
 
-			float distance    = length(light.position.xyz - wsPos) + 0.000001;
-    		float attenuation = 1.0 / (distance * distance);
-			value= attenuation * shadow;
+			//float distance    = length(light.position.xyz - wsPos) + 0.000001;
+    		//float attenuation = 1.0 / (distance * distance);
+			value = shadow;
 		}
 		
 		vec3 Li = light.direction.xyz;

@@ -219,6 +219,7 @@ namespace maple
 				info.polygonMode         = PolygonMode::Fill;
 				info.clearTargets        = false;
 				info.transparencyEnabled = false;
+				info.depthTarget         = gbuffer->getDepthBuffer();
 
 				auto pipeline = Pipeline::get(info);
 

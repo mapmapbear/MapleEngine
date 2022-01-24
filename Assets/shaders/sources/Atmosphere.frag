@@ -1,179 +1,175 @@
 #version 450
 
-#define M_PI 3.1415926535897932384626433832795
+#define PI 3.1415926535897932384626433832795
 
-layout(location = 0) in vec3 fragPosition;// Position of the fragment
+layout(location = 0) in vec2 inUV;// Position of the fragment
 
 layout(location = 0) out vec4 finalColor;
 
 
-layout(set = 1, binding = 0) uniform UniformBuffer
+layout(set = 0, binding = 0) uniform UniformBuffer
 {
-    vec3 viewPos;   //vec3 pos + view samples
-    int viewSamples;
-    
-    vec3 sunPos;    //vec3 pos + light samples
-    int lightSamples;
-    
-    float inensitySun;    // Intensity of the sun
-    float R_e;      // Radius of the planet [m]
-    float R_a;      // Radius of the atmosphere [m]
-    float padding1;
+    mat4 invProj;
 
-    vec3  beta_R;   // Rayleigh scattering coefficient
-    float beta_M;   // Mie scattering coefficient
-    
-    float H_R;      // Rayleigh scale height
-    float H_M;      // Mie scale height
-    float g;        // Mie scattering direction -  anisotropy of the medium
-    float padding2;
+    vec4 rayleighScattering;// rayleigh + surfaceRadius
+    vec4 mieScattering;// mieScattering + atmosphereRadius
+    vec4 sunDirection;//sunDirection + sunIntensity
+    vec4 centerPoint;
 } ubo;
 
 
-/**
- * @brief Computes intersection between a ray and a sphere
- * @param o Origin of the ray
- * @param d Direction of the ray
- * @param r Radius of the sphere
- * @return Roots depending on the intersection
- */
-vec2 raySphereIntersection(vec3 o, vec3 d, float r)
-{
-    // Solving analytically as a quadratic function
-    //  assumes that the sphere is centered at the origin
+
+
+
+// Global variables, needed for size
+vec2 totalDepthRM;
+vec3 I_R, I_M;
+
+// Calculate densities $\rho$.
+// Returns vec2(rho_rayleigh, rho_mie)
+// Note that intro version is more complicated and adds clouds by abusing Mie scattering density. That's why it's a separate function
+vec2 densitiesRM(vec3 p) {
+	float h = max(0., length(p - ubo.centerPoint.xyz) - ubo.rayleighScattering.w); // calculate height from Earth surface
+	return vec2(exp(-h / 8e3), exp(-h / 12e2));
+}
+
+// Basically a ray-sphere intersection. Find distance to where rays escapes a sphere with given radius.
+// Used to calculate length at which ray escapes atmosphere
+float escape(vec3 p, vec3 d, float R) {
     // f(x) = a(x^2) + bx + c
-    float a = dot(d, d);
-    float b = 2.0 * dot(d, o);
-    float c = dot(o, o) - r * r;
+	vec3 v = p - ubo.centerPoint.xyz;
+	float b = dot(v, d);
+	float det = b * b - dot(v, v) + R * R;
+	if (det < 0.) return -1.;
+	det = sqrt(det);
 
-    // Discriminant or delta
-    float delta = b * b - 4.0 * a * c;
+	float t1 = -b - det, t2 = -b + det;
 
-    // Roots not found
-    if (delta < 0.0) {
-      // TODO
-      return vec2(1e5, -1e5);
-    }
-
-    float sqrtDelta = sqrt(delta);
-    // TODO order??
-    return vec2((-b - sqrtDelta) / (2.0 * a),
-                (-b + sqrtDelta) / (2.0 * a));
+	return (t2 >= 0.) ? t2 : t1;
 }
 
-/**
- * @brief Function to compute color of a certain view ray
- * @param ray Direction of the view ray
- * @param origin Origin of the view ray
- * @return color of the view ray
- */
-vec3 computeSkyColor(vec3 ray, vec3 origin)
-{
+// Calculate density integral for optical depth for ray starting at point `p` in direction `d` for length `L`
+// Perform `steps` steps of integration
+// Returns vec2(depth_int_rayleigh, depth_int_mie)
+vec2 scatterDepthInt(vec3 o, vec3 d, float L, float steps) {
+	// Accumulator
+	vec2 depthRMs = vec2(0.);
 
-    float lightSamples = ubo.lightSamples;
-    float viewSamples = ubo.viewSamples;
+	// Set L to be step distance and pre-multiply d with it
+	L /= steps; 
+    d *= L;
+	// Go from point P to A
+	for (float i = 0.; i < steps; ++i)
+		// Simply accumulate densities
+		depthRMs += densitiesRM(o + d * i);
 
-    // Normalize the light direction
-    vec3 sunDir = normalize(ubo.sunPos.xyz);
-
-    vec2 t = raySphereIntersection(origin, ray, ubo.R_a);
-    // Intersects behind
-    if (t.x > t.y) {
-        return vec3(0.0, 1.0, 0.0);
-    }
-
-    // Distance between samples - length of each segment
-    t.y = min(t.y, raySphereIntersection(origin, ray, ubo.R_e).x);
-    float segmentLen = (t.y - t.x) / viewSamples;
-
-    // TODO t min
-    float tCurrent = 0.0f; 
-
-    // Rayleigh and Mie contribution
-    vec3 sum_R = vec3(0);
-    vec3 sum_M = vec3(0);
-
-    // Optical depth 
-    float optDepth_R = 0.0;
-    float optDepth_M = 0.0;
-
-    // Mu: the cosine angle between the sun and ray direction
-    float mu = dot(ray, sunDir);
-    float mu_2 = mu * mu;
-    
-    //--------------------------------
-    // Rayleigh and Mie Phase functions
-    float phase_R = 3.0 / (16.0 * M_PI) * (1.0 + mu_2);
-
-    float g_2 = ubo.g * ubo.g;
-    float phase_M = 3.0 / (8.0 * M_PI) * 
-                          ((1.0 - g_2) * (1.0 + mu_2)) / 
-                          ((2.0 + g_2) * pow(1.0 + g_2 - 2.0 * ubo.g * mu, 1.5));
-
- 
-
-    // Sample along the view ray
-    for (int i = 0; i < viewSamples; ++i)
-    {
-        // Middle point of the sample position
-        vec3 vSample = origin + ray * (tCurrent + segmentLen * 0.5);
-
-        // Height of the sample above the planet
-        float height = length(vSample) - ubo.R_e;
-
-        // Optical depth for Rayleigh and Mie scattering for current sample
-        float h_R = exp(-height / ubo.H_R) * segmentLen;
-        float h_M = exp(-height / ubo.H_M) * segmentLen;
-        optDepth_R += h_R;
-        optDepth_M += h_M;
-
-        //--------------------------------
-        // Secondary - light ray
-        float segmentLenLight = 
-            raySphereIntersection(vSample, sunDir.xyz, ubo.R_a).y / lightSamples;
-        float tCurrentLight = 0.0;
-
-        // Light optical depth 
-        float optDepthLight_R = 0.0;
-        float optDepthLight_M = 0.0;
-
-        // Sample along the light ray
-        for (int j = 0; j < lightSamples; ++j)
-        {
-            // Position of the light ray sample
-            vec3 lSample = vSample + sunDir.xyz * 
-                           (tCurrentLight + segmentLenLight * 0.5);
-            // Height of the light ray sample
-            float heightLight = length(lSample) - ubo.R_e;
-
-            // TODO check sample above the ground
-            
-            optDepthLight_R += exp(-heightLight / ubo.H_R) * segmentLenLight;
-            optDepthLight_M += exp(-heightLight / ubo.H_M) * segmentLenLight;
-
-            // Next light sample
-            tCurrentLight += segmentLenLight;
-        }
-        // TODO check sample above ground
-
-        // Attenuation of the light for both Rayleigh and Mie optical depth
-        //  Mie extenction coeff. = 1.1 of the Mie scattering coeff.
-        vec3 att = exp(-(ubo.beta_R * (optDepth_R + optDepthLight_R) + 
-                         ubo.beta_M * 1.1f * (optDepth_M + optDepthLight_M)));
-        // Accumulate the scattering 
-        sum_R += h_R * att;
-        sum_M += h_M * att;
-
-        // Next view sample
-        tCurrent += segmentLen;
-    }
-
-    return ubo.inensitySun * (sum_R * ubo.beta_R * phase_R + sum_M * ubo.beta_M * phase_M);
+	return depthRMs * L;
 }
+
+
+
+
+// Calculate in-scattering for ray starting at point `o` in direction `d` for length `L`
+// Perform `steps` steps of integration
+void scatterIn(vec3 o, vec3 d, float L, float steps) {
+
+    vec3 bMe = ubo.mieScattering.xyz * 1.1;
+	// Set L to be step distance and pre-multiply d with it
+	L /= steps; d *= L;
+
+	// Go from point O to B
+	for (float i = 0.; i < steps; ++i) {
+
+		// Calculate position of point P_i
+		vec3 p = o + d * i;
+
+		// Calculate densities
+		vec2 dRM = densitiesRM(p) * L;
+
+		// Accumulate T(P_i -> O) with the new P_i
+		totalDepthRM += dRM;
+
+		// Calculate sum of optical depths. totalDepthRM is T(P_i -> O)
+		// scatterDepthInt calculates integral part for T(A -> P_i)
+		// So depthRMSum becomes sum of both optical depths
+        // atmosphereRadius
+		vec2 depthRMsum = totalDepthRM + scatterDepthInt(p, ubo.sunDirection.xyz, escape(p, ubo.sunDirection.xyz, ubo.mieScattering.w), 4.);
+
+		// Calculate e^(T(A -> P_i) + T(P_i -> O)
+		vec3 A = exp(-ubo.rayleighScattering.xyz * depthRMsum.x - bMe * depthRMsum.y);
+
+		// Accumulate I_R and I_M
+		I_R += A * dRM.x;
+		I_M += A * dRM.y;
+	}
+}
+
+// Final scattering function
+// O = o -- starting point
+// B = o + d * L -- end point
+// Lo -- end point color to calculate extinction for
+vec3 scatter(vec3 o, vec3 d, float L, vec3 Lo) {
+
+    vec3 bMe = ubo.mieScattering.xyz * 1.1;
+	// Zero T(P -> O) accumulator
+	totalDepthRM = vec2(0.);
+	
+	// Zero I_M and I_R
+	I_R = I_M = vec3(0.);
+	
+	// Compute T(P -> O) and I_M and I_R
+	scatterIn(o, d, L, 32.);
+	
+	// mu = cos(alpha)
+	float mu = dot(d, ubo.sunDirection.xyz);
+	float mumu = mu * mu;
+
+    const float g = ubo.centerPoint.w;
+    const float g2 = g * g;
+
+    //PhaseFunction Fr(sita) = 
+    /**
+    *             3
+    *Fr(sita) = ----(1 + cos^2(sita))
+    *           16Pi   
+    */
+    const float phaseR =  3.0/ (16.0 * PI) * (1 + mumu);
+
+    /**
+    *                   1 - g^2
+    * Fr(sita) = ------------------------
+    *            4Pi(1 + g^2 - 2g * cos) ^ 1.5   
+    */
+    const float phaseM =  (1 - g2) / ( 4 * PI * pow( 1 + g2 - 2 * g * mu,1.5) );
+
+
+    const float phase = phaseR + phaseM;
+
+	// Calculate Lo extinction
+	return Lo * exp(-ubo.rayleighScattering.xyz * totalDepthRM.x - bMe * totalDepthRM.y)
+	
+		// Add in-scattering
+        //sunIntensity
+		+ ubo.sunDirection.w  * (
+                I_R * ubo.rayleighScattering.xyz * phaseR +
+                I_M * ubo.mieScattering.xyz * phaseM
+            );
+}
+
 
 void main()
 {
-    vec3 acolor = computeSkyColor(normalize(fragPosition.xyz - ubo.viewPos.xyz),ubo.viewPos.xyz);
+	// Might add camera position in here.
+	// It was already in there, I removed it.
+	vec3 O = vec3(0., 0., 0.);
+	vec2 NDC = inUV * 2.0 - 1;
+	vec4 camSpace = ubo.invProj * vec4(vec3(NDC, 1.0), 1.0);
+	vec3 direction = normalize(camSpace.xyz);
+	vec3 D = direction;
 
-    finalColor = vec4(acolor, 1.0);
+	vec3 col = vec3(0.0);
+    //atmosphereRadius 
+	float L = escape(O, D, ubo.mieScattering.w);
+	col = scatter(O, D, L, col);
+	finalColor = vec4(col, 1.);
 }

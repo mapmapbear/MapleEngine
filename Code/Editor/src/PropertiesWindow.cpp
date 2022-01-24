@@ -440,7 +440,7 @@ namespace MM
 			ImGuiHelper::property("Radius", light.lightData.radius, 1.0f, 100.0f);
 
 		ImGuiHelper::property("Color", light.lightData.color, true, ImGuiHelper::PropertyFlag::ColorProperty);
-		ImGuiHelper::property("Intensity", light.lightData.intensity, 0.0f, 10.0f);
+		ImGuiHelper::property("Intensity", light.lightData.intensity, 0.0f, 100.0f);
 
 		if (static_cast<LightType>(light.lightData.type) == LightType::SpotLight)
 			ImGuiHelper::property("Angle", light.lightData.angle, -1.0f, 1.0f);
@@ -648,60 +648,30 @@ namespace MM
 	{
 		auto &atmosphere = reg.get<Atmosphere>(e);
 		auto &data       = atmosphere.getData();
-		auto  transform  = reg.try_get<Transform>(e);
 
-		if (ImGui::SliderFloat("Sun Intensity", &data.inensitySun, 0.01, 100.))
-		{
-		}
-
-		auto angle = atmosphere.getAngle();
-		if (ImGui::SliderAngle("Sun Angle", &angle, -10.f, 190.f))
-		{
-			atmosphere.setAngle(angle);
-		}
-
-		ImGui::Separator();
-		ImGui::TextUnformatted("Rayleigh Scattering");
-
-		if (ImGui::DragFloat3("Coefficient", glm::value_ptr(data.beta_R),
-		                      1e-4f, 0.0, 1.0, "%.4f"))
-		{
-		}
-
-		if (ImGui::SliderFloat("Scale Height", &data.H_R, 1.0, data.R_a - data.R_e))
-		{
-		}
-
+		ImGui::Columns(3);
 		ImGui::Separator();
 
-		ImGui::TextUnformatted("Mie Scattering");
+		ImGuiHelper::propertyWithDefault("Surface Radius", atmosphere.getData().surfaceRadius, 1.f, 1.f, Atmosphere::SURFACE_RADIUS, ImGuiHelper::PropertyFlag::InputFloat);
+		ImGuiHelper::propertyWithDefault("Atmosphere Radius", atmosphere.getData().atmosphereRadius, 1.f, 1.f, Atmosphere::ATMOSPHE_RERADIUS, ImGuiHelper::PropertyFlag::InputFloat);
 
-		if (ImGui::DragFloat("Coefficient", &data.beta_M, 1e-4f, 0.f, 1.0f, "%.4f"))
+		ImGuiHelper::propertyWithDefault("Center Point", atmosphere.getData().centerPoint, -10000.f, 0.f, {0.f, -Atmosphere::SURFACE_RADIUS, 0.f}, ImGuiHelper::PropertyFlag::InputFloat);
+		auto mie = 10000.f * atmosphere.getData().mieScattering;
+
+		if (ImGuiHelper::propertyWithDefault("Mie Scattering", mie, 0.f, 10.f, Atmosphere::MIE_SCATTERING * 10000.f, ImGuiHelper::PropertyFlag::InputFloat, 0.01))
 		{
+			atmosphere.getData().mieScattering = mie / 10000.f;
 		}
+		auto ray = 10000.f * atmosphere.getData().rayleighScattering;
 
-		if (ImGui::SliderFloat("Scale Height##mie", &data.H_M, 1.0f, data.R_a - data.R_e))
+		if (ImGuiHelper::propertyWithDefault("Ray Scattering", ray, 0.f, 10.f, Atmosphere::RAYLEIGH_SCATTERING * 10000.f, ImGuiHelper::PropertyFlag::InputFloat, 0.01))
 		{
+			atmosphere.getData().rayleighScattering = ray / 10000.f;
 		}
+		ImGuiHelper::propertyWithDefault("Anisotropy(g)", atmosphere.getData().g, 0.f, 1.f, Atmosphere::G, ImGuiHelper::PropertyFlag::InputFloat, 0.01);
 
-		if (ImGui::SliderFloat("Anisotropy", &data.g, 0.01f, 1.0f))
-		{
-		}
-
+		ImGui::Columns(1);
 		ImGui::Separator();
-		ImGui::TextUnformatted("Render Options");
-
-		if (ImGui::SliderInt("View Samples", &data.viewSamples, 1, 64))
-		{
-		}
-		if (ImGui::SliderInt("Light Samples", &data.lightSamples, 1, 64))
-		{
-		}
-
-		if (transform)
-		{
-			transform->setLocalScale(glm::vec3{data.R_a});
-		}
 	}
 
 	template <>

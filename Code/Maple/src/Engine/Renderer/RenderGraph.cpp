@@ -28,6 +28,7 @@
 
 #include "Window/NativeWindow.h"
 
+#include "AtmosphereRenderer.h"
 #include "CloudRenderer.h"
 #include "PostProcessRenderer.h"
 #include "Renderer2D.h"
@@ -369,23 +370,6 @@ namespace maple
 		}
 	};
 
-	struct RenderGraph::AtmosphereData
-	{
-		bool                                        enable = false;
-		std::vector<std::shared_ptr<DescriptorSet>> descriptorSets;
-		std::shared_ptr<Shader>                     shader;
-		std::shared_ptr<Mesh>                       sphere;
-		glm::mat4                                   transform = glm::mat4(1);
-		AtmosphereData()
-		{
-			shader = Shader::create("shaders/Atmosphere.shader");
-			descriptorSets.resize(2);
-			descriptorSets[0] = DescriptorSet::create({0, shader.get()});
-			descriptorSets[1] = DescriptorSet::create({1, shader.get()});
-			sphere            = Mesh::createSphere();
-		}
-	};
-
 	struct RenderGraph::EnvironmentData
 	{
 		std::shared_ptr<Texture> skybox;
@@ -413,15 +397,14 @@ namespace maple
 		setScreenBufferSize(width, height);
 		gBuffer = std::make_shared<GBuffer>(width, height);
 		reset();
-		shadowData    = new ShadowData();
-		forwardData   = new ForwardData();
-		deferredData  = new DeferredData();
-		previewData   = new PreviewData();
-		ssaoData      = new SSAOData();
-		ssrData       = new SSRData();
-		taaData       = new TAAData();
-		atmophereData = new AtmosphereData();
-		envData       = new EnvironmentData();
+		shadowData   = new ShadowData();
+		forwardData  = new ForwardData();
+		deferredData = new DeferredData();
+		previewData  = new PreviewData();
+		ssaoData     = new SSAOData();
+		ssrData      = new SSRData();
+		taaData      = new TAAData();
+		envData      = new EnvironmentData();
 
 		{
 			finalShader = Shader::create("shaders/ScreenPass.shader");
@@ -450,6 +433,7 @@ namespace maple
 		addRender(std::make_shared<CloudRenderer>(), RenderId::Cloud);
 		addRender(std::make_shared<SkyboxRenderer>(), RenderId::Skybox);
 		addRender(std::make_shared<PostProcessRenderer>(), RenderId::PostProcess);
+		addRender(std::make_shared<AtmosphereRenderer>(), RenderId::Atmosphere);
 	}
 
 	auto RenderGraph::beginScene(Scene *scene) -> void
@@ -499,8 +483,6 @@ namespace maple
 			deferredData->descriptorColorSet[2]->setUniform("UBO", "view", &view);
 			deferredData->descriptorColorSet[2]->setUniform("UBO", "nearPlane", &nearPlane);
 			deferredData->descriptorColorSet[2]->setUniform("UBO", "farPlane", &farPlane);
-
-			atmophereData->descriptorSets[0]->setUniform("UniformBufferObject", "projView", &projView);
 		}
 		auto envView = scene->getRegistry().view<Environment>();
 		if (envView.size() > 0)
@@ -731,21 +713,6 @@ namespace maple
 				renderer->beginScene(scene, projView);
 			}
 		}
-
-		auto atmosphere = registry.group<Atmosphere>(entt::get<Transform>);
-
-		for (auto atmo : atmosphere)
-		{
-			auto &asphere = registry.get<Atmosphere>(atmo);
-			auto &trans   = registry.get<Transform>(atmo);
-
-			asphere.getData().viewPos = camera.second->getWorldPosition();
-			//
-			atmophereData->descriptorSets[1]->setUniformBufferData("UniformBuffer", &asphere.getData());
-			atmophereData->transform = trans.getWorldMatrix();
-			break;
-		}
-		atmophereData->enable = atmosphere.size() > 0;
 	}
 
 	auto RenderGraph::beginPreviewScene(Scene *scene) -> void
@@ -842,11 +809,6 @@ namespace maple
 		Application::getRenderDevice()->clearRenderTarget(gBuffer->getBuffer(GBufferTextures::VIEW_NORMALS), getCommandBuffer(), {0, 0, 0, 0});
 		Application::getRenderDevice()->clearRenderTarget(gBuffer->getBuffer(GBufferTextures::VELOCITY), getCommandBuffer(), {0, 0, 0, 0});
 
-		if (atmophereData->enable)
-		{
-			executeAtmospherePass();
-		}
-
 		if (settings.renderShadow)
 			executeShadowPass();
 
@@ -874,6 +836,11 @@ namespace maple
 		}
 
 		if (auto render = renderers[static_cast<int32_t>(RenderId::Geometry)]; render != nullptr)
+		{
+			render->renderScene();
+		}
+
+		if (auto render = renderers[static_cast<int32_t>(RenderId::Atmosphere)]; render != nullptr)
 		{
 			render->renderScene();
 		}
@@ -1224,39 +1191,6 @@ namespace maple
 
 	auto RenderGraph::executeSkyboxPass() -> void
 	{
-	}
-
-	auto RenderGraph::executeAtmospherePass() -> void
-	{
-		PROFILE_FUNCTION();
-		GPUProfile("Atmosphere Pass");
-		if (atmophereData->sphere == nullptr)
-		{
-			return;
-		}
-		atmophereData->descriptorSets[0]->update();
-		atmophereData->descriptorSets[1]->update();
-
-		PipelineInfo pipelineInfo{};
-		pipelineInfo.shader = atmophereData->shader;
-
-		pipelineInfo.polygonMode         = PolygonMode::Fill;
-		pipelineInfo.cullMode            = CullMode::Front;
-		pipelineInfo.transparencyEnabled = false;
-
-		pipelineInfo.depthTarget     = gBuffer->getDepthBuffer();
-		pipelineInfo.colorTargets[0] = gBuffer->getBuffer(GBufferTextures::SCREEN);
-
-		auto pipeline = Pipeline::get(pipelineInfo);
-		pipeline->bind(getCommandBuffer());
-
-		auto &constants = atmophereData->shader->getPushConstants();
-		constants[0].setValue("transform", glm::value_ptr(atmophereData->transform));
-		atmophereData->shader->bindPushConstants(getCommandBuffer(), pipeline.get());
-
-		Renderer::bindDescriptorSets(pipeline.get(), getCommandBuffer(), 0, atmophereData->descriptorSets);
-		Renderer::drawMesh(getCommandBuffer(), pipeline.get(), atmophereData->sphere.get());
-		pipeline->end(getCommandBuffer());
 	}
 
 	auto RenderGraph::executeDeferredOffScreenPass() -> void
@@ -1654,7 +1588,6 @@ namespace maple
 		finalDescriptorSet->setUniform("UniformBuffer", "reflectEnable", &reflectEnable);
 		finalDescriptorSet->setUniform("UniformBuffer", "cloudEnable", &cloudEnable);
 
-	
 		finalDescriptorSet->setTexture("uScreenSampler", gBuffer->getBuffer(GBufferTextures::SCREEN));
 		finalDescriptorSet->setTexture("uReflectionSampler", gBuffer->getBuffer(GBufferTextures::SSR_SCREEN));
 
