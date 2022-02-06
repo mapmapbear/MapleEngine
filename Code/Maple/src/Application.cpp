@@ -24,7 +24,8 @@
 #include "Scene/System/AccessSystem.h"
 #include "Scripts/Mono/MonoVirtualMachine.h"
 
-#include <ecs/ecs.h>
+#include "RHI/Texture.h"
+
 #include <imgui.h>
 
 //maple::Application* app;
@@ -61,6 +62,20 @@ namespace maple
 		luaVm->init();
 		monoVm->init();
 		renderGraph->init(window->getWidth(), window->getHeight());
+
+		{
+			auto splashTexture = Texture2D::create("splash","textures/maple-alpha.png");
+
+			renderDevice->begin();
+			renderDevice->drawSplashScreen(splashTexture);
+			renderDevice->present();        //present all data
+			
+			//To Display the window
+			window->onUpdate();
+			window->swapBuffers();
+		}
+
+
 		appDelegate->onInit();
 
 		systemManager->addSystem<LuaSystem>()->onInit();

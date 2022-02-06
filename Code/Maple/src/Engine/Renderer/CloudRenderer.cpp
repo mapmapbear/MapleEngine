@@ -47,7 +47,7 @@ namespace maple
 
 		float   padding1;
 		float   padding2;
-		float   padding3;
+		float   frames;
 		int32_t enablePowder;
 	};
 
@@ -188,6 +188,7 @@ namespace maple
 		if (data->pipeline)
 		{
 			{
+				data->uniformObject.frames++;
 				data->descriptorSet->setUniformBufferData("UniformBufferObject", &data->uniformObject);
 				data->descriptorSet->setTexture("fragColor", data->computeInputs[0]);
 				data->descriptorSet->setTexture("bloom", data->computeInputs[1]);
@@ -269,8 +270,8 @@ namespace maple
 			data->uniformObject.absorption         = cloud.absorption * 0.01;
 			data->uniformObject.densityFactor      = cloud.density;
 			data->uniformObject.crispiness         = cloud.crispiness;
-
-			data->pipeline = Pipeline::get(info);
+			data->uniformObject.enablePowder       = cloud.enablePowder ? 1 : 0;
+			data->pipeline                         = Pipeline::get(info);
 
 			weatherPass->uniformObject.perlinFrequency = cloud.perlinFrequency;
 			if (cloud.weathDirty)

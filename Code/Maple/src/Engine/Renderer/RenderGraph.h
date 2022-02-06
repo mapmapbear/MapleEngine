@@ -45,6 +45,7 @@ namespace maple
 		auto onImGui() -> void;
 		auto executeForwardPass() -> void;
 		auto executeShadowPass() -> void;
+		auto executeRSMPass() -> void;
 		auto executeSkyboxPass() -> void;
 
 		auto executeDeferredOffScreenPass() -> void;
@@ -104,6 +105,7 @@ namespace maple
 		auto executeFinalPass() -> void;
 		struct Config2D;
 		struct ShadowData;
+		struct ReflectiveShadowData;
 		struct ForwardData;
 		struct Renderer2DData;
 		struct DeferredData;
@@ -127,14 +129,15 @@ namespace maple
 		uint32_t screenBufferWidth  = 0;
 		uint32_t screenBufferHeight = 0;
 
-		ShadowData *     shadowData    = nullptr;
-		ForwardData *    forwardData   = nullptr;
-		DeferredData *   deferredData  = nullptr;
-		PreviewData *    previewData   = nullptr;
-		SSAOData *       ssaoData      = nullptr;
-		SSRData *        ssrData       = nullptr;
-		TAAData *        taaData       = nullptr;
-		EnvironmentData *envData       = nullptr;
+		ShadowData *          shadowData   = nullptr;
+		ForwardData *         forwardData  = nullptr;
+		DeferredData *        deferredData = nullptr;
+		PreviewData *         previewData  = nullptr;
+		SSAOData *            ssaoData     = nullptr;
+		SSRData *             ssrData      = nullptr;
+		TAAData *             taaData      = nullptr;
+		EnvironmentData *     envData      = nullptr;
+		ReflectiveShadowData *rsmData      = nullptr;
 
 		std::shared_ptr<Shader>        finalShader;
 		std::shared_ptr<DescriptorSet> finalDescriptorSet;
@@ -145,7 +148,7 @@ namespace maple
 		std::shared_ptr<Pipeline> skyboxPipeline;
 
 		int32_t toneMapIndex = 7;
-		float   gamma     = 2.2f;
+		float   gamma        = 2.2f;
 
 		Transform *transform = nullptr;
 	};

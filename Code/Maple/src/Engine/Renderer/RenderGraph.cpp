@@ -78,6 +78,8 @@ namespace maple
 					return "Normal - ViewSpace";
 				case 14:
 					return "PseudoSky";
+				case 15:
+					return "FluxSampler";
 				default:
 					return "Lighting";
 			}
@@ -130,12 +132,12 @@ namespace maple
 		float initialBias           = 0.0023f;
 		bool  shadowMapsInvalidated = true;
 
-		uint32_t  shadowMapNum                   = 4;
-		uint32_t  shadowMapSize                  = SHADOWMAP_SiZE_MAX;
-		glm::mat4 shadowProjView[SHADOWMAP_MAX]  = {};
-		glm::vec4 splitDepth[SHADOWMAP_MAX]      = {};
-		glm::mat4 lightMatrix                    = glm::mat4(1.f);
-		Frustum   cascadeFrustums[SHADOWMAP_MAX] = {};
+		uint32_t  shadowMapNum                  = 4;
+		uint32_t  shadowMapSize                 = SHADOWMAP_SiZE_MAX;
+		glm::mat4 shadowProjView[SHADOWMAP_MAX] = {};
+		glm::vec4 splitDepth[SHADOWMAP_MAX]     = {};
+		glm::mat4 lightMatrix                   = glm::mat4(1.f);
+		Frustum   cascadeFrustums[SHADOWMAP_MAX];
 
 		std::vector<std::shared_ptr<DescriptorSet>> descriptorSet;
 		std::vector<std::shared_ptr<DescriptorSet>> currentDescriptorSets;
@@ -160,6 +162,44 @@ namespace maple
 			cascadeCommandQueue[1].reserve(500);
 			cascadeCommandQueue[2].reserve(500);
 			cascadeCommandQueue[3].reserve(500);
+		}
+	};
+
+	struct RenderGraph::ReflectiveShadowData
+	{
+		bool                                        enable = false;
+		std::shared_ptr<Shader>                     shader;
+		std::vector<std::shared_ptr<DescriptorSet>> descriptorSets;
+		std::shared_ptr<Texture>                    fluxTexture;
+		struct VPL        // Virtual Point Light
+		{
+			glm::vec2 vplSamples[32];
+			glm::vec2 vplCoords[32];
+			float     vplWeights[32];
+			float     rsmRMax      = 0.3;
+			float     rsmIntensity = 400.f;
+			float     padding1;
+			float     padding2;
+		} vpl;
+
+		ReflectiveShadowData()
+		{
+			shader = Shader::create("shaders/ReflectiveShadowMap.shader");
+			descriptorSets.resize(2);
+			descriptorSets[0] = DescriptorSet::create({0, shader.get()});
+			descriptorSets[1] = DescriptorSet::create({1, shader.get()});
+
+			for (int32_t i = 0; i < 32; i++)
+			{
+				float *sample      = MathUtils::hammersley(i, 2, 32);
+				vpl.vplSamples[i]  = {sample[0], sample[1]};
+				vpl.vplWeights[i]  = sample[0] * sample[0];
+				vpl.vplCoords[i].x = vpl.rsmRMax * sample[0] * glm::sin(M_PI_TWO * sample[1]);
+				vpl.vplCoords[i].y = vpl.rsmRMax * sample[0] * glm::cos(M_PI_TWO * sample[1]);
+				delete[] sample;
+			}
+
+			fluxTexture = Texture2D::create(4096, 4096, nullptr);
 		}
 	};
 
@@ -405,7 +445,7 @@ namespace maple
 		ssrData      = new SSRData();
 		taaData      = new TAAData();
 		envData      = new EnvironmentData();
-
+		rsmData      = new ReflectiveShadowData();
 		{
 			finalShader = Shader::create("shaders/ScreenPass.shader");
 			DescriptorInfo descriptorInfo{};
@@ -548,6 +588,9 @@ namespace maple
 			if (directionaLight)
 			{
 				updateCascades(scene, directionaLight);
+
+				rsmData->descriptorSets[0]->setUniformBufferData("UniformBufferObject", &shadowData->shadowProjView[0]);
+				rsmData->descriptorSets[1]->setUniformBufferData("UBO", &directionaLight->lightData);
 
 				for (uint32_t i = 0; i < shadowData->shadowMapNum; i++)
 				{
@@ -822,6 +865,9 @@ namespace maple
 					executeSSAOPass();
 					executeSSAOBlurPass();
 				}
+
+				executeRSMPass();
+
 				executeDeferredLightPass();
 			}
 			else
@@ -981,6 +1027,7 @@ namespace maple
 	auto RenderGraph::onImGui() -> void
 	{
 		PROFILE_FUNCTION();
+
 		ImGui::TextUnformatted("Shadow Renderer");
 
 		ImGui::DragFloat("Initial Bias", &shadowData->initialBias, 0.00005f, 0.0f, 1.0f, "%.6f");
@@ -1012,7 +1059,7 @@ namespace maple
 		ImGui::PushItemWidth(-1);
 		if (ImGui::BeginMenu(renderOutputMode(forwardData->renderMode).c_str()))
 		{
-			constexpr int32_t numRenderModes = 15;
+			constexpr int32_t numRenderModes = 16;
 
 			for (int32_t i = 0; i < numRenderModes; i++)
 			{
@@ -1033,6 +1080,9 @@ namespace maple
 							break;
 						case 14:
 							descriptorSet->setTexture("uOutputSampler", gBuffer->getBuffer(GBufferTextures::PSEUDO_SKY));
+							break;
+						case 15:
+							descriptorSet->setTexture("uOutputSampler", rsmData->fluxTexture);
 							break;
 					}
 				}
@@ -1059,6 +1109,14 @@ namespace maple
 
 		ImGui::Columns(2);
 		ImGuiHelper::property("SSR Enabled", ssrData->enable);
+		ImGui::Columns(1);
+
+		ImGui::Separator();
+
+		ImGui::TextUnformatted("Global Illumination");
+
+		ImGui::Columns(2);
+		ImGuiHelper::property("RSM", rsmData->enable);
 		ImGui::Columns(1);
 
 		ImGui::Separator();
@@ -1189,6 +1247,56 @@ namespace maple
 		}
 	}
 
+	auto RenderGraph::executeRSMPass() -> void
+	{
+		PROFILE_FUNCTION();
+		if (!rsmData->enable)
+			return;
+
+		auto descriptorSet = rsmData->descriptorSets[1];
+
+		descriptorSet->setTexture("uAlbedoMap", gBuffer->getBuffer(GBufferTextures::COLOR));
+		descriptorSet->update();
+		rsmData->descriptorSets[0]->update();
+
+		auto commandBuffer = getCommandBuffer();
+
+		PipelineInfo pipeInfo;
+		pipeInfo.shader              = rsmData->shader;
+		pipeInfo.polygonMode         = PolygonMode::Fill;
+		pipeInfo.transparencyEnabled = false;
+		pipeInfo.depthBiasEnabled    = false;
+		pipeInfo.clearTargets        = true;
+		pipeInfo.depthTarget         = gBuffer->getDepthBuffer();
+		pipeInfo.colorTargets[0]     = rsmData->fluxTexture;
+
+		auto pipeline = Pipeline::get(pipeInfo);
+
+		if (commandBuffer)
+			commandBuffer->bindPipeline(pipeline.get());
+		else
+			pipeline->bind(getCommandBuffer());
+
+		for (auto &command : shadowData->cascadeCommandQueue[0])
+		{
+			Mesh *mesh          = command.mesh;
+			auto  trans         = command.transform;
+			auto &pushConstants = rsmData->shader->getPushConstants()[0];
+
+			pushConstants.setValue("transform", (void *) &trans);
+
+			rsmData->shader->bindPushConstants(getCommandBuffer(), pipeline.get());
+
+			Renderer::bindDescriptorSets(pipeline.get(), getCommandBuffer(), 0, rsmData->descriptorSets);
+			Renderer::drawMesh(getCommandBuffer(), pipeline.get(), mesh);
+		}
+
+		if (commandBuffer)
+			commandBuffer->unbindPipeline();
+		else
+			pipeline->end(getCommandBuffer());
+	}
+
 	auto RenderGraph::executeSkyboxPass() -> void
 	{
 	}
@@ -1259,11 +1367,13 @@ namespace maple
 		descriptorSet->setTexture("uSSAOSampler", gBuffer->getBuffer(GBufferTextures::SSAO_BLUR));
 		descriptorSet->setTexture("uDepthSampler", gBuffer->getDepthBuffer());
 		descriptorSet->setTexture("uShadowMap", shadowData->shadowTexture);
+		descriptorSet->setTexture("uFluxSampler", rsmData->fluxTexture);
+
 
 		descriptorSet->setTexture("uIrradianceMap", envData->irradianceMap);
 		descriptorSet->setTexture("uPreintegratedFG", forwardData->preintegratedFG);
 		descriptorSet->setTexture("uPrefilterMap", envData->environmentMap);
-
+		descriptorSet->setUniformBufferData("VirtualPointLight", &rsmData->vpl);
 		descriptorSet->update();
 
 		PipelineInfo pipeInfo;
@@ -1491,7 +1601,7 @@ namespace maple
 		float ratio = maxZ / minZ;
 		// Calculate split depths based on view camera frustum
 		// Based on method presented in https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch10.html
-#pragma omp parallel for
+		//#pragma omp parallel for
 		for (uint32_t i = 0; i < shadowData->shadowMapNum; i++)
 		{
 			float p          = static_cast<float>(i + 1) / static_cast<float>(shadowData->shadowMapNum);

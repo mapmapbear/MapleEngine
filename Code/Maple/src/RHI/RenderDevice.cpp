@@ -11,6 +11,9 @@
 #	include "RHI/OpenGL/GLRenderDevice.h"
 #endif
 
+#include "RHI/FrameBuffer.h"
+#include "RHI/RenderPass.h"
+
 namespace maple
 {
 	auto RenderDevice::clear(uint32_t bufferMask) -> void
