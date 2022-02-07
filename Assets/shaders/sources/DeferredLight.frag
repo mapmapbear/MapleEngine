@@ -6,6 +6,7 @@
 #define GAMMA 2.2
 #define MAX_LIGHTS 32
 #define MAX_SHADOWMAPS 4
+#define NUM_VPL 32
 
 const int NUM_PCF_SAMPLES = 16;
 const bool FADE_CASCADES = false;
@@ -54,7 +55,14 @@ layout(set = 0, binding = 6)  uniform sampler2D uPBRSampler;
 layout(set = 0, binding = 7)  uniform samplerCube uIrradianceMap;
 layout(set = 0, binding = 8)  uniform samplerCube uPrefilterMap;
 layout(set = 0, binding = 9)  uniform sampler2D uPreintegratedFG;
-layout(set = 0, binding = 10) uniform sampler2D uOutputSampler;
+
+layout(set = 0, binding = 10) uniform sampler2D uFluxSampler; //GI
+layout(set = 0, binding = 11) uniform sampler2D uRSMWorldSampler; //GI
+layout(set = 0, binding = 12) uniform sampler2D uRSMNormalSampler; //GI
+
+
+layout(set = 0, binding = 11) uniform sampler2D uOutputSampler; //used for debug
+
 layout(set = 0, binding = 13) uniform UniformBufferLight
 {
 	Light lights[MAX_LIGHTS];
@@ -77,6 +85,16 @@ layout(set = 0, binding = 13) uniform UniformBufferLight
 	int padding1;
 	int padding2;
 } ubo;
+
+layout(set = 0, binding = 14) uniform VirtualPointLight
+{
+	vec4 VPLSamples[NUM_VPL];
+
+	float rsmRMax;
+	float rsmIntensity;
+	float padding1;
+	float padding2; 
+} vpl;
 
 const vec2 PoissonDistribution16[16] = vec2[](
 	  vec2(-0.94201624, -0.39906216), vec2(0.94558609, -0.76890725), vec2(-0.094184101, -0.92938870), vec2(0.34495938, 0.29387760),
@@ -158,7 +176,6 @@ float RayMarch(vec3 startPos, vec3 viewDir, vec3 normal, vec3 cameraPos, Light l
 
     return finalLight;
 }
-
 
 
 vec2 samplePoisson(int index)
@@ -259,7 +276,7 @@ float getPCFShadowDirectionalLight(vec4 shadowCoords, float uvRadius, vec3 light
 int calculateCascadeIndex(vec3 wsPos)
 {
 	int cascadeIndex = 0;
-	vec4 viewPos = vec4(wsPos, 1.0) * ubo.viewMatrix;
+	vec4 viewPos = ubo.viewMatrix * vec4(wsPos, 1.0) ;
 	
 	for(int i = 0; i < ubo.shadowCount - 1; ++i)
 	{
@@ -322,6 +339,36 @@ vec3 fresnelSchlickRoughness(vec3 F0, float cosTheta, float roughness)
     return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
 
+
+vec3 indirectIllumination(vec3 fragPos, vec3 normal, vec3 viewPos)
+{
+	vec4 lightSpacePos = ( ubo.biasMat * ubo.shadowTransform[0] ) * vec4(fragPos, 1.0);
+	lightSpacePos = lightSpacePos * ( 1.0 / lightSpacePos.w);
+
+	vec3 result = vec3(0.0);
+
+	ivec2 texDim = textureSize(uFluxSampler, 0).xy;
+	vec2 dx = 1.0 / texDim;
+
+    for(int i=0; i < NUM_VPL; i++)
+	{
+    	vec4 rnd = vpl.VPLSamples[i];
+        vec2 coords = vpl.rsmRMax * rnd.zw * dx + lightSpacePos.xy;
+		
+		vec3 flux = texture( uFluxSampler, coords ).rgb;	
+		vec3 x_p = ( texture( uRSMWorldSampler, coords ) ).xyz;		// Position (x_p) and normal (n_p) are in world coordinates too.
+		vec3 n_p =  ( texture( uRSMNormalSampler, coords ) ).xyz;
+
+		vec3 r = fragPos - x_p;// Difference vector.
+		float d2 = dot( r, r );// Square distance.
+		vec3 E_p = flux * ( max( 0.0, dot( n_p, r ) ) * max( 0.0, dot( normal, -r ) ) );
+		E_p *= rnd.x * rnd.x / ( d2 * d2 );	
+    	result += E_p;
+    }
+	return result;
+}
+
+
 vec3 lighting(vec3 F0, vec3 wsPos, Material material)
 {
 	vec3 result = vec3(0.0);
@@ -331,6 +378,7 @@ vec3 lighting(vec3 F0, vec3 wsPos, Material material)
 		Light light = ubo.lights[i];
 		float value = 0.0;
 		vec3 lightColor = light.color.xyz * light.intensity;
+		vec3 indirect = vec3(0,0,0);
 		if(light.type == 2.0)
 		{
 		    // Vector to light
@@ -368,11 +416,11 @@ vec3 lighting(vec3 F0, vec3 wsPos, Material material)
 		else
 		{
 			int cascadeIndex = calculateCascadeIndex(wsPos);
-			float shadow = calculateShadow(wsPos,cascadeIndex, light.direction.xyz, material.normal);
-
-			//float distance    = length(light.position.xyz - wsPos) + 0.000001;
-    		//float attenuation = 1.0 / (distance * distance);
-			value = shadow;
+			vec4 shadowCoord = (ubo.biasMat * ubo.shadowTransform[cascadeIndex]) * vec4(wsPos, 1.0);
+			shadowCoord = shadowCoord * ( 1.0 / shadowCoord.w);
+			
+			value =  PCFShadow(shadowCoord , cascadeIndex);
+			indirect = indirectIllumination(wsPos, material.normal, material.view);
 		}
 		
 		vec3 Li = light.direction.xyz;
@@ -395,7 +443,7 @@ vec3 lighting(vec3 F0, vec3 wsPos, Material material)
 		// Cook-Torrance
 		vec3 specularBRDF = (F * D * G) / max(EPSILON, 4.0 * cosLi * material.normalDotView);
 		
-		result += (diffuseBRDF + specularBRDF) * Lradiance * cosLi * value;
+		result += (diffuseBRDF + specularBRDF) * Lradiance * cosLi * value + indirect;
 	}
 
 	return result ;

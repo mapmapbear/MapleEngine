@@ -122,7 +122,7 @@ namespace maple
 		}
 		else
 		{
-			materialProperties.usingMetallicMap = 1.0f;
+			materialProperties.usingMetallicMap = 0.0f;
 			descriptorSet->setTexture("uMetallicMap", Texture2D::create("metallic", "textures/default/default_specular.png"));
 		}
 
@@ -133,7 +133,7 @@ namespace maple
 		else
 		{
 			descriptorSet->setTexture("uRoughnessMap", Texture2D::create("roughness", "textures/default/default_roughness.png"));
-			materialProperties.usingRoughnessMap = 1.0f;
+			materialProperties.usingRoughnessMap = 0.0f;
 		}
 
 		if (pbrMaterialTextures.normal != nullptr)
@@ -143,7 +143,7 @@ namespace maple
 		else
 		{
 			descriptorSet->setTexture("uNormalMap", Texture2D::create("normal", "textures/default/default_normal.png"));
-			materialProperties.usingNormalMap = 1.0f;
+			materialProperties.usingNormalMap = 0.0f;
 		}
 
 		if (pbrMaterialTextures.ao != nullptr)
@@ -153,7 +153,7 @@ namespace maple
 		else
 		{
 			descriptorSet->setTexture("uAOMap", Texture2D::create("ao", "textures/default/default_ao.png"));
-			materialProperties.usingAOMap = 1.0f;
+			materialProperties.usingAOMap = 0.0f;
 		}
 
 		if (pbrMaterialTextures.emissive != nullptr)
@@ -163,7 +163,7 @@ namespace maple
 		else
 		{
 			descriptorSet->setTexture("uEmissiveMap", Texture2D::create("emission", "textures/default/default_emission.png"));
-			materialProperties.usingEmissiveMap = 1.0f;
+			materialProperties.usingEmissiveMap = 0.0f;
 		}
 
 		updateUniformBuffer();

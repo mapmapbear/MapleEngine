@@ -403,7 +403,7 @@ namespace maple
 
 		for (auto &resource : resources.storage_images)
 		{
-			auto &glslType = glsl->get_type(resource.base_type_id);
+			auto &glslType  = glsl->get_type(resource.base_type_id);
 			auto &glslType2 = glsl->get_type(resource.type_id);
 
 			if (glslType.basetype == spirv_cross::SPIRType::Image)
@@ -500,8 +500,11 @@ namespace maple
 			auto  bufferSize  = glsl->get_declared_struct_size(bufferType);
 			auto  memberCount = (int32_t) bufferType.member_types.size();
 
-			pushConstants.push_back({rangeSizes, type});
-			pushConstants.back().data.resize(rangeSizes);
+			auto &pushConst = pushConstants.emplace_back();
+
+			pushConst.size        = rangeSizes;
+			pushConst.shaderStage = type;
+			pushConst.data.resize(rangeSizes);
 
 			for (int i = 0; i < memberCount; i++)
 			{
@@ -512,7 +515,7 @@ namespace maple
 
 				std::string uniformName = u.name + "." + memberName;
 
-				auto &member    = pushConstants.back().members.emplace_back();
+				auto &member    = pushConst.members.emplace_back();
 				member.size     = (uint32_t) size;
 				member.offset   = offset;
 				member.type     = spirvTypeToDataType(type);

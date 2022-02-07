@@ -396,7 +396,7 @@ namespace maple
 
 				std::string uniformName = u.name + "." + memberName;
 
-				auto &member    = pushConstants.back().members.emplace_back();
+				auto &member    = push.members.emplace_back();
 				member.size     = (uint32_t) size;
 				member.offset   = offset;
 				member.type     = sprivTypeToDataType(type);
