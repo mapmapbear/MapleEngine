@@ -167,20 +167,24 @@ namespace maple
 
 	struct RenderGraph::ReflectiveShadowData
 	{
-		bool                                        enable = false;
+		static constexpr int32_t                    NUM_RSM = 32;
+		bool                                        enable  = false;
 		std::shared_ptr<Shader>                     shader;
 		std::vector<std::shared_ptr<DescriptorSet>> descriptorSets;
 		std::shared_ptr<Texture2D>                  fluxTexture;
 		std::shared_ptr<Texture2D>                  worldTexture;
 		std::shared_ptr<Texture2D>                  normalTexture;
 		std::shared_ptr<TextureDepth>               fluxDepth;
-		constexpr static int32_t                    SHADOW_SIZE = 1024;
+		constexpr static int32_t                    SHADOW_SIZE = 256;
+
+		glm::mat4 lightMatrix;
+
 		struct VPL        // Virtual Point Light
 		{
-			glm::vec4 vplSamples[32];        //
+			glm::vec4 vplSamples[NUM_RSM];        //
 
 			float rsmRMax      = 25;
-			float rsmIntensity = 3.;
+			float rsmIntensity = 1.;
 			float padding1;
 			float padding2;
 		} vpl;
@@ -192,26 +196,33 @@ namespace maple
 			descriptorSets[0] = DescriptorSet::create({0, shader.get()});
 			descriptorSets[1] = DescriptorSet::create({1, shader.get()});
 
-			for (int32_t i = 0; i < 32; i++)
+			for (int32_t i = 0; i < NUM_RSM; i++)
 			{
-				float *sample = MathUtils::hammersley(i, 2, 32);
+				//float *sample = MathUtils::hammersley(i, 2, NUM_RSM);
 
+				
+				float sample[2]   = {
+					Randomizer::random(),
+				    Randomizer::random()
+				};
 				vpl.vplSamples[i] = {
 				    sample[0],
 				    sample[1],
 				    sample[0] * std::sin(M_PI_TWO * sample[1]),
 				    sample[0] * std::cos(M_PI_TWO * sample[1])};
-				delete[] sample;
+				//delete[] sample;
 			}
 
-			fluxTexture = Texture2D::create();
-			fluxTexture->buildTexture(TextureFormat::RGBA8, SHADOW_SIZE, SHADOW_SIZE);
+			TextureParameters parameters;
 
-			worldTexture = Texture2D::create();
-			worldTexture->buildTexture(TextureFormat::RGBA8, SHADOW_SIZE, SHADOW_SIZE);
+			parameters.format = TextureFormat::RGBA32;
+			parameters.wrap   = TextureWrap::ClampToBorder;
 
-			normalTexture = Texture2D::create();
-			normalTexture->buildTexture(TextureFormat::RGBA8, SHADOW_SIZE, SHADOW_SIZE);
+			fluxTexture = Texture2D::create(SHADOW_SIZE, SHADOW_SIZE, nullptr, parameters);
+
+			worldTexture = Texture2D::create(SHADOW_SIZE, SHADOW_SIZE, nullptr, parameters);
+
+			normalTexture = Texture2D::create(SHADOW_SIZE, SHADOW_SIZE, nullptr, parameters);
 
 			fluxDepth = TextureDepth::create(SHADOW_SIZE, SHADOW_SIZE);
 		}
@@ -557,6 +568,8 @@ namespace maple
 		LightData lights[32] = {};
 		uint32_t  numLights  = 0;
 
+		Light *    rsmLighting  = nullptr;
+		Transform *rsmTransform = nullptr;
 		if (settings.render3D)
 		{
 			forwardData->frustum = camera.first->getFrustum(view);
@@ -581,6 +594,12 @@ namespace maple
 							continue;*/
 					}
 
+					if (light.reflectiveShadowMap)
+					{
+						rsmLighting  = &light;
+						rsmTransform = &trans;
+					}
+
 					lights[numLights] = light.lightData;
 					numLights++;
 				}
@@ -603,15 +622,35 @@ namespace maple
 			{
 				updateCascades(scene, directionaLight);
 
-				rsmData->descriptorSets[0]->setUniform("UniformBufferObject", "lightProjection", shadowData->shadowProjView, true);
-				rsmData->descriptorSets[1]->setUniform("UBO", "color", &directionaLight->lightData.color);
-				rsmData->descriptorSets[1]->setUniform("UBO", "type", &directionaLight->lightData.type);
-
 				for (uint32_t i = 0; i < shadowData->shadowMapNum; i++)
 				{
 					shadowData->cascadeFrustums[i].from(shadowData->shadowProjView[i]);
 				}
 			}
+		}
+
+		if (rsmLighting)
+		{
+			if (static_cast<LightType>(rsmLighting->lightData.type) == LightType::DirectionalLight)
+			{
+				rsmData->descriptorSets[0]->setUniform("UniformBufferObject", "lightProjection", shadowData->shadowProjView, true);
+			}
+
+			if (static_cast<LightType>(rsmLighting->lightData.type) == LightType::SpotLight)
+			{
+				constexpr float zNear                 = .01f;
+				constexpr float zFar                  = 96.0f;
+				glm::mat4       depthProjectionMatrix = glm::perspective(rsmLighting->lightData.angle, 1.0f, zNear, zFar);
+				glm::mat4       depthViewMatrix       = rsmTransform->getWorldMatrixInverse();
+
+				auto lightProj = depthProjectionMatrix * depthViewMatrix;
+				rsmData->descriptorSets[0]->setUniform("UniformBufferObject", "lightProjection", &lightProj, true);
+				shadowData->shadowProjView[0] = lightProj;
+				shadowData->lightMatrix       = depthViewMatrix;
+			}
+
+			rsmData->descriptorSets[0]->setUniform("UniformBufferObject", "viewMatrix", &view);
+			rsmData->descriptorSets[1]->setUniform("UBO", "light", &rsmLighting->lightData);
 		}
 
 		glm::mat4 *shadowTransforms = shadowData->shadowProjView;
@@ -698,6 +737,14 @@ namespace maple
                                                                                                                                             forwardData->defaultMaterial.get();
 						}
 					}
+				}
+				else if (rsmLighting)
+				{
+					auto &cmd     = shadowData->cascadeCommandQueue[0].emplace_back();
+					cmd.mesh      = mesh.getMesh().get();
+					cmd.transform = worldTransform;
+					cmd.material  = mesh.getMesh()->getMaterial() ? mesh.getMesh()->getMaterial().get() : settings.deferredRender ? deferredData->defaultMaterial.get() :
+                                                                                                                                    forwardData->defaultMaterial.get();
 				}
 
 				{
@@ -1167,6 +1214,17 @@ namespace maple
 		ImGui::Separator();
 		ImGui::PopStyleVar();
 
+		ImGui::Separator();
+
+		if (rsmData->fluxTexture)
+		{
+			ImGuiHelper::image(rsmData->fluxTexture.get(), {64, 64});
+			ImGuiHelper::image(rsmData->worldTexture.get(), {64, 64});
+			ImGuiHelper::image(rsmData->normalTexture.get(), {64, 64});
+		}
+
+		
+
 		for (auto render : renderers)
 		{
 			render->onImGui();
@@ -1285,6 +1343,7 @@ namespace maple
 		pipeInfo.colorTargets[0]     = rsmData->fluxTexture;
 		pipeInfo.colorTargets[1]     = rsmData->worldTexture;
 		pipeInfo.colorTargets[2]     = rsmData->normalTexture;
+		pipeInfo.clearColor          = {0, 0, 0, 0};
 
 		auto pipeline = Pipeline::get(pipeInfo);
 
@@ -1304,6 +1363,8 @@ namespace maple
 			rsmData->shader->bindPushConstants(getCommandBuffer(), pipeline.get());
 			if (command.material != nullptr)
 			{
+				descriptorSet->setUniform("UBO", "albedoColor", &command.material->getProperties().albedoColor);
+				descriptorSet->setUniform("UBO", "usingAlbedoMap", &command.material->getProperties().usingAlbedoMap);
 				descriptorSet->setTexture("uDiffuseMap", command.material->getTextures().albedo);
 				descriptorSet->update();
 			}
@@ -1384,6 +1445,10 @@ namespace maple
 		descriptorSet->setTexture("uColorSampler", gBuffer->getBuffer(GBufferTextures::COLOR));
 		descriptorSet->setTexture("uPositionSampler", gBuffer->getBuffer(GBufferTextures::POSITION));
 		descriptorSet->setTexture("uNormalSampler", gBuffer->getBuffer(GBufferTextures::NORMALS));
+
+		descriptorSet->setTexture("uViewPositionSampler", gBuffer->getBuffer(GBufferTextures::VIEW_POSITION));
+		descriptorSet->setTexture("uViewNormalSampler", gBuffer->getBuffer(GBufferTextures::VIEW_NORMALS));
+
 		descriptorSet->setTexture("uPBRSampler", gBuffer->getBuffer(GBufferTextures::PBR));
 		descriptorSet->setTexture("uSSAOSampler", gBuffer->getBuffer(GBufferTextures::SSAO_BLUR));
 		descriptorSet->setTexture("uDepthSampler", gBuffer->getDepthBuffer());

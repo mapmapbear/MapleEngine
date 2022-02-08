@@ -446,6 +446,7 @@ namespace MM
 			ImGuiHelper::property("Angle", light.lightData.angle, -1.0f, 1.0f);
 
 		ImGuiHelper::property("Show Frustum", light.showFrustum);
+		ImGuiHelper::property("Reflective Shadow Map", light.reflectiveShadowMap);
 
 		ImGui::AlignTextToFramePadding();
 		ImGui::TextUnformatted("Light Type");

@@ -35,6 +35,7 @@ namespace maple
 
 		LightData lightData;
 		bool      showFrustum = false;
+		bool      reflectiveShadowMap = false;
 
 		template <class Archive>
 		inline auto serialize(Archive &archive) -> void

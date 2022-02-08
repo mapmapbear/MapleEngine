@@ -16,10 +16,10 @@ namespace maple
 		formats[SSAO_BLUR]        = TextureFormat::RGB8;
 		formats[SSR_SCREEN]       = TextureFormat::RGBA8;
 		formats[COLOR]            = TextureFormat::RGBA8;
-		formats[POSITION]         = TextureFormat::RGBA16;
-		formats[NORMALS]          = TextureFormat::RGBA16;
-		formats[VIEW_POSITION]    = TextureFormat::RGBA16;
-		formats[VIEW_NORMALS]     = TextureFormat::RGBA16;
+		formats[POSITION]         = TextureFormat::RGBA32;
+		formats[NORMALS]          = TextureFormat::RGBA32;
+		formats[VIEW_POSITION]    = TextureFormat::RGBA32;
+		formats[VIEW_NORMALS]     = TextureFormat::RGBA32;
 		formats[VELOCITY]         = TextureFormat::RGBA8;
 		formats[PBR]              = TextureFormat::RGBA16;
 		formats[VOLUMETRIC_LIGHT] = TextureFormat::RGB8;
