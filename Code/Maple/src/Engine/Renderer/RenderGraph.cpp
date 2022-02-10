@@ -40,6 +40,8 @@
 
 #include "ImGui/ImGuiHelpers.h"
 
+#include <ecs/ecs.h>
+
 namespace maple
 {
 	namespace
@@ -167,7 +169,7 @@ namespace maple
 
 	struct RenderGraph::ReflectiveShadowData
 	{
-		static constexpr int32_t                    NUM_RSM = 32;
+		static constexpr int32_t                    NUM_RSM = 256;
 		bool                                        enable  = false;
 		std::shared_ptr<Shader>                     shader;
 		std::vector<std::shared_ptr<DescriptorSet>> descriptorSets;
@@ -177,16 +179,13 @@ namespace maple
 		std::shared_ptr<TextureDepth>               fluxDepth;
 		constexpr static int32_t                    SHADOW_SIZE = 256;
 
-		glm::mat4 lightMatrix;
-
 		struct VPL        // Virtual Point Light
 		{
 			glm::vec4 vplSamples[NUM_RSM];        //
-
-			float rsmRMax      = 25;
-			float rsmIntensity = 1.;
-			float padding1;
-			float padding2;
+			float     rsmRMax         = 1;
+			float     rsmIntensity    = 1.;
+			float     numberOfSamples = 30.f;
+			float     padding2;
 		} vpl;
 
 		ReflectiveShadowData()
@@ -198,19 +197,18 @@ namespace maple
 
 			for (int32_t i = 0; i < NUM_RSM; i++)
 			{
-				//float *sample = MathUtils::hammersley(i, 2, NUM_RSM);
-
-				
+				float *sample = MathUtils::hammersley(i, 2, NUM_RSM);
+				/*
 				float sample[2]   = {
 					Randomizer::random(),
 				    Randomizer::random()
-				};
+				};*/
 				vpl.vplSamples[i] = {
 				    sample[0],
 				    sample[1],
 				    sample[0] * std::sin(M_PI_TWO * sample[1]),
 				    sample[0] * std::cos(M_PI_TWO * sample[1])};
-				//delete[] sample;
+				delete[] sample;
 			}
 
 			TextureParameters parameters;
@@ -225,6 +223,8 @@ namespace maple
 			normalTexture = Texture2D::create(SHADOW_SIZE, SHADOW_SIZE, nullptr, parameters);
 
 			fluxDepth = TextureDepth::create(SHADOW_SIZE, SHADOW_SIZE);
+
+			descriptorSets[1]->setUniformBufferData("VirtualPointLight", &vpl);
 		}
 	};
 
@@ -443,6 +443,27 @@ namespace maple
 		bool                     cloud = false;
 	};
 
+	namespace shadow_map_pass
+	{
+		namespace component
+		{
+			struct ShadowMapData
+			{
+			};
+		}        // namespace component
+
+		using Entity = ecs::Chain::Read<component::ShadowMapData>::To<ecs::Entity>;
+
+		inline auto beginScene(Entity entity, ecs::World world)
+		{
+			
+		}
+
+		inline auto onRender(Entity entity, ecs::World world)
+		{
+		}
+	};        // namespace shadow_map_pass
+
 	RenderGraph::RenderGraph()
 	{
 		renderers.resize(static_cast<int32_t>(RenderId::Length));
@@ -499,6 +520,15 @@ namespace maple
 		addRender(std::make_shared<SkyboxRenderer>(), RenderId::Skybox);
 		addRender(std::make_shared<PostProcessRenderer>(), RenderId::PostProcess);
 		addRender(std::make_shared<AtmosphereRenderer>(), RenderId::Atmosphere);
+
+		static ExecuteQueue beginQ;
+		static ExecuteQueue renderQ;
+
+		Application::getExecutePoint()->registerQueue(beginQ);
+		Application::getExecutePoint()->registerQueue(renderQ);
+
+		Application::getExecutePoint()->registerWithinQueue<shadow_map_pass::beginScene>(beginQ);
+		Application::getExecutePoint()->registerWithinQueue<shadow_map_pass::onRender>(renderQ);
 	}
 
 	auto RenderGraph::beginScene(Scene *scene) -> void
@@ -1180,8 +1210,21 @@ namespace maple
 		ImGui::TextUnformatted("Global Illumination");
 		ImGui::Columns(2);
 		ImGuiHelper::property("RSM", rsmData->enable);
-		ImGuiHelper::property("RsmIntensity", rsmData->vpl.rsmIntensity, 0.f, 100.f, ImGuiHelper::PropertyFlag::InputFloat);
-		ImGuiHelper::property("RsmRMax", rsmData->vpl.rsmRMax, 0.f, ReflectiveShadowData::SHADOW_SIZE, ImGuiHelper::PropertyFlag::InputFloat);
+
+		if (ImGuiHelper::property("RsmIntensity", rsmData->vpl.rsmIntensity, 0.f, 100.f, ImGuiHelper::PropertyFlag::InputFloat))
+		{
+			rsmData->descriptorSets[1]->setUniform("VirtualPointLight", "rsmIntensity", &rsmData->vpl.rsmIntensity);
+		}
+		if (ImGuiHelper::property("RsmRMax", rsmData->vpl.rsmRMax, 0.f, 1.f, ImGuiHelper::PropertyFlag::InputFloat, "%.3f", 0.001))
+		{
+			rsmData->descriptorSets[1]->setUniform("VirtualPointLight", "rsmRMax", &rsmData->vpl.rsmRMax);
+		}
+
+		if (ImGuiHelper::property("NumberOfSamples", rsmData->vpl.numberOfSamples, 1.f, ReflectiveShadowData::NUM_RSM, ImGuiHelper::PropertyFlag::InputFloat))
+		{
+			rsmData->descriptorSets[1]->setUniform("VirtualPointLight", "numberOfSamples", &rsmData->vpl.numberOfSamples);
+		}
+
 		ImGui::Separator();
 		ImGui::Columns(2);
 
@@ -1222,8 +1265,6 @@ namespace maple
 			ImGuiHelper::image(rsmData->worldTexture.get(), {64, 64});
 			ImGuiHelper::image(rsmData->normalTexture.get(), {64, 64});
 		}
-
-		
 
 		for (auto render : renderers)
 		{
@@ -1462,7 +1503,6 @@ namespace maple
 			descriptorSet->setTexture("uFluxSampler", rsmData->fluxTexture);
 			descriptorSet->setTexture("uRSMWorldSampler", rsmData->worldTexture);
 			descriptorSet->setTexture("uRSMNormalSampler", rsmData->normalTexture);
-			descriptorSet->setUniformBufferData("VirtualPointLight", &rsmData->vpl);
 		}
 
 		descriptorSet->update();

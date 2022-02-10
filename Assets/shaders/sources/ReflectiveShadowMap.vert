@@ -11,6 +11,7 @@ layout(location = 4) in vec3 inTangent;
 layout(set = 0,binding = 0) uniform UniformBufferObject 
 {    
     mat4 lightProjection;
+    mat4 viewMatrix;
 } ubo;
 
 layout(push_constant) uniform PushConsts
@@ -24,10 +25,11 @@ layout(location = 2) out vec3 fragNormal;
 
 void main()
 {
-    fragPosition = pushConsts.transform * vec4(inPosition, 1.0);
+    vec4 worldPosition =  pushConsts.transform * vec4(inPosition, 1.0);
+    fragPosition = worldPosition;
     vec4 testColor = inColor;
 	fragTexCoord = inTexCoord;
-    fragNormal =  transpose(inverse(mat3(pushConsts.transform))) * normalize(inNormal);
+    fragNormal =  normalize(transpose(inverse(mat3(  pushConsts.transform ) ) ) * inNormal);
 
-	gl_Position = ubo.lightProjection * fragPosition;
+	gl_Position = ubo.lightProjection * worldPosition;
 }

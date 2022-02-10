@@ -20,7 +20,7 @@
 #include "RHI/RenderDevice.h"
 #include "Resources/Cache.h"
 #include "Scene/SceneManager.h"
-#include "Scene/System/AccessSystem.h"
+#include "Scene/System/ExecutePoint.h"
 #include "Scene/System/SystemManager.h"
 #include "Scripts/Lua/LuaVirtualMachine.h"
 #include "Thread/ThreadPool.h"
@@ -161,9 +161,9 @@ namespace maple
 			return get()->cache;
 		}
 
-		inline static auto getAccessSystem()
+		inline static auto getExecutePoint()
 		{
-			return get()->accessSystem;
+			return get()->executePoint;
 		}
 
 		static Application *app;
@@ -183,7 +183,8 @@ namespace maple
 		std::shared_ptr<GraphicsContext>    graphicsContext;
 		std::shared_ptr<RenderGraph>        renderGraph;
 		std::shared_ptr<Cache>              cache;
-		std::shared_ptr<AccessSystem>       accessSystem;
+		std::shared_ptr<ExecutePoint>       executePoint;
+
 
 		EventDispatcher                                                  dispatcher;
 		Timer                                                            timer;

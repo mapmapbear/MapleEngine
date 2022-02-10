@@ -46,8 +46,7 @@ layout(binding = 9) uniform UniformBufferObject
 
 	float padding1;
 	float padding2;
-	float padding3;
-
+	float frame;
 	int enablePowder;
 
 }ubo;
@@ -308,20 +307,26 @@ float sampleCloudDensity(vec3 p, bool expensive, float lod){
 	return clamp(base_cloud_with_coverage, 0.0, 1.0);
 }
 
-
-float beer(float d){
+//Beer定律
+//模拟了光通过材料时的衰减
+float beer(float d)
+{
 	return exp(-d);
 }
 
+//糖堆效应 内散射概率函数
+//Powdered Sugar Effect
 float powder(float d){
 	return (1. - exp(-2.*d));
 }
 
- float phase(vec3 inLightVec, vec3 inViewVec, float g) {
+//Henyey-Greenstein相位函数
+//same with Atmosphere 
+float phase(vec3 inLightVec, vec3 inViewVec, float g)
+{
 	float costheta = dot(inLightVec, inViewVec) / length(inLightVec) / length(inViewVec);
 	return HG(costheta, g);
 }
-
 
 
 float raymarchToLight(vec3 o, float stepSize, vec3 lightDir, float originalDensity, float lightDotEye)
@@ -351,7 +356,7 @@ float raymarchToLight(vec3 o, float stepSize, vec3 lightDir, float originalDensi
 			float cloudDensity = sampleCloudDensity(pos, density > 0.3, i/16);
 			if(cloudDensity > 0.0)
 			{
-				float Ti = exp(cloudDensity*sigma_ds);
+				float Ti = exp(cloudDensity*sigma_ds); //beer
 				T *= Ti;
 				density += cloudDensity;
 			}
@@ -422,9 +427,9 @@ vec4 raymarchToCloud(vec3 startPos, vec3 endPos, vec3 bg, out vec4 cloudPos){
 			float scattering = mix(HG(lightDotEye, -0.08), HG(lightDotEye, 0.08), clamp(lightDotEye*0.5 + 0.5, 0.0, 1.0));
 			//scattering = 0.6;
 			scattering = max(scattering, 1.0);
-			float powderTerm =  powder(density_sample);
-			if(ubo.enablePowder == 0)
-				powderTerm = 1.0;
+			float powderTerm = 1.0;
+			if(ubo.enablePowder == 1)
+				powderTerm = powder(density_sample) * 2;
 			
 			vec3 S = 0.6*( mix( mix(ambientLight*1.8, bg, 0.2), scattering*SUN_COLOR, powderTerm*light_density)) * density_sample;
 			float dTrans = exp(density_sample*sigma_ds);
@@ -470,13 +475,14 @@ float computeFogAmount(in vec3 startPos, in float factor){
 void main()
 {
     iResolution = textureSize(uDepthSampler,0);
-
+	//int frameIter = ubo.frame % 2;
 	vec4 fragColor_v, bloom_v, alphaness_v, cloudDistance_v;
 	ivec2 fragCoord = ivec2(gl_GlobalInvocationID.xy);
+	//fragCoord = ivec2(fragCoord.x * 2 + frameIter, fragCoord.y);
+	vec3 uv = computeClipSpaceCoord(fragCoord);
 
-	//if(texture(depthMap, TexCoords).r < 1.0)
 	//compute ray direction
-	vec4 ray_clip = vec4(computeClipSpaceCoord(fragCoord), 1.0);
+	vec4 ray_clip = vec4(uv, 1.0);
 	vec4 ray_view = ubo.invProj * ray_clip;
 	ray_view = vec4(ray_view.xy, -1.0, 0.0);
 	vec3 worldDir = (ubo.invView * ray_view).xyz;
@@ -503,8 +509,8 @@ void main()
 		raySphereintersection(ubo.cameraPosition.xyz, worldDir, SPHERE_OUTER_RADIUS, endPos);
 		fogRay = startPos;
 	}
-    else if (ubo.cameraPosition.y > SPHERE_INNER_RADIUS - EARTH_RADIUS && ubo.cameraPosition.y < SPHERE_OUTER_RADIUS - EARTH_RADIUS)
-    {
+	else if (ubo.cameraPosition.y > SPHERE_INNER_RADIUS - EARTH_RADIUS && ubo.cameraPosition.y < SPHERE_OUTER_RADIUS - EARTH_RADIUS)
+	{
 		startPos = ubo.cameraPosition.xyz;
 		raySphereintersection(ubo.cameraPosition.xyz, worldDir, SPHERE_OUTER_RADIUS, endPos);
 		bool hit = raySphereintersection(ubo.cameraPosition.xyz, worldDir, SPHERE_INNER_RADIUS, fogRay);
@@ -512,8 +518,8 @@ void main()
 			fogRay = startPos;
 		case_ = 1;
 	}
-    else
-    {
+	else
+	{
 		raySphereintersection2(ubo.cameraPosition.xyz, worldDir, SPHERE_OUTER_RADIUS, startPos);
 		raySphereintersection2(ubo.cameraPosition.xyz, worldDir, SPHERE_INNER_RADIUS, endPos);
 		raySphereintersection(ubo.cameraPosition.xyz, worldDir, SPHERE_OUTER_RADIUS, fogRay);
@@ -547,7 +553,7 @@ void main()
 	vec3 ambientColor = bg.rgb;
 
 	// use current position distance to center as action radius
-    v.rgb = mix(v.rgb, bg.rgb*v.a, clamp(fogAmount,0.,1.));
+	v.rgb = mix(v.rgb, bg.rgb*v.a, clamp(fogAmount,0.,1.));
 
 	// add sun glare to clouds
 	float sun = clamp( dot(SUN_DIR,normalize(endPos - startPos)), 0.0, 1.0 );

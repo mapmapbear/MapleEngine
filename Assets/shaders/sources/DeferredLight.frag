@@ -6,7 +6,7 @@
 #define GAMMA 2.2
 #define MAX_LIGHTS 32
 #define MAX_SHADOWMAPS 4
-#define NUM_VPL 32
+#define NUM_VPL 256
 
 const int NUM_PCF_SAMPLES = 16;
 const bool FADE_CASCADES = false;
@@ -60,10 +60,12 @@ layout(set = 0, binding = 10) uniform sampler2D uFluxSampler; //GI
 layout(set = 0, binding = 11) uniform sampler2D uRSMWorldSampler; //GI
 layout(set = 0, binding = 12) uniform sampler2D uRSMNormalSampler; //GI
 
+layout(set = 0, binding = 13) uniform sampler2D uViewPositionSampler;
+layout(set = 0, binding = 14) uniform sampler2D uViewNormalSampler; //GI
 
-layout(set = 0, binding = 11) uniform sampler2D uOutputSampler; //used for debug
+layout(set = 0, binding = 15) uniform sampler2D uOutputSampler; //used for debug
 
-layout(set = 0, binding = 13) uniform UniformBufferLight
+layout(set = 0, binding = 16) uniform UniformBufferLight
 {
 	Light lights[MAX_LIGHTS];
 	mat4 shadowTransform[MAX_SHADOWMAPS];
@@ -86,13 +88,12 @@ layout(set = 0, binding = 13) uniform UniformBufferLight
 	int padding2;
 } ubo;
 
-layout(set = 0, binding = 14) uniform VirtualPointLight
+layout(set = 0, binding = 17) uniform VirtualPointLight
 {
 	vec4 VPLSamples[NUM_VPL];
-
 	float rsmRMax;
 	float rsmIntensity;
-	float padding1;
+	float numberOfSamples;
 	float padding2; 
 } vpl;
 
@@ -339,33 +340,41 @@ vec3 fresnelSchlickRoughness(vec3 F0, float cosTheta, float roughness)
     return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
 
+vec3 calcVPLIrradiance(vec3 vVPLFlux, vec3 vVPLNormal, vec3 vVPLPos, vec3 vFragPos, vec3 vFragNormal)
+{
+	vec3 VPL2Frag = normalize(vFragPos - vVPLPos);
+	float dist = pow(length(VPL2Frag),4); // I'm not sure this is 4 or 2 ?
+	if( dist < EPSILON ){
+		return vec3(0,0,0);
+	}
+	return vVPLFlux * max(dot(vVPLNormal, VPL2Frag), 0) * max(dot(vFragNormal, -VPL2Frag), 0) / dist ;
+}
 
-vec3 indirectIllumination(vec3 fragPos, vec3 normal, vec3 viewPos)
+vec3 indirectIllumination(vec3 fragPos, vec3 normal, vec3 fragColor)
 {
 	vec4 lightSpacePos = ( ubo.biasMat * ubo.shadowTransform[0] ) * vec4(fragPos, 1.0);
 	lightSpacePos = lightSpacePos * ( 1.0 / lightSpacePos.w);
-
 	vec3 result = vec3(0.0);
-
-	ivec2 texDim = textureSize(uFluxSampler, 0).xy;
-	vec2 dx = 1.0 / texDim;
-
-    for(int i=0; i < NUM_VPL; i++)
+	if( vpl.numberOfSamples >= 1 )
 	{
-    	vec4 rnd = vpl.VPLSamples[i];
-        vec2 coords = vpl.rsmRMax * rnd.zw * dx + lightSpacePos.xy;
-		
-		vec3 flux = texture( uFluxSampler, coords ).rgb;	
-		vec3 x_p = ( texture( uRSMWorldSampler, coords ) ).xyz;		// Position (x_p) and normal (n_p) are in world coordinates too.
-		vec3 n_p =  ( texture( uRSMNormalSampler, coords ) ).xyz;
+		for(int i=0; i < vpl.numberOfSamples; i++)
+		{
+			vec4 rnd = vpl.VPLSamples[i];
+			vec2 coords = vpl.rsmRMax * rnd.zw + lightSpacePos.xy;
 
-		vec3 r = fragPos - x_p;// Difference vector.
-		float d2 = dot( r, r );// Square distance.
-		vec3 E_p = flux * ( max( 0.0, dot( n_p, r ) ) * max( 0.0, dot( normal, -r ) ) );
-		E_p *= rnd.x * rnd.x / ( d2 * d2 );	
-    	result += E_p;
-    }
-	return result;
+			vec3 vplP = texture(uRSMWorldSampler, coords.xy).xyz;
+			vec3 vplN = texture(uRSMNormalSampler, coords.xy).xyz;
+
+			vec3 viewNormal = texture(uViewNormalSampler,fragTexCoord).xyz;
+			vec3 viewPosition = texture(uViewPositionSampler,fragTexCoord).xyz;
+			vec3 vplFlux = texture(uFluxSampler, coords.xy).rgb;
+
+			float dist = length (rnd.zw);
+			result += calcVPLIrradiance( vplFlux, vplN, vplP, fragPos,normal)  * dist * dist;
+		}
+		result /=  vpl.numberOfSamples;
+	}
+	return result * vpl.rsmIntensity;
 }
 
 
@@ -406,12 +415,13 @@ vec3 lighting(vec3 F0, vec3 wsPos, Material material)
 			float epsilon       = cutoffAngle - cutoffAngle * 0.9f;
 			float attenuation 	= ((theta - cutoffAngle) / epsilon); // atteunate when approaching the outer cone
 			attenuation         *= light.radius / (pow(dist, 2.0) + 1.0);//saturate(1.0f - dist / light.range);
-			//float intensity 	= attenuation * attenuation;
+			float intensity 	= attenuation * attenuation;
 			// Erase light if there is no need to compute it
-			//intensity *= step(theta, cutoffAngle);
-			value = 1;//;;clamp(attenuation, 0.0, 1.0);
+			intensity *= step(theta, cutoffAngle);
+			value = clamp(attenuation, 0.0, 1.0);
 
-			value = RayMarch(wsPos, material.view, material.normal,ubo.cameraPosition.xyz,light);
+			indirect = indirectIllumination(wsPos, material.normal,material.view);
+			//value = RayMarch(wsPos, material.view, material.normal,ubo.cameraPosition.xyz,light);
 		}
 		else
 		{
@@ -444,6 +454,7 @@ vec3 lighting(vec3 F0, vec3 wsPos, Material material)
 		vec3 specularBRDF = (F * D * G) / max(EPSILON, 4.0 * cosLi * material.normalDotView);
 		
 		result += (diffuseBRDF + specularBRDF) * Lradiance * cosLi * value + indirect;
+		//result += indirect;
 	}
 
 	return result ;
@@ -500,7 +511,7 @@ void main()
     material.albedo			= albedo;
     material.metallic		= vec3(pbr.x);
     material.roughness		= pbr.y;
-    material.normal			= normalTex.rgb;
+    material.normal			= normalTex.xyz;
 	material.ao				= pbr.z;
 	material.ssao			= 1;
 

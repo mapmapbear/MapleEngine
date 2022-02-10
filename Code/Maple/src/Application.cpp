@@ -21,7 +21,7 @@
 #include "ImGui/ImNotification.h"
 #include "Scene/Scene.h"
 #include "Scene/SceneManager.h"
-#include "Scene/System/AccessSystem.h"
+#include "Scene/System/ExecutePoint.h"
 #include "Scripts/Mono/MonoVirtualMachine.h"
 
 #include "RHI/Texture.h"
@@ -52,6 +52,8 @@ namespace maple
 	auto Application::init() -> void
 	{
 		PROFILE_FUNCTION();
+		executePoint = systemManager->addSystem<ExecutePoint>();
+
 		Input::create();
 		window->init();
 
@@ -64,24 +66,22 @@ namespace maple
 		renderGraph->init(window->getWidth(), window->getHeight());
 
 		{
-			auto splashTexture = Texture2D::create("splash","textures/maple-alpha.png");
+			auto splashTexture = Texture2D::create("splash", "textures/maple-alpha.png");
 
 			renderDevice->begin();
 			renderDevice->drawSplashScreen(splashTexture);
 			renderDevice->present();        //present all data
-			
+
 			//To Display the window
 			window->onUpdate();
 			window->swapBuffers();
 		}
-
 
 		appDelegate->onInit();
 
 		systemManager->addSystem<LuaSystem>()->onInit();
 		systemManager->addSystem<MonoSystem>()->onInit();
 
-		auto access = systemManager->addSystem<AccessSystem>();
 
 		imGuiManager = systemManager->addSystem<ImGuiSystem>(false);
 		imGuiManager->onInit();
@@ -115,7 +115,7 @@ namespace maple
 			if (lastFrameTime - secondTimer > 1.0f)        //tick later
 			{
 				secondTimer += 1.0f;
-				LOGV("frames : {0}",frames);
+				LOGV("frames : {0}", frames);
 				frames  = 0;
 				updates = 0;
 			}
@@ -141,9 +141,11 @@ namespace maple
 	auto Application::onRender() -> void
 	{
 		PROFILE_FUNCTION();
-
 		renderGraph->beginPreviewScene(sceneManager->getSceneByName("PreviewScene"));
 		renderGraph->onRenderPreview();
+
+		executePoint->execute(sceneManager->getCurrentScene());
+
 		renderGraph->beginScene(sceneManager->getCurrentScene());
 		renderGraph->onRender();
 		onRenderDebug();
