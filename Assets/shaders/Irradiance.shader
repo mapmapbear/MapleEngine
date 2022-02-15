@@ -1,2 +1,2 @@
-#Vertex shaders/spv/Skybox.vert.spv
-#Fragment shaders/spv/Irradiance.frag.spv
+#Vertex shaders/spv/Sky/Skybox.vert.spv
+#Fragment shaders/spv/Sky/Irradiance.frag.spv

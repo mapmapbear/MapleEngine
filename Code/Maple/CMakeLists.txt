@@ -30,6 +30,7 @@ add_subdirectory(lib/lua)
 add_subdirectory(lib/tracy)
 add_subdirectory(lib/glad)
 add_subdirectory(lib/nativefiledialog)
+add_subdirectory(lib/imgui-node-editor)
 
 file(GLOB SHADERS_GLSL 
 	"${ENGINE_ASSET_DIR}/shaders/*.vert" 
@@ -175,6 +176,7 @@ endif()
 		${ENGINE_LIB_SRC_DIR}/nativefiledialog/include
 		${ENGINE_LIB_SRC_DIR}/ecs
 		${ENGINE_LIB_SRC_DIR}/imgui-notify
+		${ENGINE_LIB_SRC_DIR}/imgui-node-editor
 	)
 
 	target_link_libraries(MapleEngine 
@@ -197,9 +199,10 @@ endif()
 		TracyClient
 		glad
 		filedlg
+		imgui-node-editor
 	)
 
-	set_target_properties(lua zlib tinyobjloader tellenc spirvCross ktx spdlog_headers_for_ide stb_image glad TracyClient filedlg PROPERTIES FOLDER Library)
+	set_target_properties(lua zlib tinyobjloader tellenc spirvCross ktx spdlog_headers_for_ide stb_image glad TracyClient filedlg imgui-node-editor PROPERTIES FOLDER Library)
 	
 
 endif()

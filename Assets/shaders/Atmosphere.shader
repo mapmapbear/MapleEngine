@@ -1,2 +1,2 @@
-#Vertex shaders/spv/Atmosphere.vert.spv
-#Fragment shaders/spv/Atmosphere.frag.spv
+#Vertex shaders/spv/Atmosphere/Atmosphere.vert.spv
+#Fragment shaders/spv/Atmosphere/Atmosphere.frag.spv

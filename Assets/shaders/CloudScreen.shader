@@ -1,3 +1,3 @@
-#Vertex shaders/spv/Cloud.vert.spv
-#Fragment shaders/spv/Cloud.frag.spv
+#Vertex shaders/spv/Cloud/Cloud.vert.spv
+#Fragment shaders/spv/Cloud/Cloud.frag.spv
 
