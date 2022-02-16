@@ -5,10 +5,9 @@
 #pragma once
 #include "Others/Console.h"
 #include "Scene/Component/Component.h"
-#include "Scene/Scene.h"
-#include "Scene/SceneGraph.h"
 #include <ecs/ComponentChain.h>
 #include <ecs/Permission.h>
+#include <entt/entt.hpp>
 
 namespace maple
 {
@@ -17,8 +16,8 @@ namespace maple
 	  public:
 		Entity() = default;
 
-		Entity(entt::entity handle, Scene *s) :
-		    entityHandle(handle), scene(s)
+		Entity(entt::entity handle, entt::registry &initRegistry) :
+		    entityHandle(handle), registry(&initRegistry)
 		{
 		}
 
@@ -33,7 +32,7 @@ namespace maple
 			if (hasComponent<T>())
 				LOGW("Attempting to add extisting component ");
 #endif
-			T &t = scene->getRegistry().emplace<T>(entityHandle, std::forward<Args>(args)...);
+			T &t = registry->emplace<T>(entityHandle, std::forward<Args>(args)...);
 			t.setEntity(entityHandle);
 			return t;
 		}
@@ -41,34 +40,37 @@ namespace maple
 		template <typename T, typename... Args>
 		inline T &getOrAddComponent(Args &&...args)
 		{
-			T &t = scene->getRegistry().get_or_emplace<T>(entityHandle, std::forward<Args>(args)...);
-			t.setEntity(entityHandle);
+			T &t = registry->get_or_emplace<T>(entityHandle, std::forward<Args>(args)...);
+			if constexpr (std::is_base_of<Component, T>::value)
+			{
+				t.setEntity(entityHandle);
+			}
 			return t;
 		}
 
 		template <typename T, typename... Args>
 		inline auto addOrReplaceComponent(Args &&...args)
 		{
-			T &t = scene->getRegistry().emplace_or_replace<T>(entityHandle, std::forward<Args>(args)...);
+			T &t = registry->emplace_or_replace<T>(entityHandle, std::forward<Args>(args)...);
 			t.setEntity(entityHandle);
 		}
 
 		template <typename T>
 		inline T &getComponent()
 		{
-			return scene->getRegistry().get<T>(entityHandle);
+			return registry->get<T>(entityHandle);
 		}
 
 		template <typename T>
 		inline T *tryGetComponent()
 		{
-			return scene->getRegistry().try_get<T>(entityHandle);
+			return registry->try_get<T>(entityHandle);
 		}
 
 		template <typename T>
 		inline T *tryGetComponentFromParent()
 		{
-			auto t = scene->getRegistry().try_get<T>(entityHandle);
+			auto t = registry->try_get<T>(entityHandle);
 			if (t == nullptr)
 			{
 				auto parent = getParent();
@@ -84,13 +86,13 @@ namespace maple
 		template <typename T>
 		inline auto hasComponent() const -> bool
 		{
-			return scene->getRegistry().has<T>(entityHandle);
+			return registry->has<T>(entityHandle);
 		}
 
 		template <typename T>
 		inline auto removeComponent()
 		{
-			return scene->getRegistry().remove<T>(entityHandle);
+			return registry->remove<T>(entityHandle);
 		}
 
 		auto isActive() -> bool;
@@ -112,15 +114,17 @@ namespace maple
 		{
 			return (uint32_t) entityHandle;
 		}
+
 		inline operator bool() const
 		{
-			return entityHandle != entt::null && scene;
+			return entityHandle != entt::null;
 		}
 
 		inline auto operator==(const Entity &other) const
 		{
-			return entityHandle == other.entityHandle && scene == other.scene;
+			return entityHandle == other.entityHandle;
 		}
+
 		inline auto operator!=(const Entity &other) const
 		{
 			return !(*this == other);
@@ -134,23 +138,14 @@ namespace maple
 		{
 			entityHandle = en;
 		}
-		inline auto getScene() const
-		{
-			return scene;
-		}
-		inline auto setScene(Scene *sc)
-		{
-			scene = sc;
-		}
 
 		auto destroy() -> void;
 		auto valid() -> bool;
 
 	  protected:
-		entt::entity entityHandle = entt::null;
-		Scene *      scene        = nullptr;
+		entt::entity    entityHandle = entt::null;
+		entt::registry *registry     = nullptr;
 		friend class EntityManager;
 	};
 
 };        // namespace maple
-

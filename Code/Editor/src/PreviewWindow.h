@@ -18,6 +18,8 @@ namespace maple
 	class PreviewWindow : public EditorWindow
 	{
 	  public:
+		static constexpr char *STATIC_NAME = ICON_MDI_LOOKS "Preview";
+
 		PreviewWindow();
 		~PreviewWindow();
 		auto onImGui() -> void override;

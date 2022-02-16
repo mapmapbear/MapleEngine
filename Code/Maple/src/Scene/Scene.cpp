@@ -47,6 +47,8 @@ namespace maple
 
 		sceneGraph = std::make_shared<SceneGraph>();
 		sceneGraph->init(entityManager->getRegistry());
+
+		globalEntity = createEntity("global");
 	}
 
 	auto Scene::getRegistry() -> entt::registry &
@@ -143,7 +145,7 @@ namespace maple
 		auto camsEttView = entityManager->getEntitiesWithTypes<Camera, Transform>();
 		if (!camsEttView.empty() && useSceneCamera)
 		{
-			Entity     entity(camsEttView.front(), this);
+			Entity     entity(camsEttView.front(), getRegistry());
 			Camera &   sceneCam   = entity.getComponent<Camera>();
 			Transform &sceneCamTr = entity.getComponent<Transform>();
 			return {&sceneCam, &sceneCamTr};

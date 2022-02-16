@@ -4,7 +4,7 @@
 
 #pragma once
 #include "Engine/Core.h"
-#include <entt/entt.hpp>
+#include "Scene/Entity/Entity.h"
 #include <functional>
 #include <memory>
 #include <string>
@@ -118,6 +118,18 @@ namespace maple
 			archive(version, name);
 		}
 
+		template <typename... Components>
+		inline auto addGlobalComponent()
+		{
+			(getRegistry().emplace<Components>(globalEntity.getHandle())...);
+		}
+
+		template <typename Component>
+		inline auto& getGlobalComponent()
+		{
+			return globalEntity.template getOrAddComponent<Component>();
+		}
+
 	  protected:
 		auto updateCameraController(float dt) -> void;
 		auto copyComponents(const Entity &from, const Entity &to) -> void;
@@ -126,6 +138,8 @@ namespace maple
 		std::shared_ptr<EntityManager> entityManager;
 		std::string                    name;
 		std::string                    filePath;
+
+		Entity globalEntity;
 
 		uint32_t width  = 0;
 		uint32_t height = 0;

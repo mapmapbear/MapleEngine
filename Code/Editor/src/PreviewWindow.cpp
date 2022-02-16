@@ -22,11 +22,8 @@
 
 namespace maple
 {
-
-
 	PreviewWindow::PreviewWindow()
 	{
-		title = "Preview";
 		scene = new Scene("PreviewScene");
 		Application::getSceneManager()->addScene("PreviewScene", scene);
 
@@ -54,7 +51,7 @@ namespace maple
 	auto PreviewWindow::onImGui() -> void
 	{
 		auto flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
-		if (ImGui::Begin(title.c_str(), &active, flags))
+		if (ImGui::Begin(STATIC_NAME, &active, flags))
 		{
 			auto   windowSize   = ImGui::GetWindowSize();
 			ImVec2 minBound     = ImGui::GetWindowPos();
@@ -82,8 +79,8 @@ namespace maple
 				auto  quat      = glm::quat(transform.getLocalOrientation());
 				ImGui::gizmo3D("##gizmo2", quat, 96);
 			}
-			ImGui::End();
 		}
+		ImGui::End();
 	}
 
 	auto PreviewWindow::resize(uint32_t width, uint32_t height) -> void

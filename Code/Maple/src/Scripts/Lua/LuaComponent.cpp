@@ -285,7 +285,6 @@ return #name
 								if (ImGui::AcceptDragDropPayload("Drag_Entity"))
 								{
 									v->setHandle(entity);
-									v->setScene(Application::get()->getSceneManager()->getCurrentScene());
 								}
 								ImGui::EndDragDropTarget();
 							}

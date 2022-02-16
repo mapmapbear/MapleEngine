@@ -28,14 +28,14 @@ namespace maple
 {
 	HierarchyWindow::HierarchyWindow()
 	{
-		title = "Hierarchy";
+	
 	}
 
 	auto HierarchyWindow::onImGui() -> void
 	{
 		const auto flags = ImGuiWindowFlags_NoCollapse;
 
-		ImGui::Begin(title.c_str(), &active, flags);
+		ImGui::Begin(STATIC_NAME, &active, flags);
 		{
 			if (ImGui::IsMouseClicked(1) && ImGui::IsWindowFocused())
 			{
@@ -217,7 +217,7 @@ namespace maple
 					if (hierarchyComponent)
 					{
 						Hierarchy::reparent(entity, entt::null, registry, *hierarchyComponent);
-						Entity e(entity, scene);
+						Entity e(entity, scene->getRegistry());
 						e.removeComponent<Hierarchy>();
 					}
 				}
@@ -329,14 +329,14 @@ namespace maple
 				{
 					if (ImGui::Selectable("Paste"))
 					{
-						Entity copiedEntity = {editor->getCopiedEntity(), scene};
+						Entity copiedEntity = {editor->getCopiedEntity(), scene->getRegistry()};
 						if (!copiedEntity.valid())
 						{
 							editor->setCopiedEntity(entt::null);
 						}
 						else
 						{
-							scene->duplicateEntity(copiedEntity, {node, scene});
+							scene->duplicateEntity(copiedEntity, {node, scene->getRegistry()});
 
 							if (editor->isCutCopyEntity())
 								deleteEntity = true;
@@ -352,7 +352,7 @@ namespace maple
 
 				if (ImGui::Selectable("Duplicate"))
 				{
-					scene->duplicateEntity({node, scene});
+					scene->duplicateEntity({node, scene->getRegistry()});
 				}
 				if (ImGui::Selectable("Delete"))
 					deleteEntity = true;
@@ -367,7 +367,7 @@ namespace maple
 				{
 					auto child = scene->getEntityManager()->create();
 
-					child.setParent({node, scene});
+					child.setParent({node, scene->getRegistry()});
 				}
 				ImGui::EndPopup();
 			}

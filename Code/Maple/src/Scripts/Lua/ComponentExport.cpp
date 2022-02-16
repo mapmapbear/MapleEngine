@@ -47,7 +47,7 @@ namespace maple
 
 
 				.beginClass <Entity>("Entity")
-				.addConstructor <void (*) (entt::entity, Scene*)>()
+				//.addConstructor <void (*) (entt::entity, entt::registry&)>()
 				.addConstructor <void (*) ()>()
 				.addFunction("valid", &Entity::valid)
 				.addFunction("destroy", &Entity::destroy)

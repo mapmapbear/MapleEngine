@@ -29,6 +29,8 @@ namespace maple
 	class AssetsWindow : public EditorWindow
 	{
 	  public:
+		static constexpr char *STATIC_NAME = ICON_MDI_FILE_DOCUMENT_EDIT_OUTLINE " Assets";
+
 		AssetsWindow();
 		virtual void onImGui() override;
 

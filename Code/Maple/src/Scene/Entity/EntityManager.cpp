@@ -2,19 +2,20 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #include "EntityManager.h"
+#include "Scene/Scene.h"
 
 namespace maple
 {
 	auto EntityManager::create() -> Entity
 	{
-		return Entity(registry.create(), scene);
+		return Entity(registry.create(), scene->getRegistry());
 	}
 
 	auto EntityManager::create(const std::string &name) -> Entity
 	{
 		auto e = registry.create();
 		registry.emplace<NameComponent>(e, name);
-		return Entity(e, scene);
+		return Entity(e, scene->getRegistry());
 	}
 
 	auto EntityManager::clear() -> void
@@ -68,10 +69,10 @@ namespace maple
 			auto &comp = registry.get<NameComponent>(view);
 			if (comp.name == name)
 			{
-				return {view, scene};
+				return {view, scene->getRegistry()};
 			}
 		}
-		return {entt::null, nullptr};
+		return {};
 	}
 
 };        // namespace maple

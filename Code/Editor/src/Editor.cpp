@@ -17,6 +17,7 @@
 #include "PreviewWindow.h"
 #include "PropertiesWindow.h"
 #include "RenderCapture.h"
+#include "RenderGraphWindow.h"
 #include "SceneWindow.h"
 
 #include "Devices/Input.h"
@@ -74,6 +75,7 @@ namespace maple
 		addWindow(AssetsWindow);
 		addWindow(RenderCapture);
 		addWindow(PreviewWindow);
+		addWindow(RenderGraphWindow);
 
 		ImGuizmo::SetGizmoSizeClipSpace(0.25f);
 		auto winSize = window->getWidth() / (float) window->getHeight();
@@ -540,14 +542,16 @@ namespace maple
 
 			ImGuiID DockMiddle = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Right, 0.8f, nullptr, &dock_main_id);
 
-			ImGui::DockBuilderDockWindow("Scene", DockMiddle);
+			ImGui::DockBuilderDockWindow(SceneWindow::STATIC_NAME, DockMiddle);
+			ImGui::DockBuilderDockWindow(RenderGraphWindow::STATIC_NAME, DockMiddle);
 			ImGui::DockBuilderDockWindow("Display", DockMiddle);
 
-			ImGui::DockBuilderDockWindow("Properties", DockRight);
+			ImGui::DockBuilderDockWindow(PropertiesWindow::STATIC_NAME, DockRight);
+			ImGui::DockBuilderDockWindow(RenderCapture::STATIC_NAME, DockRight);
 			ImGui::DockBuilderDockWindow("Console", DockingBottomLeftChild);
-			ImGui::DockBuilderDockWindow("Assets", DockingBottomRightChild);
-			ImGui::DockBuilderDockWindow("Hierarchy", DockLeft);
-			ImGui::DockBuilderDockWindow("Preview", DockingRightDownChild);
+			ImGui::DockBuilderDockWindow(AssetsWindow::STATIC_NAME, DockingBottomRightChild);
+			ImGui::DockBuilderDockWindow(HierarchyWindow::STATIC_NAME, DockLeft);
+			ImGui::DockBuilderDockWindow(PreviewWindow::STATIC_NAME, DockingRightDownChild);
 
 			ImGui::DockBuilderFinish(DockspaceID);
 		}
@@ -807,8 +811,8 @@ namespace maple
 		        "editor-icons/icons8-ttf-100.png",
 		        "editor-icons/icons8-cs-80.png",
 
-		        "editor-icons/shader.png",//shader
-		        "editor-icons/material.png",//material
+		        "editor-icons/shader.png",          //shader
+		        "editor-icons/material.png",        //material
 
 		        "editor-icons/light.png",
 		        "editor-icons/camera.png",

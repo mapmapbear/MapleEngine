@@ -3,6 +3,7 @@
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include <string>
+#include <IconsMaterialDesignIcons.h>
 
 namespace maple
 {
@@ -17,15 +18,6 @@ namespace maple
 		virtual auto handleInput(float dt) -> void{};
 
 	  public:
-		inline auto &getTitle() const
-		{
-			return title;
-		}
-		inline auto setTitle(std::string title)
-		{
-			this->title = title;
-		}
-
 		inline auto isActive() const
 		{
 			return active;
@@ -43,10 +35,8 @@ namespace maple
 		{
 			this->focused = focused;
 		}
-
 	  protected:
-		std::string title;
-		bool        active  = false;
-		bool        focused = false;
+		bool active  = false;
+		bool focused = false;
 	};
 };        // namespace maple

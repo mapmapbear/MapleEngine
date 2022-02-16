@@ -6,6 +6,7 @@
 #include "RHI/Texture.h"
 #include "Scene/Entity/Entity.h"
 #include "Scene/SceneManager.h"
+#include "Scene/Scene.h"
 
 #include "Application.h"
 
@@ -177,7 +178,7 @@ namespace maple
 
 	auto Component::getEntity() -> maple::Entity
 	{
-		return {entity, Application::get()->getSceneManager()->getCurrentScene()};
+		return {entity, Application::get()->getSceneManager()->getCurrentScene()->getRegistry()};
 	}
 
 	auto Component::setEntity(entt::entity entity) -> void

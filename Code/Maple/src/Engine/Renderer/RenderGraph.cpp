@@ -30,6 +30,7 @@
 
 #include "AtmosphereRenderer.h"
 #include "CloudRenderer.h"
+#include "Engine/Vientiane/ReflectiveShadowMap.h"
 #include "PostProcessRenderer.h"
 #include "Renderer2D.h"
 #include "SkyboxRenderer.h"
@@ -44,6 +45,22 @@
 
 namespace maple
 {
+#ifdef MAPLE_OPENGL
+	constexpr glm::mat4 BIAS_MATRIX = {
+	    0.5, 0.0, 0.0, 0.0,
+	    0.0, 0.5, 0.0, 0.0,
+	    0.0, 0.0, 0.5, 0.0,
+	    0.5, 0.5, 0.5, 1.0};
+#endif        // MAPLE_OPENGL
+
+#ifdef MAPLE_VULKAN
+	constexpr glm::mat4 BIAS_MATRIX = {
+	    0.5, 0.0, 0.0, 0.0,
+	    0.0, 0.5, 0.0, 0.0,
+	    0.0, 0.0, 1.0, 0.0,
+	    0.5, 0.5, 0.0, 1.0};
+#endif
+
 	namespace
 	{
 		inline auto renderOutputMode(int32_t mode) -> const std::string
@@ -106,127 +123,6 @@ namespace maple
 			return ssaoKernels;
 		}
 	}        // namespace
-
-#ifdef MAPLE_OPENGL
-	constexpr glm::mat4 BIAS_MATRIX = {
-	    0.5, 0.0, 0.0, 0.0,
-	    0.0, 0.5, 0.0, 0.0,
-	    0.0, 0.0, 0.5, 0.0,
-	    0.5, 0.5, 0.5, 1.0};
-#endif        // MAPLE_OPENGL
-
-#if MAPLE_VULKAN
-	constexpr glm::mat4 BIAS_MATRIX = {
-	    0.5, 0.0, 0.0, 0.0,
-	    0.0, 0.5, 0.0, 0.0,
-	    0.0, 0.0, 1.0, 0.0,
-	    0.5, 0.5, 0.0, 1.0};
-#endif
-
-	struct RenderGraph::ShadowData
-	{
-		float cascadeSplitLambda    = 0.995f;
-		float sceneRadiusMultiplier = 1.4f;
-		float lightSize             = 1.5f;
-		float maxShadowDistance     = 400.0f;
-		float shadowFade            = 40.0f;
-		float cascadeTransitionFade = 3.0f;
-		float initialBias           = 0.005f;
-		bool  shadowMapsInvalidated = true;
-
-		uint32_t  shadowMapNum                  = 4;
-		uint32_t  shadowMapSize                 = SHADOWMAP_SiZE_MAX;
-		glm::mat4 shadowProjView[SHADOWMAP_MAX] = {};
-		glm::vec4 splitDepth[SHADOWMAP_MAX]     = {};
-		glm::mat4 lightMatrix                   = glm::mat4(1.f);
-		Frustum   cascadeFrustums[SHADOWMAP_MAX];
-
-		std::vector<std::shared_ptr<DescriptorSet>> descriptorSet;
-		std::vector<std::shared_ptr<DescriptorSet>> currentDescriptorSets;
-
-		std::vector<RenderCommand>         cascadeCommandQueue[SHADOWMAP_MAX];
-		std::shared_ptr<Shader>            shader;
-		std::shared_ptr<TextureDepthArray> shadowTexture;
-
-		ShadowData()
-		{
-			shadowTexture = TextureDepthArray::create(SHADOWMAP_SiZE_MAX, SHADOWMAP_SiZE_MAX, shadowMapNum);
-			shader        = Shader::create("shaders/Shadow.shader");
-
-			DescriptorInfo createInfo{};
-			createInfo.layoutIndex = 0;
-			createInfo.shader      = shader.get();
-
-			descriptorSet.resize(1);
-			descriptorSet[0] = DescriptorSet::create(createInfo);
-			currentDescriptorSets.resize(1);
-			cascadeCommandQueue[0].reserve(500);
-			cascadeCommandQueue[1].reserve(500);
-			cascadeCommandQueue[2].reserve(500);
-			cascadeCommandQueue[3].reserve(500);
-		}
-	};
-
-	struct RenderGraph::ReflectiveShadowData
-	{
-		static constexpr int32_t                    NUM_RSM = 256;
-		bool                                        enable  = false;
-		std::shared_ptr<Shader>                     shader;
-		std::vector<std::shared_ptr<DescriptorSet>> descriptorSets;
-		std::shared_ptr<Texture2D>                  fluxTexture;
-		std::shared_ptr<Texture2D>                  worldTexture;
-		std::shared_ptr<Texture2D>                  normalTexture;
-		std::shared_ptr<TextureDepth>               fluxDepth;
-		constexpr static int32_t                    SHADOW_SIZE = 256;
-
-		struct VPL        // Virtual Point Light
-		{
-			glm::vec4 vplSamples[NUM_RSM];        //
-			float     rsmRMax         = 1;
-			float     rsmIntensity    = 1.;
-			float     numberOfSamples = 30.f;
-			float     padding2;
-		} vpl;
-
-		ReflectiveShadowData()
-		{
-			shader = Shader::create("shaders/ReflectiveShadowMap.shader");
-			descriptorSets.resize(2);
-			descriptorSets[0] = DescriptorSet::create({0, shader.get()});
-			descriptorSets[1] = DescriptorSet::create({1, shader.get()});
-
-			for (int32_t i = 0; i < NUM_RSM; i++)
-			{
-				float *sample = MathUtils::hammersley(i, 2, NUM_RSM);
-				/*
-				float sample[2]   = {
-					Randomizer::random(),
-				    Randomizer::random()
-				};*/
-				vpl.vplSamples[i] = {
-				    sample[0],
-				    sample[1],
-				    sample[0] * std::sin(M_PI_TWO * sample[1]),
-				    sample[0] * std::cos(M_PI_TWO * sample[1])};
-				delete[] sample;
-			}
-
-			TextureParameters parameters;
-
-			parameters.format = TextureFormat::RGBA32;
-			parameters.wrap   = TextureWrap::ClampToBorder;
-
-			fluxTexture = Texture2D::create(SHADOW_SIZE, SHADOW_SIZE, nullptr, parameters);
-
-			worldTexture = Texture2D::create(SHADOW_SIZE, SHADOW_SIZE, nullptr, parameters);
-
-			normalTexture = Texture2D::create(SHADOW_SIZE, SHADOW_SIZE, nullptr, parameters);
-
-			fluxDepth = TextureDepth::create(SHADOW_SIZE, SHADOW_SIZE);
-
-			descriptorSets[1]->setUniformBufferData("VirtualPointLight", &vpl);
-		}
-	};
 
 	struct RenderGraph::ForwardData
 	{
@@ -427,11 +323,12 @@ namespace maple
 
 		TAAData()
 		{
+/*
 			taaShader        = Shader::create("shaders/TAA.shader");
 			taaDescriptorSet = DescriptorSet::create({0, taaShader.get()});
 
 			copyShader        = Shader::create("shaders/Copy.shader");
-			copyDescriptorSet = DescriptorSet::create({0, copyShader.get()});
+			copyDescriptorSet = DescriptorSet::create({0, copyShader.get()});*/
 		}
 	};
 
@@ -456,7 +353,6 @@ namespace maple
 
 		inline auto beginScene(Entity entity, ecs::World world)
 		{
-			
 		}
 
 		inline auto onRender(Entity entity, ecs::World world)
@@ -483,7 +379,6 @@ namespace maple
 		setScreenBufferSize(width, height);
 		gBuffer = std::make_shared<GBuffer>(width, height);
 		reset();
-		shadowData   = new ShadowData();
 		forwardData  = new ForwardData();
 		deferredData = new DeferredData();
 		previewData  = new PreviewData();
@@ -491,7 +386,6 @@ namespace maple
 		ssrData      = new SSRData();
 		taaData      = new TAAData();
 		envData      = new EnvironmentData();
-		rsmData      = new ReflectiveShadowData();
 		{
 			finalShader = Shader::create("shaders/ScreenPass.shader");
 			DescriptorInfo descriptorInfo{};
@@ -643,9 +537,11 @@ namespace maple
 
 		if (settings.renderShadow)
 		{
-			for (uint32_t i = 0; i < shadowData->shadowMapNum; i++)
+			/*auto &shadowData = scene->getGlobalComponent<component::ShadowMapData>();
+
+			for (uint32_t i = 0; i < shadowData.shadowMapNum; i++)
 			{
-				shadowData->cascadeCommandQueue[i].clear();
+				shadowData.cascadeCommandQueue[i].clear();
 			}
 
 			if (directionaLight)
@@ -656,17 +552,17 @@ namespace maple
 				{
 					shadowData->cascadeFrustums[i].from(shadowData->shadowProjView[i]);
 				}
-			}
+			}*/
 		}
 
 		if (rsmLighting)
 		{
 			if (static_cast<LightType>(rsmLighting->lightData.type) == LightType::DirectionalLight)
 			{
-				rsmData->descriptorSets[0]->setUniform("UniformBufferObject", "lightProjection", shadowData->shadowProjView, true);
+				//rsmData->descriptorSets[0]->setUniform("UniformBufferObject", "lightProjection", shadowData->shadowProjView, true);
 			}
 
-			if (static_cast<LightType>(rsmLighting->lightData.type) == LightType::SpotLight)
+			/*if (static_cast<LightType>(rsmLighting->lightData.type) == LightType::SpotLight)
 			{
 				constexpr float zNear                 = .01f;
 				constexpr float zFar                  = 96.0f;
@@ -677,41 +573,41 @@ namespace maple
 				rsmData->descriptorSets[0]->setUniform("UniformBufferObject", "lightProjection", &lightProj, true);
 				shadowData->shadowProjView[0] = lightProj;
 				shadowData->lightMatrix       = depthViewMatrix;
-			}
+			}*/
 
-			rsmData->descriptorSets[0]->setUniform("UniformBufferObject", "viewMatrix", &view);
-			rsmData->descriptorSets[1]->setUniform("UBO", "light", &rsmLighting->lightData);
+			//rsmData->descriptorSets[0]->setUniform("UniformBufferObject", "viewMatrix", &view);
+			//rsmData->descriptorSets[1]->setUniform("UBO", "light", &rsmLighting->lightData);
 		}
 
-		glm::mat4 *shadowTransforms = shadowData->shadowProjView;
+		/*glm::mat4 *shadowTransforms = shadowData->shadowProjView;
 		glm::vec4 *splitDepth       = shadowData->splitDepth;
 		glm::mat4  lightView        = shadowData->lightMatrix;
 
 		float maxShadowDistance = shadowData->maxShadowDistance;
 		float shadowMapSize     = shadowData->shadowMapSize;
 		float transitionFade    = shadowData->cascadeTransitionFade;
-		float shadowFade        = shadowData->shadowFade;
+		float shadowFade        = shadowData->shadowFade;*/
 
 		if (settings.render3D)
 		{
 			auto descriptorSet = settings.deferredRender ? deferredData->descriptorLightSet[0] : forwardData->descriptorSet[2];
 
 			descriptorSet->setUniform("UniformBufferLight", "viewMatrix", &view);
-			descriptorSet->setUniform("UniformBufferLight", "lightView", &lightView);
-			descriptorSet->setUniform("UniformBufferLight", "shadowTransform", shadowTransforms);
-			descriptorSet->setUniform("UniformBufferLight", "splitDepths", splitDepth);
+			//descriptorSet->setUniform("UniformBufferLight", "lightView", &lightView);
+			//descriptorSet->setUniform("UniformBufferLight", "shadowTransform", shadowTransforms);
+			//descriptorSet->setUniform("UniformBufferLight", "splitDepths", splitDepth);
 			descriptorSet->setUniform("UniformBufferLight", "biasMat", &forwardData->biasMatrix);
-			descriptorSet->setUniform("UniformBufferLight", "shadowMapSize", &shadowMapSize);
-			descriptorSet->setUniform("UniformBufferLight", "shadowFade", &shadowFade);
-			descriptorSet->setUniform("UniformBufferLight", "cascadeTransitionFade", &transitionFade);
+			//descriptorSet->setUniform("UniformBufferLight", "shadowMapSize", &shadowMapSize);
+			//descriptorSet->setUniform("UniformBufferLight", "shadowFade", &shadowFade);
+			/*descriptorSet->setUniform("UniformBufferLight", "cascadeTransitionFade", &transitionFade);
 			descriptorSet->setUniform("UniformBufferLight", "maxShadowDistance", &maxShadowDistance);
-			descriptorSet->setUniform("UniformBufferLight", "initialBias", &shadowData->initialBias);
+			descriptorSet->setUniform("UniformBufferLight", "initialBias", &shadowData->initialBias);*/
 
-			auto numShadows       = shadowData->shadowMapNum;
-			auto cubeMapMipLevels = envData->environmentMap ? envData->environmentMap->getMipMapLevels() - 1 : 0;
+			//auto numShadows       = shadowData->shadowMapNum;
+			//auto cubeMapMipLevels = envData->environmentMap ? envData->environmentMap->getMipMapLevels() - 1 : 0;
 
-			descriptorSet->setUniform("UniformBufferLight", "lightCount", &numLights);
-			descriptorSet->setUniform("UniformBufferLight", "shadowCount", &numShadows);
+			//descriptorSet->setUniform("UniformBufferLight", "lightCount", &numLights);
+			//descriptorSet->setUniform("UniformBufferLight", "shadowCount", &numShadows);
 			if (forwardData->renderMode >= 11)
 			{
 				const int32_t i = 11;
@@ -722,12 +618,12 @@ namespace maple
 				descriptorSet->setUniform("UniformBufferLight", "mode", &forwardData->renderMode);
 			}
 
-			descriptorSet->setUniform("UniformBufferLight", "cubeMapMipLevels", &cubeMapMipLevels);
+			//descriptorSet->setUniform("UniformBufferLight", "cubeMapMipLevels", &cubeMapMipLevels);
 			int32_t ssao = ssaoData->enable ? 1 : 0;
 			descriptorSet->setUniform("UniformBufferLight", "ssaoEnable", &ssao);
 
 			descriptorSet->setTexture("uPreintegratedFG", forwardData->preintegratedFG);
-			descriptorSet->setTexture("uShadowMap", shadowData->shadowTexture);
+			//descriptorSet->setTexture("uShadowMap", shadowData->shadowTexture);
 			descriptorSet->setTexture("uPrefilterMap", envData->environmentMap);
 			descriptorSet->setTexture("uIrradianceMap", envData->irradianceMap);
 		}
@@ -754,7 +650,7 @@ namespace maple
 
 				if (directionaLight)
 				{
-					for (uint32_t i = 0; i < shadowData->shadowMapNum; i++)
+					/*for (uint32_t i = 0; i < shadowData->shadowMapNum; i++)
 					{
 						//auto inside = shadowData->cascadeFrustums[i].isInsideFast(bbCopy);
 
@@ -766,15 +662,16 @@ namespace maple
 							cmd.material  = mesh.getMesh()->getMaterial() ? mesh.getMesh()->getMaterial().get() : settings.deferredRender ? deferredData->defaultMaterial.get() :
                                                                                                                                             forwardData->defaultMaterial.get();
 						}
-					}
+					}*/
 				}
 				else if (rsmLighting)
 				{
-					auto &cmd     = shadowData->cascadeCommandQueue[0].emplace_back();
+				/*	auto &cmd     = shadowData->cascadeCommandQueue[0].emplace_back();
 					cmd.mesh      = mesh.getMesh().get();
 					cmd.transform = worldTransform;
 					cmd.material  = mesh.getMesh()->getMaterial() ? mesh.getMesh()->getMaterial().get() : settings.deferredRender ? deferredData->defaultMaterial.get() :
                                                                                                                                     forwardData->defaultMaterial.get();
+*/
 				}
 
 				{
@@ -960,8 +857,6 @@ namespace maple
 					executeSSAOBlurPass();
 				}
 
-				executeRSMPass();
-
 				executeDeferredLightPass();
 			}
 			else
@@ -994,6 +889,7 @@ namespace maple
 		{
 			render->renderScene();
 		}
+
 		if (ssrData->enable)
 		{
 			executeReflectionPass();
@@ -1124,12 +1020,12 @@ namespace maple
 
 		ImGui::TextUnformatted("Shadow Renderer");
 
-		ImGui::DragFloat("Initial Bias", &shadowData->initialBias, 0.00005f, 0.0f, 1.0f, "%.6f");
+	/*	ImGui::DragFloat("Initial Bias", &shadowData->initialBias, 0.00005f, 0.0f, 1.0f, "%.6f");
 		ImGui::DragFloat("Light Size", &shadowData->lightSize, 0.00005f, 0.0f, 10.0f);
 		ImGui::DragFloat("Max Shadow Distance", &shadowData->maxShadowDistance, 0.05f, 0.0f, 10000.0f);
 		ImGui::DragFloat("Shadow Fade", &shadowData->shadowFade, 0.0005f, 0.0f, 500.0f);
 		ImGui::DragFloat("Cascade Transition Fade", &shadowData->cascadeTransitionFade, 0.0005f, 0.0f, 5.0f);
-		ImGui::DragFloat("Cascade Split Lambda", &shadowData->cascadeSplitLambda, 0.005f, 0.0f, 3.0f);
+		ImGui::DragFloat("Cascade Split Lambda", &shadowData->cascadeSplitLambda, 0.005f, 0.0f, 3.0f);*/
 
 		ImGui::Separator();
 
@@ -1175,9 +1071,6 @@ namespace maple
 						case 14:
 							descriptorSet->setTexture("uOutputSampler", gBuffer->getBuffer(GBufferTextures::PSEUDO_SKY));
 							break;
-						case 15:
-							descriptorSet->setTexture("uOutputSampler", rsmData->fluxTexture);
-							break;
 					}
 				}
 			}
@@ -1207,25 +1100,6 @@ namespace maple
 
 		ImGui::Separator();
 
-		ImGui::TextUnformatted("Global Illumination");
-		ImGui::Columns(2);
-		ImGuiHelper::property("RSM", rsmData->enable);
-
-		if (ImGuiHelper::property("RsmIntensity", rsmData->vpl.rsmIntensity, 0.f, 100.f, ImGuiHelper::PropertyFlag::InputFloat))
-		{
-			rsmData->descriptorSets[1]->setUniform("VirtualPointLight", "rsmIntensity", &rsmData->vpl.rsmIntensity);
-		}
-		if (ImGuiHelper::property("RsmRMax", rsmData->vpl.rsmRMax, 0.f, 1.f, ImGuiHelper::PropertyFlag::InputFloat, "%.3f", 0.001))
-		{
-			rsmData->descriptorSets[1]->setUniform("VirtualPointLight", "rsmRMax", &rsmData->vpl.rsmRMax);
-		}
-
-		if (ImGuiHelper::property("NumberOfSamples", rsmData->vpl.numberOfSamples, 1.f, ReflectiveShadowData::NUM_RSM, ImGuiHelper::PropertyFlag::InputFloat))
-		{
-			rsmData->descriptorSets[1]->setUniform("VirtualPointLight", "numberOfSamples", &rsmData->vpl.numberOfSamples);
-		}
-
-		ImGui::Separator();
 		ImGui::Columns(2);
 
 		for (auto shader : Application::getCache()->getCache())
@@ -1256,15 +1130,6 @@ namespace maple
 
 		ImGui::Separator();
 		ImGui::PopStyleVar();
-
-		ImGui::Separator();
-
-		if (rsmData->fluxTexture)
-		{
-			ImGuiHelper::image(rsmData->fluxTexture.get(), {64, 64});
-			ImGuiHelper::image(rsmData->worldTexture.get(), {64, 64});
-			ImGuiHelper::image(rsmData->normalTexture.get(), {64, 64});
-		}
 
 		for (auto render : renderers)
 		{
@@ -1324,7 +1189,7 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 
-		shadowData->descriptorSet[0]->setUniform("UniformBufferObject", "projView", shadowData->shadowProjView);
+		/*shadowData->descriptorSet[0]->setUniform("UniformBufferObject", "projView", shadowData->shadowProjView);
 		shadowData->descriptorSet[0]->update();
 
 		PipelineInfo pipelineInfo;
@@ -1359,69 +1224,7 @@ namespace maple
 				Renderer::drawMesh(getCommandBuffer(), pipeline.get(), mesh);
 			}
 			pipeline->end(getCommandBuffer());
-		}
-	}
-
-	auto RenderGraph::executeRSMPass() -> void
-	{
-		PROFILE_FUNCTION();
-		if (!rsmData->enable)
-			return;
-
-		auto descriptorSet = rsmData->descriptorSets[1];
-
-		descriptorSet->update();
-		rsmData->descriptorSets[0]->update();
-
-		auto commandBuffer = getCommandBuffer();
-
-		PipelineInfo pipeInfo;
-		pipeInfo.shader              = rsmData->shader;
-		pipeInfo.transparencyEnabled = false;
-		pipeInfo.depthBiasEnabled    = false;
-		pipeInfo.clearTargets        = true;
-		pipeInfo.depthTarget         = rsmData->fluxDepth;
-		pipeInfo.colorTargets[0]     = rsmData->fluxTexture;
-		pipeInfo.colorTargets[1]     = rsmData->worldTexture;
-		pipeInfo.colorTargets[2]     = rsmData->normalTexture;
-		pipeInfo.clearColor          = {0, 0, 0, 0};
-
-		auto pipeline = Pipeline::get(pipeInfo);
-
-		if (commandBuffer)
-			commandBuffer->bindPipeline(pipeline.get());
-		else
-			pipeline->bind(getCommandBuffer());
-
-		for (auto &command : shadowData->cascadeCommandQueue[0])
-		{
-			Mesh *      mesh          = command.mesh;
-			const auto &trans         = command.transform;
-			auto &      pushConstants = rsmData->shader->getPushConstants()[0];
-
-			pushConstants.setValue("transform", (void *) &trans);
-
-			rsmData->shader->bindPushConstants(getCommandBuffer(), pipeline.get());
-			if (command.material != nullptr)
-			{
-				descriptorSet->setUniform("UBO", "albedoColor", &command.material->getProperties().albedoColor);
-				descriptorSet->setUniform("UBO", "usingAlbedoMap", &command.material->getProperties().usingAlbedoMap);
-				descriptorSet->setTexture("uDiffuseMap", command.material->getTextures().albedo);
-				descriptorSet->update();
-			}
-
-			Renderer::bindDescriptorSets(pipeline.get(), getCommandBuffer(), 0, rsmData->descriptorSets);
-			Renderer::drawMesh(getCommandBuffer(), pipeline.get(), mesh);
-		}
-
-		if (commandBuffer)
-			commandBuffer->unbindPipeline();
-		else
-			pipeline->end(getCommandBuffer());
-	}
-
-	auto RenderGraph::executeSkyboxPass() -> void
-	{
+		}*/
 	}
 
 	auto RenderGraph::executeDeferredOffScreenPass() -> void
@@ -1493,17 +1296,18 @@ namespace maple
 		descriptorSet->setTexture("uPBRSampler", gBuffer->getBuffer(GBufferTextures::PBR));
 		descriptorSet->setTexture("uSSAOSampler", gBuffer->getBuffer(GBufferTextures::SSAO_BLUR));
 		descriptorSet->setTexture("uDepthSampler", gBuffer->getDepthBuffer());
-		descriptorSet->setTexture("uShadowMap", shadowData->shadowTexture);
+	//	descriptorSet->setTexture("uShadowMap", shadowData->shadowTexture);
 
 		descriptorSet->setTexture("uIrradianceMap", envData->irradianceMap);
 		descriptorSet->setTexture("uPreintegratedFG", forwardData->preintegratedFG);
 		descriptorSet->setTexture("uPrefilterMap", envData->environmentMap);
-		if (rsmData->enable)
+
+		/*	if (rsmData->enable)
 		{
 			descriptorSet->setTexture("uFluxSampler", rsmData->fluxTexture);
 			descriptorSet->setTexture("uRSMWorldSampler", rsmData->worldTexture);
 			descriptorSet->setTexture("uRSMNormalSampler", rsmData->normalTexture);
-		}
+		}*/
 
 		descriptorSet->update();
 
@@ -1710,84 +1514,6 @@ namespace maple
 				commandBuffer->unbindPipeline();
 			else
 				pipeline->end(commandBuffer);
-		}
-	}
-
-	auto RenderGraph::updateCascades(Scene *scene, Light *light) -> void
-	{
-		PROFILE_FUNCTION();
-		auto camera = scene->getCamera();
-		if (camera.first == nullptr || camera.second == nullptr)
-			return;
-
-		float cascadeSplits[SHADOWMAP_MAX];
-
-		float nearClip  = camera.first->getNear();
-		float farClip   = camera.first->getFar();
-		float clipRange = farClip - nearClip;
-
-		float minZ  = nearClip;
-		float maxZ  = nearClip + clipRange;
-		float range = maxZ - minZ;
-		float ratio = maxZ / minZ;
-		// Calculate split depths based on view camera frustum
-		// Based on method presented in https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch10.html
-		//#pragma omp parallel for
-		for (uint32_t i = 0; i < shadowData->shadowMapNum; i++)
-		{
-			float p          = static_cast<float>(i + 1) / static_cast<float>(shadowData->shadowMapNum);
-			float log        = minZ * std::pow(ratio, p);
-			float uniform    = minZ + range * p;
-			float d          = shadowData->cascadeSplitLambda * (log - uniform) + uniform;
-			cascadeSplits[i] = (d - nearClip) / clipRange;
-		}
-
-		//cascadeSplits[3] = 0.35f;
-
-		for (uint32_t i = 0; i < shadowData->shadowMapNum; i++)
-		{
-			PROFILE_SCOPE("Create Cascade");
-			float splitDist     = cascadeSplits[i];
-			float lastSplitDist = cascadeSplits[i];
-
-			auto frum = camera.first->getFrustum(camera.second->getWorldMatrixInverse());
-
-			glm::vec3 *frustumCorners = frum.vertices;
-
-			for (uint32_t i = 0; i < 4; i++)
-			{
-				glm::vec3 dist        = frustumCorners[i + 4] - frustumCorners[i];
-				frustumCorners[i + 4] = frustumCorners[i] + (dist * splitDist);
-				frustumCorners[i]     = frustumCorners[i] + (dist * lastSplitDist);
-			}
-
-			glm::vec3 frustumCenter = glm::vec3(0.0f);
-			for (uint32_t i = 0; i < 8; i++)
-			{
-				frustumCenter += frustumCorners[i];
-			}
-			frustumCenter /= 8.0f;
-
-			float radius = 0.0f;
-			for (uint32_t i = 0; i < 8; i++)
-			{
-				float distance = glm::length(frustumCorners[i] - frustumCenter);
-				radius         = glm::max(radius, distance);
-			}
-			radius = std::ceil(radius * 16.0f) / 16.0f;
-
-			glm::vec3 maxExtents = glm::vec3(radius);
-			glm::vec3 minExtents = -maxExtents;
-
-			glm::vec3 lightDir         = glm::normalize(glm::vec3(light->lightData.direction) * -1.f);
-			glm::mat4 lightViewMatrix  = glm::lookAt(frustumCenter - lightDir * -minExtents.z, frustumCenter, maple::UP);
-			glm::mat4 lightOrthoMatrix = glm::ortho(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, 0.0f, maxExtents.z - minExtents.z);
-
-			shadowData->splitDepth[i]     = glm::vec4(camera.first->getNear() + splitDist * clipRange) * -1.f;
-			shadowData->shadowProjView[i] = lightOrthoMatrix * lightViewMatrix;
-
-			if (i == 0)
-				shadowData->lightMatrix = lightViewMatrix;
 		}
 	}
 

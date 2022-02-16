@@ -27,7 +27,7 @@ namespace maple
 	const ImVec4 SelectedColor(0.28f, 0.56f, 0.9f, 1.0f);
 	DisplayZeroWindow::DisplayZeroWindow()
 	{
-		title = "Display";
+		
 	}
 
 	auto DisplayZeroWindow::onImGui() -> void
@@ -39,7 +39,7 @@ namespace maple
 		auto flags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
 		ImGui::SetNextWindowBgAlpha(0.0f);
 		auto currentScene = Application::get()->getSceneManager()->getCurrentScene();
-		if (ImGui::Begin(title.c_str(), &active, flags))
+		if (ImGui::Begin("Display", &active, flags))
 		{
 			Camera *camera     = nullptr;
 			auto &  registry   = currentScene->getRegistry();

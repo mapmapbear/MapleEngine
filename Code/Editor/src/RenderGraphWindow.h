@@ -8,13 +8,16 @@
 
 #include "EditorWindow.h"
 
+#include <IconsMaterialDesignIcons.h>
+
 namespace maple
 {
-	class RenderCapture : public EditorWindow
+	class RenderGraphWindow : public EditorWindow
 	{
 	  public:
-		static constexpr char *STATIC_NAME = ICON_MDI_MESSAGE_SETTINGS "Render Capture";
-		RenderCapture();
+		static constexpr char *STATIC_NAME = ICON_MDI_GRAPHQL "Render Graph";
+
+		RenderGraphWindow();
 		virtual auto onImGui() -> void;
 	  private:
 	};

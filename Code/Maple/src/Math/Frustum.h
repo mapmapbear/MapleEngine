@@ -32,9 +32,14 @@ namespace maple
 
 		auto isInside(const glm::vec3 &pos) const -> bool;
 
-		inline auto& getPlane(FrustumPlane id) const
+		inline auto &getPlane(FrustumPlane id) const
 		{
 			return planes[id];
+		}
+
+		inline auto getVertices() -> glm::vec3 *
+		{
+			return vertices;
 		}
 
 	  private:

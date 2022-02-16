@@ -14,11 +14,11 @@ namespace maple
 {
 	RenderCapture::RenderCapture()
 	{
-		title = "RenderCapture";
+	
 	}
 	auto RenderCapture::onImGui() -> void
 	{
-		ImGui::Begin(title.c_str(), &active);
+		ImGui::Begin(STATIC_NAME, &active);
 		{
 			Application::getRenderGraph()->onImGui();
 			ImGui::Separator();

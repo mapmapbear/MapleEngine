@@ -34,7 +34,6 @@ namespace maple
 
 	AssetsWindow::AssetsWindow()
 	{
-		title       = "Assets";
 		baseDirPath = ".";
 		readDirectory(baseDirPath, &baseProjectDir);
 		basePathLen                 = baseDirPath.length();
@@ -47,7 +46,7 @@ namespace maple
 	auto AssetsWindow::onImGui() -> void
 	{
 		auto &editor = static_cast<Editor &>(*Application::get());
-		ImGui::Begin(title.c_str());
+		ImGui::Begin(STATIC_NAME);
 		{
 			ImGui::Columns(2, "AB", true);
 

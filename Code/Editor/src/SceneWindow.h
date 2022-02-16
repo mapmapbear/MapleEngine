@@ -18,6 +18,8 @@ namespace maple
 	class SceneWindow : public EditorWindow
 	{
 	  public:
+		static constexpr char *STATIC_NAME = ICON_MDI_GAMEPAD_VARIANT " Scene";
+
 		SceneWindow();
 		virtual auto onImGui() -> void;
 		virtual auto resize(uint32_t width, uint32_t height) -> void;
@@ -27,7 +29,7 @@ namespace maple
 	  private:
 		auto drawGizmos(float width, float height, float xpos, float ypos, Scene *scene) -> bool;
 
-		auto drawToolbarOverlay(glm::quat & quat) -> bool;
+		auto drawToolbarOverlay(glm::quat &quat) -> bool;
 
 		auto draw2DGrid(ImDrawList *  drawList,
 		                const ImVec2 &cameraPos,

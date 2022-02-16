@@ -136,7 +136,6 @@ namespace maple
 							entt::entity e;
 							archive(cereal::make_nvp(name, e));
 							v->setHandle(e);
-							v->setScene(scene);
 						}
 					}
 				}

@@ -5,6 +5,7 @@
 #include "Engine/Core.h"
 #include "RHI/Definitions.h"
 #include <cstdint>
+#include <functional>
 #include <glm/glm.hpp>
 #include <memory>
 #include <vector>
@@ -34,6 +35,7 @@ namespace maple
 		virtual auto renderScene() -> void                                       = 0;
 		virtual auto beginScene(Scene *scene, const glm::mat4 &projView) -> void = 0;
 
+
 		virtual auto beginScenePreview(Scene *scene, const glm::mat4 &projView) -> void{};
 		virtual auto renderPreviewScene() -> void{};
 		virtual auto onResize(uint32_t width, uint32_t height) -> void{};
@@ -46,7 +48,7 @@ namespace maple
 
 		static auto bindDescriptorSets(Pipeline *pipeline, CommandBuffer *cmdBuffer, uint32_t dynamicOffset, const std::vector<std::shared_ptr<DescriptorSet>> &descriptorSets) -> void;
 		static auto drawIndexed(CommandBuffer *commandBuffer, DrawType type, uint32_t count, uint32_t start = 0) -> void;
-		static auto dispatch(CommandBuffer *commandBuffer, uint32_t x,uint32_t y,uint32_t z) -> void;
+		static auto dispatch(CommandBuffer *commandBuffer, uint32_t x, uint32_t y, uint32_t z) -> void;
 		static auto drawMesh(CommandBuffer *cmdBuffer, Pipeline *pipeline, Mesh *mesh) -> void;
 
 		auto getCommandBuffer() -> CommandBuffer *;

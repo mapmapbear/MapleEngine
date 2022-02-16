@@ -66,7 +66,7 @@ namespace maple
 		renderGraph->init(window->getWidth(), window->getHeight());
 
 		{
-			auto splashTexture = Texture2D::create("splash", "textures/maple-alpha.png");
+		/*	auto splashTexture = Texture2D::create("splash", "textures/maple-alpha.png");
 
 			renderDevice->begin();
 			renderDevice->drawSplashScreen(splashTexture);
@@ -74,14 +74,13 @@ namespace maple
 
 			//To Display the window
 			window->onUpdate();
-			window->swapBuffers();
+			window->swapBuffers();*/
 		}
 
 		appDelegate->onInit();
 
 		systemManager->addSystem<LuaSystem>()->onInit();
 		systemManager->addSystem<MonoSystem>()->onInit();
-
 
 		imGuiManager = systemManager->addSystem<ImGuiSystem>(false);
 		imGuiManager->onInit();

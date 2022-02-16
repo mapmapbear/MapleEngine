@@ -145,7 +145,7 @@ namespace maple
 			return i;
 		}
 
-		inline auto i4vecSum(int32_t n, int a[]) -> int32_t
+		inline auto i4vecSum(int32_t n, int32_t a[]) -> int32_t
 		{
 			int32_t sum = 0;
 			for (int32_t i = 0; i < n; i++)

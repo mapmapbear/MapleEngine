@@ -68,7 +68,6 @@ namespace maple
 	const ImVec4 SelectedColor(0.28f, 0.56f, 0.9f, 1.0f);
 	SceneWindow::SceneWindow()
 	{
-		title = "Scene";
 	}
 
 	auto SceneWindow::onImGui() -> void
@@ -80,7 +79,7 @@ namespace maple
 		ImGui::SetNextWindowBgAlpha(0.0f);
 
 		auto currentScene = Application::get()->getSceneManager()->getCurrentScene();
-		if (ImGui::Begin(title.c_str(), &active, flags))
+		if (ImGui::Begin(STATIC_NAME, &active, flags))
 		{
 			Camera *   camera    = nullptr;
 			Transform *transform = nullptr;
@@ -178,8 +177,8 @@ namespace maple
 					}
 				}
 			}
-			ImGui::End();
 		}
+		ImGui::End();
 		ImGui::PopStyleVar();
 	}
 

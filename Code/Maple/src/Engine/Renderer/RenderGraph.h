@@ -45,8 +45,6 @@ namespace maple
 		auto onImGui() -> void;
 		auto executeForwardPass() -> void;
 		auto executeShadowPass() -> void;
-		auto executeRSMPass() -> void;
-		auto executeSkyboxPass() -> void;
 
 		auto executeDeferredOffScreenPass() -> void;
 		auto executeDeferredLightPass() -> void;
@@ -59,8 +57,6 @@ namespace maple
 		auto executeTAAPass() -> void;
 
 		auto executePreviewPasss() -> void;
-
-		auto updateCascades(Scene *scene, Light *light) -> void;
 
 		auto setRenderTarget(const std::shared_ptr<Texture> &texture, bool rebuildFramebuffer = true) -> void;
 
@@ -105,7 +101,6 @@ namespace maple
 		auto executeFinalPass() -> void;
 		struct Config2D;
 		struct ShadowData;
-		struct ReflectiveShadowData;
 		struct ForwardData;
 		struct Renderer2DData;
 		struct DeferredData;
@@ -137,7 +132,6 @@ namespace maple
 		SSRData *             ssrData      = nullptr;
 		TAAData *             taaData      = nullptr;
 		EnvironmentData *     envData      = nullptr;
-		ReflectiveShadowData *rsmData      = nullptr;
 
 		std::shared_ptr<Shader>        finalShader;
 		std::shared_ptr<DescriptorSet> finalDescriptorSet;

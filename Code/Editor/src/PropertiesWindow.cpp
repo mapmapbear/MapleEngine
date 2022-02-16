@@ -718,7 +718,7 @@ namespace maple
 	constexpr size_t INPUT_BUFFER = 256;
 	PropertiesWindow::PropertiesWindow()
 	{
-		title = "Properties";
+		
 	}
 
 	auto PropertiesWindow::onImGui() -> void
@@ -732,7 +732,7 @@ namespace maple
 			selectedResource = editor.getSelectResource();
 		}
 
-		if (ImGui::Begin(title.c_str(), &active))
+		if (ImGui::Begin(STATIC_NAME, &active))
 		{
 			if (selected != entt::null)
 			{
