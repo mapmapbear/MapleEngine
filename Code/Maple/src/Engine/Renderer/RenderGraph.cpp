@@ -30,9 +30,11 @@
 
 #include "AtmosphereRenderer.h"
 #include "CloudRenderer.h"
+#include "DeferredOffScreenRenderer.h"
 #include "Engine/Vientiane/ReflectiveShadowMap.h"
 #include "PostProcessRenderer.h"
 #include "Renderer2D.h"
+#include "RendererData.h"
 #include "SkyboxRenderer.h"
 
 #include "Others/Randomizer.h"
@@ -323,7 +325,7 @@ namespace maple
 
 		TAAData()
 		{
-/*
+			/*
 			taaShader        = Shader::create("shaders/TAA.shader");
 			taaDescriptorSet = DescriptorSet::create({0, taaShader.get()});
 
@@ -421,8 +423,12 @@ namespace maple
 		Application::getExecutePoint()->registerQueue(beginQ);
 		Application::getExecutePoint()->registerQueue(renderQ);
 
-		Application::getExecutePoint()->registerWithinQueue<shadow_map_pass::beginScene>(beginQ);
-		Application::getExecutePoint()->registerWithinQueue<shadow_map_pass::onRender>(renderQ);
+		//Application::getExecutePoint()->registerWithinQueue<shadow_map_pass::beginScene>(beginQ);
+		//Application::getExecutePoint()->registerWithinQueue<shadow_map_pass::onRender>(renderQ);
+
+		Application::getExecutePoint()->registerGlobalComponent<component::CameraView>();
+
+		deferred_offscreen::registerDeferredOffScreenRenderer(beginQ, renderQ, Application::getExecutePoint());
 	}
 
 	auto RenderGraph::beginScene(Scene *scene) -> void
@@ -435,6 +441,15 @@ namespace maple
 		{
 			return;
 		}
+
+		auto &cameraView    = scene->getGlobalComponent<component::CameraView>();
+		cameraView.proj     = camera.first->getProjectionMatrix();
+		cameraView.view     = camera.second->getWorldMatrixInverse();
+		cameraView.projView = cameraView.proj * cameraView.view;
+		cameraView.nearPlane = camera.first->getNear();
+		cameraView.farPlane  = camera.first->getFar();
+		cameraView.frustum   = camera.first->getFrustum(cameraView.view);
+
 
 		transform = camera.second;
 
@@ -449,10 +464,10 @@ namespace maple
 
 		if (settings.render3D)
 		{
-			auto descriptorSet = settings.deferredRender ? deferredData->descriptorColorSet[0] : forwardData->descriptorSet[0];
+			/*auto descriptorSet = settings.deferredRender ? deferredData->descriptorColorSet[0] : forwardData->descriptorSet[0];
 			descriptorSet->setUniform("UniformBufferObject", "projView", &projView);
 			descriptorSet->setUniform("UniformBufferObject", "view", &view);
-			descriptorSet->setUniform("UniformBufferObject", "projViewOld", &camera.first->getProjectionMatrixOld());
+			descriptorSet->setUniform("UniformBufferObject", "projViewOld", &camera.first->getProjectionMatrixOld());*/
 
 			stencilDescriptorSet->setUniform("UniformBufferObject", "projView", &projView);
 			const auto nearPlane = camera.first->getNear();
@@ -469,10 +484,11 @@ namespace maple
 				ssrData->ssrDescriptorSet->setUniform("UniformBufferObject", "projection", &proj);
 			}
 
-			deferredData->descriptorColorSet[2]->setUniform("UBO", "view", &view);
+			/*deferredData->descriptorColorSet[2]->setUniform("UBO", "view", &view);
 			deferredData->descriptorColorSet[2]->setUniform("UBO", "nearPlane", &nearPlane);
-			deferredData->descriptorColorSet[2]->setUniform("UBO", "farPlane", &farPlane);
+			deferredData->descriptorColorSet[2]->setUniform("UBO", "farPlane", &farPlane);*/
 		}
+
 		auto envView = scene->getRegistry().view<Environment>();
 		if (envView.size() > 0)
 		{
@@ -499,7 +515,7 @@ namespace maple
 			forwardData->frustum = camera.first->getFrustum(view);
 			{
 				PROFILE_SCOPE("Get Light");
-				auto group = registry.group<Light>(entt::get<Transform>);
+				auto group = registry.group<Light,Transform>();
 
 				for (auto &lightEntity : group)
 				{
@@ -666,7 +682,7 @@ namespace maple
 				}
 				else if (rsmLighting)
 				{
-				/*	auto &cmd     = shadowData->cascadeCommandQueue[0].emplace_back();
+					/*	auto &cmd     = shadowData->cascadeCommandQueue[0].emplace_back();
 					cmd.mesh      = mesh.getMesh().get();
 					cmd.transform = worldTransform;
 					cmd.material  = mesh.getMesh()->getMaterial() ? mesh.getMesh()->getMaterial().get() : settings.deferredRender ? deferredData->defaultMaterial.get() :
@@ -811,7 +827,7 @@ namespace maple
 		}
 	}
 
-	auto RenderGraph::onRender() -> void
+	auto RenderGraph::onRender(Scene *scene) -> void
 	{
 		PROFILE_FUNCTION();
 
@@ -867,27 +883,27 @@ namespace maple
 
 		if (auto render = renderers[static_cast<int32_t>(RenderId::Render2D)]; render != nullptr)
 		{
-			render->renderScene();
+			render->renderScene(scene);
 		}
 
 		if (auto render = renderers[static_cast<int32_t>(RenderId::Geometry)]; render != nullptr)
 		{
-			render->renderScene();
+			render->renderScene(scene);
 		}
 
 		if (auto render = renderers[static_cast<int32_t>(RenderId::Atmosphere)]; render != nullptr)
 		{
-			render->renderScene();
+			render->renderScene(scene);
 		}
 
 		if (auto render = renderers[static_cast<int32_t>(RenderId::Skybox)]; render != nullptr)
 		{
-			render->renderScene();
+			render->renderScene(scene);
 		}
 
 		if (auto render = renderers[static_cast<int32_t>(RenderId::Cloud)]; render != nullptr)
 		{
-			render->renderScene();
+			render->renderScene(scene);
 		}
 
 		if (ssrData->enable)
@@ -897,12 +913,12 @@ namespace maple
 
 		if (auto render = renderers[static_cast<int32_t>(RenderId::GridRender)]; render != nullptr)
 		{
-			render->renderScene();
+			render->renderScene(scene);
 		}
 
 		if (auto render = renderers[static_cast<int32_t>(RenderId::PostProcess)]; render != nullptr)
 		{
-			render->renderScene();
+			render->renderScene(scene);
 		}
 
 		executeFinalPass();
@@ -1020,7 +1036,7 @@ namespace maple
 
 		ImGui::TextUnformatted("Shadow Renderer");
 
-	/*	ImGui::DragFloat("Initial Bias", &shadowData->initialBias, 0.00005f, 0.0f, 1.0f, "%.6f");
+		/*	ImGui::DragFloat("Initial Bias", &shadowData->initialBias, 0.00005f, 0.0f, 1.0f, "%.6f");
 		ImGui::DragFloat("Light Size", &shadowData->lightSize, 0.00005f, 0.0f, 10.0f);
 		ImGui::DragFloat("Max Shadow Distance", &shadowData->maxShadowDistance, 0.05f, 0.0f, 10000.0f);
 		ImGui::DragFloat("Shadow Fade", &shadowData->shadowFade, 0.0005f, 0.0f, 500.0f);
@@ -1290,13 +1306,13 @@ namespace maple
 		descriptorSet->setTexture("uPositionSampler", gBuffer->getBuffer(GBufferTextures::POSITION));
 		descriptorSet->setTexture("uNormalSampler", gBuffer->getBuffer(GBufferTextures::NORMALS));
 
-		descriptorSet->setTexture("uViewPositionSampler", gBuffer->getBuffer(GBufferTextures::VIEW_POSITION));
-		descriptorSet->setTexture("uViewNormalSampler", gBuffer->getBuffer(GBufferTextures::VIEW_NORMALS));
+		//descriptorSet->setTexture("uViewPositionSampler", gBuffer->getBuffer(GBufferTextures::VIEW_POSITION));
+		//descriptorSet->setTexture("uViewNormalSampler", gBuffer->getBuffer(GBufferTextures::VIEW_NORMALS));
 
 		descriptorSet->setTexture("uPBRSampler", gBuffer->getBuffer(GBufferTextures::PBR));
 		descriptorSet->setTexture("uSSAOSampler", gBuffer->getBuffer(GBufferTextures::SSAO_BLUR));
 		descriptorSet->setTexture("uDepthSampler", gBuffer->getDepthBuffer());
-	//	descriptorSet->setTexture("uShadowMap", shadowData->shadowTexture);
+		//	descriptorSet->setTexture("uShadowMap", shadowData->shadowTexture);
 
 		descriptorSet->setTexture("uIrradianceMap", envData->irradianceMap);
 		descriptorSet->setTexture("uPreintegratedFG", forwardData->preintegratedFG);

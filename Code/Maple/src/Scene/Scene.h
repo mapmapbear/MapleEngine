@@ -121,7 +121,7 @@ namespace maple
 		template <typename... Components>
 		inline auto addGlobalComponent()
 		{
-			(getRegistry().emplace<Components>(globalEntity.getHandle())...);
+			(getRegistry().emplace<Components>(globalEntity.getHandle());...);
 		}
 
 		template <typename Component>

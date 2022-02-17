@@ -116,7 +116,7 @@ namespace maple
 		gbuffer    = buffer;
 	}
 
-	auto SkyboxRenderer::renderScene() -> void
+	auto SkyboxRenderer::renderScene(Scene *scene) -> void
 	{
 		PROFILE_FUNCTION();
 		GPUProfile("SkyBox Pass");

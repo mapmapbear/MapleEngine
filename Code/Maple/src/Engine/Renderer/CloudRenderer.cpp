@@ -181,7 +181,7 @@ namespace maple
 		weatherPass->executeWorley3D(getCommandBuffer());
 	}
 
-	auto CloudRenderer::renderScene() -> void
+	auto CloudRenderer::renderScene(Scene *scene) -> void
 	{
 		PROFILE_FUNCTION();
 

@@ -18,14 +18,13 @@ namespace maple
 	class IndexBuffer;
 	class Texture;
 
-
 	class MAPLE_EXPORT Renderer2D : public Renderer
 	{
 	  public:
 		Renderer2D(bool enableDepth = false);
 		~Renderer2D();
 		auto init(const std::shared_ptr<GBuffer> &buffer) -> void override;
-		auto renderScene() -> void override;
+		auto renderScene(Scene *scene) -> void override;
 		auto beginScene(Scene *scene, const glm::mat4 &projView) -> void override;
 		auto setRenderTarget(std::shared_ptr<Texture> texture, bool rebuildFramebuffer) -> void override;
 

@@ -186,6 +186,12 @@ namespace maple
 	{
 		bool  resized = false;
 		auto &editor  = *static_cast<Editor *>(Application::get());
+
+		if (ImGui::IsMouseDragging(ImGuiMouseButton_Left))
+		{
+			return; // avoid to allocate framebuffer too many.
+		}
+
 		if (this->width != width || this->height != height)
 		{
 			resized      = true;
@@ -201,11 +207,9 @@ namespace maple
 				previewTexture->setName("PreviewTexture");
 			}
 			editor.getCamera()->setAspectRatio(this->width / (float) this->height);
-			//editor.getGraphicsContext()->waitIdle();
 			previewTexture->buildTexture(TextureFormat::RGBA8, this->width, this->height, false, false, false);
 			editor.getRenderGraph()->setRenderTarget(previewTexture);
 			editor.getRenderGraph()->onResize(this->width, this->height);
-			//editor.getGraphicsContext()->waitIdle();
 		}
 	}
 

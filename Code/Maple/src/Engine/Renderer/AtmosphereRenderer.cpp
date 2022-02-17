@@ -70,7 +70,7 @@ namespace maple
 		gbuffer = buffer;
 	}
 
-	auto AtmosphereRenderer::renderScene() -> void
+	auto AtmosphereRenderer::renderScene(Scene *scene) -> void
 	{
 		PROFILE_FUNCTION();
 		if (data->pipeline)

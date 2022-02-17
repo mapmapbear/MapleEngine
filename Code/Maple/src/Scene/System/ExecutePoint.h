@@ -6,6 +6,7 @@
 #include "Engine/Core.h"
 #include "ISystem.h"
 #include <ecs/SystemBuilder.h>
+#include "Engine/Profiler.h"
 
 namespace maple
 {
@@ -17,6 +18,14 @@ namespace maple
 		inline auto registerQueue(ExecuteQueue &queue)
 		{
 			graph.emplace_back(&queue);
+		}
+
+		template <typename Component>
+		inline auto registerGlobalComponent() -> void
+		{
+			factoryQueue.emplace_back([](Scene *scene) {
+				scene->template getGlobalComponent<Component>();
+			});
 		}
 
 		template <auto System>
@@ -31,10 +40,11 @@ namespace maple
 			expand(ecs::FunctionConstant<System>{}, queue);
 		}
 
-		auto onInit() -> void override
-		{}
+		inline auto onInit() -> void override
+		{
+		}
 
-		auto onUpdate(float dt, Scene *scene) -> void override
+		inline auto onUpdate(float dt, Scene *scene) -> void override
 		{
 			for (auto &job : updateQueue)
 			{
@@ -44,6 +54,15 @@ namespace maple
 
 		inline auto execute(Scene *scene)
 		{
+			if (!factoryQueue.empty())
+			{
+				for (auto &job : factoryQueue)
+				{
+					job(scene);
+				}
+			}
+			factoryQueue.clear();
+
 			for (auto g : graph)
 			{
 				for (auto &func : *g)
@@ -55,7 +74,6 @@ namespace maple
 
 		auto onImGui() -> void override
 		{}
-
 
 	  private:
 		template <auto System>
@@ -69,11 +87,14 @@ namespace maple
 		{
 			queue.emplace_back([](Scene *scene) {
 				auto call = ecs::CallBuilder::template buildCall(TSystem{});
+				PROFILE_SCOPE(##TSystem);
 				call(TSystem{}, scene->getRegistry());
 			});
 		}
 
 		ExecuteQueue updateQueue;
+
+		ExecuteQueue factoryQueue;
 
 		std::vector<ExecuteQueue *> graph;
 	};

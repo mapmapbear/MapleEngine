@@ -142,7 +142,8 @@ namespace maple
 
 	auto Scene::getCamera() -> std::pair<Camera *, Transform *>
 	{
-		auto camsEttView = entityManager->getEntitiesWithTypes<Camera, Transform>();
+		auto camsEttView = getRegistry().group<Camera>(entt::get<Transform>);   //entityManager->getEntitiesWithTypes<Camera, Transform>();
+
 		if (!camsEttView.empty() && useSceneCamera)
 		{
 			Entity     entity(camsEttView.front(), getRegistry());

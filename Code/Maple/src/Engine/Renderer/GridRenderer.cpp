@@ -50,7 +50,7 @@ namespace maple
 		descriptorSet = DescriptorSet::create({0, gridShader.get()});
 	}
 
-	auto GridRenderer::renderScene() -> void
+	auto GridRenderer::renderScene(Scene *scene) -> void
 	{
 		PROFILE_FUNCTION();
 

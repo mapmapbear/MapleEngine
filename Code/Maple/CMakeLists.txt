@@ -131,7 +131,6 @@ if (${Target} MATCHES "Windows")
 		-D_CRT_SECURE_CPP_OVERLOAD_STANDARD_NAMES 
 		-DPLATFORM_WINDOWS
 		-DPLATFORM_DESKTOP
-		-DMAPLE_PROFILE
 		-DMAPLE_DEBUG
 		-DNOMINMAX #conflict between windows and limits
 	)

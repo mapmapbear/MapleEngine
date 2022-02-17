@@ -22,7 +22,7 @@ namespace maple
 		CloudRenderer();
 		virtual ~CloudRenderer();
 		auto init(const std::shared_ptr<GBuffer> &buffer) -> void override;
-		auto renderScene() -> void override;
+		auto renderScene(Scene *scene) -> void override;
 		auto beginScene(Scene *scene, const glm::mat4 &projView) -> void override;
 		auto onResize(uint32_t width, uint32_t height) -> void override;
 

@@ -165,7 +165,7 @@ namespace maple
 		gbuffer = buffer;
 	}
 
-	auto ReflectiveShadowMap::renderScene() -> void
+	auto ReflectiveShadowMap::renderScene(Scene *scene) -> void
 	{
 		PROFILE_FUNCTION();
 

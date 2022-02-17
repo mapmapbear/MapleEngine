@@ -4,8 +4,8 @@
 #pragma once
 
 #include "Engine/Renderer/Renderer.h"
-#include "RHI/Shader.h"
 #include "Math/Frustum.h"
+#include "RHI/Shader.h"
 
 namespace maple
 {
@@ -69,7 +69,7 @@ namespace maple
 	{
 	  public:
 		auto init(const std::shared_ptr<GBuffer> &buffer) -> void override;
-		auto renderScene() -> void override;
+		auto renderScene(Scene *scene) -> void override;
 		auto beginScene(Scene *scene, const glm::mat4 &projView) -> void override;
 
 	  private:

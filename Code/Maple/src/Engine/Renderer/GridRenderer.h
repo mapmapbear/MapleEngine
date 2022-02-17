@@ -21,7 +21,7 @@ namespace maple
 		~GridRenderer();
 
 		auto init(const std::shared_ptr<GBuffer> &buffer) -> void override;
-		auto renderScene() -> void override;
+		auto renderScene(Scene *scene) -> void override;
 		auto renderPreviewScene() -> void override;
 
 		auto beginScene(Scene *scene, const glm::mat4 &projView) -> void override;

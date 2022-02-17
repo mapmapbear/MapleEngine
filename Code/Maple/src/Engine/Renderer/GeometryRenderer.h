@@ -42,7 +42,7 @@ namespace maple
 	{
 	  public:
 		auto init(const std::shared_ptr<GBuffer> &buffer) -> void override;
-		auto renderScene() -> void override;
+		auto renderScene(Scene *scene) -> void override;
 		auto beginScene(Scene *scene, const glm::mat4 &projView) -> void override;
 
 		static auto drawLine(const glm::vec3 &start, const glm::vec3 &end, const glm::vec4 &color = {1.0f, 1.0f, 1.0f, 1.0f}) -> void;

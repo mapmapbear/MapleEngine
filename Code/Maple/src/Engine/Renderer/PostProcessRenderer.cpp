@@ -10,10 +10,8 @@ namespace maple
 {
 	struct PostProcessRenderer::RenderData
 	{
-
 		RenderData()
 		{
-		
 		}
 	};
 
@@ -32,7 +30,7 @@ namespace maple
 		PROFILE_FUNCTION();
 	}
 
-	auto PostProcessRenderer::renderScene() -> void
+	auto PostProcessRenderer::renderScene(Scene *scene) -> void
 	{
 		PROFILE_FUNCTION();
 	}

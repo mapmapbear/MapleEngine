@@ -3,7 +3,7 @@
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-#ifndef MAPLE_PROFILE
+#ifdef MAPLE_PROFILE
 #	ifdef PLATFORM_WINDOWS
 #		define TRACY_CALLSTACK 1
 #	endif

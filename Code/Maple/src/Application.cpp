@@ -84,6 +84,8 @@ namespace maple
 
 		imGuiManager = systemManager->addSystem<ImGuiSystem>(false);
 		imGuiManager->onInit();
+
+		executePoint->onInit();
 	}
 
 	auto Application::start() -> int32_t
@@ -146,7 +148,7 @@ namespace maple
 		executePoint->execute(sceneManager->getCurrentScene());
 
 		renderGraph->beginScene(sceneManager->getCurrentScene());
-		renderGraph->onRender();
+		renderGraph->onRender(sceneManager->getCurrentScene());
 		onRenderDebug();
 	}
 

@@ -122,7 +122,7 @@ namespace maple
 		data->indexBuffer = IndexBuffer::create(indices.data(), config.indiciesSize);
 	}
 
-	auto Renderer2D::renderScene() -> void
+	auto Renderer2D::renderScene(Scene *scene) -> void
 	{
 		PROFILE_FUNCTION();
 

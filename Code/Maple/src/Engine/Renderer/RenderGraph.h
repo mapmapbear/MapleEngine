@@ -38,7 +38,7 @@ namespace maple
 
 		auto beginPreviewScene(Scene *scene) -> void;
 
-		auto onRender() -> void;
+		auto onRender(Scene *scene) -> void;
 		auto onRenderPreview() -> void;
 
 		auto onUpdate(const Timestep &timeStep, Scene *scene) -> void;

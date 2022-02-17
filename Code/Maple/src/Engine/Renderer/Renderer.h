@@ -32,9 +32,8 @@ namespace maple
 	  public:
 		virtual ~Renderer()                                                      = default;
 		virtual auto init(const std::shared_ptr<GBuffer> &buffer) -> void        = 0;
-		virtual auto renderScene() -> void                                       = 0;
+		virtual auto renderScene(Scene *scene) -> void                           = 0;
 		virtual auto beginScene(Scene *scene, const glm::mat4 &projView) -> void = 0;
-
 
 		virtual auto beginScenePreview(Scene *scene, const glm::mat4 &projView) -> void{};
 		virtual auto renderPreviewScene() -> void{};

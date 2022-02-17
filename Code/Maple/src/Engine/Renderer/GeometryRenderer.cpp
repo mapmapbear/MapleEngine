@@ -115,7 +115,7 @@ namespace maple
 		renderData = std::make_shared<RenderData>();
 	}
 
-	auto GeometryRenderer::renderScene() -> void
+	auto GeometryRenderer::renderScene(Scene *scene) -> void
 	{
 		PROFILE_FUNCTION();
 		executeLinePass();
