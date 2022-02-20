@@ -163,14 +163,24 @@ namespace maple
 		glm::vec3 skyColorBottom = glm::vec3(0.9, 0.9, 0.95);
 
 	  public:
-		inline auto &getSkyColorBottom()
+		inline auto &getSkyColorBottom()  const
 		{
 			return skyColorBottom;
 		}
-		inline auto &getSkyColorTop()
+		inline auto &getSkyColorTop()const
 		{
 			return skyColorTop;
 		}
+
+		inline auto& getSkyColorBottom()  
+		{
+			return skyColorBottom;
+		}
+		inline auto& getSkyColorTop()
+		{
+			return skyColorTop;
+		}
+
 		inline auto &getEnvironment() const
 		{
 			return environment;

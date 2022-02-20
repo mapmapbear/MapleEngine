@@ -128,19 +128,13 @@ namespace maple
 	{
 	}
 
-	auto PrefilterRenderer::beginScene(Scene *scene) -> void
+	auto PrefilterRenderer::beginScene(Environment & env) -> void
 	{
-		auto &registry = scene->getRegistry();
-		auto  view     = registry.view<Environment>();
-		if (!view.empty())
+		if (equirectangularMap != env.getEquirectangularMap() && !env.isPseudoSky())
 		{
-			auto env = &view.get<Environment>(view.front());
-			if (equirectangularMap != env->getEquirectangularMap() && !env->isPseudoSky())
-			{
-				equirectangularMap = env->getEquirectangularMap();
-				envComponent       = env;
-				updateUniform();
-			}
+			equirectangularMap = env.getEquirectangularMap();
+			envComponent = &env;
+			updateUniform();
 		}
 	}
 

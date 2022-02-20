@@ -144,11 +144,10 @@ namespace maple
 		PROFILE_FUNCTION();
 		renderGraph->beginPreviewScene(sceneManager->getSceneByName("PreviewScene"));
 		renderGraph->onRenderPreview();
+		renderGraph->beginScene(sceneManager->getCurrentScene());
 
 		executePoint->execute(sceneManager->getCurrentScene());
 
-		renderGraph->beginScene(sceneManager->getCurrentScene());
-		renderGraph->onRender(sceneManager->getCurrentScene());
 		onRenderDebug();
 	}
 

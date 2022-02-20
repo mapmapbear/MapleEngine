@@ -124,10 +124,10 @@ namespace maple
 			(getRegistry().emplace<Components>(globalEntity.getHandle());...);
 		}
 
-		template <typename Component>
-		inline auto& getGlobalComponent()
+		template <typename Component, typename... Args>
+		inline auto& getGlobalComponent(Args &&...args)
 		{
-			return globalEntity.template getOrAddComponent<Component>();
+			return globalEntity.template getOrAddComponent<Component>(std::forward<Args>(args)...);
 		}
 
 	  protected:

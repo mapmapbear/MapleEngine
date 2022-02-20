@@ -22,15 +22,17 @@ namespace maple
 		struct DeferredData
 		{
 			std::vector<RenderCommand>                  commandQueue;
-			std::shared_ptr<Texture>                    renderTexture;
 			std::shared_ptr<Material>                   defaultMaterial;
 			std::vector<std::shared_ptr<DescriptorSet>> descriptorColorSet;
 			std::vector<std::shared_ptr<DescriptorSet>> descriptorLightSet;
 
+			std::shared_ptr<Texture2D> preintegratedFG;
 			std::shared_ptr<Shader> deferredColorShader;        //stage 0 get all color information
 			std::shared_ptr<Shader> deferredLightShader;        //stage 1 process lighting
+			std::shared_ptr<Shader> stencilShader;
 
-			std::shared_ptr<Pipeline> deferredLightPipeline;
+			std::shared_ptr<DescriptorSet> stencilDescriptorSet;
+
 			std::shared_ptr<Mesh>     screenQuad;
 
 			bool depthTest = true;
@@ -42,5 +44,10 @@ namespace maple
 	namespace deferred_offscreen
 	{
 		auto registerDeferredOffScreenRenderer(ExecuteQueue &begin, ExecuteQueue &renderer, std::shared_ptr<ExecutePoint> executePoint) -> void;
+	};
+
+	namespace deferred_lighting
+	{
+		auto registerDeferredLighting(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void;
 	};
 }        // namespace maple

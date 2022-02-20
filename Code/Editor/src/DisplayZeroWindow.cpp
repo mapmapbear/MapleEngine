@@ -194,7 +194,7 @@ namespace maple
 			Application::get()->getGraphicsContext()->waitIdle();
 			previewTexture->buildTexture(TextureFormat::RGBA8, width, height, false, false, false);
 
-			Application::getRenderGraph()->setRenderTarget(previewTexture, false);
+			Application::getRenderGraph()->setRenderTarget(editor.getCurrentScene(),previewTexture, false);
 			Application::getRenderGraph()->onResize(width, height);
 
 			Application::get()->getGraphicsContext()->waitIdle();

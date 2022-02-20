@@ -21,10 +21,12 @@ namespace maple
 		}
 
 		template <typename Component>
-		inline auto registerGlobalComponent() -> void
+		inline auto registerGlobalComponent(const std::function<void(Component &)> & onInit = nullptr) -> void
 		{
-			factoryQueue.emplace_back([](Scene *scene) {
-				scene->template getGlobalComponent<Component>();
+			factoryQueue.emplace_back([=](Scene *scene) {
+				auto & comp = scene->template getGlobalComponent<Component>();
+				if (onInit != nullptr)
+					onInit(comp);
 			});
 		}
 

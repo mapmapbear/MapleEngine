@@ -34,7 +34,7 @@ namespace maple
 		auto init() -> void;
 		auto present() -> void;
 		auto renderScene() -> void;
-		auto beginScene(Scene *scene) -> void;
+		auto beginScene(Environment & env) -> void;
 
 	  private:
 		auto updateIrradianceDescriptor() -> void;

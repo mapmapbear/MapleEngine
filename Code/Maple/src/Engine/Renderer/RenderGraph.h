@@ -58,7 +58,7 @@ namespace maple
 
 		auto executePreviewPasss() -> void;
 
-		auto setRenderTarget(const std::shared_ptr<Texture> &texture, bool rebuildFramebuffer = true) -> void;
+		auto setRenderTarget(Scene * scene ,const std::shared_ptr<Texture> &texture, bool rebuildFramebuffer = true) -> void;
 
 		auto setPreview(const std::shared_ptr<Texture> &texture, const std::shared_ptr<Texture> &depth) -> void;
 
@@ -103,12 +103,10 @@ namespace maple
 		struct ShadowData;
 		struct ForwardData;
 		struct Renderer2DData;
-		struct DeferredData;
 		struct PreviewData;
 		struct SSAOData;
 		struct SSRData;
 		struct TAAData;
-		struct EnvironmentData;
 
 		auto getCommandBuffer() -> CommandBuffer *;
 
@@ -126,18 +124,11 @@ namespace maple
 
 		ShadowData *          shadowData   = nullptr;
 		ForwardData *         forwardData  = nullptr;
-		DeferredData *        deferredData = nullptr;
 		PreviewData *         previewData  = nullptr;
 		SSAOData *            ssaoData     = nullptr;
 		SSRData *             ssrData      = nullptr;
 		TAAData *             taaData      = nullptr;
-		EnvironmentData *     envData      = nullptr;
 
-		std::shared_ptr<Shader>        finalShader;
-		std::shared_ptr<DescriptorSet> finalDescriptorSet;
-
-		std::shared_ptr<DescriptorSet> stencilDescriptorSet;
-		std::shared_ptr<Shader>        stencilShader;
 
 		std::shared_ptr<Pipeline> skyboxPipeline;
 
@@ -145,5 +136,7 @@ namespace maple
 		float   gamma        = 2.2f;
 
 		Transform *transform = nullptr;
+
+		std::shared_ptr<Mesh> screenQuad;
 	};
 };        // namespace maple

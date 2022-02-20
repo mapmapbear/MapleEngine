@@ -6,6 +6,7 @@
 #include "Engine/Renderer/Renderer.h"
 #include "Math/Frustum.h"
 #include "RHI/Shader.h"
+#include "Scene/System/ExecutePoint.h"
 
 namespace maple
 {
@@ -65,14 +66,8 @@ namespace maple
 		};
 	}        // namespace component
 
-	class ReflectiveShadowMap : public Renderer
+	namespace reflective_shadow_map
 	{
-	  public:
-		auto init(const std::shared_ptr<GBuffer> &buffer) -> void override;
-		auto renderScene(Scene *scene) -> void override;
-		auto beginScene(Scene *scene, const glm::mat4 &projView) -> void override;
-
-	  private:
-		auto onImGui() -> void override;
+		auto registerShadowMap(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void;
 	};
 };        // namespace maple

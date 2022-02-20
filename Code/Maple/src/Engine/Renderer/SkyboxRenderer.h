@@ -4,22 +4,55 @@
 #pragma once
 
 #include "Renderer.h"
-
+#include "Scene/System/ExecutePoint.h"
 namespace maple
 {
-	class SkyboxRenderer : public Renderer
-	{
-	  public:
-		SkyboxRenderer();
-		virtual ~SkyboxRenderer();
-		auto init(const std::shared_ptr<GBuffer> &buffer) -> void override;
-		auto renderScene(Scene *scene) -> void override;
-		auto beginScene(Scene *scene, const glm::mat4 &projView) -> void override;
-		auto onResize(uint32_t width, uint32_t height) -> void override;
+	class PrefilterRenderer;
 
-	  private:
-		auto onImGui() -> void override;
-		struct SkyboxData;
-		SkyboxData *skyboxData = nullptr;
+	namespace component
+	{
+		struct SkyboxData
+		{
+			struct UniformBufferObject
+			{
+				glm::mat4 invProj;
+				glm::mat4 invView;
+				glm::vec4 skyColorBottom;
+				glm::vec4 skyColorTop;
+				glm::vec4 lightDirection;
+				glm::vec4 viewPos;
+			};
+
+			std::shared_ptr<Shader>        skyboxShader;
+			std::shared_ptr<Pipeline>      pipeline;
+			std::shared_ptr<DescriptorSet> descriptorSet;
+			std::shared_ptr<Mesh>          skyboxMesh;
+
+			bool pseudoSky = false;
+
+			std::shared_ptr<Shader>        pseudoSkyshader;
+			std::shared_ptr<DescriptorSet> pseudoSkydescriptorSet;
+			std::shared_ptr<Mesh>          screenMesh;
+
+			UniformBufferObject skyUniformObject;
+
+			std::shared_ptr<Texture> skybox;
+			std::shared_ptr<Texture> environmentMap;
+			std::shared_ptr<Texture> irradianceMap;
+
+			glm::mat4 projView = glm::mat4(1);
+
+			std::shared_ptr<PrefilterRenderer> prefilterRenderer;
+
+			int32_t cubeMapMode = 0;
+			float   cubeMapLevel = 0;
+
+			SkyboxData();
+		};
+	}
+	
+	namespace skybox_renderer
+	{
+		auto registerSkyboxRenderer(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void;
 	};
 }        // namespace maple

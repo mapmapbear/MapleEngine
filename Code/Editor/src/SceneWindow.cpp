@@ -208,7 +208,7 @@ namespace maple
 			}
 			editor.getCamera()->setAspectRatio(this->width / (float) this->height);
 			previewTexture->buildTexture(TextureFormat::RGBA8, this->width, this->height, false, false, false);
-			editor.getRenderGraph()->setRenderTarget(previewTexture);
+			editor.getRenderGraph()->setRenderTarget(editor.getCurrentScene(),previewTexture);
 			editor.getRenderGraph()->onResize(this->width, this->height);
 		}
 	}

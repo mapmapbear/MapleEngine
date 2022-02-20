@@ -3,15 +3,20 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include "ReflectiveShadowMap.h"
+
 #include "Engine/Camera.h"
 #include "Engine/Core.h"
 #include "Engine/Material.h"
 #include "Engine/Profiler.h"
+#include "Engine/Mesh.h"
+
 #include "ImGui/ImGuiHelpers.h"
 #include "Math/Frustum.h"
 #include "Math/MathUtils.h"
+
 #include "Scene/Component/Light.h"
 #include "Scene/Scene.h"
+#include "Scene/Component/MeshRenderer.h"
 
 #include "RHI/CommandBuffer.h"
 #include "RHI/DescriptorSet.h"
@@ -19,21 +24,22 @@
 #include "RHI/Shader.h"
 #include "RHI/Texture.h"
 
+#include "Engine/Renderer/RendererData.h"
+
+#include <ecs/ecs.h>
+
 namespace maple
 {
 	namespace        //private block
 	{
-		inline auto updateCascades(Scene *scene, Light *light, component::ShadowMapData &shadowData)
+		inline auto updateCascades(const component::CameraView & camera, component::ShadowMapData& shadowData, Light *light)
 		{
 			PROFILE_FUNCTION();
-			auto camera = scene->getCamera();
-			if (camera.first == nullptr || camera.second == nullptr)
-				return;
 
 			float cascadeSplits[SHADOWMAP_MAX];
 
-			const float nearClip  = camera.first->getNear();
-			const float farClip   = camera.first->getFar();
+			const float nearClip  = camera.nearPlane;
+			const float farClip   = camera.farPlane;
 			const float clipRange = farClip - nearClip;
 			const float minZ      = nearClip;
 			const float maxZ      = nearClip + clipRange;
@@ -56,7 +62,7 @@ namespace maple
 				float splitDist     = cascadeSplits[i];
 				float lastSplitDist = cascadeSplits[i];
 
-				auto frum = camera.first->getFrustum(camera.second->getWorldMatrixInverse());
+				auto frum = camera.frustum;
 
 				glm::vec3 *frustumCorners = frum.getVertices();
 
@@ -89,7 +95,7 @@ namespace maple
 				glm::mat4 lightViewMatrix  = glm::lookAt(frustumCenter - lightDir * -minExtents.z, frustumCenter, maple::UP);
 				glm::mat4 lightOrthoMatrix = glm::ortho(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, 0.0f, maxExtents.z - minExtents.z);
 
-				shadowData.splitDepth[i]     = glm::vec4(camera.first->getNear() + splitDist * clipRange) * -1.f;
+				shadowData.splitDepth[i]     = glm::vec4(camera.nearPlane + splitDist * clipRange) * -1.f;
 				shadowData.shadowProjView[i] = lightOrthoMatrix * lightViewMatrix;
 
 				if (i == 0)
@@ -121,7 +127,7 @@ namespace maple
 	component::ReflectiveShadowData::ReflectiveShadowData()
 	{
 		{
-			shader = Shader::create("shaders/ReflectiveShadowMap.shader");
+			shader = Shader::create("shaders/LPV/ReflectiveShadowMap.shader");
 			descriptorSets.resize(2);
 			descriptorSets[0] = DescriptorSet::create({0, shader.get()});
 			descriptorSets[1] = DescriptorSet::create({1, shader.get()});
@@ -143,23 +149,172 @@ namespace maple
 			parameters.wrap   = TextureWrap::ClampToBorder;
 
 			fluxTexture = Texture2D::create(SHADOW_SIZE, SHADOW_SIZE, nullptr, parameters);
-
 			fluxTexture->setName("uFluxSampler");
 
 			worldTexture = Texture2D::create(SHADOW_SIZE, SHADOW_SIZE, nullptr, parameters);
-
 			worldTexture->setName("uRSMWorldSampler");
 
 			normalTexture = Texture2D::create(SHADOW_SIZE, SHADOW_SIZE, nullptr, parameters);
-
 			normalTexture->setName("uRSMNormalSampler");
 
 			fluxDepth = TextureDepth::create(SHADOW_SIZE, SHADOW_SIZE);
-
 			descriptorSets[1]->setUniformBufferData("VirtualPointLight", &vpl);
 		}
 	}
 
+	namespace shadow_map_pass
+	{
+		using Entity = ecs::Chain
+			::Write<component::ShadowMapData>
+			::Read<component::CameraView>
+			::To<ecs::Entity>;
+
+		using LightQuery = ecs::Chain
+			::Write<Light>
+			::To<ecs::Query>;
+
+		using MeshQuery = ecs::Chain
+			::Write<MeshRenderer>
+			::Write<Transform>
+			::To<ecs::Query>;
+
+		inline auto beginScene(Entity entity, LightQuery lightQuery, MeshQuery meshQuery, ecs::World world)
+		{
+			auto [shadowData,cameraView] = entity;
+
+			for (uint32_t i = 0; i < shadowData.shadowMapNum; i++)
+			{
+				shadowData.cascadeCommandQueue[i].clear();
+			}
+
+			if (!lightQuery.empty())
+			{
+				Light* directionaLight = nullptr;
+
+				for (auto entity : lightQuery)
+				{
+					auto [light] = lightQuery.convert(entity);
+					if (static_cast<LightType>(light.lightData.type) == LightType::DirectionalLight)
+					{
+						directionaLight = &light;
+						break;
+					}
+				}
+
+				if (directionaLight)
+				{
+
+					if (directionaLight)
+					{
+						updateCascades(cameraView, shadowData,directionaLight);
+
+						for (uint32_t i = 0; i < shadowData.shadowMapNum; i++)
+						{
+							shadowData.cascadeFrustums[i].from(shadowData.shadowProjView[i]);
+						}
+					}
+
+					for (auto entityHandle : meshQuery)
+					{
+						auto [mesh, trans] = meshQuery.convert(entityHandle);
+
+						for (uint32_t i = 0; i < shadowData.shadowMapNum; i++)
+						{
+							//auto inside = shadowData->cascadeFrustums[i].isInsideFast(bbCopy);
+							//if (inside != Intersection::OUTSIDE)
+							{
+								auto& cmd = shadowData.cascadeCommandQueue[i].emplace_back();
+								cmd.mesh = mesh.getMesh().get();
+								cmd.transform = trans.getWorldMatrix();
+								cmd.material = mesh.getMesh()->getMaterial().get();
+							}
+						}
+					}
+				}
+			}
+		}
+
+		using RenderEntity = ecs::Chain
+			::Write<component::ShadowMapData>
+			::Read<component::RendererData>
+			::To<ecs::Entity>;
+
+		inline auto onRender(RenderEntity entity, ecs::World world)
+		{
+			auto [shadowData, rendererData] = entity;
+
+			shadowData.descriptorSet[0]->setUniform("UniformBufferObject", "projView", shadowData.shadowProjView);
+			shadowData.descriptorSet[0]->update();
+
+			PipelineInfo pipelineInfo;
+			pipelineInfo.shader = shadowData.shader;
+
+			pipelineInfo.cullMode = CullMode::Back;
+			pipelineInfo.transparencyEnabled = false;
+			pipelineInfo.depthBiasEnabled = false;
+			pipelineInfo.depthArrayTarget = shadowData.shadowTexture;
+			pipelineInfo.clearTargets = true;
+
+			auto pipeline = Pipeline::get(pipelineInfo);
+
+			for (uint32_t i = 0; i < shadowData.shadowMapNum; ++i)
+			{
+				//GPUProfile("Shadow Layer Pass");
+				pipeline->bind(rendererData.commandBuffer, i);
+
+				for (auto& command : shadowData.cascadeCommandQueue[i])
+				{
+					Mesh* mesh = command.mesh;
+					shadowData.currentDescriptorSets[0] = shadowData.descriptorSet[0];
+					auto  trans = command.transform;
+					auto& pushConstants = shadowData.shader->getPushConstants()[0];
+
+					pushConstants.setValue("transform", (void*)&trans);
+					pushConstants.setValue("cascadeIndex", (void*)&i);
+
+					shadowData.shader->bindPushConstants(rendererData.commandBuffer, pipeline.get());
+
+					Renderer::bindDescriptorSets(pipeline.get(), rendererData.commandBuffer, 0, shadowData.descriptorSet);
+					Renderer::drawMesh(rendererData.commandBuffer, pipeline.get(), mesh);
+				}
+				pipeline->end(rendererData.commandBuffer);
+			}
+		}
+	}
+
+	namespace reflective_shadow_map_pass
+	{
+		using Entity = ecs::Chain
+			::Read<component::ShadowMapData>
+			::To<ecs::Entity>;
+
+		inline auto beginScene(Entity entity, ecs::World world)
+		{
+
+		}
+
+		inline auto onRender(Entity entity, ecs::World world)
+		{
+			//auto [data, cameraView] = entity;
+		}
+	}
+
+	namespace reflective_shadow_map
+	{
+		auto registerShadowMap(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void
+		{
+			executePoint->registerGlobalComponent<component::ShadowMapData>();
+			executePoint->registerGlobalComponent<component::ReflectiveShadowData>();
+
+			executePoint->registerWithinQueue<shadow_map_pass::beginScene>(begin);
+			executePoint->registerWithinQueue<shadow_map_pass::onRender>(renderer);
+
+			executePoint->registerWithinQueue<reflective_shadow_map_pass::beginScene>(begin);
+			executePoint->registerWithinQueue<reflective_shadow_map_pass::onRender>(renderer);
+		}
+	};
+
+	/*
 	auto ReflectiveShadowMap::init(const std::shared_ptr<GBuffer> &buffer) -> void
 	{
 		gbuffer = buffer;
@@ -169,7 +324,7 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 
-		/*	auto descriptorSet = data->descriptorSets[1];
+		auto descriptorSet = data->descriptorSets[1];
 
 		data->descriptorSets[0]->update();
 		data->descriptorSets[1]->update();
@@ -217,15 +372,13 @@ namespace maple
 		if (commandBuffer)
 			commandBuffer->unbindPipeline();
 		else
-			pipeline->end(getCommandBuffer());*/
+			pipeline->end(getCommandBuffer());
 	}
 
 	auto ReflectiveShadowMap::beginScene(Scene *scene, const glm::mat4 &projView) -> void
 	{
 		auto &rsmData    = scene->getGlobalComponent<component::ReflectiveShadowData>();
 		auto &shadowData = scene->getGlobalComponent<component::ShadowMapData>();
-
-		/*
 
 		for (uint32_t i = 0; i < shadowData->shadowMapNum; i++)
 		{
@@ -240,14 +393,14 @@ namespace maple
 			{
 				shadowData->cascadeFrustums[i].from(shadowData->shadowProjView[i]);
 			}
-		}*/
+		}
 	}
 
 	auto ReflectiveShadowMap::onImGui() -> void
 	{
 		if (ImGui::TreeNode("Reflective ShadowMap"))
 		{
-			/*
+			
 			ImGui::Columns(2);
 
 			if (ImGuiHelper::property("RsmIntensity", data->vpl.rsmIntensity, 0.f, 100.f, ImGuiHelper::PropertyFlag::InputFloat))
@@ -263,8 +416,8 @@ namespace maple
 			{
 				data->descriptorSets[1]->setUniform("VirtualPointLight", "numberOfSamples", &data->vpl.numberOfSamples);
 			}
-			ImGui::Columns(1);*/
+			ImGui::Columns(1);
 		}
 	}
-
+	*/
 };        // namespace maple
