@@ -130,6 +130,11 @@ namespace maple
 			return globalEntity.template getOrAddComponent<Component>(std::forward<Args>(args)...);
 		}
 
+		inline auto getGlobalEntity() const 
+		{
+			return globalEntity;
+		}
+
 	  protected:
 		auto updateCameraController(float dt) -> void;
 		auto copyComponents(const Entity &from, const Entity &to) -> void;

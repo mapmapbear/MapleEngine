@@ -136,7 +136,7 @@ namespace maple
 					skyboxData.skyUniformObject.skyColorTop = glm::vec4(envData.getSkyColorTop(), 1);
 					skyboxData.skyUniformObject.viewPos = glm::vec4(cameraView.cameraTransform->getWorldPosition(), 1.f);
 					skyboxData.skyUniformObject.invView = cameraView.cameraTransform->getWorldMatrix();
-					skyboxData.skyUniformObject.invProj = glm::inverse(cameraView.projView);
+					skyboxData.skyUniformObject.invProj = glm::inverse(cameraView.proj);
 
 					if (!sunLightQuery.empty())
 					{

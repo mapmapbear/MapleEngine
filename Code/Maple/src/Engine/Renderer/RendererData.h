@@ -7,6 +7,9 @@
 namespace maple
 {
 	class Transform;
+	class GBuffer;
+	class CommandBuffer;
+	class Mesh;
 
 	namespace component
 	{
@@ -18,6 +21,7 @@ namespace maple
 			glm::mat4  projViewOld;
 			float      nearPlane;
 			float      farPlane;
+			float      fov;
 			Frustum    frustum;
 			Transform *cameraTransform;
 		};
@@ -35,6 +39,12 @@ namespace maple
 			CommandBuffer* commandBuffer = nullptr;
 			GBuffer* gbuffer = nullptr;
 			std::shared_ptr<Mesh> screenQuad;
+		};
+
+		struct WindowSize
+		{
+			uint32_t width;
+			uint32_t height;
 		};
 	}        // namespace component
 

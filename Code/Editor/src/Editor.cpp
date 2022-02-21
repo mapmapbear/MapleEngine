@@ -22,8 +22,8 @@
 
 #include "Devices/Input.h"
 #include "Engine/Camera.h"
+
 #include "Engine/Renderer/GeometryRenderer.h"
-#include "Engine/Renderer/GridRenderer.h"
 
 #include "Engine/TextureAtlas.h"
 
@@ -65,9 +65,6 @@ namespace maple
 	{
 		Application::init();
 		//off-screen
-		renderGraph->addRender(std::make_shared<GridRenderer>(), RenderId::GridRender);
-		renderGraph->addRender(std::make_shared<GeometryRenderer>(), RenderId::Geometry);
-
 		addWindow(SceneWindow);
 		//addWindow(DisplayZeroWindow);
 		addWindow(HierarchyWindow);
@@ -213,7 +210,7 @@ namespace maple
 		auto &registry = getSceneManager()->getCurrentScene()->getRegistry();
 		if (cameraSelected || camera->isOrthographic())
 		{
-			auto view = registry.group<Camera, Transform>();
+			auto view = registry.view<Camera, Transform>();
 			for (auto v : view)
 			{
 				auto &[camera, trans] = registry.get<Camera, Transform>(v);

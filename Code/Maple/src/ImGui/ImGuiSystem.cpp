@@ -136,4 +136,12 @@ namespace maple
 	{
 	}
 
+
+	namespace on_imgui 
+	{
+		auto registerImGui(std::shared_ptr<ExecutePoint> executePoint) -> void
+		{
+		}
+	}
+
 };        // namespace maple

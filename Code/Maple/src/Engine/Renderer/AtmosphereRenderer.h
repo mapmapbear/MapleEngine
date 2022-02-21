@@ -2,23 +2,14 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
-
 #include "Renderer.h"
+#include "Scene/System/ExecutePoint.h"
+
 
 namespace maple
 {
-	class AtmosphereRenderer : public Renderer
+	namespace atmosphere_pass
 	{
-	  public:
-		AtmosphereRenderer();
-		virtual ~AtmosphereRenderer();
-		auto init(const std::shared_ptr<GBuffer> &buffer) -> void override;
-		auto renderScene(Scene *scene) -> void override;
-		auto beginScene(Scene *scene, const glm::mat4 &projView) -> void override;
-		auto onImGui() -> void;
-
-	  private:
-		struct RenderData;
-		RenderData *data = nullptr;
-	};
+		auto registerAtmosphere(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void;
+	}
 }        // namespace maple

@@ -3,16 +3,24 @@
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
 
+
 #include "Engine/Core.h"
-#include "ISystem.h"
-#include <ecs/SystemBuilder.h>
 #include "Engine/Profiler.h"
+
+#include <ecs/SystemBuilder.h>
+#include <ecs/World.h>
 
 namespace maple
 {
-	using ExecuteQueue = std::vector<std::function<void(Scene *)>>;
+	struct ExecuteQueue
+	{
+		std::string name;
+		std::vector<std::function<void(entt::registry& )>> jobs;
+		std::function<void(ecs::World)> preCall = [](ecs::World) {};
+		std::function<void(ecs::World)> postCall = [](ecs::World) {};
+	};
 
-	class MAPLE_EXPORT ExecutePoint : public ISystem
+	class ExecutePoint
 	{
 	  public:
 		inline auto registerQueue(ExecuteQueue &queue)
@@ -23,8 +31,8 @@ namespace maple
 		template <typename Component>
 		inline auto registerGlobalComponent(const std::function<void(Component &)> & onInit = nullptr) -> void
 		{
-			factoryQueue.emplace_back([=](Scene *scene) {
-				auto & comp = scene->template getGlobalComponent<Component>();
+			factoryQueue.jobs.emplace_back([=](entt::registry& reg) {
+				auto & comp = reg.get_or_emplace<Component>(globalEntity);
 				if (onInit != nullptr)
 					onInit(comp);
 			});
@@ -37,47 +45,61 @@ namespace maple
 		}
 
 		template <auto System>
-		inline auto registerWithinQueue(ExecuteQueue &queue) -> void
+		inline auto registerOnImGui() -> void
+		{
+			expand(ecs::FunctionConstant<System>{}, imGuiQueue);
+		}
+
+		template <auto System>
+		inline auto registerWithinQueue(ExecuteQueue &queue)
 		{
 			expand(ecs::FunctionConstant<System>{}, queue);
 		}
 
-		inline auto onInit() -> void override
-		{
-		}
-
-		inline auto onUpdate(float dt, Scene *scene) -> void override
-		{
-			for (auto &job : updateQueue)
-			{
-				job(scene);
-			}
-		}
-
-		inline auto execute(Scene *scene)
-		{
-			if (!factoryQueue.empty())
-			{
-				for (auto &job : factoryQueue)
-				{
-					job(scene);
-				}
-			}
-			factoryQueue.clear();
-
-			for (auto g : graph)
-			{
-				for (auto &func : *g)
-				{
-					func(scene);
-				}
-			}
-		}
-
-		auto onImGui() -> void override
-		{}
-
 	  private:
+		  friend class Application;
+
+		  inline auto setGlobalEntity(entt::entity global)
+		  {
+			  globalEntity = global;
+		  }
+
+		  inline auto onUpdate(float dt, entt::registry& reg)
+		  {
+			  for (auto& job : updateQueue.jobs)
+			  {
+				  job(reg);
+			  }
+		  }
+
+		  inline auto executeImGui(entt::registry& reg)
+		  {
+			  for (auto& job : imGuiQueue.jobs)
+			  {
+				  job(reg);
+			  }
+		  }
+
+		  inline auto execute(entt::registry& reg)
+		  {
+			  if (!factoryQueue.jobs.empty())
+			  {
+				  for (auto& job : factoryQueue.jobs)
+				  {
+					  job(reg);
+				  }
+				  factoryQueue.jobs.clear();
+			  }
+
+			  for (auto g : graph)
+			  {
+				  for (auto& func : g->jobs)
+				  {
+					  func(reg);
+				  }
+			  }
+		  }
+
 		template <auto System>
 		inline auto expand(ecs::FunctionConstant<System> system, ExecuteQueue &queue) -> void
 		{
@@ -87,18 +109,27 @@ namespace maple
 		template <typename TSystem>
 		inline auto build(TSystem, ExecuteQueue &queue) -> void
 		{
-			queue.emplace_back([](Scene *scene) {
+			queue.jobs.emplace_back([&](entt::registry& reg) {
 				auto call = ecs::CallBuilder::template buildCall(TSystem{});
-				PROFILE_SCOPE(##TSystem);
-				call(TSystem{}, scene->getRegistry());
+#ifdef MAPLE_PROFILE
+				constexpr auto reflectStr = ecs::CallBuilder::template buildFullCallName(TSystem{});
+				constexpr std::string str = { reflectStr.data(),reflectStr.size() };
+				PROFILE_SCOPE(str.c_str());
+#endif // MAPLE_PROFILE
+				queue.preCall(ecs::World{ reg });
+				call(TSystem{}, reg);
+				queue.postCall(ecs::World{ reg });
 			});
 		}
 
 		ExecuteQueue updateQueue;
 
+		ExecuteQueue imGuiQueue;
+
 		ExecuteQueue factoryQueue;
 
 		std::vector<ExecuteQueue *> graph;
-	};
 
+		entt::entity globalEntity = entt::null;
+	};
 };        // namespace maple

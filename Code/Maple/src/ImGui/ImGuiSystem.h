@@ -18,12 +18,12 @@ namespace maple
 		ImGuiSystem(bool clearScreen = false);
 		~ImGuiSystem();
 
-		auto newFrame(const Timestep &step) -> void;
+		auto newFrame(const Timestep& step) -> void;
 		auto onInit() -> void override;
 		auto onUpdate(float dt, Scene* scene) -> void override;
 		auto onImGui() -> void override {};
 
-		auto onRender(Scene * scene) -> void;
+		auto onRender(Scene* scene) -> void;
 		auto addIcon() -> void;
 		auto onResize(uint32_t w, uint32_t h) -> void;
 		auto setTheme() -> void;
@@ -33,4 +33,5 @@ namespace maple
 		std::shared_ptr<ImGuiRenderer> imguiRender;
 		EventHandler handler;
 	};
+
 }

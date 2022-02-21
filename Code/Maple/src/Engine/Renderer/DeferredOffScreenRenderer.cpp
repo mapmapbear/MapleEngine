@@ -22,7 +22,7 @@
 #include "Scene/Component/Component.h"
 #include "Scene/Scene.h"
 
-
+#include "PostProcessRenderer.h"
 
 #include "Engine/Vientiane/ReflectiveShadowMap.h"
 
@@ -86,6 +86,7 @@ namespace maple
 			::Read<component::ShadowMapData>
 			::Read<component::CameraView>
 			::Read<component::RendererData>
+			::Read<component::SSAOData>
 			::To<ecs::Entity>;
 
 		using LightDefine = ecs::Chain
@@ -109,7 +110,7 @@ namespace maple
 
 		inline auto beginScene(Entity entity, Query lightQuery, EnvQuery env, MeshQuery meshQuery,ecs::World world)
 		{
-			auto [data, shadowData, cameraView,renderData] = entity;
+			auto [data, shadowData, cameraView,renderData,ssao] = entity;
 			data.commandQueue.clear();
 			auto descriptorSet = data.descriptorColorSet[0];
 
@@ -170,6 +171,7 @@ namespace maple
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "shadowCount", &numShadows);
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "mode", &renderMode);
 
+	
 			data.descriptorLightSet[0]->setTexture("uPreintegratedFG", data.preintegratedFG);
 			data.descriptorLightSet[0]->setTexture("uShadowMap", shadowData.shadowTexture);
 
@@ -180,9 +182,9 @@ namespace maple
 				data.descriptorLightSet[0]->setTexture("uIrradianceMap", evnData.getIrradianceMap());
 			}
 
-			int32_t ssao = false ? 1 : 0;
+			int32_t ssaoEnable = ssao.enable ? 1 : 0;
 			int32_t cubeMapMipLevels = 0;
-			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "ssaoEnable", &ssao);
+			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "ssaoEnable", &ssaoEnable);
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "cubeMapMipLevels", &cubeMapMipLevels);
 
 
@@ -264,7 +266,7 @@ namespace maple
 
 		inline auto onRender(Entity entity, ecs::World world)
 		{
-			auto [data, shadowData, cameraView, renderData] = entity;
+			auto [data, shadowData, cameraView, renderData,ssao] = entity;
 
 			data.descriptorColorSet[0]->update();
 			data.descriptorColorSet[2]->update();

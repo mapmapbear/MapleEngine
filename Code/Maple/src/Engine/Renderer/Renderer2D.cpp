@@ -16,26 +16,21 @@
 #include "RHI/UniformBuffer.h"
 #include "RHI/VertexBuffer.h"
 
+#include "Engine/Vertex.h"
 #include "Engine/Camera.h"
 #include "Engine/Profiler.h"
 #include "Scene/Component/Sprite.h"
 
+#include "RendererData.h"
 #include "Application.h"
 #include "FileSystem/File.h"
 #include "Scene/Scene.h"
 
 #include <imgui.h>
+#include <ecs/ecs.h>
 
 namespace maple
 {
-	namespace
-	{
-		auto getCommandBuffer() -> CommandBuffer *
-		{
-			return Application::getGraphicsContext()->getSwapChain()->getCurrentCommandBuffer();
-		}
-	}        // namespace
-
 	struct Config2D
 	{
 		uint32_t maxQuads          = 10000;
@@ -52,261 +47,276 @@ namespace maple
 		glm::mat4     transform;
 	};
 
-	struct Renderer2D::Renderer2DData
+	namespace component 
 	{
-		std::shared_ptr<Shader>        shader;
-		std::shared_ptr<Pipeline>      pipeline;
-		std::shared_ptr<DescriptorSet> descriptorSet;
-		std::shared_ptr<DescriptorSet> projViewSet;
-
-		std::vector<std::shared_ptr<Texture>> textures;
-
-		bool enableDepth = true;
-
-		std::vector<std::shared_ptr<VertexBuffer>> vertexBuffers;
-		std::shared_ptr<IndexBuffer>               indexBuffer;
-
-		std::vector<Command2D> commands;
-
-		struct UniformBufferObject
+		struct Renderer2DData
 		{
-			glm::mat4 projView;
-		} systemBuffer;
+			std::shared_ptr<Shader>        shader;
+			std::shared_ptr<DescriptorSet> descriptorSet;
+			std::shared_ptr<DescriptorSet> projViewSet;
 
-		int32_t   textureCount       = 0;
-		int32_t   batchDrawCallIndex = 0;
-		int32_t   indexCount         = 0;
-		Vertex2D *buffer             = nullptr;
-	};
+			std::vector<std::shared_ptr<Texture>> textures;
 
-	Renderer2D::Renderer2D(bool enableDepth)
-	{
-		data              = new Renderer2DData();
-		data->enableDepth = enableDepth;
-		data->textures.resize(16);
-	}
+			bool enableDepth = true;
 
-	Renderer2D::~Renderer2D()
-	{
-		delete data;
-	}
+			std::vector<std::shared_ptr<VertexBuffer>> vertexBuffers;
+			std::shared_ptr<IndexBuffer>               indexBuffer;
 
-	auto Renderer2D::init(const std::shared_ptr<GBuffer> &buffer) -> void
-	{
-		gbuffer             = buffer;
-		data->shader        = Shader::create("shaders/Batch2D.shader");
-		data->projViewSet   = DescriptorSet::create({0, data->shader.get()});
-		data->descriptorSet = DescriptorSet::create({1, data->shader.get()});
-		data->vertexBuffers.resize(config.maxBatchDrawCalls);
+			std::vector<Command2D> commands;
 
-		for (int32_t i = 0; i < config.maxBatchDrawCalls; i++)
-		{
-			data->vertexBuffers[i] = VertexBuffer::create(BufferUsage::Dynamic);
-			data->vertexBuffers[i]->resize(config.bufferSize);
-		}
-
-		std::vector<uint32_t> indices(config.indiciesSize);
-		uint32_t              offset = 0;
-		for (uint32_t i = 0; i < config.indiciesSize; i += 6)
-		{
-			indices[i]     = offset + 0;
-			indices[i + 1] = offset + 1;
-			indices[i + 2] = offset + 2;
-
-			indices[i + 3] = offset + 2;
-			indices[i + 4] = offset + 3;
-			indices[i + 5] = offset + 0;
-			offset += 4;
-		}
-
-		data->indexBuffer = IndexBuffer::create(indices.data(), config.indiciesSize);
-	}
-
-	auto Renderer2D::renderScene(Scene *scene) -> void
-	{
-		PROFILE_FUNCTION();
-
-		if (data->pipeline == nullptr && renderTexture)
-		{
-			PipelineInfo pipeInfo;
-			pipeInfo.shader              = data->shader;
-			pipeInfo.cullMode            = CullMode::None;
-			pipeInfo.transparencyEnabled = true;
-			pipeInfo.depthBiasEnabled    = false;
-			pipeInfo.clearTargets        = false;
-			if (data->enableDepth)
-				pipeInfo.depthTarget = gbuffer->getDepthBuffer();
-			pipeInfo.colorTargets[0] = renderTexture;
-			pipeInfo.blendMode       = BlendMode::SrcAlphaOneMinusSrcAlpha;
-			data->pipeline           = Pipeline::get(pipeInfo);
-		}
-
-		data->vertexBuffers[data->batchDrawCallIndex]->bind(getCommandBuffer(), data->pipeline.get());
-		data->buffer = data->vertexBuffers[data->batchDrawCallIndex]->getPointer<Vertex2D>();
-
-		for (auto &command : data->commands)
-		{
-			if (data->indexCount >= config.indiciesSize)
+			struct UniformBufferObject
 			{
-				flush();
+				glm::mat4 projView;
+			} systemBuffer;
+
+			int32_t   textureCount = 0;
+			int32_t   batchDrawCallIndex = 0;
+			int32_t   indexCount = 0;
+			Vertex2D* buffer = nullptr;
+
+			Renderer2DData()
+			{
+				textures.resize(16);
+				shader = Shader::create("shaders/Batch2D.shader");
+				projViewSet = DescriptorSet::create({ 0, shader.get() });
+				descriptorSet = DescriptorSet::create({ 1,shader.get() });
+				vertexBuffers.resize(config.maxBatchDrawCalls);
+
+				for (int32_t i = 0; i < config.maxBatchDrawCalls; i++)
+				{
+					vertexBuffers[i] = VertexBuffer::create(BufferUsage::Dynamic);
+					vertexBuffers[i]->resize(config.bufferSize);
+				}
+
+				std::vector<uint32_t> indices(config.indiciesSize);
+				uint32_t              offset = 0;
+				for (uint32_t i = 0; i < config.indiciesSize; i += 6)
+				{
+					indices[i] = offset + 0;
+					indices[i + 1] = offset + 1;
+					indices[i + 2] = offset + 2;
+
+					indices[i + 3] = offset + 2;
+					indices[i + 4] = offset + 3;
+					indices[i + 5] = offset + 0;
+					offset += 4;
+				}
+
+				indexBuffer = IndexBuffer::create(indices.data(), config.indiciesSize);
 			}
-			auto &quad2d    = command.quad;
-			auto &transform = command.transform;
-
-			glm::vec4 min = transform * glm::vec4(quad2d->getOffset(), 0, 1.f);
-			glm::vec4 max = transform * glm::vec4(quad2d->getOffset() + glm::vec2{quad2d->getWidth(), quad2d->getHeight()}, 0, 1.f);
-
-			const auto &color   = quad2d->getColor();
-			const auto &uv      = quad2d->getTexCoords();
-			const auto  texture = quad2d->getTexture();
-
-			int32_t textureSlot = -1;
-			if (texture)
-				textureSlot = submitTexture(texture);
-
-			data->buffer->vertex = glm::vec3(min.x, min.y, 0.0f);
-			data->buffer->color  = color;
-			data->buffer->uv     = glm::vec3(uv[0], textureSlot);
-			data->buffer++;
-
-			data->buffer->vertex = glm::vec3(max.x, min.y, 0.0f);
-			data->buffer->color  = color;
-			data->buffer->uv     = glm::vec3(uv[1], textureSlot);
-			data->buffer++;
-
-			data->buffer->vertex = glm::vec3(max.x, max.y, 0.0f);
-			data->buffer->color  = color;
-			data->buffer->uv     = glm::vec3(uv[2], textureSlot);
-			data->buffer++;
-
-			data->buffer->vertex = glm::vec3(min.x, max.y, 0.0f);
-			data->buffer->color  = color;
-			data->buffer->uv     = glm::vec3(uv[3], textureSlot);
-			data->buffer++;
-			data->indexCount += 6;
-		}
-
-		present();
-
-		data->batchDrawCallIndex = 0;
+		};
 	}
 
-	auto Renderer2D::beginScene(Scene *scene, const glm::mat4 &projView) -> void
+	namespace render2d
 	{
-		PROFILE_FUNCTION();
-
-		auto camera = scene->getCamera();
-		if (camera.first == nullptr)
+		namespace common 
 		{
-			return;
-		}
-
-		data->systemBuffer.projView = projView;
-		data->commands.clear();
-
-		data->projViewSet->setUniformBufferData("UniformBufferObject", &data->systemBuffer);
-		data->projViewSet->update();
-
-		auto &registry = scene->getRegistry();
-		auto  group    = registry.group<Sprite>(entt::get<Transform>);
-
-		{
-			PROFILE_SCOPE("Submit Sprites");
-			for (auto entity : group)
+			inline auto present(component::Renderer2DData& data, Pipeline* pipeline, CommandBuffer* cmd) -> void
 			{
-				const auto &[sprite, trans] = group.get<Sprite, Transform>(entity);
-				data->commands.push_back({&sprite.getQuad(), trans.getWorldMatrix()});
+				PROFILE_FUNCTION();
+				if (data.indexCount == 0)
+				{
+					data.vertexBuffers[data.batchDrawCallIndex]->releasePointer();
+					return;
+				}
+
+				data.descriptorSet->setTexture("textures", data.textures);
+				data.descriptorSet->update();
+
+				pipeline->bind(cmd);
+
+				data.indexBuffer->setCount(data.indexCount);
+				data.indexBuffer->bind(cmd);
+
+				data.vertexBuffers[data.batchDrawCallIndex]->releasePointer();
+				data.vertexBuffers[data.batchDrawCallIndex]->bind(cmd, pipeline);
+
+				Renderer::bindDescriptorSets(pipeline, cmd, 0, { data.projViewSet, data.descriptorSet });
+				Renderer::drawIndexed(cmd, DrawType::Triangle, data.indexCount);
+
+				data.vertexBuffers[data.batchDrawCallIndex]->unbind();
+				data.indexBuffer->unbind();
+				data.indexCount = 0;
+
+				data.batchDrawCallIndex++;
+
+				pipeline->end(cmd);
 			}
-		}
-		{
-			PROFILE_SCOPE("Submit AnimatedSprite");
-			auto group2 = registry.group<AnimatedSprite>(entt::get<Transform>);
-			for (auto entity : group2)
+
+			inline auto flush(component::Renderer2DData& data, Pipeline* pipeline, CommandBuffer* cmd) -> void
 			{
-				const auto &[anim, trans] = group2.get<AnimatedSprite, Transform>(entity);
-				data->commands.push_back({&anim.getQuad(), trans.getWorldMatrix()});
+				PROFILE_FUNCTION();
+				present(data, pipeline, cmd);
+				data.textureCount = 0;
+				data.vertexBuffers[data.batchDrawCallIndex]->unbind();
+				data.buffer = data.vertexBuffers[data.batchDrawCallIndex]->getPointer<Vertex2D>();
+			}
+
+			inline auto submitTexture(component::Renderer2DData &data, const std::shared_ptr<Texture>& texture, Pipeline* pipeline, CommandBuffer* cmd) -> int32_t
+			{
+				PROFILE_FUNCTION();
+
+				float result = 0.0f;
+				bool  found = false;
+
+				for (uint32_t i = 0; i < data.textureCount; i++)
+				{
+					if (data.textures[i] == texture)        //Temp
+					{
+						return i + 1;
+					}
+				}
+
+				if (data.textureCount >= config.maxTextures)
+				{
+					common::flush(data,pipeline,cmd);
+				}
+				data.textures[data.textureCount] = texture;
+				data.textureCount++;
+				return data.textureCount;
 			}
 		}
 
-		std::sort(data->commands.begin(), data->commands.end(), [](Command2D &a, Command2D &b) {
-			return a.transform[3][2] < b.transform[3][2];
-		});
-	}
-
-	auto Renderer2D::setRenderTarget(std::shared_ptr<Texture> texture, bool rebuildFramebuffer) -> void
-	{
-		PROFILE_FUNCTION();
-		Renderer::setRenderTarget(texture, rebuildFramebuffer);
-		data->pipeline = nullptr;
-	}
-
-	auto Renderer2D::submitTexture(const std::shared_ptr<Texture> &texture) -> int32_t
-	{
-		PROFILE_FUNCTION();
-
-		float result = 0.0f;
-		bool  found  = false;
-
-		for (uint32_t i = 0; i < data->textureCount; i++)
+		namespace on_begin_scene
 		{
-			if (data->textures[i] == texture)        //Temp
+			using Entity = ecs::Chain
+				::Write<component::Renderer2DData>
+				::Read<component::CameraView>
+				::Read<component::RendererData>
+				::To<ecs::Entity>;
+
+			using SpriteDefine = ecs::Chain
+				::Write<Sprite>
+				::Write<Transform>;
+
+			using SpriteEntity = SpriteDefine
+				::To<ecs::Entity>;
+
+			using Query = SpriteDefine
+				::To<ecs::Query>;
+
+			using AnimatedSpriteDefine = ecs::Chain
+				::Write<AnimatedSprite>
+				::Write<Transform>;
+
+			using AnimatedSpriteEntity = AnimatedSpriteDefine
+				::To<ecs::Entity>;
+
+			using AnimatedQuery = AnimatedSpriteDefine
+				::To<ecs::Query>;
+
+			inline auto system(Entity entity, Query query, AnimatedQuery animatedQuery, ecs::World world)
 			{
-				return i + 1;
+				auto [data, camera, render] = entity;
+
+				data.systemBuffer.projView = camera.projView;
+				data.commands.clear();
+				query.forEach([&](SpriteEntity spriteEntity) {
+					auto [sprite, trans] = spriteEntity;
+					data.commands.push_back({ &sprite.getQuad(), trans.getWorldMatrix() });
+				});
+
+				animatedQuery.forEach([&](AnimatedSpriteEntity spriteEntity) {
+					auto [sprite, trans] = spriteEntity;
+					data.commands.push_back({ &sprite.getQuad(), trans.getWorldMatrix() });
+				});
+
+				std::sort(data.commands.begin(), data.commands.end(), [](Command2D& a, Command2D& b) {
+					return a.transform[3][2] < b.transform[3][2];
+				});
+
+				if (!data.commands.empty())
+				{
+					data.projViewSet->setUniformBufferData("UniformBufferObject", &data.systemBuffer);
+					data.projViewSet->update();
+				}
 			}
 		}
 
-		if (data->textureCount >= config.maxTextures)
+		namespace on_render
 		{
-			flush();
+			using Entity = ecs::Chain
+				::Write<component::Renderer2DData>
+				::Read<component::CameraView>
+				::Read<component::RendererData>
+				::To<ecs::Entity>;
+
+			inline auto system(Entity entity, ecs::World world)
+			{
+				auto [data, camera, render] = entity;
+
+				if (data.commands.empty())
+					return;
+
+				PipelineInfo pipeInfo;
+				pipeInfo.shader = data.shader;
+				pipeInfo.cullMode = CullMode::None;
+				pipeInfo.transparencyEnabled = true;
+				pipeInfo.depthBiasEnabled = false;
+				pipeInfo.clearTargets = false;
+				if (data.enableDepth)
+					pipeInfo.depthTarget = render.gbuffer->getDepthBuffer();
+				pipeInfo.colorTargets[0] = render.gbuffer->getBuffer(GBufferTextures::SCREEN);
+				pipeInfo.blendMode = BlendMode::SrcAlphaOneMinusSrcAlpha;
+				auto pipeline = Pipeline::get(pipeInfo);
+
+				data.vertexBuffers[data.batchDrawCallIndex]->bind(render.commandBuffer, pipeline.get());
+				data.buffer = data.vertexBuffers[data.batchDrawCallIndex]->getPointer<Vertex2D>();
+
+				for (auto& command : data.commands)
+				{
+					if (data.indexCount >= config.indiciesSize)
+					{
+						common::flush(data,pipeline.get(),render.commandBuffer);
+					}
+					auto& quad2d = command.quad;
+					auto& transform = command.transform;
+
+					glm::vec4 min = transform * glm::vec4(quad2d->getOffset(), 0, 1.f);
+					glm::vec4 max = transform * glm::vec4(quad2d->getOffset() + glm::vec2{ quad2d->getWidth(), quad2d->getHeight() }, 0, 1.f);
+
+					const auto& color = quad2d->getColor();
+					const auto& uv = quad2d->getTexCoords();
+					const auto  texture = quad2d->getTexture();
+
+					int32_t textureSlot = -1;
+					if (texture)
+						textureSlot = common::submitTexture(data, texture, pipeline.get(), render.commandBuffer);
+
+					data.buffer->vertex = glm::vec3(min.x, min.y, 0.0f);
+					data.buffer->color = color;
+					data.buffer->uv = glm::vec3(uv[0], textureSlot);
+					data.buffer++;
+
+					data.buffer->vertex = glm::vec3(max.x, min.y, 0.0f);
+					data.buffer->color = color;
+					data.buffer->uv = glm::vec3(uv[1], textureSlot);
+					data.buffer++;
+
+					data.buffer->vertex = glm::vec3(max.x, max.y, 0.0f);
+					data.buffer->color = color;
+					data.buffer->uv = glm::vec3(uv[2], textureSlot);
+					data.buffer++;
+
+					data.buffer->vertex = glm::vec3(min.x, max.y, 0.0f);
+					data.buffer->color = color;
+					data.buffer->uv = glm::vec3(uv[3], textureSlot);
+					data.buffer++;
+					data.indexCount += 6;
+				}
+
+				common::present(data, pipeline.get(), render.commandBuffer);
+
+				data.batchDrawCallIndex = 0;
+			}
 		}
-		data->textures[data->textureCount] = texture;
-		data->textureCount++;
-		return data->textureCount;
+
+		auto registerRenderer2D(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void
+		{
+			executePoint->registerGlobalComponent<component::Renderer2DData>();
+			executePoint->registerWithinQueue<on_begin_scene::system>(begin);
+			executePoint->registerWithinQueue<on_render::system>(renderer);
+		}
 	}
 
-	auto Renderer2D::flush() -> void
-	{
-		PROFILE_FUNCTION();
-		present();
-		data->textureCount = 0;
-		data->vertexBuffers[data->batchDrawCallIndex]->unbind();
-		data->buffer = data->vertexBuffers[data->batchDrawCallIndex]->getPointer<Vertex2D>();
-	}
-
-	auto Renderer2D::present() -> void
-	{
-		PROFILE_FUNCTION();
-		if (data->indexCount == 0)
-		{
-			data->vertexBuffers[data->batchDrawCallIndex]->releasePointer();
-			return;
-		}
-
-		data->descriptorSet->setTexture("textures", data->textures);
-		data->descriptorSet->update();
-
-		auto cmd = getCommandBuffer();
-
-		if (data->pipeline)
-		{
-			data->pipeline->bind(cmd);
-
-			data->indexBuffer->setCount(data->indexCount);
-			data->indexBuffer->bind(cmd);
-
-			data->vertexBuffers[data->batchDrawCallIndex]->releasePointer();
-			data->vertexBuffers[data->batchDrawCallIndex]->bind(cmd, data->pipeline.get());
-
-			Renderer::bindDescriptorSets(data->pipeline.get(), cmd, 0, {data->projViewSet, data->descriptorSet});
-			Renderer::drawIndexed(cmd, DrawType::Triangle, data->indexCount);
-
-			data->vertexBuffers[data->batchDrawCallIndex]->unbind();
-			data->indexBuffer->unbind();
-			data->indexCount = 0;
-
-			data->batchDrawCallIndex++;
-
-			data->pipeline->end(cmd);
-		}
-	}
 };        // namespace maple

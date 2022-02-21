@@ -2,31 +2,41 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "Renderer.h"
-#include <cstdint>
-#include <glm/glm.hpp>
 #include <memory>
-#include <vector>
+#include "Scene/System/ExecutePoint.h"
 
 namespace maple
 {
-	class MAPLE_EXPORT PostProcessRenderer : public Renderer
+	class Shader;
+	class DescriptorSet;
+
+	namespace component
 	{
-	  public:
-		PostProcessRenderer();
+		struct SSAOData
+		{
+			std::shared_ptr<Shader>                     ssaoShader;
+			std::shared_ptr<Shader>                     ssaoBlurShader;
+			std::vector<std::shared_ptr<DescriptorSet>> ssaoSet;
+			std::vector<std::shared_ptr<DescriptorSet>> ssaoBlurSet;
+			bool  enable = true;
+			float bias = 0.025;
+			SSAOData();
+		};
 
-		~PostProcessRenderer();
+		struct SSRData
+		{
+			bool                           enable = false;
+			std::shared_ptr<DescriptorSet> ssrDescriptorSet;
+			std::shared_ptr<Shader>        ssrShader;
+			SSRData();
+		};
+	};
 
-		auto init(const std::shared_ptr<GBuffer> &buffer) -> void override;
 
-		auto renderScene(Scene *scene) -> void override;
 
-		auto beginScene(Scene *scene, const glm::mat4 &projView) -> void override;
-
-		auto onResize(uint32_t width, uint32_t height) -> void override;
-
-	  private:
-		struct RenderData;
-		RenderData *data = nullptr;
+	namespace post_process
+	{
+		auto registerSSAOPass(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void;
+		auto registerSSR(ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void;
 	};
 }        // namespace maple

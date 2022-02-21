@@ -20,7 +20,6 @@
 #include "RHI/RenderDevice.h"
 #include "Resources/Cache.h"
 #include "Scene/SceneManager.h"
-#include "Scene/System/ExecutePoint.h"
 #include "Scene/System/SystemManager.h"
 #include "Scripts/Lua/LuaVirtualMachine.h"
 #include "Thread/ThreadPool.h"
@@ -29,6 +28,7 @@
 namespace maple
 {
 	class MonoVirtualMachine;
+	class ExecutePoint;
 
 	enum class EditorState
 	{

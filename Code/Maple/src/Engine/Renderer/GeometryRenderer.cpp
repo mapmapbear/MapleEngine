@@ -16,133 +16,137 @@
 #include "Scene/Component/Transform.h"
 #include "Scene/Scene.h"
 
+#include "RendererData.h"
 #include "Application.h"
+
+#include <ecs/ecs.h>
 
 namespace maple
 {
+	struct GeometryLine
+	{
+		glm::vec3 start;
+		glm::vec3 end;
+		glm::vec4 color;
+	};
+
+	struct GeometryPoint
+	{
+		glm::vec3 p1;
+		glm::vec4 color;
+		float     size;
+	};
+
+	struct GeometryTriangle
+	{
+		glm::vec3 p1;
+		glm::vec3 p2;
+		glm::vec3 p3;
+		glm::vec4 color;
+	};
+
 	namespace
 	{
-		constexpr uint32_t MaxPoints               = 10000;
-		constexpr uint32_t MaxPointVertices        = MaxPoints * 4;
-		constexpr uint32_t MaxPointIndices         = MaxPoints * 6;
-		constexpr uint32_t MaxBatchDrawCalls       = 100;
-		constexpr uint32_t RendererPointSize       = sizeof(PointVertex) * 4;
+		constexpr uint32_t MaxPoints = 10000;
+		constexpr uint32_t MaxPointVertices = MaxPoints * 4;
+		constexpr uint32_t MaxPointIndices = MaxPoints * 6;
+		constexpr uint32_t MaxBatchDrawCalls = 100;
+		constexpr uint32_t RendererPointSize = sizeof(PointVertex) * 4;
 		constexpr uint32_t RendererPointBufferSize = RendererPointSize * MaxPointVertices;
 
-		constexpr uint32_t MaxLines               = 10000;
-		constexpr uint32_t MaxLineVertices        = MaxLines * 2;
-		constexpr uint32_t MaxLineIndices         = MaxLines * 6;
-		constexpr uint32_t MaxLineBatchDrawCalls  = 100;
-		constexpr uint32_t RendererLineSize       = sizeof(LineVertex) * 4;
+		constexpr uint32_t MaxLines = 10000;
+		constexpr uint32_t MaxLineVertices = MaxLines * 2;
+		constexpr uint32_t MaxLineIndices = MaxLines * 6;
+		constexpr uint32_t MaxLineBatchDrawCalls = 100;
+		constexpr uint32_t RendererLineSize = sizeof(LineVertex) * 4;
 		constexpr uint32_t RendererLineBufferSize = RendererLineSize * MaxLineVertices;
 	}        // namespace
 
-	struct GeometryRenderer::RenderData
+	namespace component
 	{
-		std::shared_ptr<VertexBuffer> lineVertexBuffers;
-		std::shared_ptr<VertexBuffer> pointVertexBuffers;
-
-		std::shared_ptr<IndexBuffer> lineIndexBuffer;
-		std::shared_ptr<IndexBuffer> pointIndexBuffer;
-
-		std::vector<std::shared_ptr<DescriptorSet>> pointDescriptorSet;
-		std::vector<std::shared_ptr<DescriptorSet>> lineDescriptorSet;
-
-		LineVertex * lineBuffer  = nullptr;
-		PointVertex *pointBuffer = nullptr;
-
-		uint32_t lineIndexCount          = 0;
-		uint32_t pointIndexCount         = 0;
-		uint32_t lineBatchDrawCallIndex  = 0;
-		uint32_t pointBatchDrawCallIndex = 0;
-
-		std::shared_ptr<Shader> lineShader;
-		std::shared_ptr<Shader> pointShader;
-
-		RenderData()
+		struct GeometryRenderData
 		{
-			pointShader = Shader::create("shaders/BatchPoint.shader");
-			lineShader  = Shader::create("shaders/BatchLine.shader");
+			std::vector<GeometryLine>     lines;
+			std::vector<GeometryTriangle> triangles;
+			std::vector<GeometryPoint>    points;
 
+
+			std::shared_ptr<VertexBuffer> lineVertexBuffers;
+			std::shared_ptr<VertexBuffer> pointVertexBuffers;
+
+			std::shared_ptr<IndexBuffer> lineIndexBuffer;
+			std::shared_ptr<IndexBuffer> pointIndexBuffer;
+
+			std::vector<std::shared_ptr<DescriptorSet>> pointDescriptorSet;
+			std::vector<std::shared_ptr<DescriptorSet>> lineDescriptorSet;
+
+			LineVertex* lineBuffer = nullptr;
+			PointVertex* pointBuffer = nullptr;
+
+			uint32_t lineIndexCount = 0;
+			uint32_t pointIndexCount = 0;
+			uint32_t lineBatchDrawCallIndex = 0;
+			uint32_t pointBatchDrawCallIndex = 0;
+
+			std::shared_ptr<Shader> lineShader;
+			std::shared_ptr<Shader> pointShader;
+
+			GeometryRenderData()
 			{
-				DescriptorInfo descriptorInfo{};
-				descriptorInfo.layoutIndex = 0;
-				descriptorInfo.shader      = pointShader.get();
-				pointDescriptorSet.emplace_back(DescriptorSet::create(descriptorInfo));
+				pointShader = Shader::create("shaders/BatchPoint.shader");
+				lineShader = Shader::create("shaders/BatchLine.shader");
 
-				pointVertexBuffers = VertexBuffer::create(BufferUsage::Dynamic);
-				pointVertexBuffers->resize(RendererPointBufferSize);
-
-				std::vector<uint32_t> indices;
-				indices.resize(MaxPointIndices);
-
-				for (int32_t i = 0, offset = 0; i < MaxPointIndices; i += 6, offset += 4)
 				{
-					indices[i]     = offset + 0;
-					indices[i + 1] = offset + 1;
-					indices[i + 2] = offset + 2;
+					DescriptorInfo descriptorInfo{};
+					descriptorInfo.layoutIndex = 0;
+					descriptorInfo.shader = pointShader.get();
+					pointDescriptorSet.emplace_back(DescriptorSet::create(descriptorInfo));
 
-					indices[i + 3] = offset + 2;
-					indices[i + 4] = offset + 3;
-					indices[i + 5] = offset + 0;
+					pointVertexBuffers = VertexBuffer::create(BufferUsage::Dynamic);
+					pointVertexBuffers->resize(RendererPointBufferSize);
+
+					std::vector<uint32_t> indices;
+					indices.resize(MaxPointIndices);
+
+					for (int32_t i = 0, offset = 0; i < MaxPointIndices; i += 6, offset += 4)
+					{
+						indices[i] = offset + 0;
+						indices[i + 1] = offset + 1;
+						indices[i + 2] = offset + 2;
+
+						indices[i + 3] = offset + 2;
+						indices[i + 4] = offset + 3;
+						indices[i + 5] = offset + 0;
+					}
+
+					pointIndexBuffer = IndexBuffer::create(indices.data(), MaxPointIndices);
 				}
-
-				pointIndexBuffer = IndexBuffer::create(indices.data(), MaxPointIndices);
-			}
-			{
-				DescriptorInfo descriptorLineInfo{};
-				descriptorLineInfo.layoutIndex = 0;
-				descriptorLineInfo.shader      = pointShader.get();
-				lineDescriptorSet.emplace_back(DescriptorSet::create(descriptorLineInfo));
-
-				lineVertexBuffers = VertexBuffer::create(BufferUsage::Dynamic);
-				lineVertexBuffers->resize(RendererLineBufferSize);
-
-				std::vector<uint32_t> indices;
-				indices.resize(MaxLineIndices);
-				for (int32_t i = 0; i < MaxLineIndices; i++)
 				{
-					indices[i] = i;
+					DescriptorInfo descriptorLineInfo{};
+					descriptorLineInfo.layoutIndex = 0;
+					descriptorLineInfo.shader = pointShader.get();
+					lineDescriptorSet.emplace_back(DescriptorSet::create(descriptorLineInfo));
+
+					lineVertexBuffers = VertexBuffer::create(BufferUsage::Dynamic);
+					lineVertexBuffers->resize(RendererLineBufferSize);
+
+					std::vector<uint32_t> indices;
+					indices.resize(MaxLineIndices);
+					for (int32_t i = 0; i < MaxLineIndices; i++)
+					{
+						indices[i] = i;
+					}
+					lineIndexBuffer = IndexBuffer::create(indices.data(), MaxLineIndices);
 				}
-				lineIndexBuffer = IndexBuffer::create(indices.data(), MaxLineIndices);
 			}
-		}
-	};
-
-	auto GeometryRenderer::init(const std::shared_ptr<GBuffer> &buffer) -> void
-	{
-		gbuffer    = buffer;
-		renderData = std::make_shared<RenderData>();
-	}
-
-	auto GeometryRenderer::renderScene(Scene *scene) -> void
-	{
-		PROFILE_FUNCTION();
-		executeLinePass();
-		executePointPass();
-		lines.clear();
-		points.clear();
-	}
-
-	auto GeometryRenderer::beginScene(Scene *scene, const glm::mat4 &projView) -> void
-	{
-		PROFILE_FUNCTION();
-		auto camera = scene->getCamera();
-		if (camera.first == nullptr || camera.second == nullptr)
-		{
-			return;
-		}
-
-		transform = camera.second;
-
-		renderData->lineDescriptorSet[0]->setUniform("UniformBufferObject", "projView", &projView);
-		renderData->pointDescriptorSet[0]->setUniform("UniformBufferObject", "projView", &projView);
+		};
 	}
 
 	auto GeometryRenderer::drawLine(const glm::vec3 &start, const glm::vec3 &end, const glm::vec4 &color) -> void
 	{
-		auto render = Application::getRenderGraph()->getRender(static_cast<int32_t>(RenderId::Geometry));
-		std::static_pointer_cast<GeometryRenderer>(render)->lines.push_back({start, end, color});
+		auto scene = Application::getSceneManager()->getCurrentScene();
+		auto& renderData = scene->getGlobalComponent<component::GeometryRenderData>();
+		renderData.lines.push_back({start, end, color});
 	}
 
 	auto GeometryRenderer::drawFrustum(const Frustum &frustum) -> void
@@ -201,133 +205,175 @@ namespace maple
 
 	auto GeometryRenderer::drawTriangle(const glm::vec3 &v0, const glm::vec3 &v1, const glm::vec3 &v2, const glm::vec4 &color) -> void
 	{
-		auto render = Application::getRenderGraph()->getRender(static_cast<int32_t>(RenderId::Geometry));
-		std::static_pointer_cast<GeometryRenderer>(render)->triangles.push_back({v0, v1, v2, color});
+		auto scene = Application::getSceneManager()->getCurrentScene();
+		auto& renderData = scene->getGlobalComponent<component::GeometryRenderData>();
+		renderData.triangles.push_back({v0, v1, v2, color});
 	}
 
-	auto GeometryRenderer::executeLinePass() -> void
+	namespace on_begin_scene 
 	{
-		PROFILE_FUNCTION();
-		auto commandBuffer = getCommandBuffer();
+		using Entity = ecs::Chain
+			::Read<component::RendererData>
+			::Write<component::GeometryRenderData>
+			::Read<component::CameraView>
+			::To<ecs::Entity>;
 
-		if (!lines.empty())
+		inline auto system(Entity entity, ecs::World world) 
 		{
-			renderData->lineDescriptorSet[0]->update();
-
-			PipelineInfo pipelineInfo;
-			pipelineInfo.shader              = renderData->lineShader;
-			pipelineInfo.polygonMode         = PolygonMode::Fill;
-			pipelineInfo.cullMode            = CullMode::Back;
-			pipelineInfo.transparencyEnabled = false;
-			pipelineInfo.clearTargets        = false;
-			pipelineInfo.drawType            = DrawType::Lines;
-			pipelineInfo.colorTargets[0]     = gbuffer->getBuffer(GBufferTextures::SCREEN);
-
-			auto pipeline = Pipeline::get(pipelineInfo);
-
-			pipeline->bind(commandBuffer);
-			renderData->lineVertexBuffers->bind(commandBuffer, pipeline.get());
-			renderData->lineBuffer = renderData->lineVertexBuffers->getPointer<LineVertex>();
-
-			for (auto &line : lines)
-			{
-				renderData->lineBuffer->vertex = line.start;
-				renderData->lineBuffer->color  = line.color;
-				renderData->lineBuffer++;
-				renderData->lineBuffer->vertex = line.end;
-				renderData->lineBuffer->color  = line.color;
-				renderData->lineBuffer++;
-				renderData->lineIndexCount += 2;
-			}
-
-			renderData->lineVertexBuffers->releasePointer();
-			renderData->lineVertexBuffers->unbind();
-
-			renderData->lineIndexBuffer->setCount(renderData->lineIndexCount);
-			renderData->lineVertexBuffers->bind(commandBuffer, pipeline.get());
-			renderData->lineIndexBuffer->bind(commandBuffer);
-
-			Renderer::bindDescriptorSets(pipeline.get(), commandBuffer, 0, renderData->lineDescriptorSet);
-			Renderer::drawIndexed(commandBuffer, DrawType::Lines, renderData->lineIndexCount);
-
-			renderData->lineVertexBuffers->unbind();
-			renderData->lineIndexBuffer->unbind();
-
-			renderData->lineIndexCount = 0;
-
-			pipeline->end(commandBuffer);
+			auto [render, geometry, cameraView] = entity;
+			geometry.lineDescriptorSet[0]->setUniform("UniformBufferObject", "projView", &cameraView.projView);
+			geometry.pointDescriptorSet[0]->setUniform("UniformBufferObject", "projView", &cameraView.projView);
 		}
 	}
 
-	auto GeometryRenderer::executePointPass() -> void
+	namespace on_render_lines
 	{
-		PROFILE_FUNCTION();
-		if (!points.empty())
+		using Entity = ecs::Chain
+			::Read<component::RendererData>
+			::Write<component::GeometryRenderData>
+			::Write<component::CameraView>
+			::To<ecs::Entity>;
+
+		inline auto systemLines(Entity entity, ecs::World world) 
 		{
-			auto commandBuffer = getCommandBuffer();
-			renderData->pointDescriptorSet[0]->update();
-			PipelineInfo pipelineInfo;
-			pipelineInfo.shader              = renderData->pointShader;
-			pipelineInfo.polygonMode         = PolygonMode::Fill;
-			pipelineInfo.cullMode            = CullMode::Back;
-			pipelineInfo.transparencyEnabled = true;
-			pipelineInfo.drawType            = DrawType::Triangle;
-			pipelineInfo.blendMode           = BlendMode::SrcAlphaOneMinusSrcAlpha;
-			pipelineInfo.colorTargets[0]     = gbuffer->getBuffer(GBufferTextures::SCREEN);
+			auto [render, geometry, cameraView] = entity;
+			auto commandBuffer = render.commandBuffer;
 
-			auto pipeline = Pipeline::get(pipelineInfo);
-
-			pipeline->bind(commandBuffer);
-			renderData->pointVertexBuffers->bind(commandBuffer, pipeline.get());
-			renderData->pointBuffer = renderData->pointVertexBuffers->getPointer<PointVertex>();
-
-			for (auto &pointInfo : points)
+			if (!geometry.lines.empty())
 			{
-				auto right = pointInfo.size * transform->getRightDirection();
-				auto up    = pointInfo.size * transform->getUpDirection();
+				geometry.lineDescriptorSet[0]->update();
 
-				renderData->pointBuffer->vertex = pointInfo.p1 - right - up;
-				renderData->pointBuffer->color  = pointInfo.color;
-				renderData->pointBuffer->size   = {pointInfo.size, 0.0f};
-				renderData->pointBuffer->uv     = {-1.0f, -1.0f};
-				renderData->pointBuffer++;
+				PipelineInfo pipelineInfo;
+				pipelineInfo.shader = geometry.lineShader;
+				pipelineInfo.polygonMode = PolygonMode::Fill;
+				pipelineInfo.cullMode = CullMode::Back;
+				pipelineInfo.transparencyEnabled = false;
+				pipelineInfo.clearTargets = false;
+				pipelineInfo.drawType = DrawType::Lines;
+				pipelineInfo.colorTargets[0] = render.gbuffer->getBuffer(GBufferTextures::SCREEN);
 
-				renderData->pointBuffer->vertex = pointInfo.p1 + right - up;
-				renderData->pointBuffer->color  = pointInfo.color;
-				renderData->pointBuffer->size   = {pointInfo.size, 0.0f};
-				renderData->pointBuffer->uv     = {1.0f, -1.0f};
-				renderData->pointBuffer++;
+				auto pipeline = Pipeline::get(pipelineInfo);
 
-				renderData->pointBuffer->vertex = pointInfo.p1 + right + up;
-				renderData->pointBuffer->color  = pointInfo.color;
-				renderData->pointBuffer->size   = {pointInfo.size, 0.0f};
-				renderData->pointBuffer->uv     = {1.0f, 1.0f};
-				renderData->pointBuffer++;
+				pipeline->bind(commandBuffer);
+				geometry.lineVertexBuffers->bind(commandBuffer, pipeline.get());
+				geometry.lineBuffer = geometry.lineVertexBuffers->getPointer<LineVertex>();
 
-				renderData->pointBuffer->vertex = pointInfo.p1 - right + up;
-				renderData->pointBuffer->color  = pointInfo.color;
-				renderData->pointBuffer->size   = {pointInfo.size, 0.0f};
-				renderData->pointBuffer->uv     = {-1.0f, 1.0f};
-				renderData->pointBuffer++;
+				for (auto& line : geometry.lines)
+				{
+					geometry.lineBuffer->vertex = line.start;
+					geometry.lineBuffer->color = line.color;
+					geometry.lineBuffer++;
+					geometry.lineBuffer->vertex = line.end;
+					geometry.lineBuffer->color = line.color;
+					geometry.lineBuffer++;
+					geometry.lineIndexCount += 2;
+				}
 
-				renderData->pointIndexCount += 6;
+				geometry.lineVertexBuffers->releasePointer();
+				geometry.lineVertexBuffers->unbind();
+
+				geometry.lineIndexBuffer->setCount(geometry.lineIndexCount);
+				geometry.lineVertexBuffers->bind(commandBuffer, pipeline.get());
+				geometry.lineIndexBuffer->bind(commandBuffer);
+
+				Renderer::bindDescriptorSets(pipeline.get(), commandBuffer, 0, geometry.lineDescriptorSet);
+				Renderer::drawIndexed(commandBuffer, DrawType::Lines, geometry.lineIndexCount);
+
+				geometry.lineVertexBuffers->unbind();
+				geometry.lineIndexBuffer->unbind();
+
+				geometry.lineIndexCount = 0;
+
+				pipeline->end(commandBuffer);
+
+				geometry.lines.clear();
 			}
+		}
 
-			renderData->pointVertexBuffers->releasePointer();
-			renderData->pointIndexBuffer->setCount(renderData->pointIndexCount);
-			renderData->pointIndexBuffer->bind(commandBuffer);
+		inline auto systemPoints(Entity entity, ecs::World world)
+		{
+			auto [render, geometry, cameraView] = entity;
+			auto commandBuffer = render.commandBuffer;
 
-			Renderer::bindDescriptorSets(pipeline.get(), commandBuffer, 0, renderData->pointDescriptorSet);
-			Renderer::drawIndexed(commandBuffer, DrawType::Triangle, renderData->pointIndexCount);
+			if (!geometry.points.empty())
+			{
+				geometry.pointDescriptorSet[0]->update();
+				PipelineInfo pipelineInfo;
+				pipelineInfo.shader = geometry.pointShader;
+				pipelineInfo.polygonMode = PolygonMode::Fill;
+				pipelineInfo.cullMode = CullMode::Back;
+				pipelineInfo.transparencyEnabled = true;
+				pipelineInfo.drawType = DrawType::Triangle;
+				pipelineInfo.blendMode = BlendMode::SrcAlphaOneMinusSrcAlpha;
+				pipelineInfo.colorTargets[0] = render.gbuffer->getBuffer(GBufferTextures::SCREEN);
 
-			renderData->pointVertexBuffers->unbind();
-			renderData->pointIndexBuffer->unbind();
+				auto pipeline = Pipeline::get(pipelineInfo);
 
-			renderData->pointIndexCount = 0;
+				pipeline->bind(commandBuffer);
+				geometry.pointVertexBuffers->bind(commandBuffer, pipeline.get());
+				geometry.pointBuffer = geometry.pointVertexBuffers->getPointer<PointVertex>();
 
-			pipeline->end(commandBuffer);
+				for (auto& pointInfo : geometry.points)
+				{
+					auto right = pointInfo.size * cameraView.cameraTransform->getRightDirection();
+					auto up = pointInfo.size * cameraView.cameraTransform->getUpDirection();
 
-			renderData->pointBatchDrawCallIndex++;
+					geometry.pointBuffer->vertex = pointInfo.p1 - right - up;
+					geometry.pointBuffer->color = pointInfo.color;
+					geometry.pointBuffer->size = { pointInfo.size, 0.0f };
+					geometry.pointBuffer->uv = { -1.0f, -1.0f };
+					geometry.pointBuffer++;
+
+					geometry.pointBuffer->vertex = pointInfo.p1 + right - up;
+					geometry.pointBuffer->color = pointInfo.color;
+					geometry.pointBuffer->size = { pointInfo.size, 0.0f };
+					geometry.pointBuffer->uv = { 1.0f, -1.0f };
+					geometry.pointBuffer++;
+
+					geometry.pointBuffer->vertex = pointInfo.p1 + right + up;
+					geometry.pointBuffer->color = pointInfo.color;
+					geometry.pointBuffer->size = { pointInfo.size, 0.0f };
+					geometry.pointBuffer->uv = { 1.0f, 1.0f };
+					geometry.pointBuffer++;
+
+					geometry.pointBuffer->vertex = pointInfo.p1 - right + up;
+					geometry.pointBuffer->color = pointInfo.color;
+					geometry.pointBuffer->size = { pointInfo.size, 0.0f };
+					geometry.pointBuffer->uv = { -1.0f, 1.0f };
+					geometry.pointBuffer++;
+
+					geometry.pointIndexCount += 6;
+				}
+
+				geometry.pointVertexBuffers->releasePointer();
+				geometry.pointIndexBuffer->setCount(geometry.pointIndexCount);
+				geometry.pointIndexBuffer->bind(commandBuffer);
+
+				Renderer::bindDescriptorSets(pipeline.get(), commandBuffer, 0, geometry.pointDescriptorSet);
+				Renderer::drawIndexed(commandBuffer, DrawType::Triangle, geometry.pointIndexCount);
+
+				geometry.pointVertexBuffers->unbind();
+				geometry.pointIndexBuffer->unbind();
+
+				geometry.pointIndexCount = 0;
+
+				pipeline->end(commandBuffer);
+
+				geometry.pointBatchDrawCallIndex++;
+
+				geometry.points.clear();
+			}
+		}
+	}
+
+	namespace geometry_renderer
+	{
+		auto registerGeometryRenderer(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void
+		{
+			executePoint->registerGlobalComponent<component::GeometryRenderData>();
+			executePoint->registerWithinQueue<on_begin_scene::system>(begin);
+			executePoint->registerWithinQueue<on_render_lines::systemLines>(renderer);
+			executePoint->registerWithinQueue<on_render_lines::systemPoints>(renderer);
 		}
 	}
 

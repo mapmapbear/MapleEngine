@@ -23,111 +23,120 @@
 
 #include "Application.h"
 
+#include "RendererData.h"
+#include <ecs/ecs.h>
+
 namespace maple
 {
-	struct UniformBufferObject
+	namespace component
 	{
-		glm::mat4 projView;
-
-		glm::vec4 rayleighScattering;        // rayleigh + surfaceRadius
-		glm::vec4 mieScattering;             // mieScattering + atmosphereRadius
-		glm::vec4 sunDirection;              //sunDirection + sunIntensity
-		glm::vec4 centerPoint;
-	};
-
-	struct AtmosphereRenderer::RenderData
-	{
-		std::shared_ptr<Shader>        atmosphereShader;
-		std::shared_ptr<DescriptorSet> descriptorSet;
-		UniformBufferObject            uniformObject;
-		std::shared_ptr<Pipeline>      pipeline;
-
-		std::shared_ptr<Mesh> screenMesh;
-
-		bool renderScreen = false;
-
-		RenderData()
+		struct AtmosphereData
 		{
-			atmosphereShader = Shader::create("shaders/Atmosphere.shader");
-			descriptorSet    = DescriptorSet::create({0, atmosphereShader.get()});
-			screenMesh       = Mesh::createQuad(true);
-			memset(&uniformObject, 0, sizeof(UniformBufferObject));
-		}
-	};
-
-	AtmosphereRenderer::AtmosphereRenderer()
-	{
-	}
-
-	AtmosphereRenderer::~AtmosphereRenderer()
-	{
-		delete data;
-	}
-
-	auto AtmosphereRenderer::init(const std::shared_ptr<GBuffer> &buffer) -> void
-	{
-		data    = new RenderData();
-		gbuffer = buffer;
-	}
-
-	auto AtmosphereRenderer::renderScene(Scene *scene) -> void
-	{
-		PROFILE_FUNCTION();
-		if (data->pipeline)
-		{
-			data->descriptorSet->setUniformBufferData("UniformBuffer", &data->uniformObject);
-			data->descriptorSet->update();
-			data->pipeline->bind(getCommandBuffer());
-			Renderer::bindDescriptorSets(data->pipeline.get(), getCommandBuffer(), 0, {data->descriptorSet});
-			Renderer::drawMesh(getCommandBuffer(), data->pipeline.get(), data->screenMesh.get());
-			data->pipeline->end(getCommandBuffer());
-		}
-	}
-
-	auto AtmosphereRenderer::beginScene(Scene *scene, const glm::mat4 &projView) -> void
-	{
-		auto group = scene->getRegistry().group<Atmosphere>(entt::get<Light, Transform>);
-
-		auto &      camera = scene->getCamera();
-		static auto begin  = Application::getTimer().current();
-
-		for (auto entity : group)
-		{
-			auto [atmosphere, light, transform] = group.get<Atmosphere, Light, Transform>(entity);
-
-			const auto &proj          = camera.first->getProjectionMatrix();
-			auto        inverseCamerm = camera.second->getWorldMatrixInverse();
-			inverseCamerm[3]          = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-
-			PipelineInfo info;
-			info.shader = data->atmosphereShader;
-			if (data->renderScreen)
+			std::shared_ptr<Shader>        atmosphereShader;
+			std::shared_ptr<DescriptorSet> descriptorSet;
+			struct UniformBufferObject
 			{
-				info.depthTarget = gbuffer->getDepthBuffer();
+				glm::mat4 projView;
+				glm::vec4 rayleighScattering;        // rayleigh + surfaceRadius
+				glm::vec4 mieScattering;             // mieScattering + atmosphereRadius
+				glm::vec4 sunDirection;              //sunDirection + sunIntensity
+				glm::vec4 centerPoint;
+			}uniformObject;
+			std::shared_ptr<Pipeline>      pipeline;
+
+			bool renderScreen = true;
+
+			AtmosphereData()
+			{
+				atmosphereShader = Shader::create("shaders/Atmosphere.shader");
+				descriptorSet = DescriptorSet::create({ 0, atmosphereShader.get() });
+				memset(&uniformObject, 0, sizeof(UniformBufferObject));
 			}
-			info.colorTargets[0]     = gbuffer->getBuffer(data->renderScreen ? GBufferTextures::SCREEN : GBufferTextures::PSEUDO_SKY);
-			info.polygonMode         = PolygonMode::Fill;
-			info.clearTargets        = false;
-			info.transparencyEnabled = false;
+		};
+	}
 
-			data->uniformObject.projView           = glm::inverse(proj * inverseCamerm);
-			data->uniformObject.sunDirection       = {glm::vec3(light.lightData.direction), light.lightData.intensity};
-			data->uniformObject.rayleighScattering = {atmosphere.getData().rayleighScattering, atmosphere.getData().surfaceRadius * 1000.f};
-			data->uniformObject.mieScattering      = {atmosphere.getData().mieScattering, atmosphere.getData().atmosphereRadius * 1000.f};
-			data->uniformObject.centerPoint        = {atmosphere.getData().centerPoint.x * 1000.f, atmosphere.getData().centerPoint.y * 1000.f, atmosphere.getData().centerPoint.z * 1000.f, atmosphere.getData().g};
-			data->pipeline                         = Pipeline::get(info);
+	namespace atmosphere_pass
+	{
+		namespace begin_scene
+		{
+			using Entity = ecs::Chain
+				::Write<component::AtmosphereData>
+				::Read<component::RendererData>
+				::Read<component::CameraView>
+				::To<ecs::Entity>;
 
-			break;
+			using Query = ecs::Chain
+				::Read<Atmosphere>
+				::Read<Light>
+				::Read<Transform>
+				::To<ecs::Query>;
+
+			inline auto system(Entity entity, Query query, ecs::World world)
+			{
+				auto [data,render, camera] = entity;
+
+				for (auto entity : query)
+				{
+					auto [atmosphere, light, transform] = query.convert(entity);
+
+					auto inverseCamerm = camera.view;
+					inverseCamerm[3] = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+
+					PipelineInfo info;
+					info.shader = data.atmosphereShader;
+					if (data.renderScreen)
+					{
+						info.depthTarget = render.gbuffer->getDepthBuffer();
+					}
+					info.colorTargets[0] = render.gbuffer->getBuffer(data.renderScreen ? GBufferTextures::SCREEN : GBufferTextures::PSEUDO_SKY);
+					info.polygonMode = PolygonMode::Fill;
+					info.clearTargets = false;
+					info.transparencyEnabled = false;
+
+					data.uniformObject.projView = glm::inverse(camera.proj * inverseCamerm);
+					data.uniformObject.sunDirection = { glm::vec3(light.lightData.direction), light.lightData.intensity };
+					data.uniformObject.rayleighScattering = { atmosphere.getData().rayleighScattering, atmosphere.getData().surfaceRadius * 1000.f };
+					data.uniformObject.mieScattering = { atmosphere.getData().mieScattering, atmosphere.getData().atmosphereRadius * 1000.f };
+					data.uniformObject.centerPoint = { atmosphere.getData().centerPoint.x * 1000.f, atmosphere.getData().centerPoint.y * 1000.f, atmosphere.getData().centerPoint.z * 1000.f, atmosphere.getData().g };
+					data.pipeline = Pipeline::get(info);
+
+					break;
+				}
+			}
+		}
+
+		namespace on_render
+		{
+			using Entity = ecs::Chain
+				::Write<component::AtmosphereData>
+				::Read<component::RendererData>
+				::To<ecs::Entity>;
+
+			inline auto system(Entity entity,  ecs::World world)
+			{
+				auto [data, render] = entity;
+
+				if (data.pipeline) 
+				{
+					data.descriptorSet->setUniformBufferData("UniformBuffer", &data.uniformObject);
+					data.descriptorSet->update();
+					data.pipeline->bind(render.commandBuffer);
+					Renderer::bindDescriptorSets(data.pipeline.get(), render.commandBuffer, 0, { data.descriptorSet });
+					Renderer::drawMesh(render.commandBuffer, data.pipeline.get(), render.screenQuad.get());
+					data.pipeline->end(render.commandBuffer);
+				}
+			}
 		}
 	}
-
-	auto AtmosphereRenderer::onImGui() -> void
+	
+	namespace atmosphere_pass
 	{
-		ImGui::TextUnformatted("Atmosphere Renderer");
-		ImGui::Separator();
-		ImGui::Columns(2);
-		ImGuiHelper::property("Render Target(Screen or Skybox Buffer)", data->renderScreen);
-		ImGui::Columns(1);
-	}
+		auto registerAtmosphere(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void
+		{
+			executePoint->registerGlobalComponent<component::AtmosphereData>();
 
+			executePoint->registerWithinQueue<begin_scene::system>(begin);
+			executePoint->registerWithinQueue<on_render::system>(renderer);
+		}
+	}
 };        // namespace maple

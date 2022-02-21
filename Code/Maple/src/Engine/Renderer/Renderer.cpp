@@ -22,11 +22,6 @@ namespace maple
 		Application::getRenderDevice()->dispatch(commandBuffer, x, y, z);
 	}
 
-	auto Renderer::getCommandBuffer() -> CommandBuffer *
-	{
-		return Application::getGraphicsContext()->getSwapChain()->getCurrentCommandBuffer();
-	}
-
 	auto Renderer::drawMesh(CommandBuffer *cmdBuffer, Pipeline *pipeline, Mesh *mesh) -> void
 	{
 		mesh->getVertexBuffer()->bind(cmdBuffer, pipeline);

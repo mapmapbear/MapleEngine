@@ -1,3 +1,7 @@
+//////////////////////////////////////////////////////////////////////////////
+// This file is part of the Maple Engine                              		//
+//////////////////////////////////////////////////////////////////////////////
+
 #include "CloudRenderer.h"
 #include "RHI/Pipeline.h"
 #include "RHI/Shader.h"
@@ -17,299 +21,328 @@
 
 #include "ImGui/ImGuiHelpers.h"
 
+#include "RendererData.h"
+
 #include "Application.h"
+
+#include <ecs/ecs.h>
 
 namespace maple
 {
-	struct UniformBufferObject
+	enum CloudsTextures
 	{
-		glm::mat4 invView;
-		glm::mat4 invProj;
-
-		glm::vec4 lightColor;
-		glm::vec4 lightDirection;
-		glm::vec4 cameraPosition;
-
-		float FOV;
-		float iTime;
-		float coverageMultiplier;
-		float cloudSpeed;
-
-		float crispiness;
-		float earthRadius;
-		float sphereInnerRadius;
-		float sphereOuterRadius;
-
-		float curliness;
-		float absorption;
-		float densityFactor;
-		float steps;
-
-		float   padding1;
-		float   padding2;
-		float   frames;
-		int32_t enablePowder;
+		FragColor,
+		Bloom,
+		Alphaness,
+		CloudDistance,
+		Length
 	};
 
-	struct CloudRenderer::RenderData
+	namespace component 
 	{
-		std::shared_ptr<Shader>                 cloudShader;
-		std::shared_ptr<Pipeline>               pipeline;
-		std::shared_ptr<DescriptorSet>          descriptorSet;
-		std::vector<std::shared_ptr<Texture2D>> computeInputs;
-		UniformBufferObject                     uniformObject;
-
-		std::shared_ptr<Shader>        screenCloudShader;
-		std::shared_ptr<DescriptorSet> screenDescriptorSet;
-		std::shared_ptr<Mesh>          screenMesh;
-
-		RenderData()
+		struct CloudRenderData
 		{
-			cloudShader   = Shader::create("shaders/Cloud.shader");
-			descriptorSet = DescriptorSet::create({0, cloudShader.get()});
-			memset(&uniformObject, 0, sizeof(UniformBufferObject));
-			uniformObject.steps = 64;
+			std::shared_ptr<Shader>                 cloudShader;
+			std::shared_ptr<Pipeline>               pipeline;
+			std::shared_ptr<DescriptorSet>          descriptorSet;
+			std::vector<std::shared_ptr<Texture2D>> computeInputs;
 
-			screenCloudShader   = Shader::create("shaders/CloudScreen.shader");
-			screenDescriptorSet = DescriptorSet::create({0, screenCloudShader.get()});
-			screenMesh          = Mesh::createQuad(true);
-		}
-	};
-
-	struct CloudRenderer::WeatherPass
-	{
-		std::shared_ptr<Shader>        shader;
-		std::shared_ptr<DescriptorSet> descriptorSet;
-		std::shared_ptr<Texture2D>     weather;
-
-		std::shared_ptr<Shader>        perlinWorley;
-		std::shared_ptr<Texture3D>     perlin3D;
-		std::shared_ptr<DescriptorSet> perlinWorleySet;
-
-		std::shared_ptr<Shader>        worleyShader;
-		std::shared_ptr<Texture3D>     worley3D;
-		std::shared_ptr<DescriptorSet> worleySet;
-
-		struct UniformBufferObject
-		{
-			glm::vec3 seed;
-			float     perlinAmplitude = 0.5;
-			float     perlinFrequency = 0.8;
-			float     perlinScale     = 100.0;
-			int       perlinOctaves   = 4;
-		} uniformObject;
-
-		WeatherPass()
-		{
-			shader        = Shader::create("shaders/Weather.shader");
-			descriptorSet = DescriptorSet::create({0, shader.get()});
-			weather       = Texture2D::create();
-			weather->buildTexture(TextureFormat::RGBA32, 1024, 1024, false, true, false, false, true, 2);
-			uniformObject.seed = {Randomizer::random(), Randomizer::random(), Randomizer::random()};
-
-			perlinWorley    = Shader::create("shaders/PerlinWorley.shader");
-			perlin3D        = Texture3D::create(128, 128, 128);
-			perlinWorleySet = DescriptorSet::create({0, perlinWorley.get()});
-			perlinWorleySet->setTexture("outVolTex", perlin3D);
-
-			worleyShader = Shader::create("shaders/Worley.shader");
-			worley3D     = Texture3D::create(32, 32, 32);
-			worleySet    = DescriptorSet::create({0, worleyShader.get()});
-			worleySet->setTexture("outVolTex", worley3D);
-		}
-
-		inline auto executePerlin3D(CommandBuffer *cmd)
-		{
-			PipelineInfo info;
-			info.shader   = perlinWorley;
-			auto pipeline = Pipeline::get(info);
-			perlinWorleySet->update();
-			pipeline->bind(cmd);
-			Renderer::bindDescriptorSets(pipeline.get(), cmd, 0, {perlinWorleySet});
-			Renderer::dispatch(cmd, 128 / 4, 128 / 4, 128 / 4);
-			pipeline->end(cmd);
-			perlin3D->generateMipmaps();
-		}
-
-		inline auto executeWorley3D(CommandBuffer *cmd)
-		{
-			PipelineInfo info;
-			info.shader   = worleyShader;
-			auto pipeline = Pipeline::get(info);
-			worleySet->update();
-			pipeline->bind(cmd);
-			Renderer::bindDescriptorSets(pipeline.get(), cmd, 0, {worleySet});
-			Renderer::dispatch(cmd, 32 / 4, 32 / 4, 32 / 4);
-			pipeline->end(cmd);
-			worley3D->generateMipmaps();
-		}
-
-		inline auto execute(CommandBuffer *cmd)
-		{
-			descriptorSet->setUniformBufferData("UniformBufferObject", &uniformObject);
-			descriptorSet->setTexture("outWeatherTex", weather);
-			descriptorSet->update();
-
-			PipelineInfo info;
-			info.shader   = shader;
-			auto pipeline = Pipeline::get(info);
-			pipeline->bind(cmd);
-			Renderer::bindDescriptorSets(pipeline.get(), cmd, 0, {descriptorSet});
-			Renderer::dispatch(cmd, 1024 / 8, 1024 / 8, 1);
-			pipeline->end(cmd);
-		}
-	};
-
-	CloudRenderer::CloudRenderer()
-	{
-	}
-
-	CloudRenderer::~CloudRenderer()
-	{
-		delete data;
-		delete skyData;
-		delete weatherPass;
-	}
-
-	auto CloudRenderer::init(const std::shared_ptr<GBuffer> &buffer) -> void
-	{
-		data        = new RenderData();
-		weatherPass = new WeatherPass();
-		gbuffer     = buffer;
-
-		weatherPass->executePerlin3D(getCommandBuffer());
-		weatherPass->executeWorley3D(getCommandBuffer());
-	}
-
-	auto CloudRenderer::renderScene(Scene *scene) -> void
-	{
-		PROFILE_FUNCTION();
-
-		if (data->pipeline)
-		{
+			struct UniformBufferObject
 			{
-				data->uniformObject.frames++;
-				data->descriptorSet->setUniformBufferData("UniformBufferObject", &data->uniformObject);
-				data->descriptorSet->setTexture("fragColor", data->computeInputs[0]);
-				data->descriptorSet->setTexture("bloom", data->computeInputs[1]);
-				data->descriptorSet->setTexture("alphaness", data->computeInputs[2]);
-				data->descriptorSet->setTexture("cloudDistance", data->computeInputs[3]);
-				data->descriptorSet->setTexture("uDepthSampler", gbuffer->getDepthBuffer());
-				data->descriptorSet->setTexture("uSky", gbuffer->getBuffer(GBufferTextures::PSEUDO_SKY));
+				glm::mat4 invView;
+				glm::mat4 invProj;
 
-				data->descriptorSet->setTexture("uWeatherTex", weatherPass->weather);
-				data->descriptorSet->setTexture("uCloud", weatherPass->perlin3D);
-				data->descriptorSet->setTexture("uWorley32", weatherPass->worley3D);
+				glm::vec4 lightColor;
+				glm::vec4 lightDirection;
+				glm::vec4 cameraPosition;
 
-				data->descriptorSet->update();
+				float FOV;
+				float iTime;
+				float coverageMultiplier;
+				float cloudSpeed;
 
-				data->pipeline->bind(getCommandBuffer());
-				Renderer::bindDescriptorSets(data->pipeline.get(), getCommandBuffer(), 0, {data->descriptorSet});
-				Renderer::dispatch(getCommandBuffer(),
-				                   gbuffer->getWidth() / data->cloudShader->getLocalSizeX(),
-				                   gbuffer->getHeight() / data->cloudShader->getLocalSizeY(),
-				                   1);
-				data->pipeline->end(getCommandBuffer());
+				float crispiness;
+				float earthRadius;
+				float sphereInnerRadius;
+				float sphereOuterRadius;
+
+				float curliness;
+				float absorption;
+				float densityFactor;
+				float steps;
+
+				float   padding1;
+				float   padding2;
+				float   frames;
+				int32_t enablePowder;
+			} uniformObject;
+
+			std::shared_ptr<Shader>        screenCloudShader;
+			std::shared_ptr<DescriptorSet> screenDescriptorSet;
+
+			CloudRenderData()
+			{
+				cloudShader = Shader::create("shaders/Cloud.shader");
+				descriptorSet = DescriptorSet::create({ 0, cloudShader.get() });
+				memset(&uniformObject, 0, sizeof(UniformBufferObject));
+				uniformObject.steps = 64;
+
+				screenCloudShader = Shader::create("shaders/CloudScreen.shader");
+				screenDescriptorSet = DescriptorSet::create({ 0, screenCloudShader.get() });
+			}
+		};
+
+		struct WeatherPass
+		{
+			std::shared_ptr<Shader>        shader;
+			std::shared_ptr<DescriptorSet> descriptorSet;
+			std::shared_ptr<Texture2D>     weather;
+
+			std::shared_ptr<Shader>        perlinWorley;
+			std::shared_ptr<Texture3D>     perlin3D;
+			std::shared_ptr<DescriptorSet> perlinWorleySet;
+
+			std::shared_ptr<Shader>        worleyShader;
+			std::shared_ptr<Texture3D>     worley3D;
+			std::shared_ptr<DescriptorSet> worleySet;
+
+			struct UniformBufferObject
+			{
+				glm::vec3 seed;
+				float     perlinAmplitude = 0.5;
+				float     perlinFrequency = 0.8;
+				float     perlinScale = 100.0;
+				int       perlinOctaves = 4;
+			} uniformObject;
+
+			bool generatedNoise = false;
+
+			WeatherPass()
+			{
+				shader = Shader::create("shaders/Weather.shader");
+				descriptorSet = DescriptorSet::create({ 0, shader.get() });
+				weather = Texture2D::create();
+				weather->buildTexture(TextureFormat::RGBA32, 1024, 1024, false, true, false, false, true, 2);
+				uniformObject.seed = { Randomizer::random(), Randomizer::random(), Randomizer::random() };
+
+				perlinWorley = Shader::create("shaders/PerlinWorley.shader");
+				perlin3D = Texture3D::create(128, 128, 128);
+				perlinWorleySet = DescriptorSet::create({ 0, perlinWorley.get() });
+				perlinWorleySet->setTexture("outVolTex", perlin3D);
+
+				worleyShader = Shader::create("shaders/Worley.shader");
+				worley3D = Texture3D::create(32, 32, 32);
+				worleySet = DescriptorSet::create({ 0, worleyShader.get() });
+				worleySet->setTexture("outVolTex", worley3D);
 			}
 
+			inline auto executePerlin3D(CommandBuffer* cmd)
 			{
-				data->screenDescriptorSet->update();
 				PipelineInfo info;
-				info.shader              = data->screenCloudShader;
-				info.colorTargets[0]     = gbuffer->getBuffer(GBufferTextures::SCREEN);
-				info.polygonMode         = PolygonMode::Fill;
-				info.clearTargets        = false;
-				info.transparencyEnabled = false;
-				info.depthTarget         = gbuffer->getDepthBuffer();
-
+				info.shader = perlinWorley;
 				auto pipeline = Pipeline::get(info);
-
-				data->screenDescriptorSet->setTexture("uCloudSampler", data->computeInputs[0]);
-				data->screenDescriptorSet->update();
-
-				pipeline->bind(getCommandBuffer());
-				Renderer::bindDescriptorSets(pipeline.get(), getCommandBuffer(), 0, {data->screenDescriptorSet});
-				Renderer::drawMesh(getCommandBuffer(), pipeline.get(), data->screenMesh.get());
-				pipeline->end(getCommandBuffer());
+				perlinWorleySet->update();
+				pipeline->bind(cmd);
+				Renderer::bindDescriptorSets(pipeline.get(), cmd, 0, { perlinWorleySet });
+				Renderer::dispatch(cmd, 128 / 4, 128 / 4, 128 / 4);
+				pipeline->end(cmd);
+				perlin3D->generateMipmaps();
 			}
-		}
-	}
 
-	auto CloudRenderer::beginScene(Scene *scene, const glm::mat4 &projView) -> void
-	{
-		auto group = scene->getRegistry().group<VolumetricCloud>(entt::get<Light, Transform>);
-
-		auto &      camera = scene->getCamera();
-		static auto begin  = Application::getTimer().current();
-
-		for (auto entity : group)
-		{
-			auto [cloud, light, transform] = group.get<VolumetricCloud, Light, Transform>(entity);
-
-			PipelineInfo info;
-			info.shader      = data->cloudShader;
-			info.groupCountX = data->computeInputs[0]->getWidth() / 16;
-			info.groupCountY = data->computeInputs[0]->getWidth() / 16;
-			//data->pipeline   = Pipeline::get(info);
-
-			data->uniformObject.invProj        = glm::inverse(camera.first->getProjectionMatrix());
-			data->uniformObject.invView        = camera.second->getWorldMatrix();
-			data->uniformObject.lightDirection = glm::vec4(glm::normalize(transform.getWorldOrientation() * maple::FORWARD), 1);
-			data->uniformObject.lightColor     = light.lightData.color;
-			data->uniformObject.cameraPosition = glm::vec4(camera.second->getWorldPosition(), 1.f);
-
-			data->uniformObject.FOV   = camera.first->getFov();
-			data->uniformObject.iTime = Application::getTimer().elapsed(begin, Application::getTimer().current()) / 1000000.f;
-
-			data->uniformObject.earthRadius        = cloud.earthRadius;
-			data->uniformObject.sphereInnerRadius  = cloud.sphereInnerRadius;
-			data->uniformObject.sphereOuterRadius  = cloud.sphereOuterRadius;
-			data->uniformObject.coverageMultiplier = cloud.coverage;
-			data->uniformObject.cloudSpeed         = cloud.cloudSpeed;
-			data->uniformObject.curliness          = cloud.curliness;
-			data->uniformObject.absorption         = cloud.absorption * 0.01;
-			data->uniformObject.densityFactor      = cloud.density;
-			data->uniformObject.crispiness         = cloud.crispiness;
-			data->uniformObject.enablePowder       = cloud.enablePowder ? 1 : 0;
-			data->pipeline                         = Pipeline::get(info);
-
-			weatherPass->uniformObject.perlinFrequency = cloud.perlinFrequency;
-			if (cloud.weathDirty)
+			inline auto executeWorley3D(CommandBuffer* cmd)
 			{
-				weatherPass->execute(getCommandBuffer());
+				PipelineInfo info;
+				info.shader = worleyShader;
+				auto pipeline = Pipeline::get(info);
+				worleySet->update();
+				pipeline->bind(cmd);
+				Renderer::bindDescriptorSets(pipeline.get(), cmd, 0, { worleySet });
+				Renderer::dispatch(cmd, 32 / 4, 32 / 4, 32 / 4);
+				pipeline->end(cmd);
+				worley3D->generateMipmaps();
 			}
-			break;
-		}
-	}
 
-	auto CloudRenderer::onResize(uint32_t width, uint32_t height) -> void
-	{
-		if (data->computeInputs.empty())
-		{
-			for (auto i = 0; i < data->cloudShader->getDescriptorInfo(0).descriptors.size(); i++)
+			inline auto execute(CommandBuffer* cmd)
 			{
-				data->computeInputs.emplace_back(Texture2D::create());
+				descriptorSet->setUniformBufferData("UniformBufferObject", &uniformObject);
+				descriptorSet->setTexture("outWeatherTex", weather);
+				descriptorSet->update();
+
+				PipelineInfo info;
+				info.shader = shader;
+				auto pipeline = Pipeline::get(info);
+				pipeline->bind(cmd);
+				Renderer::bindDescriptorSets(pipeline.get(), cmd, 0, { descriptorSet });
+				Renderer::dispatch(cmd, 1024 / 8, 1024 / 8, 1);
+				pipeline->end(cmd);
+			}
+		};
+	}
+	
+	namespace begin_scene 
+	{
+		using Entity = ecs::Chain
+			::Write<component::CloudRenderData>
+			::Read<component::CameraView>
+			::Read<component::RendererData>
+			::Write<component::WeatherPass>
+			::Write<Timer>
+			::Read<component::WindowSize>
+			::To<ecs::Entity>;
+
+		using Query = ecs::Chain
+			::Read<VolumetricCloud>
+			::Read<Light>
+			::Read<Transform>
+			::To<ecs::Query>;
+
+		inline auto system(Entity entity, Query query, ecs::World world)
+		{
+			auto [data, camera, render, weather, timer, winSize] = entity;
+			static auto begin = timer.current();
+
+			if (!weather.generatedNoise)
+			{
+				weather.executePerlin3D(render.commandBuffer);
+				weather.executeWorley3D(render.commandBuffer);
+				weather.generatedNoise = true;
+			}
+
+			if (query.empty() || winSize.height == 0 || winSize.width == 0)
+				return;
+
+			if (data.computeInputs.empty()) 
+			{
+				for (auto i = 0; i < data.cloudShader->getDescriptorInfo(0).descriptors.size(); i++)
+				{
+					data.computeInputs.emplace_back(Texture2D::create());
+				}
+			}
+
+			for (auto& desc : data.cloudShader->getDescriptorInfo(0).descriptors)
+			{
+				auto& binding = data.computeInputs[desc.binding];
+				if(binding->getWidth() != winSize.width || binding->getHeight() != winSize.height)
+					binding->buildTexture(TextureFormat::RGBA32, winSize.width, winSize.height, false, true, false, false, true, desc.accessFlag);
+			}
+	
+
+			for (auto entity : query)
+			{
+				auto [cloud, light, transform] = query.convert(entity);
+
+				PipelineInfo info;
+				info.shader = data.cloudShader;
+				info.groupCountX = data.computeInputs[0]->getWidth() / 16;
+				info.groupCountY = data.computeInputs[0]->getWidth() / 16;
+
+				data.uniformObject.invProj = glm::inverse(camera.proj);
+				data.uniformObject.invView = camera.cameraTransform->getWorldMatrix();
+				data.uniformObject.lightDirection = light.lightData.direction;
+					//glm::vec4(glm::normalize(transform.getWorldOrientation() * maple::FORWARD), 1);
+				data.uniformObject.lightColor = light.lightData.color;
+				data.uniformObject.cameraPosition = glm::vec4(camera.cameraTransform->getWorldPosition(), 1.f);
+
+				data.uniformObject.FOV = camera.fov;
+				data.uniformObject.iTime = timer.elapsed(begin, timer.current()) / 1000000.f;
+
+				data.uniformObject.earthRadius = cloud.earthRadius;
+				data.uniformObject.sphereInnerRadius = cloud.sphereInnerRadius;
+				data.uniformObject.sphereOuterRadius = cloud.sphereOuterRadius;
+				data.uniformObject.coverageMultiplier = cloud.coverage;
+				data.uniformObject.cloudSpeed = cloud.cloudSpeed;
+				data.uniformObject.curliness = cloud.curliness;
+				data.uniformObject.absorption = cloud.absorption * 0.01;
+				data.uniformObject.densityFactor = cloud.density;
+				data.uniformObject.crispiness = cloud.crispiness;
+				data.uniformObject.enablePowder = cloud.enablePowder ? 1 : 0;
+				data.pipeline = Pipeline::get(info);
+
+				weather.uniformObject.perlinFrequency = cloud.perlinFrequency;
+
+				if (cloud.weathDirty)
+				{
+					weather.execute(render.commandBuffer);
+				}
+				break;
 			}
 		}
-		for (auto &desc : data->cloudShader->getDescriptorInfo(0).descriptors)
+	}
+
+	namespace on_render
+	{
+		using Entity = ecs::Chain
+			::Write<component::CloudRenderData>
+			::Read<component::CameraView>
+			::Read<component::RendererData>
+			::Read<component::WeatherPass>
+			::To<ecs::Entity>;
+
+		inline auto system(Entity entity, ecs::World world)
 		{
-			auto &binding = data->computeInputs[desc.binding];
-			binding->buildTexture(TextureFormat::RGBA32, width, height, false, true, false, false, true, desc.accessFlag);
+			auto [data, camera, render,weather] = entity;
+
+			if (data.pipeline)
+			{
+				{
+					data.uniformObject.frames++;
+					data.descriptorSet->setUniformBufferData("UniformBufferObject", &data.uniformObject);
+					data.descriptorSet->setTexture("fragColor", data.computeInputs[0]);
+					data.descriptorSet->setTexture("bloom", data.computeInputs[1]);
+					data.descriptorSet->setTexture("alphaness", data.computeInputs[2]);
+					data.descriptorSet->setTexture("cloudDistance", data.computeInputs[3]);
+					data.descriptorSet->setTexture("uDepthSampler",render.gbuffer->getDepthBuffer());
+					data.descriptorSet->setTexture("uSky", render.gbuffer->getBuffer(GBufferTextures::PSEUDO_SKY));
+
+					data.descriptorSet->setTexture("uWeatherTex", weather.weather);
+					data.descriptorSet->setTexture("uCloud", weather.perlin3D);
+					data.descriptorSet->setTexture("uWorley32", weather.worley3D);
+
+					data.descriptorSet->update();
+
+					data.pipeline->bind(render.commandBuffer);
+					Renderer::bindDescriptorSets(data.pipeline.get(), render.commandBuffer, 0, { data.descriptorSet });
+					Renderer::dispatch(render.commandBuffer,
+						render.gbuffer->getWidth() / data.cloudShader->getLocalSizeX(),
+						render.gbuffer->getHeight() / data.cloudShader->getLocalSizeY(),
+						1);
+					data.pipeline->end(render.commandBuffer);
+				}
+
+				{
+					data.screenDescriptorSet->update();
+					PipelineInfo info;
+					info.shader = data.screenCloudShader;
+					info.colorTargets[0] = render.gbuffer->getBuffer(GBufferTextures::SCREEN);
+					info.polygonMode = PolygonMode::Fill;
+					info.clearTargets = false;
+					info.transparencyEnabled = false;
+					info.depthTarget = render.gbuffer->getDepthBuffer();
+
+					auto pipeline = Pipeline::get(info);
+
+					data.screenDescriptorSet->setTexture("uCloudSampler", data.computeInputs[0]);
+					data.screenDescriptorSet->update();
+
+					pipeline->bind(render.commandBuffer);
+					Renderer::bindDescriptorSets(pipeline.get(), render.commandBuffer, 0, { data.screenDescriptorSet });
+					Renderer::drawMesh(render.commandBuffer, pipeline.get(), render.screenQuad.get());
+					pipeline->end(render.commandBuffer);
+				}
+			}
 		}
 	}
 
-	auto CloudRenderer::getTexture(CloudsTextures id) -> std::shared_ptr<Texture>
+	namespace cloud_renderer
 	{
-		return data->computeInputs[id];
-	}
+		auto registerCloudRenderer(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void
+		{
+			executePoint->registerGlobalComponent<Timer>();
+			executePoint->registerGlobalComponent<component::CloudRenderData>();
+			executePoint->registerGlobalComponent<component::WeatherPass>();
 
-	auto CloudRenderer::onImGui() -> void
-	{
-		ImGui::TextUnformatted("Cloud Renderer");
-		ImGui::Separator();
-		ImGui::Columns(2);
-		ImGuiHelper::property("Cloud : Steps", data->uniformObject.steps, 1, 64);
-		ImGui::Columns(1);
+			executePoint->registerWithinQueue<begin_scene::system>(begin);
+			executePoint->registerWithinQueue<on_render::system>(renderer);
+		}
 	}
-
 };        // namespace maple

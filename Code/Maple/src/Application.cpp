@@ -52,7 +52,7 @@ namespace maple
 	auto Application::init() -> void
 	{
 		PROFILE_FUNCTION();
-		executePoint = systemManager->addSystem<ExecutePoint>();
+		executePoint = std::make_shared<ExecutePoint>();
 
 		Input::create();
 		window->init();
@@ -65,18 +65,6 @@ namespace maple
 		monoVm->init();
 		renderGraph->init(window->getWidth(), window->getHeight());
 
-		{
-		/*	auto splashTexture = Texture2D::create("splash", "textures/maple-alpha.png");
-
-			renderDevice->begin();
-			renderDevice->drawSplashScreen(splashTexture);
-			renderDevice->present();        //present all data
-
-			//To Display the window
-			window->onUpdate();
-			window->swapBuffers();*/
-		}
-
 		appDelegate->onInit();
 
 		systemManager->addSystem<LuaSystem>()->onInit();
@@ -84,8 +72,6 @@ namespace maple
 
 		imGuiManager = systemManager->addSystem<ImGuiSystem>(false);
 		imGuiManager->onInit();
-
-		executePoint->onInit();
 	}
 
 	auto Application::start() -> int32_t
@@ -131,9 +117,15 @@ namespace maple
 		PROFILE_FUNCTION();
 		auto scene = sceneManager->getCurrentScene();
 		scene->onUpdate(delta);
+
+		systemManager->onImGui();
 		onImGui();
 		ImNotification::onImGui();
+
 		systemManager->onUpdate(delta, scene);
+		executePoint->setGlobalEntity(scene->getGlobalEntity());
+		executePoint->onUpdate(delta, scene->getRegistry());
+
 		window->onUpdate();
 		dispatcher.dispatchEvents();
 		renderGraph->onUpdate(delta, scene);
@@ -142,12 +134,11 @@ namespace maple
 	auto Application::onRender() -> void
 	{
 		PROFILE_FUNCTION();
-		renderGraph->beginPreviewScene(sceneManager->getSceneByName("PreviewScene"));
-		renderGraph->onRenderPreview();
+	/*	renderGraph->beginPreviewScene(sceneManager->getSceneByName("PreviewScene"));
+		renderGraph->onRenderPreview();*/
+
 		renderGraph->beginScene(sceneManager->getCurrentScene());
-
-		executePoint->execute(sceneManager->getCurrentScene());
-
+		executePoint->execute(sceneManager->getCurrentScene()->getRegistry());
 		onRenderDebug();
 	}
 
@@ -157,6 +148,7 @@ namespace maple
 
 	auto Application::onImGui() -> void
 	{
+		executePoint->executeImGui(sceneManager->getCurrentScene()->getRegistry());
 		PROFILE_FUNCTION();
 	}
 

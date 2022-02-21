@@ -20,19 +20,16 @@ namespace maple
 		~Timer()
 		{
 		}
-
-		Timer(const Timer &) = delete;
-		Timer &operator=(const Timer &) = delete;
-
+	
 		// Start the timer by setting the last measurement to now.
-		auto start() -> void
+		inline auto start() -> void
 		{
 			point = clock::now();
 			prev  = current();
 		}
 
 		// Return time elapsed since the last measurement.
-		auto stop() -> int64_t
+		inline auto stop() -> int64_t
 		{
 			clock::time_point last = point;
 			point                  = clock::now();
@@ -40,25 +37,25 @@ namespace maple
 			return duration.count();
 		}
 
-		auto currentTimestamp()
+		inline auto currentTimestamp()
 		{
 			auto tp  = std::chrono::time_point_cast<std::chrono::milliseconds>(std::chrono::system_clock::now());
 			auto tmp = std::chrono::duration_cast<std::chrono::milliseconds>(tp.time_since_epoch());
 			return tmp.count();
 		}
 
-		auto current() -> std::chrono::high_resolution_clock::time_point
+		inline auto current() -> std::chrono::high_resolution_clock::time_point
 		{
 			return std::chrono::high_resolution_clock::now();
 		}
 
-		auto elapsed(std::chrono::high_resolution_clock::time_point begin,
+		inline auto elapsed(std::chrono::high_resolution_clock::time_point begin,
 		             std::chrono::high_resolution_clock::time_point end)
 		{
 			return std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
 		}
 
-		auto step() -> float
+		inline auto step() -> float
 		{
 			auto currTime = current();
 
