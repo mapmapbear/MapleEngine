@@ -21,6 +21,7 @@ namespace maple
 		auto onResize(uint32_t width, uint32_t height) -> void override;
 		auto presentInternal() -> void override;
 		auto presentInternal(CommandBuffer *commandBuffer) -> void override;
+		auto drawArraysInternal(CommandBuffer* commandBuffer, DrawType type, uint32_t count, uint32_t start = 0) const -> void override;
 		auto drawIndexedInternal(CommandBuffer *commandBuffer, DrawType type, uint32_t count, uint32_t start) const -> void override;
 		auto drawInternal(CommandBuffer *commandBuffer, DrawType type, uint32_t count, DataType datayType, const void *indices) const -> void override;
 		auto bindDescriptorSetsInternal(Pipeline *pipeline, CommandBuffer *commandBuffer, uint32_t dynamicOffset, const std::vector<std::shared_ptr<DescriptorSet>> &sets) -> void override;

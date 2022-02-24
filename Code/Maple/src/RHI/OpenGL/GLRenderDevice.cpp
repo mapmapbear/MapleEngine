@@ -175,6 +175,7 @@ namespace maple
 	{
 	}
 
+
 	auto GLRenderDevice::setDepthTestingInternal(bool enabled) -> void
 	{
 		PROFILE_FUNCTION();
@@ -320,6 +321,13 @@ namespace maple
 		PROFILE_FUNCTION();
 		//NumDrawCalls++;
 		GLCall(glDrawElements(drawTypeToGL(type), count, dataTypeToGL(DataType::UnsignedInt), nullptr));
+	}
+
+	auto GLRenderDevice::drawArraysInternal(CommandBuffer* commandBuffer, DrawType type, uint32_t count, uint32_t start /*= 0*/) const -> void
+	{
+		PROFILE_FUNCTION();
+		//NumDrawCalls++;
+		GLCall(glDrawArrays(drawTypeToGL(type), start, count));
 	}
 
 	auto GLRenderDevice::bindDescriptorSetsInternal(Pipeline *pipeline, CommandBuffer *commandBuffer, uint32_t dynamicOffset, const std::vector<std::shared_ptr<DescriptorSet>> &descriptorSets) -> void

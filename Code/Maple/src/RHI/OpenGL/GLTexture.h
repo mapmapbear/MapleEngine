@@ -71,7 +71,7 @@ namespace maple
 	class GLTexture3D : public Texture3D
 	{
 	  public:
-		GLTexture3D(uint32_t width, uint32_t height, uint32_t depth);
+		GLTexture3D(uint32_t width, uint32_t height, uint32_t depth, TextureFormat foramt = TextureFormat::RGBA8);
 		~GLTexture3D();
 
 		auto init(uint32_t width, uint32_t height, uint32_t depth) -> void;
@@ -112,6 +112,8 @@ namespace maple
 		{
 			return format;
 		}
+
+		auto clear() -> void override;
 
 	  private:
 		uint32_t      handle = 0;

@@ -203,7 +203,6 @@ namespace maple
 
 				if (directionaLight)
 				{
-
 					if (directionaLight)
 					{
 						updateCascades(cameraView, shadowData,directionaLight);
@@ -286,11 +285,12 @@ namespace maple
 	{
 		using Entity = ecs::Chain
 			::Read<component::ShadowMapData>
+			::Read<component::ReflectiveShadowData>
 			::To<ecs::Entity>;
 
 		inline auto beginScene(Entity entity, ecs::World world)
 		{
-
+			auto [shadow, rsm] = entity;
 		}
 
 		inline auto onRender(Entity entity, ecs::World world)

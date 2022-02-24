@@ -84,6 +84,7 @@ namespace maple
 	{
 		NONE,
 		R8,
+		R32I,
 		RG8,
 		RGB8,
 		RGBA8,
@@ -102,6 +103,7 @@ namespace maple
 	enum class TextureType : int32_t
 	{
 		Color,
+		Color3D,
 		Depth,
 		DepthArray,
 		Cube,

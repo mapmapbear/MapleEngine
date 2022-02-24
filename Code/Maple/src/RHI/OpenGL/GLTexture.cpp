@@ -60,9 +60,21 @@ namespace maple
 					return GL_RGBA32F;
 				case TextureFormat::DEPTH:
 					return GL_DEPTH24_STENCIL8;
+				case TextureFormat::R32I:
+					return GL_R32I;
 				default:
 					MAPLE_ASSERT(false, "[Texture] Unsupported TextureFormat");
 					return 0;
+			}
+		}
+
+		inline auto textureDataType(const TextureFormat format)
+		{
+			switch (format) {
+				case TextureFormat::R32I:
+					return GL_INT;
+				default:
+					return GL_FLOAT;
 			}
 		}
 
@@ -640,8 +652,8 @@ namespace maple
 		GLCall(glBindTexture(GL_TEXTURE_2D_ARRAY, 0));
 	}
 
-	GLTexture3D::GLTexture3D(uint32_t width, uint32_t height, uint32_t depth) :
-	    width(width), height(height), depth(depth)
+	GLTexture3D::GLTexture3D(uint32_t width, uint32_t height, uint32_t depth, TextureFormat initFormat) :
+	    width(width), height(height), depth(depth), format(initFormat)
 	{
 		init(width, height, depth);
 	}
@@ -663,9 +675,13 @@ namespace maple
 		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
 		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR));
 
-		GLCall(glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA8, width, height, depth, 0, GL_RGBA, GL_FLOAT, NULL));
+		auto textureFormat = textureFormatToGL(format, false);
+		auto internalFormat = textureFormatToInternalFormat(textureFormat);
+		auto dataType = textureDataType(format);
+
+		GLCall(glTexImage3D(GL_TEXTURE_3D, 0, textureFormat, width, height, depth, 0, internalFormat, dataType, NULL));
 		GLCall(glGenerateMipmap(GL_TEXTURE_3D));
-		GLCall(glBindImageTexture(0, handle, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8));
+		GLCall(glBindImageTexture(0, handle, 0, GL_FALSE, 0, GL_WRITE_ONLY, textureFormat));
 	}
 
 	auto GLTexture3D::bind(uint32_t slot) const -> void
@@ -699,5 +715,18 @@ namespace maple
                                     GL_READ_WRITE;
 		bind(unit);
 		GLCall(glBindImageTexture(unit, handle, level, true, layer, flag, textureFormatToGL(format, false)));
+	}
+
+	auto GLTexture3D::clear() -> void
+	{
+		PROFILE_FUNCTION();
+		std::vector<uint8_t> emptyData(width * height * depth * sizeof(int32_t), 0);//float and int is 4.
+
+		auto internalFormat = textureFormatToInternalFormat(textureFormatToGL(format, false));
+		auto dataType = textureDataType(format);	
+
+		glBindTexture(GL_TEXTURE_3D, handle);
+		glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, width, height, depth, internalFormat, dataType, &emptyData[0]);
+		glBindTexture(GL_TEXTURE_3D, 0);
 	}
 }        // namespace maple

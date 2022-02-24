@@ -107,7 +107,7 @@ namespace maple
 	class MAPLE_EXPORT Texture3D : public Texture2D
 	{
 	  public:
-		static auto create(uint32_t width, uint32_t height, uint32_t depth) -> std::shared_ptr<Texture3D>;
+		static auto create(uint32_t width, uint32_t height, uint32_t depth, TextureFormat format = TextureFormat::RGBA8) -> std::shared_ptr<Texture3D>;
 
 		virtual auto update(int32_t x, int32_t y, int32_t w, int32_t h, const void *buffer) -> void
 		{}
@@ -122,8 +122,10 @@ namespace maple
 
 		inline auto getType() const -> TextureType override
 		{
-			return TextureType::Color;
+			return TextureType::Color3D;
 		};
+
+		virtual auto clear() -> void  {};
 	};
 
 	class MAPLE_EXPORT TextureCube : public Texture

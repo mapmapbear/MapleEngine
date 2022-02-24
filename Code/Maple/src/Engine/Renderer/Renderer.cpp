@@ -17,7 +17,12 @@ namespace maple
 		Application::getRenderDevice()->drawIndexed(commandBuffer, type, count, start);
 	}
 
-	auto Renderer::dispatch(CommandBuffer *commandBuffer, uint32_t x, uint32_t y, uint32_t z) -> void
+	auto Renderer::drawArrays(CommandBuffer* commandBuffer, DrawType type, uint32_t count, uint32_t start /*= 0*/) -> void
+	{
+		Application::getRenderDevice()->drawArrays(commandBuffer, type, count, start);
+	}
+
+	auto Renderer::dispatch(CommandBuffer* commandBuffer, uint32_t x, uint32_t y, uint32_t z) -> void
 	{
 		Application::getRenderDevice()->dispatch(commandBuffer, x, y, z);
 	}
