@@ -44,6 +44,7 @@ namespace maple
 		auto setUniform(const std::string &bufferName, const std::string &uniformName, const void *data, bool dynamic) -> void override;
 		auto setUniform(const std::string &bufferName, const std::string &uniformName, const void *data, uint32_t size, bool dynamic) -> void override;
 		auto setUniformBufferData(const std::string &bufferName, const void *data) -> void override;
+		auto getDescriptors() const -> const std::vector<Descriptor>& override { return descriptors; }
 
 	  private:
 		uint32_t dynamicOffset      = 0;
@@ -51,7 +52,7 @@ namespace maple
 		bool     dynamic            = false;
 		bool     descriptorDirty[3] = {};
 
-		DescriptorSetInfo descriptors;
+		std::vector<Descriptor> descriptors;
 
 		std::array<VkDescriptorBufferInfo, MAX_BUFFER_INFOS>    bufferInfoPool;
 		std::array<VkDescriptorImageInfo, MAX_IMAGE_INFOS>      imageInfoPool;

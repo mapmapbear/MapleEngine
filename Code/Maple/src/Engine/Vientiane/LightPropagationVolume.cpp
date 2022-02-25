@@ -56,7 +56,6 @@ namespace maple
 				pipelineInfo.shader = injectionLight.shader;
 				pipelineInfo.groupCountX = component::ReflectiveShadowData::SHADOW_SIZE / injectionLight.shader->getLocalSizeX();
 				pipelineInfo.groupCountY = component::ReflectiveShadowData::SHADOW_SIZE / injectionLight.shader->getLocalSizeY();
-
 				auto pipeline = Pipeline::get(pipelineInfo);
 				pipeline->bind(rendererData.commandBuffer);
 				Renderer::bindDescriptorSets(pipeline.get(), rendererData.commandBuffer, 0, injectionLight.descriptors);

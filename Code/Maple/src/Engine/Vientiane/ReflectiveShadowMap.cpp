@@ -25,6 +25,7 @@
 #include "RHI/Texture.h"
 
 #include "Engine/Renderer/RendererData.h"
+#include "Engine/CaptureGraph.h"
 
 #include <ecs/ecs.h>
 
@@ -236,11 +237,12 @@ namespace maple
 		using RenderEntity = ecs::Chain
 			::Write<component::ShadowMapData>
 			::Read<component::RendererData>
+			::Write<capture_graph::component::RenderGraph>
 			::To<ecs::Entity>;
 
 		inline auto onRender(RenderEntity entity, ecs::World world)
 		{
-			auto [shadowData, rendererData] = entity;
+			auto [shadowData, rendererData,renderGraph] = entity;
 
 			shadowData.descriptorSet[0]->setUniform("UniformBufferObject", "projView", shadowData.shadowProjView);
 			shadowData.descriptorSet[0]->update();
@@ -253,8 +255,8 @@ namespace maple
 			pipelineInfo.depthBiasEnabled = false;
 			pipelineInfo.depthArrayTarget = shadowData.shadowTexture;
 			pipelineInfo.clearTargets = true;
-
-			auto pipeline = Pipeline::get(pipelineInfo);
+			
+			auto pipeline = Pipeline::get(pipelineInfo, shadowData.descriptorSet, renderGraph);
 
 			for (uint32_t i = 0; i < shadowData.shadowMapNum; ++i)
 			{
@@ -286,16 +288,63 @@ namespace maple
 		using Entity = ecs::Chain
 			::Read<component::ShadowMapData>
 			::Read<component::ReflectiveShadowData>
+			::Read<component::RendererData>
+			::Write<capture_graph::component::RenderGraph>
 			::To<ecs::Entity>;
-
-		inline auto beginScene(Entity entity, ecs::World world)
-		{
-			auto [shadow, rsm] = entity;
-		}
 
 		inline auto onRender(Entity entity, ecs::World world)
 		{
-			//auto [data, cameraView] = entity;
+			auto [shadow, rsm,renderData,renderGraph] = entity;
+
+			auto descriptorSet = rsm.descriptorSets[1];
+
+			rsm.descriptorSets[0]->update();
+			rsm.descriptorSets[1]->update();
+
+			auto commandBuffer = renderData.commandBuffer;
+
+			PipelineInfo pipeInfo;
+			pipeInfo.shader = rsm.shader;
+			pipeInfo.transparencyEnabled = false;
+			pipeInfo.depthBiasEnabled = false;
+			pipeInfo.clearTargets = true;
+			pipeInfo.depthTarget = rsm.fluxDepth;
+			pipeInfo.colorTargets[0] = rsm.fluxTexture;
+			pipeInfo.colorTargets[1] = rsm.worldTexture;
+			pipeInfo.colorTargets[2] = rsm.normalTexture;
+			pipeInfo.clearColor = { 0, 0, 0, 0 };
+
+			auto pipeline = Pipeline::get(pipeInfo, rsm.descriptorSets, renderGraph);
+
+			if (commandBuffer)
+				commandBuffer->bindPipeline(pipeline.get());
+			else
+				pipeline->bind(commandBuffer);
+
+			for (auto& command : shadow.cascadeCommandQueue[0])
+			{
+				Mesh* mesh = command.mesh;
+				const auto& trans = command.transform;
+				auto& pushConstants = rsm.shader->getPushConstants()[0];
+
+				pushConstants.setValue("transform", (void*)&trans);
+
+				rsm.shader->bindPushConstants(commandBuffer, pipeline.get());
+				if (command.material != nullptr)
+				{
+					descriptorSet->setUniform("UBO", "albedoColor", &command.material->getProperties().albedoColor);
+					descriptorSet->setUniform("UBO", "usingAlbedoMap", &command.material->getProperties().usingAlbedoMap);
+					descriptorSet->setTexture("uDiffuseMap", command.material->getTextures().albedo);
+					descriptorSet->update();
+				}
+				Renderer::bindDescriptorSets(pipeline.get(), commandBuffer, 0, rsm.descriptorSets);
+				Renderer::drawMesh(commandBuffer, pipeline.get(), mesh);
+			}
+
+			if (commandBuffer)
+				commandBuffer->unbindPipeline();
+			else
+				pipeline->end(commandBuffer);
 		}
 	}
 
@@ -308,116 +357,7 @@ namespace maple
 
 			executePoint->registerWithinQueue<shadow_map_pass::beginScene>(begin);
 			executePoint->registerWithinQueue<shadow_map_pass::onRender>(renderer);
-
-			executePoint->registerWithinQueue<reflective_shadow_map_pass::beginScene>(begin);
 			executePoint->registerWithinQueue<reflective_shadow_map_pass::onRender>(renderer);
 		}
 	};
-
-	/*
-	auto ReflectiveShadowMap::init(const std::shared_ptr<GBuffer> &buffer) -> void
-	{
-		gbuffer = buffer;
-	}
-
-	auto ReflectiveShadowMap::renderScene(Scene *scene) -> void
-	{
-		PROFILE_FUNCTION();
-
-		auto descriptorSet = data->descriptorSets[1];
-
-		data->descriptorSets[0]->update();
-		data->descriptorSets[1]->update();
-
-		auto commandBuffer = getCommandBuffer();
-
-		PipelineInfo pipeInfo;
-		pipeInfo.shader              = data->shader;
-		pipeInfo.transparencyEnabled = false;
-		pipeInfo.depthBiasEnabled    = false;
-		pipeInfo.clearTargets        = true;
-		pipeInfo.depthTarget         = data->fluxDepth;
-		pipeInfo.colorTargets[0]     = data->fluxTexture;
-		pipeInfo.colorTargets[1]     = data->worldTexture;
-		pipeInfo.colorTargets[2]     = data->normalTexture;
-		pipeInfo.clearColor          = {0, 0, 0, 0};
-
-		auto pipeline = Pipeline::get(pipeInfo);
-
-		if (commandBuffer)
-			commandBuffer->bindPipeline(pipeline.get());
-		else
-			pipeline->bind(getCommandBuffer());
-
-		for (auto &command : shadowData->cascadeCommandQueue[0])
-		{
-			Mesh *      mesh          = command.mesh;
-			const auto &trans         = command.transform;
-			auto &      pushConstants = data->shader->getPushConstants()[0];
-
-			pushConstants.setValue("transform", (void *) &trans);
-
-			data->shader->bindPushConstants(getCommandBuffer(), pipeline.get());
-			if (command.material != nullptr)
-			{
-				descriptorSet->setUniform("UBO", "albedoColor", &command.material->getProperties().albedoColor);
-				descriptorSet->setUniform("UBO", "usingAlbedoMap", &command.material->getProperties().usingAlbedoMap);
-				descriptorSet->setTexture("uDiffuseMap", command.material->getTextures().albedo);
-				descriptorSet->update();
-			}
-			Renderer::bindDescriptorSets(pipeline.get(), getCommandBuffer(), 0, data->descriptorSets);
-			Renderer::drawMesh(getCommandBuffer(), pipeline.get(), mesh);
-		}
-
-		if (commandBuffer)
-			commandBuffer->unbindPipeline();
-		else
-			pipeline->end(getCommandBuffer());
-	}
-
-	auto ReflectiveShadowMap::beginScene(Scene *scene, const glm::mat4 &projView) -> void
-	{
-		auto &rsmData    = scene->getGlobalComponent<component::ReflectiveShadowData>();
-		auto &shadowData = scene->getGlobalComponent<component::ShadowMapData>();
-
-		for (uint32_t i = 0; i < shadowData->shadowMapNum; i++)
-		{
-			shadowData->cascadeCommandQueue[i].clear();
-		}
-
-		if (directionaLight)
-		{
-			updateCascades(scene, directionaLight);
-
-			for (uint32_t i = 0; i < shadowData->shadowMapNum; i++)
-			{
-				shadowData->cascadeFrustums[i].from(shadowData->shadowProjView[i]);
-			}
-		}
-	}
-
-	auto ReflectiveShadowMap::onImGui() -> void
-	{
-		if (ImGui::TreeNode("Reflective ShadowMap"))
-		{
-			
-			ImGui::Columns(2);
-
-			if (ImGuiHelper::property("RsmIntensity", data->vpl.rsmIntensity, 0.f, 100.f, ImGuiHelper::PropertyFlag::InputFloat))
-			{
-				data->descriptorSets[1]->setUniform("VirtualPointLight", "rsmIntensity", &data->vpl.rsmIntensity);
-			}
-			if (ImGuiHelper::property("RsmRMax", data->vpl.rsmRMax, 0.f, 1.f, ImGuiHelper::PropertyFlag::InputFloat, "%.3f", 0.001))
-			{
-				data->descriptorSets[1]->setUniform("VirtualPointLight", "rsmRMax", &data->vpl.rsmRMax);
-			}
-
-			if (ImGuiHelper::property("NumberOfSamples", data->vpl.numberOfSamples, 1.f, ReflectiveShadowData::NUM_RSM, ImGuiHelper::PropertyFlag::InputFloat))
-			{
-				data->descriptorSets[1]->setUniform("VirtualPointLight", "numberOfSamples", &data->vpl.numberOfSamples);
-			}
-			ImGui::Columns(1);
-		}
-	}
-	*/
 };        // namespace maple

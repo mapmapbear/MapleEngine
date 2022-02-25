@@ -8,13 +8,16 @@ get_filename_component(ENGINE_LIB_SRC_DIR
 
 
 get_filename_component(ENGINE_ASSET_DIR
-					  ${CMAKE_SOURCE_DIR}/Assets
+						${CMAKE_CURRENT_LIST_DIR}/../../Assets
                       ABSOLUTE)					   
 					   
 get_filename_component(TOOL_CHAIN_DIR
 					  ${CMAKE_SOURCE_DIR}/Toolchains
                       ABSOLUTE)					   
 					   					  
+get_filename_component(ASSET_SHADER_DIR
+					   ${CMAKE_CURRENT_LIST_DIR}/../../Assets/shaders
+					   ABSOLUTE)		
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 
@@ -32,11 +35,21 @@ add_subdirectory(lib/glad)
 add_subdirectory(lib/nativefiledialog)
 add_subdirectory(lib/imgui-node-editor)
 
-file(GLOB SHADERS_GLSL 
-	"${ENGINE_ASSET_DIR}/shaders/*.vert" 
-	"${ENGINE_ASSET_DIR}/shaders/*.frag" 
-	"${ENGINE_ASSET_DIR}/shaders/*.bat" 
+file(GLOB_RECURSE SHADERS_GLSL 
+	${ASSET_SHADER_DIR}/*.vert 
+	${ASSET_SHADER_DIR}/*.frag 
+	${ASSET_SHADER_DIR}/*.comp 
+	${ASSET_SHADER_DIR}/*.geom 
+	${ASSET_SHADER_DIR}/*.tesc 
+	${ASSET_SHADER_DIR}/*.tese 
+	${ASSET_SHADER_DIR}/*.mesh 
+	${ASSET_SHADER_DIR}/*.task 
+	${ASSET_SHADER_DIR}/*.rgen
+	${ASSET_SHADER_DIR}/*.rchit 
+	${ASSET_SHADER_DIR}/*.rmiss
+	${ASSET_SHADER_DIR}/*.shader
 )
+
 
 file(GLOB IMGUI_SRC 
 	${ENGINE_LIB_SRC_DIR}/imgui/src/imgui_tables.cpp
@@ -139,7 +152,7 @@ if (${Target} MATCHES "Windows")
 
 	source_group(TREE ${CMAKE_CURRENT_LIST_DIR} FILES ${VK_APP_SRC})
 
-	source_group("Shaders\\GLSL" FILES ${SHADERS_GLSL})
+	source_group(TREE ${ENGINE_ASSET_DIR} FILES ${SHADERS_GLSL})
 
 if(ENGINE_AS_LIBRARY)
 	add_library(MapleEngine SHARED ${VK_APP_SRC} ${KTX_SOURCES} ${SHADERS_GLSL} ${IMGUI_SRC})

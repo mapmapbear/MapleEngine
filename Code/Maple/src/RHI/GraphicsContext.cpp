@@ -33,6 +33,8 @@
 #	include "RHI/OpenGL/GLVertexBuffer.h"
 #endif
 
+#include "Engine/CaptureGraph.h"
+
 #include "Application.h"
 
 namespace maple
@@ -245,6 +247,30 @@ namespace maple
 		std::shared_ptr<Pipeline> pipeline = std::make_shared<VulkanPipeline>(desc);
 		return pipelineCache.emplace(std::piecewise_construct, std::forward_as_tuple(hash), std::forward_as_tuple(pipeline, Application::getTimer().currentTimestamp())).first->second.asset;
 #endif        // MAPLE_OPENGL
+	}
+
+
+	auto Pipeline::get(const PipelineInfo& desc, const std::vector<std::shared_ptr<DescriptorSet>>& sets, capture_graph::component::RenderGraph & graph) -> std::shared_ptr<Pipeline>
+	{
+		auto pip = Pipeline::get(desc);
+		
+		for (auto set : sets)
+		{
+			for (auto input : set->getDescriptors())
+			{
+				capture_graph::input(desc.shader->getName(), graph, input.textures);
+			}
+		}
+
+		capture_graph::input(desc.shader->getName(), graph, { desc.depthTarget,desc.depthArrayTarget });
+
+		for (auto color : desc.colorTargets)
+		{	
+			if(color!=nullptr)
+				capture_graph::output(desc.shader->getName(), graph, { color });
+		}
+	
+		return pip;
 	}
 
 	auto RenderPass::create(const RenderPassInfo &desc) -> std::shared_ptr<RenderPass>

@@ -10,6 +10,7 @@
 #include "Engine/Profiler.h"
 #include "Engine/Quad2D.h"
 #include "Engine/Vertex.h"
+#include "Engine/CaptureGraph.h"
 
 #include "RHI/CommandBuffer.h"
 #include "RHI/GPUProfile.h"
@@ -130,6 +131,8 @@ namespace maple
 			data.screenQuad = Mesh::createQuad(true);
 			data.gbuffer = gBuffer.get();
 		});
+
+		executePoint->registerGlobalComponent<capture_graph::component::RenderGraph>();
 
 		executePoint->registerGlobalComponent<component::CameraView>();
 		executePoint->registerGlobalComponent<component::FinalPass>();

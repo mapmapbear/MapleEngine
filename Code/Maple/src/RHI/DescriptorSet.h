@@ -126,10 +126,6 @@ namespace maple
 		std::vector<BufferMemberInfo> members;
 	};
 
-	struct DescriptorSetInfo
-	{
-		std::vector<Descriptor> descriptors;
-	};
 
 	class DescriptorSet
 	{
@@ -147,5 +143,6 @@ namespace maple
 		virtual auto setUniform(const std::string &bufferName, const std::string &uniformName, const void *data, bool dynamic = false) -> void                = 0;
 		virtual auto setUniform(const std::string &bufferName, const std::string &uniformName, const void *data, uint32_t size, bool dynamic = false) -> void = 0;
 		virtual auto setUniformBufferData(const std::string &bufferName, const void *data) -> void                                                            = 0;
+		virtual auto getDescriptors() const -> const std::vector<Descriptor> & = 0;
 	};
 }        // namespace maple

@@ -355,14 +355,14 @@ namespace maple
 		}
 	}
 
-	auto GLShader::getDescriptorInfo(uint32_t index) -> const DescriptorSetInfo
+	auto GLShader::getDescriptorInfo(uint32_t index) -> const std::vector<Descriptor>
 	{
 		if (descriptorInfos.find(index) != descriptorInfos.end())
 		{
 			return descriptorInfos[index];
 		}
 		LOGW("DescriptorSetInfo not found. Index = {0}", index);
-		return DescriptorSetInfo();
+		return std::vector<Descriptor>();
 	}
 
 	auto GLShader::loadShader(const std::vector<uint32_t> &spvCode, ShaderType type) -> std::string
@@ -415,7 +415,7 @@ namespace maple
 				LOGV("Load Image, type {0}, set {1}, binding {2}, name {3}", fmt, set, binding, resource.name);
 
 				auto &descriptorInfo = descriptorInfos[set];
-				auto &descriptor     = descriptorInfo.descriptors.emplace_back();
+				auto &descriptor     = descriptorInfo.emplace_back();
 
 				descriptor.offset     = 0;
 				descriptor.size       = 0;
@@ -435,7 +435,7 @@ namespace maple
 			uint32_t binding = glsl->get_decoration(resource.id, spv::DecorationBinding);
 
 			auto &descriptorInfo = descriptorInfos[set];
-			auto &descriptor     = descriptorInfo.descriptors.emplace_back();
+			auto &descriptor     = descriptorInfo.emplace_back();
 
 			descriptor.offset     = 0;
 			descriptor.size       = 0;
@@ -456,7 +456,7 @@ namespace maple
 			auto  memberCount = (int32_t) bufferType.member_types.size();
 
 			auto &descriptorInfo  = descriptorInfos[set];
-			auto &descriptor      = descriptorInfo.descriptors.emplace_back();
+			auto &descriptor      = descriptorInfo.emplace_back();
 			descriptor.binding    = binding;
 			descriptor.size       = (uint32_t) bufferSize;
 			descriptor.name       = uniformBuffer.name;
@@ -530,7 +530,7 @@ namespace maple
 		for (int32_t i = 0; i < descriptorInfos.size(); i++)
 		{
 			auto &descriptorInfo = descriptorInfos[i];
-			for (auto &descriptor : descriptorInfo.descriptors)
+			for (auto &descriptor : descriptorInfo)
 			{
 				if (descriptor.type == DescriptorType::ImageSampler)
 				{

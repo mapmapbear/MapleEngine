@@ -104,9 +104,10 @@ namespace maple
 		{
 			return nullptr;
 		}
-		virtual auto getDescriptorInfo(uint32_t index) -> const DescriptorSetInfo
+
+		virtual auto getDescriptorInfo(uint32_t index) -> const std::vector<Descriptor>
 		{
-			return DescriptorSetInfo();
+			return  std::vector<Descriptor>{};
 		}
 
 		virtual auto getResourceType() const -> FileType

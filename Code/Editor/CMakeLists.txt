@@ -42,6 +42,7 @@ target_include_directories(EditorStatic PUBLIC
 	${EDITOR_LIB_SRC_DIR}/libmono/6.13.0/include
 	${EDITOR_LIB_SRC_DIR}/imGuIZMOquat/
 	${EDITOR_LIB_SRC_DIR}/ecs
+	${EDITOR_LIB_SRC_DIR}/imgui-node-editor
 )
 
 source_group(TREE ${CMAKE_CURRENT_LIST_DIR} FILES ${EDITOR_STATIC_SRC})

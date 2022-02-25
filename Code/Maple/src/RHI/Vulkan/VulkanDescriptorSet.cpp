@@ -65,7 +65,7 @@ namespace maple
 		shader      = info.shader;
 		descriptors = shader->getDescriptorInfo(info.layoutIndex);
 		uniformBuffers.resize(framesInFlight);
-		for (auto &descriptor : descriptors.descriptors)
+		for (auto &descriptor : descriptors)
 		{
 			if (descriptor.type == DescriptorType::UniformBuffer)
 			{
@@ -133,7 +133,7 @@ namespace maple
 			int32_t imageIndex            = 0;
 			int32_t index                 = 0;
 
-			for (auto &imageInfo : descriptors.descriptors)
+			for (auto &imageInfo : descriptors)
 			{
 				if (imageInfo.type == DescriptorType::ImageSampler)
 				{
@@ -208,7 +208,7 @@ namespace maple
 
 	auto VulkanDescriptorSet::setTexture(const std::string &name, const std::vector<std::shared_ptr<Texture>> &textures) -> void
 	{
-		for (auto &descriptor : descriptors.descriptors)
+		for (auto &descriptor : descriptors)
 		{
 			if (descriptor.type == DescriptorType::ImageSampler && descriptor.name == name)
 			{

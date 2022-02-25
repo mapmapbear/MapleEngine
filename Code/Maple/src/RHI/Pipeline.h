@@ -10,11 +10,22 @@
 
 namespace maple
 {
+	namespace capture_graph 
+	{
+		namespace component
+		{
+			struct RenderGraph;
+		};
+	}
+
+	class DescriptorSet;
+
 	class MAPLE_EXPORT Pipeline
 	{
 	  public:
 		//static auto create(const PipelineInfo &pipelineDesc) -> std::shared_ptr<Pipeline>;
-		static auto get(const PipelineInfo &pipelineDesc) -> std::shared_ptr<Pipeline>;
+		  static auto get(const PipelineInfo& pipelineDesc)->std::shared_ptr<Pipeline>;
+		  static auto get(const PipelineInfo& pipelineDesc, const std::vector<std::shared_ptr<DescriptorSet>> & sets, capture_graph::component::RenderGraph& )->std::shared_ptr<Pipeline>;
 
 		virtual ~Pipeline() = default;
 

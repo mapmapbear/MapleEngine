@@ -80,7 +80,7 @@ namespace maple
 			return filePath;
 		}
 
-		auto getDescriptorInfo(uint32_t index) -> const DescriptorSetInfo override;
+		auto getDescriptorInfo(uint32_t index) -> const std::vector<Descriptor> override;
 
 		inline auto getProgramId() const
 		{
@@ -102,7 +102,7 @@ namespace maple
 		std::string name;
 		std::string source;
 
-		std::unordered_map<uint32_t, DescriptorSetInfo> descriptorInfos;
+		std::unordered_map<uint32_t, std::vector<Descriptor>> descriptorInfos;
 		std::unordered_map<std::string, uint32_t>       uniformLocations;
 		std::unordered_map<uint32_t, uint32_t>          sampledLocations;
 		std::unordered_map<ShaderType, std::string>     sources;

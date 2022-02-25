@@ -213,13 +213,14 @@ namespace maple
 
 			if (data.computeInputs.empty()) 
 			{
-				for (auto i = 0; i < data.cloudShader->getDescriptorInfo(0).descriptors.size(); i++)
+				for (auto i = 0; i < data.cloudShader->getDescriptorInfo(0).size(); i++)
 				{
 					data.computeInputs.emplace_back(Texture2D::create());
 				}
 			}
 
-			for (auto& desc : data.cloudShader->getDescriptorInfo(0).descriptors)
+			auto descs = data.cloudShader->getDescriptorInfo(0);
+			for (auto& desc : descs)
 			{
 				auto& binding = data.computeInputs[desc.binding];
 				if(binding->getWidth() != winSize.width || binding->getHeight() != winSize.height)

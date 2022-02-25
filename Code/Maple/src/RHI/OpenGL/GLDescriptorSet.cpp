@@ -12,7 +12,7 @@ namespace maple
 	GLDescriptorSet::GLDescriptorSet(const DescriptorInfo &descriptorDesc)
 	{
 		shader      = static_cast<GLShader *>(descriptorDesc.shader);
-		descriptors = shader->getDescriptorInfo(descriptorDesc.layoutIndex).descriptors;
+		descriptors = shader->getDescriptorInfo(descriptorDesc.layoutIndex);
 
 		for (auto &descriptor : descriptors)
 		{

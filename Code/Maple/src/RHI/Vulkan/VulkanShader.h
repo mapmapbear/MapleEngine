@@ -59,7 +59,7 @@ namespace maple
 			return nullptr;
 		}
 
-		inline auto getDescriptorInfo(uint32_t index) -> const DescriptorSetInfo override
+		inline auto getDescriptorInfo(uint32_t index) -> const std::vector<Descriptor> override
 		{
 			if (descriptorInfos.find(index) != descriptorInfos.end())
 			{
@@ -67,7 +67,7 @@ namespace maple
 			}
 
 			LOGW("DescriptorDesc not found. Index = {0}", index);
-			return DescriptorSetInfo{};
+			return std::vector<Descriptor>{};
 		}
 
 		inline auto getDescriptorLayout(uint32_t index) const
@@ -116,6 +116,6 @@ namespace maple
 		std::vector<DescriptorLayoutInfo>               descriptorLayoutInfo;
 		std::vector<VkDescriptorSetLayout>              descriptorSetLayouts;
 		std::vector<VkVertexInputAttributeDescription>  vertexInputAttributeDescriptions;
-		std::unordered_map<uint32_t, DescriptorSetInfo> descriptorInfos;
+		std::unordered_map<uint32_t, std::vector<Descriptor>> descriptorInfos;
 	};
 };        // namespace maple

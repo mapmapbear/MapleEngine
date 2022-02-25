@@ -331,7 +331,7 @@ namespace maple
 			auto  memberCount = (int32_t) bufferType.member_types.size();
 
 			auto &descriptorInfo  = descriptorInfos[set];
-			auto &descriptor      = descriptorInfo.descriptors.emplace_back();
+			auto &descriptor      = descriptorInfo.emplace_back();
 			descriptor.binding    = binding;
 			descriptor.size       = (uint32_t) bufferSize;
 			descriptor.name       = u.name;
@@ -411,7 +411,7 @@ namespace maple
 			uint32_t binding = comp.get_decoration(u.id, spv::DecorationBinding);
 
 			auto &descriptorInfo = descriptorInfos[set];
-			auto &descriptor     = descriptorInfo.descriptors.emplace_back();
+			auto &descriptor     = descriptorInfo.emplace_back();
 
 			auto &type = comp.get_type(u.type_id);
 			LOGI("Found Sampled Image {0} at set = {1}, binding = {2}", u.name.c_str(), set, binding);

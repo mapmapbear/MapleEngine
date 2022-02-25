@@ -35,6 +35,8 @@ namespace maple
 			return dynamicOffset;
 		}
 
+		auto getDescriptors() const -> const std::vector<Descriptor> & override { return descriptors; }
+
 	  private:
 		uint32_t                dynamicOffset = 0;
 		GLShader *              shader        = nullptr;
