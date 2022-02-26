@@ -8,6 +8,7 @@
 #include "RHI/Shader.h"
 #include "RHI/Texture.h"
 
+#include "Engine/CaptureGraph.h"
 #include "Engine/Camera.h"
 #include "Engine/GBuffer.h"
 #include "Engine/Mesh.h"
@@ -109,6 +110,7 @@ namespace maple
 		using Entity = ecs::Chain
 			::Write<component::SkyboxData>
 			::Read<component::CameraView>
+			::Write<capture_graph::component::RenderGraph>
 			::To<ecs::Entity>;
 
 		using Query = ecs::Chain
@@ -122,7 +124,7 @@ namespace maple
 
 		inline auto beginScene(Entity entity, Query query, SunLightQuery sunLightQuery, ecs::World world)
 		{
-			auto [skyboxData,cameraView] = entity;
+			auto [skyboxData,cameraView,graph] = entity;
 
 			if (!query.empty())
 			{
@@ -174,7 +176,7 @@ namespace maple
 
 		inline auto onRender(Entity entity, ecs::World world)
 		{
-			auto [skyboxData, cameraView] = entity;
+			auto [skyboxData, cameraView, graph] = entity;
 
 			auto& renderData = world.getComponent<component::RendererData>(entity);
 
@@ -189,7 +191,7 @@ namespace maple
 				info.clearTargets = true;
 				info.transparencyEnabled = false;
 
-				auto pipeline = Pipeline::get(info);
+				auto pipeline = Pipeline::get(info, { skyboxData.pseudoSkydescriptorSet },graph);
 
 				skyboxData.pseudoSkydescriptorSet->setTexture("uPositionSampler", renderData.gbuffer->getBuffer(GBufferTextures::POSITION));
 				skyboxData.pseudoSkydescriptorSet->update();
@@ -201,7 +203,7 @@ namespace maple
 			}
 			else
 			{
-				skyboxData.prefilterRenderer->renderScene();
+				skyboxData.prefilterRenderer->renderScene(graph);
 
 				if (skyboxData.skybox == nullptr)
 				{
@@ -219,7 +221,7 @@ namespace maple
 				pipelineInfo.depthTarget = renderData.gbuffer->getDepthBuffer();
 				pipelineInfo.colorTargets[0] = renderData.gbuffer->getBuffer(GBufferTextures::SCREEN);
 
-				auto skyboxPipeline = Pipeline::get(pipelineInfo);
+				auto skyboxPipeline = Pipeline::get(pipelineInfo, {skyboxData.descriptorSet}, graph);
 				skyboxPipeline->bind(renderData.commandBuffer);
 				if (skyboxData.cubeMapMode == 0)
 				{

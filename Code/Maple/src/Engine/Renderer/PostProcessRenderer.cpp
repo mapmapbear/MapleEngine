@@ -5,6 +5,7 @@
 #include "PostProcessRenderer.h"
 #include "Engine/Profiler.h"
 #include "Engine/Renderer/Renderer.h"
+#include "Engine/CaptureGraph.h"
 
 #include "RHI/Shader.h"
 #include "RHI/DescriptorSet.h"
@@ -78,11 +79,12 @@ namespace maple
 		using Entity = ecs::Chain
 			::Write<component::SSAOData>
 			::Read<component::RendererData>
+			::Write<capture_graph::component::RenderGraph>
 			::To<ecs::Entity>;
 
 		inline auto system(Entity entity, ecs::World world)
 		{
-			auto [ssaoData, renderData] = entity;
+			auto [ssaoData, renderData,graph] = entity;
 
 			auto descriptorSet = ssaoData.ssaoSet[0];
 			descriptorSet->setTexture("uViewPositionSampler", renderData.gbuffer->getBuffer(GBufferTextures::VIEW_POSITION));
@@ -101,7 +103,7 @@ namespace maple
 			pipeInfo.clearTargets = true;
 			pipeInfo.depthTest = false;
 			pipeInfo.colorTargets[0] = renderData.gbuffer->getBuffer(GBufferTextures::SSAO_SCREEN);
-			auto pipeline = Pipeline::get(pipeInfo);
+			auto pipeline = Pipeline::get(pipeInfo, ssaoData.ssaoSet, graph);
 
 			if (commandBuffer)
 				commandBuffer->bindPipeline(pipeline.get());
@@ -123,11 +125,12 @@ namespace maple
 		using Entity = ecs::Chain
 			::Write<component::SSAOData>
 			::Read<component::RendererData>
+			::Write<capture_graph::component::RenderGraph>
 			::To<ecs::Entity>;
 
 		inline auto system(Entity entity, ecs::World world)
 		{
-			auto [ssaoData, renderData] = entity;
+			auto [ssaoData, renderData,graph] = entity;
 
 			auto descriptorSet = ssaoData.ssaoBlurSet[0];
 			descriptorSet->setTexture("uSsaoSampler", renderData.gbuffer->getBuffer(GBufferTextures::SSAO_SCREEN));
@@ -144,7 +147,7 @@ namespace maple
 			pipeInfo.clearTargets = true;
 			pipeInfo.depthTest = false;
 			pipeInfo.colorTargets[0] = renderData.gbuffer->getBuffer(GBufferTextures::SSAO_BLUR);
-			auto pipeline = Pipeline::get(pipeInfo);
+			auto pipeline = Pipeline::get(pipeInfo, ssaoData.ssaoBlurSet, graph);
 
 			if (commandBuffer)
 				commandBuffer->bindPipeline(pipeline.get());
@@ -166,11 +169,12 @@ namespace maple
 		using Entity = ecs::Chain
 			::Write<component::SSRData>
 			::Read<component::RendererData>
+			::Write<capture_graph::component::RenderGraph>
 			::To<ecs::Entity>;
 
 		inline auto system(Entity entity, ecs::World world)
 		{
-			auto [ssrData, render] = entity;
+			auto [ssrData, render,graph] = entity;
 
 			ssrData.ssrDescriptorSet->setTexture("uViewPositionSampler", render.gbuffer->getBuffer(GBufferTextures::VIEW_POSITION));
 			ssrData.ssrDescriptorSet->setTexture("uViewNormalSampler", render.gbuffer->getBuffer(GBufferTextures::VIEW_NORMALS));
@@ -190,7 +194,7 @@ namespace maple
 			pipeInfo.depthTest = false;
 			pipeInfo.colorTargets[0] = render.gbuffer->getBuffer(GBufferTextures::SSR_SCREEN);
 
-			auto pipeline = Pipeline::get(pipeInfo);
+			auto pipeline = Pipeline::get(pipeInfo, { ssrData.ssrDescriptorSet }, graph);
 
 			if (commandBuffer)
 				commandBuffer->bindPipeline(pipeline.get());

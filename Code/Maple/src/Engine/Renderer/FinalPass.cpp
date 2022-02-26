@@ -5,6 +5,8 @@
 #include "FinalPass.h"
 #include "Engine/Renderer/Renderer.h"
 
+#include "Engine/CaptureGraph.h"
+
 #include "RHI/Shader.h"
 #include "RHI/DescriptorSet.h"
 #include "RHI/Pipeline.h"
@@ -28,11 +30,12 @@ namespace maple
 		using Entity = ecs::Chain
 			::Read<component::FinalPass>
 			::Read<component::RendererData>
+			::Write<capture_graph::component::RenderGraph>
 			::To<ecs::Entity>;
 
 		inline auto system(Entity entity, ecs::World world)
 		{
-			auto [finalData, renderData] = entity;
+			auto [finalData, renderData,graph] = entity;
 			float gamma = 2.2;
 			int32_t toneMapIndex = 7;
 
@@ -63,7 +66,7 @@ namespace maple
 			else
 				pipelineDesc.swapChainTarget = true;
 
-			auto pipeline = Pipeline::get(pipelineDesc);
+			auto pipeline = Pipeline::get(pipelineDesc, { finalData.finalDescriptorSet },graph);
 			pipeline->bind(renderData.commandBuffer);
 
 			Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, { finalData.finalDescriptorSet });

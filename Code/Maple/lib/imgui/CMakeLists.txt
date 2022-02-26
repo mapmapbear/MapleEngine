@@ -15,6 +15,7 @@ set(IMGUI_SRC
 	src/imgui_impl_vulkan.cpp
 	src/imgui_impl_glfw.cpp
 	src/ImGuizmo.cpp
+	src/imgui_stacklayout.cpp
 )
 	  
 #add_library(imgui ${IMGUI_SRC})

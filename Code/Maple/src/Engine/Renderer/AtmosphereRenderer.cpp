@@ -11,6 +11,8 @@
 #include "Engine/GBuffer.h"
 #include "Engine/Mesh.h"
 #include "Engine/Profiler.h"
+#include "Engine/CaptureGraph.h"
+
 
 #include "Scene/Component/Atmosphere.h"
 #include "Scene/Component/Light.h"
@@ -63,6 +65,7 @@ namespace maple
 				::Write<component::AtmosphereData>
 				::Read<component::RendererData>
 				::Read<component::CameraView>
+				::Write<capture_graph::component::RenderGraph>
 				::To<ecs::Entity>;
 
 			using Query = ecs::Chain
@@ -73,7 +76,7 @@ namespace maple
 
 			inline auto system(Entity entity, Query query, ecs::World world)
 			{
-				auto [data,render, camera] = entity;
+				auto [data,render, camera,graph] = entity;
 
 				for (auto entity : query)
 				{
@@ -98,7 +101,7 @@ namespace maple
 					data.uniformObject.rayleighScattering = { atmosphere.getData().rayleighScattering, atmosphere.getData().surfaceRadius * 1000.f };
 					data.uniformObject.mieScattering = { atmosphere.getData().mieScattering, atmosphere.getData().atmosphereRadius * 1000.f };
 					data.uniformObject.centerPoint = { atmosphere.getData().centerPoint.x * 1000.f, atmosphere.getData().centerPoint.y * 1000.f, atmosphere.getData().centerPoint.z * 1000.f, atmosphere.getData().g };
-					data.pipeline = Pipeline::get(info);
+					data.pipeline = Pipeline::get(info, {data.descriptorSet}, graph);
 
 					break;
 				}

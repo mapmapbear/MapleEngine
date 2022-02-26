@@ -15,6 +15,7 @@
 #include "Engine/Mesh.h"
 #include "Engine/Profiler.h"
 #include "Engine/Mesh.h"
+#include "Engine/CaptureGraph.h"
 
 #include "Scene/Component/MeshRenderer.h"
 #include "Scene/Component/Light.h"
@@ -264,9 +265,18 @@ namespace maple
 			}
 		}
 
-		inline auto onRender(Entity entity, ecs::World world)
+		using RenderEntity = ecs::Chain
+			::Write<component::DeferredData>
+			::Read<component::ShadowMapData>
+			::Read<component::CameraView>
+			::Read<component::RendererData>
+			::Read<component::SSAOData>
+			::Write<capture_graph::component::RenderGraph>
+			::To<ecs::Entity>;
+
+		inline auto onRender(RenderEntity entity, ecs::World world)
 		{
-			auto [data, shadowData, cameraView, renderData,ssao] = entity;
+			auto [data, shadowData, cameraView, renderData,ssao,graph] = entity;
 
 			data.descriptorColorSet[0]->update();
 			data.descriptorColorSet[2]->update();
@@ -276,6 +286,8 @@ namespace maple
 
 			for (auto& command : data.commandQueue)
 			{
+				data.descriptorColorSet[1] = command.material->getDescriptorSet();
+
 				pipeline = Pipeline::get(command.pipelineInfo);
 
 				if (renderData.commandBuffer)
@@ -283,7 +295,6 @@ namespace maple
 				else
 					pipeline->bind(renderData.commandBuffer);
 
-				data.descriptorColorSet[1] = command.material->getDescriptorSet();
 				auto& pushConstants = data.deferredColorShader->getPushConstants()[0];
 				pushConstants.setValue("transform", &command.transform);
 				data.deferredColorShader->bindPushConstants(renderData.commandBuffer, pipeline.get());
@@ -334,6 +345,7 @@ namespace maple
 			::Read<component::ShadowMapData>
 			::Read<component::CameraView>
 			::Read<component::RendererData>
+			::Write<capture_graph::component::RenderGraph>
 			::To<ecs::Entity>;
 		
 		using EnvQuery = ecs::Chain
@@ -342,7 +354,7 @@ namespace maple
 
 		inline auto onRender(Entity entity, EnvQuery envQuery, ecs::World world)
 		{
-			auto [data, shadow, cameraView, rendererData] = entity;
+			auto [data, shadow, cameraView, rendererData,graph] = entity;
 
 			auto descriptorSet = data.descriptorLightSet[0];
 			descriptorSet->setTexture("uColorSampler", rendererData.gbuffer->getBuffer(GBufferTextures::COLOR));
@@ -373,7 +385,7 @@ namespace maple
 			pipeInfo.depthBiasEnabled = false;
 			pipeInfo.clearTargets = false;
 			pipeInfo.colorTargets[0] = rendererData.gbuffer->getBuffer(GBufferTextures::SCREEN);
-			auto deferredLightPipeline = Pipeline::get(pipeInfo);
+			auto deferredLightPipeline = Pipeline::get(pipeInfo,data.descriptorLightSet, graph);
 			deferredLightPipeline->bind(rendererData.commandBuffer);
 
 			Renderer::bindDescriptorSets(deferredLightPipeline.get(), rendererData.commandBuffer, 0, data.descriptorLightSet);

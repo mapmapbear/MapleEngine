@@ -64,6 +64,7 @@ file(GLOB IMGUI_SRC
 	${ENGINE_LIB_SRC_DIR}/imgui/src/imgui_impl_glfw.cpp
 	${ENGINE_LIB_SRC_DIR}/imgui/src/ImGuizmo.cpp
 	${ENGINE_LIB_SRC_DIR}/imgui/src/cimgui.cpp
+	${ENGINE_LIB_SRC_DIR}/imgui/src/imgui_stacklayout.cpp
 	${ENGINE_LIB_SRC_DIR}/imGuIZMOquat/imGuIZMOquat.cpp
 )
 

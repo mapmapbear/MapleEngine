@@ -7,6 +7,8 @@
 #include "Engine/GBuffer.h"
 #include "Engine/Profiler.h"
 #include "Engine/Vertex.h"
+#include "Engine/CaptureGraph.h"
+
 #include "Math/BoundingBox.h"
 #include "RHI/IndexBuffer.h"
 #include "RHI/Pipeline.h"
@@ -232,11 +234,12 @@ namespace maple
 			::Read<component::RendererData>
 			::Write<component::GeometryRenderData>
 			::Write<component::CameraView>
+			::Write<capture_graph::component::RenderGraph>
 			::To<ecs::Entity>;
 
 		inline auto systemLines(Entity entity, ecs::World world) 
 		{
-			auto [render, geometry, cameraView] = entity;
+			auto [render, geometry, cameraView,graph] = entity;
 			auto commandBuffer = render.commandBuffer;
 
 			if (!geometry.lines.empty())
@@ -252,7 +255,7 @@ namespace maple
 				pipelineInfo.drawType = DrawType::Lines;
 				pipelineInfo.colorTargets[0] = render.gbuffer->getBuffer(GBufferTextures::SCREEN);
 
-				auto pipeline = Pipeline::get(pipelineInfo);
+				auto pipeline = Pipeline::get(pipelineInfo, geometry.lineDescriptorSet,graph);
 
 				pipeline->bind(commandBuffer);
 				geometry.lineVertexBuffers->bind(commandBuffer, pipeline.get());
@@ -292,7 +295,7 @@ namespace maple
 
 		inline auto systemPoints(Entity entity, ecs::World world)
 		{
-			auto [render, geometry, cameraView] = entity;
+			auto [render, geometry, cameraView,graph] = entity;
 			auto commandBuffer = render.commandBuffer;
 
 			if (!geometry.points.empty())
@@ -307,7 +310,7 @@ namespace maple
 				pipelineInfo.blendMode = BlendMode::SrcAlphaOneMinusSrcAlpha;
 				pipelineInfo.colorTargets[0] = render.gbuffer->getBuffer(GBufferTextures::SCREEN);
 
-				auto pipeline = Pipeline::get(pipelineInfo);
+				auto pipeline = Pipeline::get(pipelineInfo,geometry.pointDescriptorSet, graph);
 
 				pipeline->bind(commandBuffer);
 				geometry.pointVertexBuffers->bind(commandBuffer, pipeline.get());

@@ -12,12 +12,84 @@
 
 #include "Editor.h"
 
-#define IMGUI_DEFINE_MATH_OPERATORS
-#include <imgui_internal.h>
 #include <imgui.h>
+#include <IconsMaterialDesignIcons.h>
 
 namespace maple
 {
+
+	namespace
+	{
+		static int32_t NextId = 1;
+
+		inline auto getNextId()
+		{
+			return NextId++;
+		}
+
+		inline auto drawNode(RenderGraphWindow::NodeInfo * node)
+		{
+			ed::BeginNode(node->nodeId);
+			auto size = node->inputs.size();
+			uint32_t i = 0;
+			for (auto& pin : node->inputs)
+			{
+				ed::BeginPin(pin.second, ed::PinKind::Input);
+				ImGui::TextUnformatted(ICON_MDI_ARROW_DOWN);
+				ed::EndPin();
+				i++;
+				if (i < size)
+				{
+					ImGui::SameLine();
+				}
+			}
+
+			ImGui::TextUnformatted(node->graphNode->name.c_str());
+			if (node->graphNode->texture) 
+			{
+				ImGuiHelper::image(node->graphNode->texture.get(), { 128,128 });
+			}
+
+			size = node->graphNode->outputs.size();
+			i = 0;
+			for (auto& pin : node->outputs)
+			{
+				ed::BeginPin(pin.second, ed::PinKind::Output);
+				ImGui::TextUnformatted(ICON_MDI_ARROW_DOWN);
+				ed::EndPin();
+				i++;
+				if (i < size)
+				{
+					ImGui::SameLine();
+				}
+			}
+			ed::EndNode();
+		}
+
+		inline auto getPinID(const std::string& name, std::unordered_map<std::string, ed::PinId> & map)
+		{
+			auto id = map.find(name);
+
+			if (id == map.end())
+			{
+				id = map.emplace(name, getNextId()).first;
+			}
+
+			return id->second;
+		}
+
+		inline auto getNodeID(const std::string& name, std::unordered_map<std::string, RenderGraphWindow::NodeInfo>& map)
+		{
+			auto id = map.find(name);
+
+			if (id == map.end())
+			{
+				id = map.emplace(name, RenderGraphWindow::NodeInfo{ ed::NodeId(getNextId()) }).first;
+			}
+			return id;
+		}
+	}
+
 	RenderGraphWindow::RenderGraphWindow()
 	{
 		ed::Config config;
@@ -32,151 +104,207 @@ namespace maple
 			ed::DestroyEditor(context);
 	}
 
+	struct Link
+	{
+		ed::LinkId ID;
+
+		ed::PinId StartPinID;
+		ed::PinId EndPinID;
+
+		ImColor Color;
+
+		Link(ed::LinkId id, ed::PinId startPinId, ed::PinId endPinId) :
+			ID(id), StartPinID(startPinId), EndPinID(endPinId), Color(255, 255, 255)
+		{
+
+		}
+	};
+
 	auto RenderGraphWindow::onImGui() -> void
 	{
-		auto& editor = *static_cast<Editor*>(Application::get());
-
-		auto& graph = editor.getCurrentScene()->getGlobalComponent<capture_graph::component::RenderGraph>();
-
+		gatherData();
 		ed::SetCurrentEditor(context);
+		int32_t linkId = 0;
+
 		if (ImGui::Begin(STATIC_NAME, &active))
 		{
-			ed::Begin("Render Graph Window");
+			static float leftPaneWidth = 400.0f;
+			static float rightPaneWidth = 800.0f;
+			splitter(true, 4.0f, &leftPaneWidth, &rightPaneWidth, 30.0f, 70.0f);
 
-            for (auto& node : graph.nodes)
-            {
-                if (node.second->nodeType != capture_graph::NodeType::RenderPass)
-                    continue;
+			leftPanel(leftPaneWidth - 4.f);
 
-                const float rounding = 10.0f;
-                const float padding = 12.0f;
-                auto id = idMap.find(node.first);
+			ImGui::SameLine(0.0f, 12.0f);
 
-                if (id == idMap.end()) 
-                {
-                  id = idMap.emplace(node.first, idStart++).first;
-                }
-
-                ed::PushStyleColor(ed::StyleColor_NodeBg, ImColor(229, 229, 229, 200));
-                ed::PushStyleColor(ed::StyleColor_NodeBorder, ImColor(125, 125, 125, 200));
-                ed::PushStyleColor(ed::StyleColor_PinRect, ImColor(229, 229, 229, 60));
-                ed::PushStyleColor(ed::StyleColor_PinRectBorder, ImColor(125, 125, 125, 60));
-
-                const auto pinBackground = ed::GetStyle().Colors[ed::StyleColor_NodeBg];
-
-                ed::PushStyleVar(ed::StyleVar_NodePadding, ImVec4(0, 0, 0, 0));
-                ed::PushStyleVar(ed::StyleVar_NodeRounding, rounding);
-                ed::PushStyleVar(ed::StyleVar_SourceDirection, ImVec2(0.0f, 1.0f));
-                ed::PushStyleVar(ed::StyleVar_TargetDirection, ImVec2(0.0f, -1.0f));
-                ed::PushStyleVar(ed::StyleVar_LinkStrength, 0.0f);
-                ed::PushStyleVar(ed::StyleVar_PinBorderWidth, 1.0f);
-                ed::PushStyleVar(ed::StyleVar_PinRadius, 6.0f);
-                ed::BeginNode(id->second);
-
-                ImGui::Dummy(ImVec2(160, 0));
-                ImGui::TextUnformatted(node.first.c_str());
-               /* ImGui::BeginVertical(node.ID.AsPointer());
-                if (!node.Inputs.empty())
-                {
-                    ImGui::BeginHorizontal("inputs");
-                    ImGui::Spring(1, 0);
-
-                    ImRect inputsRect;
-                    int inputAlpha = 200;
-                    for (auto& pin : node.Inputs)
-                    {
-                        ImGui::Dummy(ImVec2(padding, padding));
-                        inputsRect = ImGui_GetItemRect();
-                        ImGui::Spring(1, 0);
-                        inputsRect.Min.y -= padding;
-                        inputsRect.Max.y -= padding;
-
-                        //ed::PushStyleVar(ed::StyleVar_PinArrowSize, 10.0f);
-                        //ed::PushStyleVar(ed::StyleVar_PinArrowWidth, 10.0f);
-                        ed::PushStyleVar(ed::StyleVar_PinCorners, 15);
-                        ed::BeginPin(pin.ID, ed::PinKind::Input);
-                        ed::PinPivotRect(inputsRect.GetCenter(), inputsRect.GetCenter());
-                        ed::PinRect(inputsRect.GetTL(), inputsRect.GetBR());
-                        ed::EndPin();
-                        //ed::PopStyleVar(3);
-                        ed::PopStyleVar(1);
-
-                        auto drawList = ImGui::GetWindowDrawList();
-                        drawList->AddRectFilled(inputsRect.GetTL(), inputsRect.GetBR(),
-                            IM_COL32((int)(255 * pinBackground.x), (int)(255 * pinBackground.y), (int)(255 * pinBackground.z), inputAlpha), 4.0f, 15);
-                        drawList->AddRect(inputsRect.GetTL(), inputsRect.GetBR(),
-                            IM_COL32((int)(255 * pinBackground.x), (int)(255 * pinBackground.y), (int)(255 * pinBackground.z), inputAlpha), 4.0f, 15);
-
-                        if (newLinkPin && !CanCreateLink(newLinkPin, &pin) && &pin != newLinkPin)
-                            inputAlpha = (int)(255 * ImGui::GetStyle().Alpha * (48.0f / 255.0f));
-                    }
-
-                    //ImGui::Spring(1, 0);
-                    ImGui::EndHorizontal();
-                }
-                */
-
-                /*ImGui::BeginHorizontal("content_frame");
-                ImGui::Spring(1, padding);
-
-                ImGui::BeginVertical("content", ImVec2(0.0f, 0.0f));
-                ImGui::Dummy(ImVec2(160, 0));
-                ImGui::Spring(1);
-                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 0.0f, 0.0f, 1.0f));
-                ImGui::TextUnformatted(node.Name.c_str());
-                ImGui::PopStyleColor();
-                ImGui::Spring(1);
-                ImGui::EndVertical();
-                auto contentRect = ImGui_GetItemRect();
-
-                ImGui::Spring(1, padding);
-                ImGui::EndHorizontal();*/
-
-                /*if (!node.Outputs.empty())
-                {
-                    ImGui::BeginHorizontal("outputs");
-                    ImGui::Spring(1, 0);
-
-                    ImRect outputsRect;
-                    int outputAlpha = 200;
-                    for (auto& pin : node.Outputs)
-                    {
-                        ImGui::Dummy(ImVec2(padding, padding));
-                        outputsRect = ImGui_GetItemRect();
-                        ImGui::Spring(1, 0);
-                        outputsRect.Min.y += padding;
-                        outputsRect.Max.y += padding;
-
-                        ed::PushStyleVar(ed::StyleVar_PinCorners, 3);
-                        ed::BeginPin(pin.ID, ed::PinKind::Output);
-                        ed::PinPivotRect(outputsRect.GetCenter(), outputsRect.GetCenter());
-                        ed::PinRect(outputsRect.GetTL(), outputsRect.GetBR());
-                        ed::EndPin();
-                        ed::PopStyleVar();
-
-                        auto drawList = ImGui::GetWindowDrawList();
-                        drawList->AddRectFilled(outputsRect.GetTL(), outputsRect.GetBR(),
-                            IM_COL32((int)(255 * pinBackground.x), (int)(255 * pinBackground.y), (int)(255 * pinBackground.z), outputAlpha), 4.0f, 15);
-                        drawList->AddRect(outputsRect.GetTL(), outputsRect.GetBR(),
-                            IM_COL32((int)(255 * pinBackground.x), (int)(255 * pinBackground.y), (int)(255 * pinBackground.z), outputAlpha), 4.0f, 15);
-
-
-                        if (newLinkPin && !CanCreateLink(newLinkPin, &pin) && &pin != newLinkPin)
-                            outputAlpha = (int)(255 * ImGui::GetStyle().Alpha * (48.0f / 255.0f));
-                    }
-
-                    ImGui::EndHorizontal();
-                }*/
-
-                //ImGui::EndVertical();
-
-                ed::EndNode();
-                ed::PopStyleVar(7);
-                ed::PopStyleColor(4);
-            }
-			ed::End();
+			rightPanel();
 		}
 		ImGui::End();
-		ed::SetCurrentEditor(nullptr);
 	}
+
+	auto RenderGraphWindow::gatherData() -> void
+	{
+		auto& editor = *static_cast<Editor*>(Application::get());
+		auto& graph = editor.getCurrentScene()->getGlobalComponent<capture_graph::component::RenderGraph>();
+
+
+		if (graph.nodes.size() != idMap.size()) 
+		{
+			links.clear();
+
+			for (auto& node : graph.nodes)
+			{
+				auto iter = getNodeID(node.first, idMap);
+
+				iter->second.graphNode = node.second;
+
+				for (auto input : node.second->inputs)
+				{
+					auto toId = getPinID(input->name, iter->second.inputs);
+					//create outputId in targert;
+					auto fromNode = getNodeID(input->name, idMap);
+					auto fromId = getPinID(node.first, fromNode->second.outputs);
+
+					links.emplace_back(getNextId(), fromId, toId);
+				}
+
+				for (auto output : node.second->outputs)
+				{
+					auto fromId = getPinID(output->name, iter->second.outputs);
+
+					auto toNode = getNodeID(output->name, idMap);
+					auto toId = getPinID(node.first, toNode->second.inputs);
+
+					links.emplace_back(getNextId(), fromId, toId);
+				}
+			}
+		}
+	}
+
+	auto RenderGraphWindow::leftPanel(float paneWidth) -> void
+	{
+		auto& io = ImGui::GetIO();
+
+		ImGui::BeginChild("Selection", ImVec2(paneWidth, 0));
+
+		paneWidth = ImGui::GetContentRegionAvailWidth();
+
+		for (auto & node : idMap)
+		{
+			if (node.second.graphNode->nodeType == capture_graph::NodeType::RenderPass) 
+			{
+				if (ImGui::Selectable(node.first.c_str())) 
+				{
+					current = &node.second;
+				}
+			}
+		}
+		
+		if (ImGui::TreeNode("Textures Nodes")) 
+		{
+			for (auto& node : idMap)
+			{
+				if (node.second.graphNode->nodeType == capture_graph::NodeType::Image)
+				{
+					ImGui::Selectable(node.first.c_str());
+
+					ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(5, 5));
+					if (ImGui::IsItemHovered())
+					{
+						auto ratio = node.second.graphNode->texture->getWidth() / (float)node.second.graphNode->texture->getHeight();
+
+						ImGui::BeginTooltip();
+						ImGuiHelper::image(node.second.graphNode->texture.get(), { 512,512 / ratio });
+						ImGui::EndTooltip();
+					}
+					ImGui::PopStyleVar();
+
+				}
+			}
+			ImGui::TreePop();
+		}
+
+		ImGui::EndChild();
+	}
+
+	auto RenderGraphWindow::rightPanel() -> void
+	{
+		ed::Begin("Render Graph Window");
+
+		auto cursorTopLeft = ImGui::GetCursorScreenPos();
+		
+		if (current != nullptr) 
+		{
+			drawNode(current);
+			for (auto & input : current->inputs)
+			{
+				auto iter = getNodeID(input.first, idMap);
+				drawNode(&iter->second);
+			}
+
+			for (auto& input : current->outputs)
+			{
+				auto iter = getNodeID(input.first, idMap);
+				drawNode(&iter->second);
+			}
+		}
+		else 
+		{
+			for (auto& node : idMap)
+			{
+				ed::BeginNode(node.second.nodeId);
+
+				auto size = node.second.inputs.size();
+				uint32_t i = 0;
+				for (auto& pin : node.second.inputs)
+				{
+					ed::BeginPin(pin.second, ed::PinKind::Input);
+					ImGui::TextUnformatted(ICON_MDI_ARROW_DOWN);
+					ed::EndPin();
+					i++;
+					if (i < size)
+					{
+						ImGui::SameLine();
+					}
+				}
+
+				ImGui::TextUnformatted(node.first.c_str());
+				if (node.second.graphNode->texture)
+					ImGuiHelper::image(node.second.graphNode->texture.get(), { 128,128 });
+
+				size = node.second.outputs.size();
+				i = 0;
+				for (auto& pin : node.second.outputs)
+				{
+					ed::BeginPin(pin.second, ed::PinKind::Output);
+					ImGui::TextUnformatted(ICON_MDI_ARROW_DOWN);
+					ed::EndPin();
+					i++;
+					if (i < size)
+					{
+						ImGui::SameLine();
+					}
+				}
+
+				ed::EndNode();
+			}
+		}
+
+		for (auto& link : links)
+			ed::Link(link.ID, link.StartPinID, link.EndPinID);
+
+		ed::End();
+	}
+
+	auto RenderGraphWindow::splitter(bool splitVertically, float thickness, float* size1, float* size2, float minSize1, float minSize2, float splitterLongAxisSize /*= -1.0f*/) ->bool
+	{
+		using namespace ImGui;
+		ImGuiContext& g = *GImGui;
+		ImGuiWindow* window = g.CurrentWindow;
+		ImGuiID id = window->GetID("##Splitter");
+		ImRect bb;
+		bb.Min = window->DC.CursorPos + (splitVertically ? ImVec2(*size1, 0.0f) : ImVec2(0.0f, *size1));
+		bb.Max = bb.Min + CalcItemSize(splitVertically ? ImVec2(thickness, splitterLongAxisSize) : ImVec2(splitterLongAxisSize, thickness), 0.0f, 0.0f);
+		return SplitterBehavior(bb, id, splitVertically ? ImGuiAxis_X : ImGuiAxis_Y, size1, size2, minSize1, minSize2, 0.0f);
+	}
+
 }        // namespace maple

@@ -198,7 +198,8 @@ namespace maple
 		format      = internalformat;
 		width       = w;
 		height      = h;
-		name        = "Attachment";
+		if(name == "")
+			name        = "Unknown-Attachment";
 		storedImage = image;
 
 		uint32_t glFormat  = textureFormatToGL(internalformat, srgb);

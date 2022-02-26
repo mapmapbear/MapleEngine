@@ -11,6 +11,7 @@
 #include "Engine/GBuffer.h"
 #include "Engine/Mesh.h"
 #include "Engine/Profiler.h"
+#include "Engine/CaptureGraph.h"
 
 #include "Scene/Component/Light.h"
 #include "Scene/Component/Transform.h"
@@ -136,11 +137,11 @@ namespace maple
 				worleySet->setTexture("outVolTex", worley3D);
 			}
 
-			inline auto executePerlin3D(CommandBuffer* cmd)
+			inline auto executePerlin3D(CommandBuffer* cmd, capture_graph::component::RenderGraph& graph)
 			{
 				PipelineInfo info;
 				info.shader = perlinWorley;
-				auto pipeline = Pipeline::get(info);
+				auto pipeline = Pipeline::get(info, { perlinWorleySet },graph);
 				perlinWorleySet->update();
 				pipeline->bind(cmd);
 				Renderer::bindDescriptorSets(pipeline.get(), cmd, 0, { perlinWorleySet });
@@ -149,11 +150,11 @@ namespace maple
 				perlin3D->generateMipmaps();
 			}
 
-			inline auto executeWorley3D(CommandBuffer* cmd)
+			inline auto executeWorley3D(CommandBuffer* cmd, capture_graph::component::RenderGraph& graph)
 			{
 				PipelineInfo info;
 				info.shader = worleyShader;
-				auto pipeline = Pipeline::get(info);
+				auto pipeline = Pipeline::get(info, { worleySet },graph);
 				worleySet->update();
 				pipeline->bind(cmd);
 				Renderer::bindDescriptorSets(pipeline.get(), cmd, 0, { worleySet });
@@ -162,7 +163,7 @@ namespace maple
 				worley3D->generateMipmaps();
 			}
 
-			inline auto execute(CommandBuffer* cmd)
+			inline auto execute(CommandBuffer* cmd, capture_graph::component::RenderGraph& graph)
 			{
 				descriptorSet->setUniformBufferData("UniformBufferObject", &uniformObject);
 				descriptorSet->setTexture("outWeatherTex", weather);
@@ -170,7 +171,7 @@ namespace maple
 
 				PipelineInfo info;
 				info.shader = shader;
-				auto pipeline = Pipeline::get(info);
+				auto pipeline = Pipeline::get(info, { descriptorSet },graph);
 				pipeline->bind(cmd);
 				Renderer::bindDescriptorSets(pipeline.get(), cmd, 0, { descriptorSet });
 				Renderer::dispatch(cmd, 1024 / 8, 1024 / 8, 1);
@@ -188,6 +189,7 @@ namespace maple
 			::Write<component::WeatherPass>
 			::Write<Timer>
 			::Read<component::WindowSize>
+			::Write<capture_graph::component::RenderGraph>
 			::To<ecs::Entity>;
 
 		using Query = ecs::Chain
@@ -198,13 +200,13 @@ namespace maple
 
 		inline auto system(Entity entity, Query query, ecs::World world)
 		{
-			auto [data, camera, render, weather, timer, winSize] = entity;
+			auto [data, camera, render, weather, timer, winSize,graph] = entity;
 			static auto begin = timer.current();
 
 			if (!weather.generatedNoise)
 			{
-				weather.executePerlin3D(render.commandBuffer);
-				weather.executeWorley3D(render.commandBuffer);
+				weather.executePerlin3D(render.commandBuffer,graph);
+				weather.executeWorley3D(render.commandBuffer,graph);
 				weather.generatedNoise = true;
 			}
 
@@ -232,11 +234,7 @@ namespace maple
 			{
 				auto [cloud, light, transform] = query.convert(entity);
 
-				PipelineInfo info;
-				info.shader = data.cloudShader;
-				info.groupCountX = data.computeInputs[0]->getWidth() / 16;
-				info.groupCountY = data.computeInputs[0]->getWidth() / 16;
-
+				
 				data.uniformObject.invProj = glm::inverse(camera.proj);
 				data.uniformObject.invView = camera.cameraTransform->getWorldMatrix();
 				data.uniformObject.lightDirection = light.lightData.direction;
@@ -257,13 +255,31 @@ namespace maple
 				data.uniformObject.densityFactor = cloud.density;
 				data.uniformObject.crispiness = cloud.crispiness;
 				data.uniformObject.enablePowder = cloud.enablePowder ? 1 : 0;
-				data.pipeline = Pipeline::get(info);
+
+				PipelineInfo info;
+				info.shader = data.cloudShader;
+				info.groupCountX = data.computeInputs[0]->getWidth() / 16;
+				info.groupCountY = data.computeInputs[0]->getWidth() / 16;
+
+
+
+				data.descriptorSet->setTexture("fragColor", data.computeInputs[0]);
+				data.descriptorSet->setTexture("bloom", data.computeInputs[1]);
+				data.descriptorSet->setTexture("alphaness", data.computeInputs[2]);
+				data.descriptorSet->setTexture("cloudDistance", data.computeInputs[3]);
+				data.descriptorSet->setTexture("uDepthSampler", render.gbuffer->getDepthBuffer());
+				data.descriptorSet->setTexture("uSky", render.gbuffer->getBuffer(GBufferTextures::PSEUDO_SKY));
+				data.descriptorSet->setTexture("uWeatherTex", weather.weather);
+				data.descriptorSet->setTexture("uCloud", weather.perlin3D);
+				data.descriptorSet->setTexture("uWorley32", weather.worley3D);
+
+				data.pipeline = Pipeline::get(info, { data.descriptorSet }, graph);
 
 				weather.uniformObject.perlinFrequency = cloud.perlinFrequency;
 
 				if (cloud.weathDirty)
 				{
-					weather.execute(render.commandBuffer);
+					weather.execute(render.commandBuffer, graph);
 				}
 				break;
 			}
@@ -277,30 +293,19 @@ namespace maple
 			::Read<component::CameraView>
 			::Read<component::RendererData>
 			::Read<component::WeatherPass>
+			::Write<capture_graph::component::RenderGraph>
 			::To<ecs::Entity>;
 
 		inline auto system(Entity entity, ecs::World world)
 		{
-			auto [data, camera, render,weather] = entity;
+			auto [data, camera, render,weather,graph] = entity;
 
 			if (data.pipeline)
 			{
 				{
 					data.uniformObject.frames++;
 					data.descriptorSet->setUniformBufferData("UniformBufferObject", &data.uniformObject);
-					data.descriptorSet->setTexture("fragColor", data.computeInputs[0]);
-					data.descriptorSet->setTexture("bloom", data.computeInputs[1]);
-					data.descriptorSet->setTexture("alphaness", data.computeInputs[2]);
-					data.descriptorSet->setTexture("cloudDistance", data.computeInputs[3]);
-					data.descriptorSet->setTexture("uDepthSampler",render.gbuffer->getDepthBuffer());
-					data.descriptorSet->setTexture("uSky", render.gbuffer->getBuffer(GBufferTextures::PSEUDO_SKY));
-
-					data.descriptorSet->setTexture("uWeatherTex", weather.weather);
-					data.descriptorSet->setTexture("uCloud", weather.perlin3D);
-					data.descriptorSet->setTexture("uWorley32", weather.worley3D);
-
 					data.descriptorSet->update();
-
 					data.pipeline->bind(render.commandBuffer);
 					Renderer::bindDescriptorSets(data.pipeline.get(), render.commandBuffer, 0, { data.descriptorSet });
 					Renderer::dispatch(render.commandBuffer,
@@ -320,7 +325,7 @@ namespace maple
 					info.transparencyEnabled = false;
 					info.depthTarget = render.gbuffer->getDepthBuffer();
 
-					auto pipeline = Pipeline::get(info);
+					auto pipeline = Pipeline::get(info, { data.screenDescriptorSet }, graph);
 
 					data.screenDescriptorSet->setTexture("uCloudSampler", data.computeInputs[0]);
 					data.screenDescriptorSet->update();

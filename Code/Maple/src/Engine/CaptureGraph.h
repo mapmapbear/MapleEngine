@@ -44,6 +44,7 @@ namespace maple
 			}
 			auto node = std::make_shared<GraphNode>();
 			node->nodeType = NodeType::RenderPass;
+			node->name = name;
 			return graph.nodes.emplace(name, node).first->second;
 		}
 

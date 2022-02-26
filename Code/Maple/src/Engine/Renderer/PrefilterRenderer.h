@@ -22,7 +22,13 @@ namespace maple
 	class Shader;
 	class Scene;
 	class FrameBuffer;
-
+	namespace capture_graph
+	{
+		namespace component
+		{
+			struct RenderGraph;
+		}
+	}
 	class MAPLE_EXPORT PrefilterRenderer
 	{
 	  public:
@@ -33,16 +39,16 @@ namespace maple
 
 		auto init() -> void;
 		auto present() -> void;
-		auto renderScene() -> void;
+		auto renderScene(capture_graph::component::RenderGraph& graph) -> void;
 		auto beginScene(Environment & env) -> void;
 
 	  private:
 		auto updateIrradianceDescriptor() -> void;
 		auto updatePrefilterDescriptor() -> void;
 
-		auto generateSkybox() -> void;
-		auto generateIrradianceMap() -> void;
-		auto generatePrefilterMap() -> void;
+		auto generateSkybox(capture_graph::component::RenderGraph& graph) -> void;
+		auto generateIrradianceMap(capture_graph::component::RenderGraph& graph) -> void;
+		auto generatePrefilterMap(capture_graph::component::RenderGraph & graph) -> void;
 
 		auto createPipeline() -> void;
 		auto updateUniform() -> void;

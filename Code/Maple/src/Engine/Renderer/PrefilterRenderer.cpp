@@ -17,6 +17,8 @@
 #include "Engine/Camera.h"
 #include "Engine/GBuffer.h"
 #include "Engine/Mesh.h"
+#include "Engine/CaptureGraph.h"
+
 #include "FileSystem/File.h"
 #include "Scene/Scene.h"
 
@@ -98,7 +100,7 @@ namespace maple
 		updateUniform();
 	}
 
-	auto PrefilterRenderer::renderScene() -> void
+	auto PrefilterRenderer::renderScene(capture_graph::component::RenderGraph& graph) -> void
 	{
 		if (envComponent == nullptr)
 		{
@@ -112,13 +114,13 @@ namespace maple
 				envComponent->setEnvironmnet(skyboxCube);
 			}
 
-			generateSkybox();
+			generateSkybox(graph);
 
 			updateIrradianceDescriptor();
-			generateIrradianceMap();
+			generateIrradianceMap(graph);
 
 			updatePrefilterDescriptor();
-			generatePrefilterMap();
+			generatePrefilterMap(graph);
 
 			envComponent = nullptr;
 		}
@@ -156,7 +158,7 @@ namespace maple
 		}
 	}
 
-	auto PrefilterRenderer::generateSkybox() -> void
+	auto PrefilterRenderer::generateSkybox(capture_graph::component::RenderGraph& graph) -> void
 	{
 		const auto maxMipLevels = 5;
 		const auto proj         = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
@@ -177,7 +179,7 @@ namespace maple
 		pipeInfo.clearTargets        = true;
 		pipeInfo.colorTargets[0]     = skyboxCaptureColor;
 		pipeInfo.colorTargets[1]     = skyboxCube;
-		auto cubeMapPipeline         = Pipeline::get(pipeInfo);
+		auto cubeMapPipeline = Pipeline::get(pipeInfo, { cubeMapSet },graph);
 
 		for (auto faceId = 0; faceId < 6; faceId++)
 		{
@@ -196,7 +198,7 @@ namespace maple
 		skyboxCube->generateMipmap(cmd);
 	}
 
-	auto PrefilterRenderer::generateIrradianceMap() -> void
+	auto PrefilterRenderer::generateIrradianceMap(capture_graph::component::RenderGraph& graph) -> void
 	{
 		PipelineInfo pipeInfo;
 		pipeInfo.shader   = irradianceShader;
@@ -209,7 +211,7 @@ namespace maple
 		pipeInfo.colorTargets[0] = irradianceCaptureColor;
 		pipeInfo.colorTargets[1] = envComponent->getIrradianceMap();
 
-		auto pipeline = Pipeline::get(pipeInfo);
+		auto pipeline = Pipeline::get(pipeInfo,{ irradianceSet }, graph);
 
 		auto cmd = Application::getGraphicsContext()->getSwapChain()->getCurrentCommandBuffer();
 
@@ -229,7 +231,7 @@ namespace maple
 		}
 	}
 
-	auto PrefilterRenderer::generatePrefilterMap() -> void
+	auto PrefilterRenderer::generatePrefilterMap(capture_graph::component::RenderGraph & graph) -> void
 	{
 		cubeMapSet->update();
 
@@ -244,7 +246,7 @@ namespace maple
 		pipeInfo.colorTargets[0] = prefilterCaptureColor;
 		pipeInfo.colorTargets[1] = envComponent->getPrefilteredEnvironment();
 
-		auto pipeline = Pipeline::get(pipeInfo);
+		auto pipeline = Pipeline::get(pipeInfo, { prefilterSet }, graph);
 
 		auto cmd = Application::getGraphicsContext()->getSwapChain()->getCurrentCommandBuffer();
 

@@ -262,7 +262,8 @@ namespace maple
 			}
 		}
 
-		capture_graph::input(desc.shader->getName(), graph, { desc.depthTarget,desc.depthArrayTarget });
+		capture_graph::input(desc.shader->getName(), graph, { desc.depthTarget });
+		capture_graph::output(desc.shader->getName(), graph, { desc.depthArrayTarget });
 
 		for (auto color : desc.colorTargets)
 		{	

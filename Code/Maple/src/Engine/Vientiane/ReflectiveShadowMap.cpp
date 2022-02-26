@@ -159,6 +159,8 @@ namespace maple
 			normalTexture->setName("uRSMNormalSampler");
 
 			fluxDepth = TextureDepth::create(SHADOW_SIZE, SHADOW_SIZE);
+			fluxDepth->setName("uFluxDepthSampler");
+
 			descriptorSets[1]->setUniformBufferData("VirtualPointLight", &vpl);
 		}
 	}
