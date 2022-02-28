@@ -29,7 +29,8 @@ namespace maple
 
 	auto MeshRenderer::getMesh(const std::string &name) -> void
 	{
-		Entity ent{entity, Application::get()->getSceneManager()->getCurrentScene()->getRegistry()};
+		auto currentScene = Application::get()->getSceneManager()->getCurrentScene();
+		Entity ent{entity, currentScene->getRegistry()};
 		auto   model = ent.tryGetComponent<Model>();
 		if (model != nullptr)
 		{

@@ -20,7 +20,7 @@ namespace maple
 		inline auto operator==(const BoundingBox& rhs) const { return (min == rhs.min && max == rhs.max); }
 		inline auto operator!=(const BoundingBox& rhs) const { return (min != rhs.min || max != rhs.max); }
 	
-		auto merge(const glm::vec3& point) -> void
+		inline auto merge(const glm::vec3& point) -> void
 		{
 			if (point.x < min.x)
 				min.x = point.x;
@@ -36,7 +36,7 @@ namespace maple
 				max.z = point.z;
 		}
 
-		auto merge(const BoundingBox& box) -> void
+		inline auto merge(const BoundingBox& box) -> void
 		{
 
 			if (box.min.x < min.x)
@@ -53,7 +53,7 @@ namespace maple
 				max.z = box.max.z;
 		}
 
-		auto transform(const glm::mat4 & transform) ->BoundingBox;
+		inline auto transform(const glm::mat4 & transform) ->BoundingBox;
 
 		inline auto clear() -> void
 		{

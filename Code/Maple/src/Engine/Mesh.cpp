@@ -17,6 +17,7 @@ namespace maple
 	Mesh::Mesh(const std::shared_ptr<VertexBuffer> &vertexBuffer, const std::shared_ptr<IndexBuffer> &indexBuffer) :
 	    vertexBuffer(vertexBuffer), indexBuffer(indexBuffer)
 	{
+
 	}
 
 	Mesh::Mesh(const std::vector<uint32_t> &indices, const std::vector<Vertex> &vertices)

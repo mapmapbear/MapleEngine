@@ -159,7 +159,7 @@ namespace maple
 		entityManager->removeAllChildren(entity);
 	}
 
-	auto Scene::copyComponents(const Entity &from, const Entity &to) -> void
+	auto Scene::copyComponents(const Entity& from, const Entity& to) -> void
 	{
 		LOGW("Not implementation {0}", __FUNCTION__);
 	}

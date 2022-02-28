@@ -2,6 +2,7 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #include "Frustum.h"
+#include "BoundingBox.h"
 #include "Engine/Profiler.h"
 #include <glm/geometric.hpp>
 
@@ -47,6 +48,68 @@ namespace maple
 		for (int32_t i = 0; i < 6; i++)
 		{
 			if (planes[i].getDistance(pos) < 0.0f)
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	auto Frustum::isInside(const BoundingBox& box) const->bool
+	{
+		PROFILE_FUNCTION();
+		for (int i = 0; i < 6; i++)
+		{
+			glm::vec3 p = box.min;
+			glm::vec3 n = box.max;
+			glm::vec3 N = planes[i].getNormal();
+			if (N.x >= 0)
+			{
+				p.x = box.max.x;
+				n.x = box.min.x;
+			}
+			if (N.y >= 0)
+			{
+				p.y = box.max.y;
+				n.y = box.min.y;
+			}
+			if (N.z >= 0)
+			{
+				p.z = box.max.z;
+				n.z = box.min.z;
+			}
+			if (planes[i].getDistance(p) < 0)
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	auto Frustum::isInside(const std::shared_ptr<BoundingBox>& box) const->bool
+	{
+		PROFILE_FUNCTION();
+		for (int i = 0; i < 6; i++)
+		{
+			glm::vec3 p = box->min;
+			glm::vec3 n = box->max;
+			glm::vec3 N = planes[i].getNormal();
+			if (N.x >= 0)
+			{
+				p.x = box->max.x;
+				n.x = box->min.x;
+			}
+			if (N.y >= 0)
+			{
+				p.y = box->max.y;
+				n.y = box->min.y;
+			}
+			if (N.z >= 0)
+			{
+				p.z = box->max.z;
+				n.z = box->min.z;
+			}
+			if (planes[i].getDistance(p) < 0)
 			{
 				return false;
 			}

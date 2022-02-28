@@ -206,10 +206,10 @@ namespace maple
 
 					auto bb = mesh.getMesh()->getBoundingBox();
 			
-					{
-						//auto inside = forwardData->frustum.isInsideFast(bbCopy);
+					{//culling
+						auto inside = cameraView.frustum.isInside(bb);
 
-						//if (inside != Intersection::Outside)
+						if (inside)
 						{
 							auto& cmd = data.commandQueue.emplace_back();
 							cmd.mesh = mesh.getMesh().get();

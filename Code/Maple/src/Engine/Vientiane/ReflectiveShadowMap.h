@@ -53,6 +53,8 @@ namespace maple
 			glm::mat4 shadowProjView[SHADOWMAP_MAX] = {};
 			glm::vec4 splitDepth[SHADOWMAP_MAX]     = {};
 			glm::mat4 lightMatrix                   = glm::mat4(1.f);
+			glm::mat4 shadowProj					= glm::mat4(1.f);
+
 			Frustum   cascadeFrustums[SHADOWMAP_MAX];
 
 			std::vector<std::shared_ptr<DescriptorSet>> descriptorSet;

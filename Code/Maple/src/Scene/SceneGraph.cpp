@@ -5,6 +5,8 @@
 #include "SceneGraph.h"
 #include "Component/Component.h"
 #include "Component/Transform.h"
+#include "Component/MeshRenderer.h"
+
 #include "Engine/Profiler.h"
 namespace maple 
 {

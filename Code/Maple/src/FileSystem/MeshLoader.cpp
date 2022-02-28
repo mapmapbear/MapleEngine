@@ -137,10 +137,7 @@ namespace maple
 					}
 				}
 				pbrMaterial->setTextures(textures);
-
-				auto vb = VertexBuffer::create();
-				vb->setData(sizeof(vertices[0]) * vertices.size(), vertices.data());
-				auto mesh = std::make_shared<Mesh>(vb, IndexBuffer::create(indices.data(), indices.size()));
+				auto mesh = std::make_shared<Mesh>(indices, vertices);
 				mesh->setMaterial(pbrMaterial);
 				mesh->setName(shape.name);
 				meshes.emplace(shape.name, mesh);

@@ -98,9 +98,10 @@ namespace maple
 
 				shadowData.splitDepth[i]     = glm::vec4(camera.nearPlane + splitDist * clipRange) * -1.f;
 				shadowData.shadowProjView[i] = lightOrthoMatrix * lightViewMatrix;
-
-				if (i == 0)
+				if (i == 0) 
+				{
 					shadowData.lightMatrix = lightViewMatrix;
+				}
 			}
 		}
 	}        // namespace
@@ -170,6 +171,7 @@ namespace maple
 		using Entity = ecs::Chain
 			::Write<component::ShadowMapData>
 			::Read<component::CameraView>
+			::Write<component::ReflectiveShadowData>
 			::To<ecs::Entity>;
 
 		using LightQuery = ecs::Chain
@@ -183,7 +185,7 @@ namespace maple
 
 		inline auto beginScene(Entity entity, LightQuery lightQuery, MeshQuery meshQuery, ecs::World world)
 		{
-			auto [shadowData,cameraView] = entity;
+			auto [shadowData,cameraView,rsm] = entity;
 
 			for (uint32_t i = 0; i < shadowData.shadowMapNum; i++)
 			{
@@ -206,6 +208,8 @@ namespace maple
 
 				if (directionaLight)
 				{
+					rsm.descriptorSets[1]->setUniform("UBO", "light", &directionaLight->lightData);
+
 					if (directionaLight)
 					{
 						updateCascades(cameraView, shadowData,directionaLight);
@@ -299,6 +303,8 @@ namespace maple
 			auto [shadow, rsm,renderData,renderGraph] = entity;
 
 			auto descriptorSet = rsm.descriptorSets[1];
+
+			rsm.descriptorSets[0]->setUniform("UniformBufferObject", "lightProjection", &shadow.shadowProjView);
 
 			rsm.descriptorSets[0]->update();
 			rsm.descriptorSets[1]->update();

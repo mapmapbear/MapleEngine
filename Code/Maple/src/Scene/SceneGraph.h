@@ -14,10 +14,11 @@ namespace maple
 	public:
 		SceneGraph() = default;
 		~SceneGraph() = default;
-		void init(entt::registry & registry);
-		void disconnectOnConstruct(bool disable, entt::registry & registry);
-		void update(entt::registry & registry);
-		void updateTransform(entt::entity entity, entt::registry & registry);
+		auto init(entt::registry & registry) -> void;
+		auto disconnectOnConstruct(bool disable, entt::registry & registry) -> void;
+		auto update(entt::registry & registry) -> void;
+		auto updateTransform(entt::entity entity, entt::registry & registry)-> void;
+	private:
 	};
 
 };

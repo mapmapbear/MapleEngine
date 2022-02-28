@@ -9,6 +9,8 @@
 #include <string>
 namespace maple
 {
+	class BoundingBox;
+
 	class MAPLE_EXPORT Frustum
 	{
 	  public:
@@ -31,6 +33,8 @@ namespace maple
 		auto from(const glm::mat4 &projection) -> void;
 
 		auto isInside(const glm::vec3 &pos) const -> bool;
+		auto isInside(const BoundingBox& box) const->bool;
+		auto isInside(const std::shared_ptr<BoundingBox>& box) const->bool;
 
 		inline auto &getPlane(FrustumPlane id) const
 		{

@@ -24,7 +24,8 @@ namespace maple
 
 			InjectLightData()
 			{
-
+				shader = Shader::create("shaders/LPV/LightInjection.shader");
+				descriptors.emplace_back(DescriptorSet::create({0,shader.get()}));
 			}
 		};
 	};
