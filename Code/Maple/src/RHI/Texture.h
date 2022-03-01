@@ -115,6 +115,9 @@ namespace maple
 		virtual auto buildTexture(TextureFormat internalformat, uint32_t width, uint32_t height, bool srgb = false, bool depth = false, bool samplerShadow = false, bool mipmap = false, bool image = false, uint32_t accessFlag = 0) -> void
 		{}
 
+		virtual auto buildTexture3D(TextureFormat format, uint32_t width, uint32_t height,uint32_t depth) -> void
+		{}
+
 		virtual auto setData(const void *data) -> void override
 		{}
 

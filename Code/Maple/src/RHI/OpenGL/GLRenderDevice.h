@@ -48,6 +48,8 @@ namespace maple
 
 		auto clearInternal(uint32_t bufferMask) -> void override;
 		auto dispatch(CommandBuffer *commandBuffer, uint32_t x, uint32_t y, uint32_t z) -> void override;
+		auto memoryBarrier(CommandBuffer* commandBuffer,MemoryBarrierFlags flag) -> void override;
+
 	  protected:
 		const std::string rendererName = "OpenGL-Renderer";
 	};

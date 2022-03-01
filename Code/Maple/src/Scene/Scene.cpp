@@ -11,6 +11,7 @@
 #include "Scene/Component/Sprite.h"
 #include "Scene/Component/Transform.h"
 #include "Scene/Component/VolumetricCloud.h"
+#include "Scene/Component/BoundingBox.h"
 
 #include "SceneGraph.h"
 
@@ -19,6 +20,8 @@
 #include "Engine/CameraController.h"
 #include "Engine/Material.h"
 #include "Engine/Profiler.h"
+#include "Engine/Mesh.h"
+
 #include "Others/Serialization.h"
 #include "Others/StringUtils.h"
 
@@ -26,6 +29,8 @@
 #include "Scripts/Mono/MonoSystem.h"
 #include <filesystem>
 #include <fstream>
+
+#include <ecs/ecs.h>
 
 #include "Application.h"
 
@@ -47,8 +52,10 @@ namespace maple
 
 		sceneGraph = std::make_shared<SceneGraph>();
 		sceneGraph->init(entityManager->getRegistry());
+		entityManager->getRegistry().on_construct<MeshRenderer>().connect<&Scene::onMeshRenderCreated>(this);
 
 		globalEntity = createEntity("global");
+		globalEntity.addComponent<component::BoundingBoxComponent>();
 	}
 
 	auto Scene::getRegistry() -> entt::registry &
@@ -159,6 +166,35 @@ namespace maple
 		entityManager->removeAllChildren(entity);
 	}
 
+	auto Scene::calculateBoundingBox() -> void
+	{
+		boxDirty = false;
+
+		sceneBox.clear();
+		
+		using Query = ecs::Chain
+			::Write<MeshRenderer>
+			::To<ecs::Query>;
+
+		Query query(entityManager->getRegistry());
+
+		for (auto entity : query)
+		{
+			auto [meshRender] = query.convert(entity);
+			if (auto mesh = meshRender.getMesh())
+			{
+				sceneBox.merge(mesh->getBoundingBox());
+			}
+		}
+		auto & aabb = getGlobalComponent<component::BoundingBoxComponent>();
+		aabb.box = &sceneBox;
+	}
+
+	auto Scene::onMeshRenderCreated() -> void
+	{
+		boxDirty = true;
+	}
+
 	auto Scene::copyComponents(const Entity& from, const Entity& to) -> void
 	{
 		LOGW("Not implementation {0}", __FUNCTION__);
@@ -199,6 +235,7 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 		updateCameraController(dt);
+		getBoundingBox();
 		sceneGraph->update(entityManager->getRegistry());
 		auto view = entityManager->getRegistry().view<AnimatedSprite, Transform>();
 		for (auto entity : view)
@@ -207,5 +244,4 @@ namespace maple
 			anim.onUpdate(dt);
 		}
 	}
-
 };        // namespace maple

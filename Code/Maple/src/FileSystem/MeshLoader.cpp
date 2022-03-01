@@ -143,6 +143,5 @@ namespace maple
 				meshes.emplace(shape.name, mesh);
 			}
 		}
-
 	};        // namespace MeshLoader
 };            // namespace maple

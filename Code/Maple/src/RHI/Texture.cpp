@@ -180,10 +180,10 @@ namespace maple
 	auto Texture3D::create(uint32_t width, uint32_t height, uint32_t depth, TextureFormat format) -> std::shared_ptr<Texture3D>
 	{
 #ifdef MAPLE_OPENGL
-		return Application::getCache()->emplace<GLTexture3D>(width, height, depth, format);
+		return std::make_shared <GLTexture3D>(width, height, depth, format);
 #endif        // MAPLE_OPENGL
 #ifdef MAPLE_VULKAN
-		return Application::getCache()->emplace<VulkanTexture3D>(width, height, depth, format);
+		return std::make_shared <VulkanTexture3D>(width, height, depth, format);
 #endif        // MAPLE_VULKAN
 	}
 }        // namespace maple

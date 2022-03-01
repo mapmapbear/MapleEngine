@@ -27,7 +27,12 @@ namespace maple
 		Application::getRenderDevice()->dispatch(commandBuffer, x, y, z);
 	}
 
-	auto Renderer::drawMesh(CommandBuffer *cmdBuffer, Pipeline *pipeline, Mesh *mesh) -> void
+	auto Renderer::memoryBarrier(CommandBuffer* commandBuffer,MemoryBarrierFlags flags) -> void
+	{
+		Application::getRenderDevice()->memoryBarrier(commandBuffer,flags);
+	}
+
+	auto Renderer::drawMesh(CommandBuffer* cmdBuffer, Pipeline* pipeline, Mesh* mesh) -> void
 	{
 		mesh->getVertexBuffer()->bind(cmdBuffer, pipeline);
 		mesh->getIndexBuffer()->bind(cmdBuffer);

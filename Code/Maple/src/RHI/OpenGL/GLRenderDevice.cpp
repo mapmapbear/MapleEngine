@@ -164,6 +164,11 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 		GLCall(glDispatchCompute(x,y,z));
+	}
+
+	auto GLRenderDevice::memoryBarrier(CommandBuffer* commandBuffer,MemoryBarrierFlags flag) -> void
+	{
+		PROFILE_FUNCTION();
 		GLCall(glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT));
 	}
 

@@ -78,7 +78,7 @@ namespace maple
 			}
 		}
 
-		inline auto textureFormatToInternalFormat(uint32_t format)
+		inline auto internalFormatToFormat(uint32_t format)
 		{
 			switch (format)
 			{
@@ -112,6 +112,8 @@ namespace maple
 					return GL_RGB;
 				case GL_SRGB_ALPHA:
 					return GL_RGBA;
+				case GL_R32I:
+					return GL_RED_INTEGER;
 				case GL_LUMINANCE:
 					return GL_LUMINANCE;
 				case GL_LUMINANCE_ALPHA:
@@ -174,7 +176,7 @@ namespace maple
 
 		auto floatData = parameters.format == TextureFormat::RGB16 || parameters.format == TextureFormat::RGB32 || parameters.format == TextureFormat::RGBA16 || parameters.format == TextureFormat::RGBA32;
 
-		GLCall(glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, textureFormatToInternalFormat(format), (isHDR || floatData) ? GL_FLOAT : GL_UNSIGNED_BYTE, data ? data : nullptr));
+		GLCall(glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, internalFormatToFormat(format), (isHDR || floatData) ? GL_FLOAT : GL_UNSIGNED_BYTE, data ? data : nullptr));
 		GLCall(glGenerateMipmap(GL_TEXTURE_2D));
 	}
 
@@ -203,7 +205,7 @@ namespace maple
 		storedImage = image;
 
 		uint32_t glFormat  = textureFormatToGL(internalformat, srgb);
-		uint32_t glFormat2 = textureFormatToInternalFormat(glFormat);
+		uint32_t glFormat2 = internalFormatToFormat(glFormat);
 
 		GLCall(glBindTexture(GL_TEXTURE_2D, handle));
 		GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
@@ -242,7 +244,7 @@ namespace maple
 	auto GLTexture2D::update(int32_t x, int32_t y, int32_t w, int32_t h, const void *buffer) -> void
 	{
 		PROFILE_FUNCTION();
-		GLCall(glTexSubImage2D(GL_TEXTURE_2D, 0, x, y, w, h, textureFormatToInternalFormat(textureFormatToGL(parameters.format, parameters.srgb)), isHDR ? GL_FLOAT : GL_UNSIGNED_BYTE, buffer));
+		GLCall(glTexSubImage2D(GL_TEXTURE_2D, 0, x, y, w, h, internalFormatToFormat(textureFormatToGL(parameters.format, parameters.srgb)), isHDR ? GL_FLOAT : GL_UNSIGNED_BYTE, buffer));
 	}
 
 	auto GLTexture2D::setData(const void *pixels) -> void
@@ -251,7 +253,7 @@ namespace maple
 		auto floatData = parameters.format == TextureFormat::RGB16 || parameters.format == TextureFormat::RGB32 || parameters.format == TextureFormat::RGBA16 || parameters.format == TextureFormat::RGBA32;
 
 		GLCall(glBindTexture(GL_TEXTURE_2D, handle));
-		GLCall(glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, textureFormatToInternalFormat(textureFormatToGL(parameters.format, parameters.srgb)), (isHDR || floatData) ? GL_FLOAT : GL_UNSIGNED_BYTE, pixels));
+		GLCall(glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, internalFormatToFormat(textureFormatToGL(parameters.format, parameters.srgb)), (isHDR || floatData) ? GL_FLOAT : GL_UNSIGNED_BYTE, pixels));
 		GLCall(glGenerateMipmap(GL_TEXTURE_2D));
 	}
 
@@ -328,7 +330,7 @@ namespace maple
 		GLCall(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
 
 		auto internalFormat = textureFormatToGL(format, false);
-		auto dataFormat     = textureFormatToInternalFormat(internalFormat);
+		auto dataFormat     = internalFormatToFormat(internalFormat);
 
 		auto floatData = format == TextureFormat::RGB16 || format == TextureFormat::RGB32 || format == TextureFormat::RGBA16 || format == TextureFormat::RGBA32;
 
@@ -410,7 +412,7 @@ namespace maple
 		GLCall(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
 
 		uint32_t internalFormat = textureFormatToGL(parameters.format, parameters.srgb);
-		uint32_t format         = textureFormatToInternalFormat(internalFormat);
+		uint32_t format         = internalFormatToFormat(internalFormat);
 
 		GLCall(glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, internalFormat, width, height, 0, format, GL_UNSIGNED_BYTE, xp->getData()));
 		GLCall(glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, internalFormat, width, height, 0, format, GL_UNSIGNED_BYTE, xn->getData()));
@@ -499,7 +501,7 @@ namespace maple
 		GLCall(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE));
 
 		uint32_t internalFormat = textureFormatToGL(parameters.format, parameters.srgb);
-		uint32_t format         = textureFormatToInternalFormat(internalFormat);
+		uint32_t format         = internalFormatToFormat(internalFormat);
 		for (uint32_t m = 0; m < mips; m++)
 		{
 			GLCall(glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, m, internalFormat, faceWidths[m], faceHeights[m], 0, format, GL_UNSIGNED_BYTE, cubeTextureData[m][3]));
@@ -676,13 +678,27 @@ namespace maple
 		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
 		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR));
 
-		auto textureFormat = textureFormatToGL(format, false);
-		auto internalFormat = textureFormatToInternalFormat(textureFormat);
+/*
+* 
+* 
+		glTexImage3D(GLenum target,
+			GLint level,
+			GLint internalformat,
+			GLsizei width,
+			GLsizei height,
+			GLsizei depth,
+			GLint border,
+			GLenum format, //GL_RED, GL_RG, GL_RGB, GL_BGR, GL_RGBA, GL_BGRA, GL_RED_INTEGER, GL_RG_INTEGER, GL_RGB_INTEGER, GL_BGR_INTEGER, GL_RGBA_INTEGER, GL_BGRA_INTEGER, GL_STENCIL_INDEX, GL_DEPTH_COMPONENT, GL_DEPTH_STENCIL.
+			GLenum type,
+			const void* data);*/
+
+		auto internalFormat = textureFormatToGL(format, false);
+		auto textureFormat = internalFormatToFormat(internalFormat);
 		auto dataType = textureDataType(format);
 
-		GLCall(glTexImage3D(GL_TEXTURE_3D, 0, textureFormat, width, height, depth, 0, internalFormat, dataType, NULL));
+		GLCall(glTexImage3D(GL_TEXTURE_3D, 0, internalFormat, width, height, depth, 0, textureFormat, dataType, NULL));
 		GLCall(glGenerateMipmap(GL_TEXTURE_3D));
-		GLCall(glBindImageTexture(0, handle, 0, GL_FALSE, 0, GL_WRITE_ONLY, textureFormat));
+		GLCall(glBindImageTexture(0, handle, 0, GL_FALSE, 0, GL_READ_WRITE, internalFormat));
 	}
 
 	auto GLTexture3D::bind(uint32_t slot) const -> void
@@ -718,12 +734,31 @@ namespace maple
 		GLCall(glBindImageTexture(unit, handle, level, true, layer, flag, textureFormatToGL(format, false)));
 	}
 
+	auto GLTexture3D::buildTexture3D(TextureFormat format, uint32_t width, uint32_t height, uint32_t depth) -> void
+	{
+		this->format = format;
+
+		GLCall(glBindTexture(GL_TEXTURE_3D, handle));
+		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_REPEAT));
+		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_REPEAT));
+		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
+		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
+		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR));
+
+		auto internalFormat = textureFormatToGL(format, false);
+		auto textureFormat = internalFormatToFormat(internalFormat);
+		auto dataType = textureDataType(format);
+
+		GLCall(glTexImage3D(GL_TEXTURE_3D, 0, internalFormat, width, height, depth, 0, textureFormat, dataType, NULL));
+		GLCall(glBindTexture(GL_TEXTURE_3D, 0));
+	}
+
 	auto GLTexture3D::clear() -> void
 	{
 		PROFILE_FUNCTION();
 		std::vector<uint8_t> emptyData(width * height * depth * sizeof(int32_t), 0);//float and int is 4.
 
-		auto internalFormat = textureFormatToInternalFormat(textureFormatToGL(format, false));
+		auto internalFormat = internalFormatToFormat(textureFormatToGL(format, false));
 		auto dataType = textureDataType(format);	
 
 		glBindTexture(GL_TEXTURE_3D, handle);

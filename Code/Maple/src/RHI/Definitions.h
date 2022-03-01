@@ -318,6 +318,11 @@ namespace maple
 
 		glm::mat4 transform;
 	};
+
+	enum class MemoryBarrierFlags
+	{
+		None,
+	};
 }        // namespace maple
 
 namespace std

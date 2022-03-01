@@ -11,7 +11,7 @@ namespace maple
 {
 	namespace component
 	{
-		struct LPVData
+		struct LPVGrid
 		{
 			std::shared_ptr<Texture3D> lpvGridR;
 			std::shared_ptr<Texture3D> lpvGridG;

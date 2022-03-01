@@ -4,24 +4,50 @@
 
 #include "LightPropagationVolume.h"
 #include "ReflectiveShadowMap.h"
+#include "Scene/Component/BoundingBox.h"
+#include "Math/BoundingBox.h"
+
 #include "Engine/Renderer/RendererData.h"
 #include "Engine/Mesh.h"
+
+#include "RHI/Texture.h"
 #include "RHI/IndexBuffer.h"
 #include "RHI/VertexBuffer.h"
 #include "RHI/Shader.h"
 #include "RHI/Pipeline.h"
 #include "RHI/DescriptorSet.h"
+#include "Math/BoundingBox.h"
 #include <ecs/ecs.h>
 
 namespace maple
 {
+	namespace 
+	{
+		inline auto updateGrid(component::LPVGrid& grid, maple::BoundingBox * box) 
+		{
+			auto dimension = box->size();
+			if (grid.lpvGridB == nullptr) 
+			{
+				grid.lpvGridR = Texture3D::create(dimension.x * 4, dimension.y, dimension.z, TextureFormat::R32I);
+				grid.lpvGridB = Texture3D::create(dimension.x * 4, dimension.y, dimension.z, TextureFormat::R32I);
+				grid.lpvGridG = Texture3D::create(dimension.x * 4, dimension.y, dimension.z, TextureFormat::R32I);
+			}
+			else 
+			{
+				grid.lpvGridR->buildTexture(TextureFormat::R32I,dimension.x * 4, dimension.y, dimension.z);
+				grid.lpvGridB->buildTexture(TextureFormat::R32I,dimension.x * 4, dimension.y, dimension.z);
+				grid.lpvGridG->buildTexture(TextureFormat::R32I,dimension.x * 4, dimension.y, dimension.z);
+			}	
+		}
+	}
+
 	namespace component
 	{
 		struct InjectLightData
 		{
 			std::shared_ptr<Shader> shader;
 			std::vector<std::shared_ptr<DescriptorSet>> descriptors;
-
+			BoundingBox boundingBox;
 			InjectLightData()
 			{
 				shader = Shader::create("shaders/LPV/LightInjection.shader");
@@ -35,19 +61,30 @@ namespace maple
 		namespace inject_light_pass 
 		{
 			using Entity = ecs::Chain
-				::Read<component::LPVData>
+				::Read<component::LPVGrid>
 				::Read<component::ReflectiveShadowData>
 				::Read<component::RendererData>
-				::Read<component::InjectLightData>
+				::Write<component::InjectLightData>
+				::Read<component::BoundingBoxComponent>
 				::To<ecs::Entity>;
 				
 			inline auto beginScene(Entity entity, ecs::World world)
 			{
+				auto [lpv, rsm, render, injectLight,aabb] = entity;
+				if (injectLight.boundingBox != *aabb.box) 
+				{
+					updateGrid(lpv, aabb.box);
+					injectLight.boundingBox.min = aabb.box->min;
+					injectLight.boundingBox.max = aabb.box->max;
+				}
 			}
 
 			inline auto render(Entity entity, ecs::World world)
 			{
-				auto [lpv, rsm, rendererData,injectionLight] = entity;
+				auto [lpv, rsm, rendererData,injectionLight,aabb] = entity;
+
+				if (lpv.lpvGridR == nullptr)
+					return;
 
 				lpv.lpvGridR->clear();
 				lpv.lpvGridG->clear();
@@ -68,7 +105,7 @@ namespace maple
 		namespace inject_geometry_pass
 		{
 			using Entity = ecs::Chain
-				::Read<component::LPVData>
+				::Read<component::LPVGrid>
 				::To<ecs::Entity>;
 
 			inline auto beginScene(Entity entity, ecs::World world)
@@ -85,7 +122,7 @@ namespace maple
 		namespace propagation_pass
 		{
 			using Entity = ecs::Chain
-				::Read<component::LPVData>
+				::Read<component::LPVGrid>
 				::To<ecs::Entity>;
 
 			inline auto beginScene(Entity entity, ecs::World world)
@@ -102,7 +139,7 @@ namespace maple
 
 		auto registerLPV(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void
 		{
-			executePoint->registerGlobalComponent<component::LPVData>();
+			executePoint->registerGlobalComponent<component::LPVGrid>();
 			executePoint->registerWithinQueue<inject_light_pass::beginScene>(begin);
 			executePoint->registerWithinQueue<inject_light_pass::render>(renderer);
 			executePoint->registerWithinQueue<inject_geometry_pass::beginScene>(begin);

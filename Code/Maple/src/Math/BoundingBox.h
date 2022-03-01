@@ -5,12 +5,13 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <cstdint>
+#include <memory>
+
 #include "Rect2D.h"
 #include "Engine/Core.h"
 
 namespace maple
 {
-
 	class MAPLE_EXPORT BoundingBox
 	{
 	public:
@@ -38,7 +39,6 @@ namespace maple
 
 		inline auto merge(const BoundingBox& box) -> void
 		{
-
 			if (box.min.x < min.x)
 				min.x = box.min.x;
 			if (box.min.y < min.y)
@@ -51,6 +51,22 @@ namespace maple
 				max.y = box.max.y;
 			if (box.max.z > max.z)
 				max.z = box.max.z;
+		}
+
+		inline auto merge(const std::shared_ptr<BoundingBox> & box) -> void
+		{
+			if (box->min.x < min.x)
+				min.x = box->min.x;
+			if (box->min.y < min.y)
+				min.y = box->min.y;
+			if (box->min.z < min.z)
+				min.z = box->min.z;
+			if (box->max.x > max.x)
+				max.x = box->max.x;
+			if (box->max.y > max.y)
+				max.y = box->max.y;
+			if (box->max.z > max.z)
+				max.z = box->max.z;
 		}
 
 		inline auto transform(const glm::mat4 & transform) ->BoundingBox;

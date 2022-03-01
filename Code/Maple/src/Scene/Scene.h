@@ -5,6 +5,7 @@
 #pragma once
 #include "Engine/Core.h"
 #include "Scene/Entity/Entity.h"
+#include "Math/BoundingBox.h"
 #include <functional>
 #include <memory>
 #include <string>
@@ -86,26 +87,6 @@ namespace maple
 
 		auto removeAllChildren(entt::entity entity) -> void;
 
-		inline auto &getSettings() const
-		{
-			return settings;
-		}
-
-		inline auto &getSettings()
-		{
-			return settings;
-		}
-
-		struct Settings
-		{
-			bool render2D       = true;
-			bool render3D       = true;
-			bool renderDebug    = true;
-			bool renderSkybox   = true;
-			bool renderShadow   = true;
-			bool deferredRender = true;
-		};
-
 		template <typename Archive>
 		auto save(Archive &archive) const -> void
 		{
@@ -135,6 +116,10 @@ namespace maple
 			return globalEntity;
 		}
 
+		inline auto& getBoundingBox() { if (boxDirty) calculateBoundingBox();  return sceneBox; }
+
+		auto calculateBoundingBox() -> void;
+		auto onMeshRenderCreated() -> void;
 	  protected:
 		auto updateCameraController(float dt) -> void;
 		auto copyComponents(const Entity &from, const Entity &to) -> void;
@@ -158,8 +143,10 @@ namespace maple
 
 		bool     dirty          = false;
 		bool     useSceneCamera = false;
-		Settings settings;
 
 		std::function<void(Entity)> onEntityAdd;
+
+		BoundingBox sceneBox;
+		bool boxDirty = false;
 	};
 };        // namespace maple

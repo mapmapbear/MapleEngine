@@ -84,6 +84,8 @@ namespace maple
 
 		auto bindImageTexture(uint32_t unit, bool read, bool write, uint32_t level, uint32_t layer) -> void override;
 
+		auto buildTexture3D(TextureFormat format, uint32_t width, uint32_t height, uint32_t depth) -> void override;
+
 		virtual auto getFilePath() const -> const std::string & override
 		{
 			return filePath;

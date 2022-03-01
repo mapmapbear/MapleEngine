@@ -420,56 +420,6 @@ namespace maple
 				}
 				ImGui::EndMenu();
 			}
-
-			if (ImGui::BeginMenu("GBuffer"))
-			{
-				auto event = std::make_unique<DeferredTypeEvent>();
-
-				if (ImGui::MenuItem("Depth"))
-				{
-					event->setDeferredType(0);
-					Application::get()->getEventDispatcher().postEvent(std::move(event));
-				}
-
-				if (ImGui::MenuItem("Color"))
-				{
-					event->setDeferredType(1);
-					Application::get()->getEventDispatcher().postEvent(std::move(event));
-				}
-
-				if (ImGui::MenuItem("Position"))
-				{
-					event->setDeferredType(2);
-					Application::get()->getEventDispatcher().postEvent(std::move(event));
-				}
-
-				if (ImGui::MenuItem("Normal"))
-				{
-					event->setDeferredType(3);
-					Application::get()->getEventDispatcher().postEvent(std::move(event));
-				}
-
-				if (ImGui::MenuItem("ShadowMap"))
-				{
-					event->setDeferredType(4);
-					Application::get()->getEventDispatcher().postEvent(std::move(event));
-				}
-
-				if (ImGui::MenuItem("ShadowCubeMap"))
-				{
-					event->setDeferredType(5);
-					Application::get()->getEventDispatcher().postEvent(std::move(event));
-				}
-
-				if (ImGui::MenuItem("Deferred"))
-				{
-					event->setDeferredType(6);
-					Application::get()->getEventDispatcher().postEvent(std::move(event));
-				}
-
-				ImGui::EndMenu();
-			}
-
 			ImGui::EndMainMenuBar();
 		}
 	}
