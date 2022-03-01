@@ -61,7 +61,7 @@ namespace maple
 		namespace inject_light_pass 
 		{
 			using Entity = ecs::Chain
-				::Read<component::LPVGrid>
+				::Write<component::LPVGrid>
 				::Read<component::ReflectiveShadowData>
 				::Read<component::RendererData>
 				::Write<component::InjectLightData>
