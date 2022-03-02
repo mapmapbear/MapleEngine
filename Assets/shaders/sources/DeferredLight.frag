@@ -56,16 +56,11 @@ layout(set = 0, binding = 7)  uniform samplerCube uIrradianceMap;
 layout(set = 0, binding = 8)  uniform samplerCube uPrefilterMap;
 layout(set = 0, binding = 9)  uniform sampler2D uPreintegratedFG;
 
-layout(set = 0, binding = 10) uniform sampler2D uFluxSampler; //GI
-layout(set = 0, binding = 11) uniform sampler2D uRSMWorldSampler; //GI
-layout(set = 0, binding = 12) uniform sampler2D uRSMNormalSampler; //GI
+//layout(set = 0, binding = 13) uniform sampler2D uViewPositionSampler;
+//layout(set = 0, binding = 14) uniform sampler2D uViewNormalSampler; //GI
+layout(set = 0, binding = 10) uniform sampler2D uOutputSampler; //used for debug
 
-layout(set = 0, binding = 13) uniform sampler2D uViewPositionSampler;
-layout(set = 0, binding = 14) uniform sampler2D uViewNormalSampler; //GI
-
-layout(set = 0, binding = 15) uniform sampler2D uOutputSampler; //used for debug
-
-layout(set = 0, binding = 16) uniform UniformBufferLight
+layout(set = 0, binding = 11) uniform UniformBufferLight
 {
 	Light lights[MAX_LIGHTS];
 	mat4 shadowTransform[MAX_SHADOWMAPS];
@@ -88,14 +83,14 @@ layout(set = 0, binding = 16) uniform UniformBufferLight
 	int padding2;
 } ubo;
 
-layout(set = 0, binding = 17) uniform VirtualPointLight
+/*layout(set = 0, binding = 12) uniform VirtualPointLight
 {
 	vec4 VPLSamples[NUM_VPL];
 	float rsmRMax;
 	float rsmIntensity;
 	float numberOfSamples;
 	float padding2; 
-} vpl;
+} vpl;*/
 
 const vec2 PoissonDistribution16[16] = vec2[](
 	  vec2(-0.94201624, -0.39906216), vec2(0.94558609, -0.76890725), vec2(-0.094184101, -0.92938870), vec2(0.34495938, 0.29387760),
@@ -339,7 +334,7 @@ vec3 fresnelSchlickRoughness(vec3 F0, float cosTheta, float roughness)
 {
     return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
-
+/*
 vec3 calcVPLIrradiance(vec3 vVPLFlux, vec3 vVPLNormal, vec3 vVPLPos, vec3 vFragPos, vec3 vFragNormal)
 {
 	vec3 VPL2Frag = normalize(vFragPos - vVPLPos);
@@ -376,7 +371,7 @@ vec3 indirectIllumination(vec3 fragPos, vec3 normal, vec3 fragColor)
 	}
 	return result * vpl.rsmIntensity;
 }
-
+*/
 
 vec3 lighting(vec3 F0, vec3 wsPos, Material material)
 {
@@ -385,7 +380,7 @@ vec3 lighting(vec3 F0, vec3 wsPos, Material material)
 	for(int i = 0; i < ubo.lightCount; i++)
 	{
 		Light light = ubo.lights[i];
-		float value = 0.0;
+		float value = 1.0;
 		vec3 lightColor = light.color.xyz * light.intensity;
 		vec3 indirect = vec3(0,0,0);
 		if(light.type == 2.0)
@@ -420,7 +415,7 @@ vec3 lighting(vec3 F0, vec3 wsPos, Material material)
 			intensity *= step(theta, cutoffAngle);
 			value = clamp(attenuation, 0.0, 1.0);
 
-			indirect = indirectIllumination(wsPos, material.normal,material.view);
+			//indirect = indirectIllumination(wsPos, material.normal,material.view);
 			//value = RayMarch(wsPos, material.view, material.normal,ubo.cameraPosition.xyz,light);
 		}
 		else
@@ -428,9 +423,8 @@ vec3 lighting(vec3 F0, vec3 wsPos, Material material)
 			int cascadeIndex = calculateCascadeIndex(wsPos);
 			vec4 shadowCoord = (ubo.biasMat * ubo.shadowTransform[cascadeIndex]) * vec4(wsPos, 1.0);
 			shadowCoord = shadowCoord * ( 1.0 / shadowCoord.w);
-			
 			value =  PCFShadow(shadowCoord , cascadeIndex);
-			indirect = indirectIllumination(wsPos, material.normal, material.view);
+			//indirect = indirectIllumination(wsPos, material.normal, material.view);
 		}
 		
 		vec3 Li = light.direction.xyz;

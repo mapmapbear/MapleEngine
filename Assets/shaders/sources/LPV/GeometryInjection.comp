@@ -1,0 +1,51 @@
+#version 450
+
+layout (local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
+#include "LPVCommon.glsl"
+
+layout(r32i ,binding = 0) uniform iimage3D uGeometryVolume;
+
+layout(binding = 1) uniform sampler2D uRSMWorldSampler;
+layout(binding = 2) uniform sampler2D uRSMNormalSampler;
+layout(binding = 3) uniform UniformBufferObject
+{
+	mat4 lightViewMat;
+	vec3 minAABB;
+	vec3 lightDir;
+	float rmsSize;
+	float rsmArea;
+	float cellSize;
+}ubo;
+
+ivec3 convertPointToGridIndex(vec3 vPos) {
+	return ivec3((vPos - ubo.minAABB) / ubo.cellSize);
+}
+
+float calculateSurfelAreaLightOrtho(vec3 lightPos) {
+	return (ubo.rsmArea)/(ubo.rmsSize * ubo.rmsSize);
+}
+
+float calculateBlockingPotencial(float surfelArea, vec3 dir, vec3 normal) {
+	return clamp((surfelArea * clamp(dot(normal,dir),0.0,1.0))/(ubo.cellSize * ubo.cellSize),0.0,1.0);
+}
+
+void main()
+{
+ 	ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
+	
+	vec3 posFromRSM = texelFetch(uRSMWorldSampler, pixel,0).rgb;
+	vec3 normalFromRSM = texelFetch(uRSMNormalSampler, pixel,0).rgb;
+
+	vec4 viewPos = ubo.lightViewMat * vec4(posFromRSM,1.0);
+	float surfelArea = calculateSurfelAreaLightOrtho(viewPos.xyz);
+
+	ivec3 volumeCellIndex = convertPointToGridIndex(posFromRSM);
+
+	float blockingPotencial = calculateBlockingPotencial(surfelArea, ubo.lightDir, normalFromRSM);
+
+	vec4 SHCoeffGV = evalCosineLobeToDir(normalFromRSM) * blockingPotencial;
+
+	imgStoreAdd(uGeometryVolume,volumeCellIndex,SHCoeffGV);
+
+}

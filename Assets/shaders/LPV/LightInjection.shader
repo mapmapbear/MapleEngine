@@ -1,2 +1,1 @@
-#Vertex shaders/spv/LPV/LightInjection.vert.spv
-#Fragment shaders/spv/LPV/LightInjection.frag.spv
+#Compute shaders/spv/LPV/LightInjection.comp.spv

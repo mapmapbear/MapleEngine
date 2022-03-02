@@ -1,0 +1,115 @@
+#version 450
+
+#include "LPVCommon.glsl"
+
+layout (local_size_x = 16, local_size_y = 16, local_size_z = 16) in;
+
+layout(r32i ,binding = 0) uniform iimage3D RAccumulatorLPV_;
+layout(r32i ,binding = 1) uniform iimage3D GAccumulatorLPV_;
+layout(r32i ,binding = 2) uniform iimage3D BAccumulatorLPV_;
+layout(r32i ,binding = 3) uniform iimage3D LPVGridR_;
+layout(r32i ,binding = 4) uniform iimage3D LPVGridG_;
+layout(r32i ,binding = 5) uniform iimage3D LPVGridB_;
+
+layout( binding = 6) uniform sampler3D LPVGridR;
+layout( binding = 7) uniform sampler3D LPVGridG;
+layout( binding = 8) uniform sampler3D LPVGridB;
+layout( binding = 9) uniform sampler3D uGeometryVolume;
+
+layout( binding = 10) uniform UniformObject
+{
+	vec3 gridDim;
+	float occlusionAmplifier;
+}ubo; 
+
+
+const float directFaceSubtendedSolidAngle =  0.4006696846f; 
+const float sideFaceSubtendedSolidAngle = 0.4234413544f; 
+
+const ivec3 propDirections[6] = {
+	//+Z
+	ivec3(0,0,1),
+	//-Z
+	ivec3(0,0,-1),
+	//+X
+	ivec3(1,0,0),
+	//-X
+	ivec3(-1,0,0),
+	//+Y
+	ivec3(0,1,0),
+	//-Y
+	ivec3(0,-1,0)
+};
+const ivec2 cellSides[4] = {ivec2(1.0, 0.0), ivec2(0.0, 1.0), ivec2(-1.0, 0.0), ivec2(0.0, -1.0)};
+
+vec3 getEvalSideDirection(int index, ivec3 orientation) {
+	const float smallComponent = 0.4472135; // 1 / sqrt(5)
+	const float bigComponent = 0.894427; // 2 / sqrt(5)
+	const ivec2 side = cellSides[ index ];
+	vec3 tmp = vec3(side.x * smallComponent, side.y * smallComponent, bigComponent);
+	return vec3(orientation.x * tmp.x, orientation.y * tmp.y, orientation.z * tmp.z);
+}
+
+vec3 getReprojSideDirection(int index, ivec3 orientation) {
+	const ivec2 side = cellSides[ index ];
+	return vec3(orientation.x*side.x, orientation.y*side.y, 0);
+}
+
+
+void main()
+{
+	ivec3 volumeCellIndex = ivec3(gl_GlobalInvocationID.xyz);
+
+	vec4 cR = vec4(0.0);
+	vec4 cG = vec4(0.0);
+	vec4 cB = vec4(0.0);
+	for(int neighbour = 0; neighbour < 6; neighbour++) {
+		vec4 RSHcoeffsNeighbour = vec4(0.0);
+		vec4 GSHcoeffsNeighbour = vec4(0.0);
+		vec4 BSHcoeffsNeighbour = vec4(0.0);
+		ivec3 mainDirection = propDirections[neighbour]; 
+		ivec3 neighbourCellIndex = volumeCellIndex - mainDirection;
+	
+		RSHcoeffsNeighbour = texelFetch(LPVGridR, neighbourCellIndex, 0);
+		GSHcoeffsNeighbour = texelFetch(LPVGridG, neighbourCellIndex, 0);
+		BSHcoeffsNeighbour = texelFetch(LPVGridB, neighbourCellIndex, 0);
+
+		vec3 occCoord = (vec3(neighbourCellIndex.xyz) + 0.5 * mainDirection) / ubo.gridDim;
+		vec4 occCoeffs = texture(uGeometryVolume, occCoord);
+		float occlusionValue = 1.0 - clamp(ubo.occlusionAmplifier * dot(occCoeffs, dirToSH(-mainDirection)),0.0,1.0 );
+		float occludedDirectFaceContribution = occlusionValue * directFaceSubtendedSolidAngle;
+		vec4 mainDirectionCosineLobeSH = evalCosineLobeToDir(mainDirection);
+		vec4 mainDirectionSH = dirToSH(mainDirection);
+		cR += occludedDirectFaceContribution * max(0.0, dot(RSHcoeffsNeighbour, mainDirectionCosineLobeSH)) * mainDirectionSH;
+		cG += occludedDirectFaceContribution * max(0.0, dot(GSHcoeffsNeighbour, mainDirectionCosineLobeSH)) * mainDirectionSH;
+		cB += occludedDirectFaceContribution * max(0.0, dot(BSHcoeffsNeighbour, mainDirectionCosineLobeSH)) * mainDirectionSH;
+	
+		for(int face = 0; face < 4; face++) {
+			vec3 evalDirection = getEvalSideDirection(face, mainDirection);
+			vec3 reprojDirection = getReprojSideDirection(face, mainDirection);
+
+			vec3 occCoord = (vec3(neighbourCellIndex.xyz) + 0.5 * evalDirection) / ubo.gridDim;
+			vec4 occCoeffs = texture(uGeometryVolume, occCoord);
+			occlusionValue = 1.0 - clamp(ubo.occlusionAmplifier * dot(occCoeffs, dirToSH(-evalDirection)),0.0,1.0);
+			float occludedSideFaceContribution = occlusionValue * sideFaceSubtendedSolidAngle;
+			vec4 reprojDirectionCosineLobeSH = dirToSH(reprojDirection);
+			vec4 evalDirectionSH = evalCosineLobeToDir(evalDirection);
+			
+			cR += occludedSideFaceContribution * max(0.0, dot(RSHcoeffsNeighbour, evalDirectionSH)) * reprojDirectionCosineLobeSH;
+			cG += occludedSideFaceContribution * max(0.0, dot(GSHcoeffsNeighbour, evalDirectionSH)) * reprojDirectionCosineLobeSH;
+			cB += occludedSideFaceContribution * max(0.0, dot(BSHcoeffsNeighbour, evalDirectionSH)) * reprojDirectionCosineLobeSH;
+		}
+	}
+
+	imgStoreAdd(LPVGridR_,volumeCellIndex,(cR / PI));
+	imgStoreAdd(LPVGridG_,volumeCellIndex,(cG / PI));
+	imgStoreAdd(LPVGridB_,volumeCellIndex,(cB / PI));
+
+	vec4 R = imageLoad(LPVGridR_, volumeCellIndex);
+	vec4 G = imageLoad(LPVGridG_, volumeCellIndex);
+	vec4 B = imageLoad(LPVGridB_, volumeCellIndex);
+
+	imgStoreAdd(RAccumulatorLPV_, volumeCellIndex, R);
+	imgStoreAdd(GAccumulatorLPV_, volumeCellIndex, G);
+	imgStoreAdd(BAccumulatorLPV_, volumeCellIndex, B);
+}
