@@ -77,6 +77,9 @@ namespace maple
 					injectLight.boundingBox.min = aabb.box->min;
 					injectLight.boundingBox.max = aabb.box->max;
 				}
+
+				injectLight.descriptors[0]->setUniform("UniformBufferObject", "minAABB", glm::value_ptr(aabb.box->size()));
+				injectLight.descriptors[0]->setUniform("UniformBufferObject", "cellSize", &lpv.cellSize);
 			}
 
 			inline auto render(Entity entity, ecs::World world)
@@ -89,6 +92,12 @@ namespace maple
 				lpv.lpvGridR->clear();
 				lpv.lpvGridG->clear();
 				lpv.lpvGridB->clear();
+
+				injectionLight.descriptors[0]->setTexture("LPVGridR",lpv.lpvGridR);
+				injectionLight.descriptors[0]->setTexture("LPVGridG",lpv.lpvGridG);
+				injectionLight.descriptors[0]->setTexture("LPVGridB",lpv.lpvGridB);
+				injectionLight.descriptors[0]->setTexture("uFluxSampler", rsm.fluxTexture);
+				injectionLight.descriptors[0]->setTexture("uRSMWorldSampler", rsm.worldTexture);
 
 				PipelineInfo pipelineInfo;
 				pipelineInfo.shader = injectionLight.shader;
@@ -140,6 +149,9 @@ namespace maple
 		auto registerLPV(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void
 		{
 			executePoint->registerGlobalComponent<component::LPVGrid>();
+			executePoint->registerGlobalComponent<component::InjectLightData>();
+
+
 			executePoint->registerWithinQueue<inject_light_pass::beginScene>(begin);
 			executePoint->registerWithinQueue<inject_light_pass::render>(renderer);
 			executePoint->registerWithinQueue<inject_geometry_pass::beginScene>(begin);

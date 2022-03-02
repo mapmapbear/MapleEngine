@@ -11,6 +11,7 @@
 #include "Engine/Quad2D.h"
 #include "Engine/Vertex.h"
 #include "Engine/CaptureGraph.h"
+#include "Engine/Vientiane/LightPropagationVolume.h"
 
 #include "RHI/CommandBuffer.h"
 #include "RHI/GPUProfile.h"
@@ -146,6 +147,7 @@ namespace maple
 		executePoint->registerWithinQueue<on_begin_renderer::system>(renderQ);
 
 		reflective_shadow_map::registerShadowMap(beginQ, renderQ, executePoint);
+		light_propagation_volume::registerLPV(beginQ, renderQ, executePoint);
 		deferred_offscreen::registerDeferredOffScreenRenderer(beginQ, renderQ, executePoint);
 		post_process::registerSSAOPass(beginQ, renderQ, executePoint);
 		deferred_lighting::registerDeferredLighting(beginQ, renderQ, executePoint);

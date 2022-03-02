@@ -18,7 +18,7 @@ namespace maple
 			std::shared_ptr<Shader>                     ssaoBlurShader;
 			std::vector<std::shared_ptr<DescriptorSet>> ssaoSet;
 			std::vector<std::shared_ptr<DescriptorSet>> ssaoBlurSet;
-			bool  enable = true;
+			bool  enable = false;
 			float bias = 0.025;
 			SSAOData();
 		};

@@ -55,7 +55,8 @@ namespace maple
 		entityManager->getRegistry().on_construct<MeshRenderer>().connect<&Scene::onMeshRenderCreated>(this);
 
 		globalEntity = createEntity("global");
-		globalEntity.addComponent<component::BoundingBoxComponent>();
+
+		getGlobalComponent<component::BoundingBoxComponent>();
 	}
 
 	auto Scene::getRegistry() -> entt::registry &

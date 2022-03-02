@@ -27,7 +27,11 @@
 #include "Engine/Renderer/RendererData.h"
 #include "Engine/CaptureGraph.h"
 
+#include "Application.h"
+
 #include <ecs/ecs.h>
+
+#include <omp.h>
 
 namespace maple
 {
@@ -183,6 +187,11 @@ namespace maple
 			::Write<Transform>
 			::To<ecs::Query>;
 
+		using MeshEntity = ecs::Chain
+			::Write<MeshRenderer>
+			::Write<Transform>
+			::To<ecs::Entity>;
+
 		inline auto beginScene(Entity entity, LightQuery lightQuery, MeshQuery meshQuery, ecs::World world)
 		{
 			auto [shadowData,cameraView,rsm] = entity;
@@ -219,23 +228,21 @@ namespace maple
 							shadowData.cascadeFrustums[i].from(shadowData.shadowProjView[i]);
 						}
 					}
-
-					for (auto entityHandle : meshQuery)
-					{
-						auto [mesh, trans] = meshQuery.convert(entityHandle);
-
-						for (uint32_t i = 0; i < shadowData.shadowMapNum; i++)
+#pragma omp parallel for num_threads(4)
+						for (int32_t i = 0; i < shadowData.shadowMapNum; i++)
 						{
-							//auto inside = shadowData->cascadeFrustums[i].isInsideFast(bbCopy);
-							//if (inside != Intersection::OUTSIDE)
-							{
-								auto& cmd = shadowData.cascadeCommandQueue[i].emplace_back();
-								cmd.mesh = mesh.getMesh().get();
-								cmd.transform = trans.getWorldMatrix();
-								cmd.material = mesh.getMesh()->getMaterial().get();
-							}
+							meshQuery.forEach([&, i](MeshEntity meshEntity) {
+								auto [mesh, trans] = meshEntity;
+								auto inside = shadowData.cascadeFrustums[i].isInside(mesh.getMesh()->getBoundingBox());
+								if (inside)
+								{
+									auto& cmd = shadowData.cascadeCommandQueue[i].emplace_back();
+									cmd.mesh = mesh.getMesh().get();
+									cmd.transform = trans.getWorldMatrix();
+									cmd.material = mesh.getMesh()->getMaterial().get();
+								}
+								});
 						}
-					}
 				}
 			}
 		}
@@ -286,6 +293,7 @@ namespace maple
 				}
 				pipeline->end(rendererData.commandBuffer);
 			}
+
 		}
 	}
 

@@ -16,6 +16,7 @@ namespace maple
 			std::shared_ptr<Texture3D> lpvGridR;
 			std::shared_ptr<Texture3D> lpvGridG;
 			std::shared_ptr<Texture3D> lpvGridB;
+			float cellSize = 1.f;
 		};
 	};
 

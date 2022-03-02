@@ -114,9 +114,7 @@ namespace maple
 				constexpr auto reflectStr = ecs::CallBuilder::template buildFullCallName(TSystem{});
 				std::string str = { reflectStr.data(),reflectStr.size() };
 				PROFILE_SCOPE(str.c_str());
-				queue.preCall(str, ecs::World{ reg });
 				call(TSystem{}, reg);
-				queue.postCall(str, ecs::World{ reg });
 			});
 		}
 

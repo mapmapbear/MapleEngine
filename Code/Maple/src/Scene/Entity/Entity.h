@@ -33,7 +33,10 @@ namespace maple
 				LOGW("Attempting to add extisting component ");
 #endif
 			T &t = registry->emplace<T>(entityHandle, std::forward<Args>(args)...);
-			t.setEntity(entityHandle);
+			if constexpr (std::is_base_of<Component, T>::value)
+			{
+				t.setEntity(entityHandle);
+			}
 			return t;
 		}
 
@@ -52,7 +55,10 @@ namespace maple
 		inline auto addOrReplaceComponent(Args &&...args)
 		{
 			T &t = registry->emplace_or_replace<T>(entityHandle, std::forward<Args>(args)...);
-			t.setEntity(entityHandle);
+			if constexpr (std::is_base_of<Component, T>::value)
+			{
+				t.setEntity(entityHandle);
+			}
 		}
 
 		template <typename T>
