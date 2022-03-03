@@ -86,6 +86,9 @@ namespace maple
 		{
 			auto [ssaoData, renderData,graph] = entity;
 
+			if (!ssaoData.enable)
+				return;
+
 			auto descriptorSet = ssaoData.ssaoSet[0];
 			descriptorSet->setTexture("uViewPositionSampler", renderData.gbuffer->getBuffer(GBufferTextures::VIEW_POSITION));
 			descriptorSet->setTexture("uViewNormalSampler", renderData.gbuffer->getBuffer(GBufferTextures::VIEW_NORMALS));
@@ -131,7 +134,8 @@ namespace maple
 		inline auto system(Entity entity, ecs::World world)
 		{
 			auto [ssaoData, renderData,graph] = entity;
-
+			if (!ssaoData.enable)
+				return;
 			auto descriptorSet = ssaoData.ssaoBlurSet[0];
 			descriptorSet->setTexture("uSsaoSampler", renderData.gbuffer->getBuffer(GBufferTextures::SSAO_SCREEN));
 			descriptorSet->update();
@@ -175,7 +179,8 @@ namespace maple
 		inline auto system(Entity entity, ecs::World world)
 		{
 			auto [ssrData, render,graph] = entity;
-
+			if (!ssrData.enable)
+				return;
 			ssrData.ssrDescriptorSet->setTexture("uViewPositionSampler", render.gbuffer->getBuffer(GBufferTextures::VIEW_POSITION));
 			ssrData.ssrDescriptorSet->setTexture("uViewNormalSampler", render.gbuffer->getBuffer(GBufferTextures::VIEW_NORMALS));
 			ssrData.ssrDescriptorSet->setTexture("uPBRSampler", render.gbuffer->getBuffer(GBufferTextures::PBR));

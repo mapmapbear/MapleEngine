@@ -2,16 +2,16 @@
 
 #include "LPVCommon.glsl"
 
-layout (local_size_x = 16, local_size_y = 16, local_size_z = 16) in;
+layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
 layout(r32i ,binding = 0) uniform iimage3D RAccumulatorLPV_;
 layout(r32i ,binding = 1) uniform iimage3D GAccumulatorLPV_;
 layout(r32i ,binding = 2) uniform iimage3D BAccumulatorLPV_;
-layout(r32i ,binding = 3) uniform iimage3D LPVGridR_;
-layout(r32i ,binding = 4) uniform iimage3D LPVGridG_;
-layout(r32i ,binding = 5) uniform iimage3D LPVGridB_;
+layout(r32i ,binding = 3) uniform iimage3D LPVGridR_;//save current result
+layout(r32i ,binding = 4) uniform iimage3D LPVGridG_;//save current result
+layout(r32i ,binding = 5) uniform iimage3D LPVGridB_;//save current result
 
-layout( binding = 6) uniform sampler3D LPVGridR;
+layout( binding = 6) uniform sampler3D LPVGridR;//pre-result
 layout( binding = 7) uniform sampler3D LPVGridG;
 layout( binding = 8) uniform sampler3D LPVGridB;
 layout( binding = 9) uniform sampler3D uGeometryVolume;
@@ -105,9 +105,9 @@ void main()
 	imgStoreAdd(LPVGridG_,volumeCellIndex,(cG / PI));
 	imgStoreAdd(LPVGridB_,volumeCellIndex,(cB / PI));
 
-	vec4 R = imageLoad(LPVGridR_, volumeCellIndex);
-	vec4 G = imageLoad(LPVGridG_, volumeCellIndex);
-	vec4 B = imageLoad(LPVGridB_, volumeCellIndex);
+	vec4 R = imgLoad(LPVGridR_, volumeCellIndex);
+	vec4 G = imgLoad(LPVGridG_, volumeCellIndex);
+	vec4 B = imgLoad(LPVGridB_, volumeCellIndex);
 
 	imgStoreAdd(RAccumulatorLPV_, volumeCellIndex, R);
 	imgStoreAdd(GAccumulatorLPV_, volumeCellIndex, G);

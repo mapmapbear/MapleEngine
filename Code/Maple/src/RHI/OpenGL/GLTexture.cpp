@@ -655,8 +655,8 @@ namespace maple
 		GLCall(glBindTexture(GL_TEXTURE_2D_ARRAY, 0));
 	}
 
-	GLTexture3D::GLTexture3D(uint32_t width, uint32_t height, uint32_t depth, TextureFormat initFormat) :
-	    width(width), height(height), depth(depth), format(initFormat)
+	GLTexture3D::GLTexture3D(uint32_t width, uint32_t height, uint32_t depth, TextureParameters parameters) :
+	    width(width), height(height), depth(depth), parameters(parameters)
 	{
 		init(width, height, depth);
 	}
@@ -672,11 +672,13 @@ namespace maple
 		GLCall(glGenTextures(1, &handle));
 		GLCall(glBindTexture(GL_TEXTURE_3D, handle));
 
-		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_REPEAT));
-		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_REPEAT));
-		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR));
+		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, textureWrapToGL(parameters.wrap)));
+		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, textureWrapToGL(parameters.wrap)));
+		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, textureWrapToGL(parameters.wrap)));
+
+		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, parameters.magFilter == TextureFilter::Linear? GL_LINEAR : GL_NEAREST));
+		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, parameters.minFilter == TextureFilter::Linear ? GL_LINEAR : GL_NEAREST));
+		//GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR));
 
 /*
 * 
@@ -692,12 +694,12 @@ namespace maple
 			GLenum type,
 			const void* data);*/
 
-		auto internalFormat = textureFormatToGL(format, false);
+		auto internalFormat = textureFormatToGL(parameters.format, false);
 		auto textureFormat = internalFormatToFormat(internalFormat);
-		auto dataType = textureDataType(format);
+		auto dataType = textureDataType(parameters.format);
 
 		GLCall(glTexImage3D(GL_TEXTURE_3D, 0, internalFormat, width, height, depth, 0, textureFormat, dataType, NULL));
-		GLCall(glGenerateMipmap(GL_TEXTURE_3D));
+		//GLCall(glGenerateMipmap(GL_TEXTURE_3D));
 		GLCall(glBindImageTexture(0, handle, 0, GL_FALSE, 0, GL_READ_WRITE, internalFormat));
 	}
 
@@ -731,19 +733,23 @@ namespace maple
 		            write         ? GL_WRITE_ONLY :
                                     GL_READ_WRITE;
 		bind(unit);
-		GLCall(glBindImageTexture(unit, handle, level, true, layer, flag, textureFormatToGL(format, false)));
+		GLCall(glBindImageTexture(unit, handle, level, true, layer, flag, textureFormatToGL(parameters.format, false)));
 	}
 
 	auto GLTexture3D::buildTexture3D(TextureFormat format, uint32_t width, uint32_t height, uint32_t depth) -> void
 	{
-		this->format = format;
 
 		GLCall(glBindTexture(GL_TEXTURE_3D, handle));
-		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_REPEAT));
-		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_REPEAT));
-		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR));
+
+		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, textureWrapToGL(parameters.wrap)));
+		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, textureWrapToGL(parameters.wrap)));
+		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, textureWrapToGL(parameters.wrap)));
+
+		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, parameters.magFilter == TextureFilter::Linear ? GL_LINEAR : GL_NEAREST));
+		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, parameters.minFilter == TextureFilter::Linear ? GL_LINEAR : GL_NEAREST));
+
+
+		//GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR));
 
 		auto internalFormat = textureFormatToGL(format, false);
 		auto textureFormat = internalFormatToFormat(internalFormat);
@@ -758,8 +764,8 @@ namespace maple
 		PROFILE_FUNCTION();
 		std::vector<uint8_t> emptyData(width * height * depth * sizeof(int32_t), 0);//float and int is 4.
 
-		auto internalFormat = internalFormatToFormat(textureFormatToGL(format, false));
-		auto dataType = textureDataType(format);	
+		auto internalFormat = internalFormatToFormat(textureFormatToGL(parameters.format, false));
+		auto dataType = textureDataType(parameters.format);
 
 		glBindTexture(GL_TEXTURE_3D, handle);
 		glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, width, height, depth, internalFormat, dataType, &emptyData[0]);

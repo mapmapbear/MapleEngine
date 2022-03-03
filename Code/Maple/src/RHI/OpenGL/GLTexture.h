@@ -71,7 +71,7 @@ namespace maple
 	class GLTexture3D : public Texture3D
 	{
 	  public:
-		GLTexture3D(uint32_t width, uint32_t height, uint32_t depth, TextureFormat foramt = TextureFormat::RGBA8);
+		GLTexture3D(uint32_t width, uint32_t height, uint32_t depth, TextureParameters parameters);
 		~GLTexture3D();
 
 		auto init(uint32_t width, uint32_t height, uint32_t depth) -> void;
@@ -112,7 +112,7 @@ namespace maple
 		}
 		inline auto getFormat() const -> TextureFormat override
 		{
-			return format;
+			return parameters.format;
 		}
 
 		auto clear() -> void override;
@@ -122,7 +122,7 @@ namespace maple
 		uint32_t      width  = 0;
 		uint32_t      height = 0;
 		uint32_t      depth  = 0;
-		TextureFormat format = TextureFormat::RGBA8;
+		TextureParameters parameters;
 		std::string   filePath;
 	};
 

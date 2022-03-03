@@ -46,6 +46,7 @@ namespace maple
 			float shadowFade            = 40.0f;
 			float cascadeTransitionFade = 3.0f;
 			float initialBias           = 0.005f;
+			float lightArea				= 1.0f;//used for rsm
 			bool  shadowMapsInvalidated = true;
 
 			uint32_t  shadowMapNum                  = 4;
@@ -54,7 +55,7 @@ namespace maple
 			glm::vec4 splitDepth[SHADOWMAP_MAX]     = {};
 			glm::mat4 lightMatrix                   = glm::mat4(1.f);
 			glm::mat4 shadowProj					= glm::mat4(1.f);
-
+			glm::vec3 lightDir = {};
 			Frustum   cascadeFrustums[SHADOWMAP_MAX];
 
 			std::vector<std::shared_ptr<DescriptorSet>> descriptorSet;

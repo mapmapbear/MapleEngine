@@ -13,7 +13,6 @@ layout(binding = 3) uniform UniformBufferObject
 	mat4 lightViewMat;
 	vec3 minAABB;
 	vec3 lightDir;
-	float rmsSize;
 	float rsmArea;
 	float cellSize;
 }ubo;
@@ -22,8 +21,8 @@ ivec3 convertPointToGridIndex(vec3 vPos) {
 	return ivec3((vPos - ubo.minAABB) / ubo.cellSize);
 }
 
-float calculateSurfelAreaLightOrtho(vec3 lightPos) {
-	return (ubo.rsmArea)/(ubo.rmsSize * ubo.rmsSize);
+float calculateSurfelAreaLightOrtho(vec3 lightPos,float rmsSize) {
+	return (ubo.rsmArea)/(rmsSize * rmsSize);
 }
 
 float calculateBlockingPotencial(float surfelArea, vec3 dir, vec3 normal) {
@@ -34,11 +33,13 @@ void main()
 {
  	ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
 	
+	int rmsSize = textureSize(uRSMWorldSampler,0).x;
+
 	vec3 posFromRSM = texelFetch(uRSMWorldSampler, pixel,0).rgb;
 	vec3 normalFromRSM = texelFetch(uRSMNormalSampler, pixel,0).rgb;
 
 	vec4 viewPos = ubo.lightViewMat * vec4(posFromRSM,1.0);
-	float surfelArea = calculateSurfelAreaLightOrtho(viewPos.xyz);
+	float surfelArea = calculateSurfelAreaLightOrtho(viewPos.xyz,float(rmsSize));
 
 	ivec3 volumeCellIndex = convertPointToGridIndex(posFromRSM);
 

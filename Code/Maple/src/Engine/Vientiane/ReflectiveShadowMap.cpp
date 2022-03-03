@@ -105,6 +105,8 @@ namespace maple
 				if (i == 0) 
 				{
 					shadowData.lightMatrix = lightViewMatrix;
+					shadowData.lightDir = lightDir;
+					shadowData.lightArea = radius * radius * 4 ;
 				}
 			}
 		}
