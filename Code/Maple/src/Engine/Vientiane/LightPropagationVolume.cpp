@@ -9,7 +9,9 @@
 
 #include "Engine/Renderer/RendererData.h"
 #include "Engine/Mesh.h"
+#include "Engine/GBuffer.h"
 
+#include "RHI/CommandBuffer.h"
 #include "RHI/Texture.h"
 #include "RHI/IndexBuffer.h"
 #include "RHI/VertexBuffer.h"
@@ -26,14 +28,16 @@ namespace maple
 		inline auto updateGrid(component::LPVGrid& grid, maple::BoundingBox * box) 
 		{
 			auto dimension = box->size();
-			TextureParameters paramemters(TextureFormat::R32I, TextureFilter::Linear, TextureWrap::ClampToEdge);
+			TextureParameters paramemters(TextureFormat::R32I, TextureFilter::Nearest, TextureWrap::ClampToEdge);
 			if (grid.lpvGridB == nullptr) 
 			{
 
 				grid.lpvGridR = Texture3D::create(dimension.x * 4, dimension.y, dimension.z, paramemters);
 				grid.lpvGridB = Texture3D::create(dimension.x * 4, dimension.y, dimension.z, paramemters);
 				grid.lpvGridG = Texture3D::create(dimension.x * 4, dimension.y, dimension.z, paramemters);
-				grid.lpvGeometryVolume = Texture3D::create(dimension.x * 4, dimension.y, dimension.z, paramemters);
+				
+				grid.lpvGeometryVolume = Texture3D::create(dimension.x, dimension.y, dimension.z, { TextureFormat::RGBA32, TextureFilter::Nearest, TextureWrap::ClampToEdge });
+
 				grid.lpvAccumulatorB = Texture3D::create(dimension.x * 4, dimension.y, dimension.z, paramemters);
 				grid.lpvAccumulatorG = Texture3D::create(dimension.x * 4, dimension.y, dimension.z, paramemters);
 				grid.lpvAccumulatorR = Texture3D::create(dimension.x * 4, dimension.y, dimension.z, paramemters);
@@ -55,7 +59,7 @@ namespace maple
 				grid.lpvGridR->buildTexture3D(TextureFormat::R32I,dimension.x * 4, dimension.y, dimension.z);
 				grid.lpvGridB->buildTexture3D(TextureFormat::R32I,dimension.x * 4, dimension.y, dimension.z);
 				grid.lpvGridG->buildTexture3D(TextureFormat::R32I,dimension.x * 4, dimension.y, dimension.z);
-				grid.lpvGeometryVolume->buildTexture3D(TextureFormat::R32I, dimension.x * 4, dimension.y, dimension.z);
+				grid.lpvGeometryVolume->buildTexture3D(TextureFormat::RGBA32, dimension.x, dimension.y, dimension.z);
 				grid.lpvAccumulatorB->buildTexture3D(TextureFormat::R32I, dimension.x * 4, dimension.y, dimension.z);
 				grid.lpvAccumulatorG->buildTexture3D(TextureFormat::R32I, dimension.x * 4, dimension.y, dimension.z);
 				grid.lpvAccumulatorR->buildTexture3D(TextureFormat::R32I, dimension.x * 4, dimension.y, dimension.z);
@@ -105,6 +109,21 @@ namespace maple
 				descriptors.emplace_back(DescriptorSet::create({ 0,shader.get() }));
 			}
 		};
+
+		struct DebugAABBData
+		{
+			std::shared_ptr<Shader> shader;
+			std::vector<std::shared_ptr<DescriptorSet>> descriptors;
+			std::shared_ptr<Mesh> sphere;
+			DebugAABBData()
+			{
+				shader = Shader::create("shaders/LPV/AABBDebug.shader");
+				descriptors.emplace_back(DescriptorSet::create({ 0,shader.get() }));
+				descriptors.emplace_back(DescriptorSet::create({ 1,shader.get() }));
+				sphere = Mesh::createSphere();
+			}
+		};
+
 	};
 
 	namespace light_propagation_volume
@@ -211,6 +230,7 @@ namespace maple
 				pipeline->bind(rendererData.commandBuffer);
 				Renderer::bindDescriptorSets(pipeline.get(), rendererData.commandBuffer, 0, geometry.descriptors);
 				Renderer::dispatch(rendererData.commandBuffer, pipelineInfo.groupCountX, pipelineInfo.groupCountY, 1);
+				Renderer::memoryBarrier(rendererData.commandBuffer, MemoryBarrierFlags::Shader_Image_Access_Barrier);
 				pipeline->end(rendererData.commandBuffer);
 			}
 		};
@@ -282,7 +302,90 @@ namespace maple
 				}
 			}
 		};
+		
+		namespace aabb_debug 
+		{
+			using Entity = ecs::Chain
+				::Read<component::LPVGrid>
+				::Write<component::DebugAABBData>
+				::Read<component::BoundingBoxComponent>
+				::Write<component::RendererData>
+				::Read<component::CameraView>
+				::To<ecs::Entity>;
 
+			inline auto beginScene(Entity entity, ecs::World world)
+			{
+				auto [lpv, data, aabb, renderData,cameraView] = entity;
+				if (lpv.lpvGridR == nullptr)
+					return;
+
+				data.descriptors[0]->setUniform("UniformBufferObjectVert", "projView", glm::value_ptr(cameraView.projView));
+
+				data.descriptors[1]->setUniform("UniformBufferObjectFrag", "minAABB", glm::value_ptr(aabb.box->size()));
+				data.descriptors[1]->setUniform("UniformBufferObjectFrag", "cellSize", &lpv.cellSize);
+			}
+
+			inline auto render(Entity entity, ecs::World world)
+			{
+				auto [lpv, data, aabb, renderData, cameraView] = entity;
+				if (lpv.lpvGridR == nullptr)
+					return;
+
+				data.descriptors[1]->setTexture("uRAccumulatorLPV", lpv.lpvAccumulatorR);
+				data.descriptors[1]->setTexture("uGAccumulatorLPV", lpv.lpvAccumulatorG);
+				data.descriptors[1]->setTexture("uBAccumulatorLPV", lpv.lpvAccumulatorB);
+
+				for (auto descriptor : data.descriptors)
+				{
+					descriptor->update();
+				}
+
+				auto min = aabb.box->min;
+				auto max = aabb.box->max;
+
+				PipelineInfo pipelineInfo{};
+				pipelineInfo.shader = data.shader;
+				pipelineInfo.polygonMode = PolygonMode::Fill;
+				pipelineInfo.blendMode = BlendMode::SrcAlphaOneMinusSrcAlpha;
+				pipelineInfo.clearTargets = false;
+				pipelineInfo.swapChainTarget = false;
+				pipelineInfo.depthTarget = renderData.gbuffer->getDepthBuffer();
+				pipelineInfo.colorTargets[0] = renderData.gbuffer->getBuffer(GBufferTextures::SCREEN);
+
+				auto pipeline = Pipeline::get(pipelineInfo);
+
+
+				if (renderData.commandBuffer)
+					renderData.commandBuffer->bindPipeline(pipeline.get());
+				else
+					pipeline->bind(renderData.commandBuffer);
+
+				for (int32_t i = min.x; i < max.x; i++) 
+				{
+					for (int32_t j = min.y; j < max.y; j++)
+					{
+						for (int32_t k = min.z; k < max.z; k++)
+						{
+							glm::mat4 model = glm::mat4(1);
+							model = glm::translate(model, glm::vec3(i, j, k));
+							model = glm::scale(model, glm::vec3(0.1, 0.1, 0.1));
+
+							auto& pushConstants = data.shader->getPushConstants()[0];
+							pushConstants.setValue("transform", &model);
+							data.shader->bindPushConstants(renderData.commandBuffer, pipeline.get());
+
+							Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, data.descriptors);
+							Renderer::drawMesh(renderData.commandBuffer, pipeline.get(), data.sphere.get());
+						}
+					}
+				}
+
+				if (renderData.commandBuffer)
+					renderData.commandBuffer->unbindPipeline();
+				else if (pipeline)
+					pipeline->end(renderData.commandBuffer);
+			}
+		}
 
 		auto registerLPV(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void
 		{
@@ -290,6 +393,8 @@ namespace maple
 			executePoint->registerGlobalComponent<component::InjectLightData>();
 			executePoint->registerGlobalComponent<component::InjectGeometryVolume>();
 			executePoint->registerGlobalComponent<component::PropagationData>();
+			executePoint->registerGlobalComponent<component::DebugAABBData>();
+
 
 			executePoint->registerWithinQueue<inject_light_pass::beginScene>(begin);
 			executePoint->registerWithinQueue<inject_light_pass::render>(renderer);
@@ -297,6 +402,9 @@ namespace maple
 			executePoint->registerWithinQueue<inject_geometry_pass::render>(renderer);
 			executePoint->registerWithinQueue<propagation_pass::beginScene>(begin);
 			executePoint->registerWithinQueue<propagation_pass::render>(renderer);
+
+			executePoint->registerWithinQueue<aabb_debug::beginScene>(begin);
+			executePoint->registerWithinQueue<aabb_debug::render>(renderer);
 		}
 	};
 };        // namespace maple

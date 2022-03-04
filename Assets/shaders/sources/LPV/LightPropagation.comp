@@ -11,9 +11,9 @@ layout(r32i ,binding = 3) uniform iimage3D LPVGridR_;//save current result
 layout(r32i ,binding = 4) uniform iimage3D LPVGridG_;//save current result
 layout(r32i ,binding = 5) uniform iimage3D LPVGridB_;//save current result
 
-layout( binding = 6) uniform sampler3D LPVGridR;//pre-result
-layout( binding = 7) uniform sampler3D LPVGridG;
-layout( binding = 8) uniform sampler3D LPVGridB;
+layout( binding = 6) uniform isampler3D LPVGridR;//pre-result
+layout( binding = 7) uniform isampler3D LPVGridG;
+layout( binding = 8) uniform isampler3D LPVGridB;
 layout( binding = 9) uniform sampler3D uGeometryVolume;
 
 layout( binding = 10) uniform UniformObject
@@ -70,12 +70,14 @@ void main()
 		ivec3 mainDirection = propDirections[neighbour]; 
 		ivec3 neighbourCellIndex = volumeCellIndex - mainDirection;
 	
-		RSHcoeffsNeighbour = texelFetch(LPVGridR, neighbourCellIndex, 0);
-		GSHcoeffsNeighbour = texelFetch(LPVGridG, neighbourCellIndex, 0);
-		BSHcoeffsNeighbour = texelFetch(LPVGridB, neighbourCellIndex, 0);
+		RSHcoeffsNeighbour = texelFetch2(LPVGridR, neighbourCellIndex);
+		GSHcoeffsNeighbour = texelFetch2(LPVGridG, neighbourCellIndex);
+		BSHcoeffsNeighbour = texelFetch2(LPVGridB, neighbourCellIndex);
 
+		
 		vec3 occCoord = (vec3(neighbourCellIndex.xyz) + 0.5 * mainDirection) / ubo.gridDim;
 		vec4 occCoeffs = texture(uGeometryVolume, occCoord);
+
 		float occlusionValue = 1.0 - clamp(ubo.occlusionAmplifier * dot(occCoeffs, dirToSH(-mainDirection)),0.0,1.0 );
 		float occludedDirectFaceContribution = occlusionValue * directFaceSubtendedSolidAngle;
 		vec4 mainDirectionCosineLobeSH = evalCosineLobeToDir(mainDirection);
@@ -90,6 +92,8 @@ void main()
 
 			vec3 occCoord = (vec3(neighbourCellIndex.xyz) + 0.5 * evalDirection) / ubo.gridDim;
 			vec4 occCoeffs = texture(uGeometryVolume, occCoord);
+
+
 			occlusionValue = 1.0 - clamp(ubo.occlusionAmplifier * dot(occCoeffs, dirToSH(-evalDirection)),0.0,1.0);
 			float occludedSideFaceContribution = occlusionValue * sideFaceSubtendedSolidAngle;
 			vec4 reprojDirectionCosineLobeSH = dirToSH(reprojDirection);

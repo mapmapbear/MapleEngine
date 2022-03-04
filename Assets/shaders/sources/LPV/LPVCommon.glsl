@@ -24,6 +24,15 @@
     intBitsToFloat(imageLoad(img, ivec3(pos.x * 4 + 2, pos.y, pos.z)).x) , \
     intBitsToFloat(imageLoad(img, ivec3(pos.x * 4 + 3, pos.y, pos.z)).x) )
 
+
+#define texelFetch2(txt,pos) \
+  vec4( \
+    intBitsToFloat(texelFetch(txt, ivec3(pos.x * 4 + 0, pos.y, pos.z ),0).x), \
+    intBitsToFloat(texelFetch(txt, ivec3(pos.x * 4 + 1, pos.y, pos.z ),0).x), \
+    intBitsToFloat(texelFetch(txt, ivec3(pos.x * 4 + 2, pos.y, pos.z ),0).x), \
+    intBitsToFloat(texelFetch(txt, ivec3(pos.x * 4 + 3, pos.y, pos.z ),0).x) )
+
+
 vec4 evalCosineLobeToDir(vec3 dir)
 {
 	return vec4( SH_cosLobe_C0, -SH_cosLobe_C1 * dir.y, SH_cosLobe_C1 * dir.z, -SH_cosLobe_C1 * dir.x );

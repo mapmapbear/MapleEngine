@@ -20,12 +20,13 @@ layout(push_constant) uniform PushConsts
 
 layout (location = 0) out vec3 outPosition; // in view space
 layout (location = 1) out vec3 outNormal;
-layout (location = 2) out flat ivec3 outVolumeCellIndex;
 
 
 void main()
 {
-	outVolumeCellIndex = ivec3(inPosition);
+	vec4 testC = inColor;
+	vec2 testCc = inTexCoord;
+
 	vec4 fragPosInViewSpace =  pushConsts.transform * vec4(inPosition, 1.0f);
 	gl_Position = ubo.projView * fragPosInViewSpace;
 	outNormal = inNormal;	

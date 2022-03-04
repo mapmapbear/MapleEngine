@@ -4,7 +4,7 @@ layout (local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
 #include "LPVCommon.glsl"
 
-layout(r32i ,binding = 0) uniform iimage3D uGeometryVolume;
+layout(rgba32f,binding = 0) uniform image3D uGeometryVolume;
 
 layout(binding = 1) uniform sampler2D uRSMWorldSampler;
 layout(binding = 2) uniform sampler2D uRSMNormalSampler;
@@ -47,6 +47,5 @@ void main()
 
 	vec4 SHCoeffGV = evalCosineLobeToDir(normalFromRSM) * blockingPotencial;
 
-	imgStoreAdd(uGeometryVolume,volumeCellIndex,SHCoeffGV);
-
+	imageStore(uGeometryVolume,volumeCellIndex,SHCoeffGV);
 }

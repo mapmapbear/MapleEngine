@@ -322,6 +322,7 @@ namespace maple
 	enum class MemoryBarrierFlags
 	{
 		None,
+		Shader_Image_Access_Barrier
 	};
 }        // namespace maple
 
