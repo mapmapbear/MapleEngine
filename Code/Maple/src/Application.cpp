@@ -47,6 +47,7 @@ namespace maple
 		monoVm        = std::make_shared<MonoVirtualMachine>();
 		renderGraph   = std::make_shared<RenderGraph>();
 		systemManager = std::make_unique<SystemManager>();
+		loaderFactory = std::make_shared<ModelLoaderFactory>();
 	}
 
 	auto Application::init() -> void

@@ -86,6 +86,8 @@ namespace maple
 				return TextureFormat::RGBA8;
 			case spv::ImageFormatR32i:
 				return TextureFormat::R32I;
+			case spv::ImageFormatR32ui:
+				return TextureFormat::R32UI;
 		}
 		LOGW("unsupported spv::ImageFormat : {0}",format);
 	}

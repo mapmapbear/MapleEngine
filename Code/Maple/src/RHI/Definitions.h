@@ -85,6 +85,7 @@ namespace maple
 		NONE,
 		R8,
 		R32I,
+		R32UI,
 		RG8,
 		RGB8,
 		RGBA8,

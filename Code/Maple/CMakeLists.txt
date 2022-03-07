@@ -190,6 +190,7 @@ endif()
 		${ENGINE_LIB_SRC_DIR}/ecs
 		${ENGINE_LIB_SRC_DIR}/imgui-notify
 		${ENGINE_LIB_SRC_DIR}/imgui-node-editor
+		${ENGINE_LIB_SRC_DIR}/tinygltf
 	)
 
 	target_link_libraries(MapleEngine 

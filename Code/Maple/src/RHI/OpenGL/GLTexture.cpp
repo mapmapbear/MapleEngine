@@ -62,17 +62,57 @@ namespace maple
 					return GL_DEPTH24_STENCIL8;
 				case TextureFormat::R32I:
 					return GL_R32I;
+				case TextureFormat::R32UI:
+					return GL_R32UI;
 				default:
 					MAPLE_ASSERT(false, "[Texture] Unsupported TextureFormat");
 					return 0;
 			}
 		}
 
+
+
+		inline auto textureFormatSize(const TextureFormat format)
+		{
+			switch (format)
+			{
+			case TextureFormat::RGBA8:
+			case TextureFormat::RGBA:
+				return sizeof(int32_t);
+			case TextureFormat::RGB:
+				return sizeof(int8_t) * 3;
+			case TextureFormat::R8:
+				return sizeof(int8_t);
+			case TextureFormat::RG8:
+				return sizeof(int16_t);
+			case TextureFormat::RGB8:
+				return sizeof(int8_t) * 3;
+			case TextureFormat::RGB16:
+				return sizeof(int16_t) * 3;
+			case TextureFormat::RGBA16:
+				return sizeof(int16_t) * 4;
+			case TextureFormat::RGB32:
+				return sizeof(int32_t) * 3;
+			case TextureFormat::RGBA32:
+				return sizeof(int32_t) * 4;
+			case TextureFormat::R32I:
+				return sizeof(int32_t);
+			case TextureFormat::R32UI:
+				return sizeof(uint32_t);
+			default:
+				MAPLE_ASSERT(false, "[Texture] Unsupported TextureFormat");
+				return (uint64_t)0;
+			}
+		}
+
+
 		inline auto textureDataType(const TextureFormat format)
 		{
 			switch (format) {
 				case TextureFormat::R32I:
 					return GL_INT;
+				case TextureFormat::R32UI:
+					return GL_UNSIGNED_INT;
 				default:
 					return GL_FLOAT;
 			}
@@ -113,6 +153,7 @@ namespace maple
 				case GL_SRGB_ALPHA:
 					return GL_RGBA;
 				case GL_R32I:
+				case GL_R32UI:
 					return GL_RED_INTEGER;
 				case GL_LUMINANCE:
 					return GL_LUMINANCE;
@@ -738,7 +779,7 @@ namespace maple
 
 	auto GLTexture3D::buildTexture3D(TextureFormat format, uint32_t width, uint32_t height, uint32_t depth) -> void
 	{
-
+		PROFILE_FUNCTION();
 		GLCall(glBindTexture(GL_TEXTURE_3D, handle));
 
 		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, textureWrapToGL(parameters.wrap)));
@@ -762,7 +803,7 @@ namespace maple
 	auto GLTexture3D::clear() -> void
 	{
 		PROFILE_FUNCTION();
-		std::vector<uint8_t> emptyData(width * height * depth * sizeof(int32_t), 0);//float and int is 4.
+		std::vector<uint8_t> emptyData(width * height * depth * textureFormatSize(parameters.format), 0);//float and int is 4.
 
 		auto internalFormat = internalFormatToFormat(textureFormatToGL(parameters.format, false));
 		auto dataType = textureDataType(parameters.format);
