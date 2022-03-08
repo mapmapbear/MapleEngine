@@ -11,26 +11,31 @@
 
 #define DEG_TO_RAD PI / 180.0f
 
+#define SH_F_TO_I 1000
+#define SH_I_TO_F 0.001
+
+
 #define imgStoreAdd(img, pos, data) \
-  imageAtomicAdd(img, ivec3(pos.x * 4 + 0, pos.y, pos.z ), floatBitsToInt(data.x)); \
-  imageAtomicAdd(img, ivec3(pos.x * 4 + 1, pos.y, pos.z ), floatBitsToInt(data.y)); \
-  imageAtomicAdd(img, ivec3(pos.x * 4 + 2, pos.y, pos.z ), floatBitsToInt(data.z)); \
-  imageAtomicAdd(img, ivec3(pos.x * 4 + 3, pos.y, pos.z ), floatBitsToInt(data.w));
+  imageAtomicAdd(img, ivec3(pos.x * 4 + 0, pos.y, pos.z ), uint(data.r * SH_F_TO_I)); \
+  imageAtomicAdd(img, ivec3(pos.x * 4 + 1, pos.y, pos.z ), uint(data.g * SH_F_TO_I)); \
+  imageAtomicAdd(img, ivec3(pos.x * 4 + 2, pos.y, pos.z ), uint(data.b * SH_F_TO_I)); \
+  imageAtomicAdd(img, ivec3(pos.x * 4 + 3, pos.y, pos.z ), uint(data.a * SH_F_TO_I));
+
 
 #define imgLoad(img, pos) \
   vec4( \
-    intBitsToFloat(imageLoad(img, ivec3(pos.x * 4 + 0, pos.y, pos.z)).x) , \
-    intBitsToFloat(imageLoad(img, ivec3(pos.x * 4 + 1, pos.y, pos.z)).x) , \
-    intBitsToFloat(imageLoad(img, ivec3(pos.x * 4 + 2, pos.y, pos.z)).x) , \
-    intBitsToFloat(imageLoad(img, ivec3(pos.x * 4 + 3, pos.y, pos.z)).x) )
+    imageLoad(img, ivec3(pos.x * 4 + 0, pos.y, pos.z)).r * SH_I_TO_F , \
+    imageLoad(img, ivec3(pos.x * 4 + 1, pos.y, pos.z)).r * SH_I_TO_F , \
+    imageLoad(img, ivec3(pos.x * 4 + 2, pos.y, pos.z)).r * SH_I_TO_F , \
+    imageLoad(img, ivec3(pos.x * 4 + 3, pos.y, pos.z)).r * SH_I_TO_F )
 
 
 #define texelFetch2(txt,pos) \
   vec4( \
-    intBitsToFloat(texelFetch(txt, ivec3(pos.x * 4 + 0, pos.y, pos.z ),0).x), \
-    intBitsToFloat(texelFetch(txt, ivec3(pos.x * 4 + 1, pos.y, pos.z ),0).x), \
-    intBitsToFloat(texelFetch(txt, ivec3(pos.x * 4 + 2, pos.y, pos.z ),0).x), \
-    intBitsToFloat(texelFetch(txt, ivec3(pos.x * 4 + 3, pos.y, pos.z ),0).x) )
+    texelFetch(txt, ivec3(pos.x * 4 + 0, pos.y, pos.z ),0).r  * SH_I_TO_F, \
+    texelFetch(txt, ivec3(pos.x * 4 + 1, pos.y, pos.z ),0).r  * SH_I_TO_F, \
+    texelFetch(txt, ivec3(pos.x * 4 + 2, pos.y, pos.z ),0).r  * SH_I_TO_F, \
+    texelFetch(txt, ivec3(pos.x * 4 + 3, pos.y, pos.z ),0).r  * SH_I_TO_F )
 
 
 vec4 evalCosineLobeToDir(vec3 dir)

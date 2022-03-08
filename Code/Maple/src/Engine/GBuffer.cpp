@@ -24,6 +24,7 @@ namespace maple
 		formats[PBR]              = TextureFormat::RGBA16;
 		formats[VOLUMETRIC_LIGHT] = TextureFormat::RGB8;
 		formats[PSEUDO_SKY]       = TextureFormat::RGBA8;
+		formats[INDIRECT_LIGHTING] = TextureFormat::RGBA32;
 		buildTexture();
 	}
 
@@ -91,6 +92,7 @@ namespace maple
 			STR(VIEW_POSITION);
 			STR(VIEW_NORMALS);
 			STR(VELOCITY);
+			STR(INDIRECT_LIGHTING);
 #undef STR
 			default:
 				return "UNKNOWN_ERROR";

@@ -177,7 +177,7 @@ namespace maple
 				PipelineInfo pipelineInfo;
 				pipelineInfo.shader = injectionLight.shader;
 				pipelineInfo.groupCountX = rsm.normalTexture->getWidth() / injectionLight.shader->getLocalSizeX();
-				pipelineInfo.groupCountY = rsm.normalTexture->getWidth() / injectionLight.shader->getLocalSizeY();
+				pipelineInfo.groupCountY = rsm.normalTexture->getHeight() / injectionLight.shader->getLocalSizeY();
 				auto pipeline = Pipeline::get(pipelineInfo);
 				pipeline->bind(rendererData.commandBuffer);
 				Renderer::bindDescriptorSets(pipeline.get(), rendererData.commandBuffer, 0, injectionLight.descriptors);
@@ -204,9 +204,9 @@ namespace maple
 					return;
 				geometry.descriptors[0]->setUniform("UniformBufferObject", "lightViewMat", glm::value_ptr(shadowData.lightMatrix));
 				geometry.descriptors[0]->setUniform("UniformBufferObject", "minAABB", glm::value_ptr(aabb.box->min));
+				geometry.descriptors[0]->setUniform("UniformBufferObject", "cellSize", &lpv.cellSize);
 				geometry.descriptors[0]->setUniform("UniformBufferObject", "lightDir", glm::value_ptr(shadowData.lightDir));
 				geometry.descriptors[0]->setUniform("UniformBufferObject", "rsmArea", &shadowData.lightArea);
-				geometry.descriptors[0]->setUniform("UniformBufferObject", "cellSize", &lpv.cellSize);
 			}
 
 			inline auto render(Entity entity, ecs::World world)
@@ -402,8 +402,9 @@ namespace maple
 			executePoint->registerWithinQueue<inject_geometry_pass::render>(renderer);
 			executePoint->registerWithinQueue<propagation_pass::beginScene>(begin);
 			executePoint->registerWithinQueue<propagation_pass::render>(renderer);
+/*
 			executePoint->registerWithinQueue<aabb_debug::beginScene>(begin);
-			executePoint->registerWithinQueue<aabb_debug::render>(renderer);
+			executePoint->registerWithinQueue<aabb_debug::render>(renderer);*/
 		}
 	};
 };        // namespace maple

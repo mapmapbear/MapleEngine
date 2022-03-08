@@ -33,7 +33,10 @@
 #include "AtmosphereRenderer.h"
 #include "CloudRenderer.h"
 #include "DeferredOffScreenRenderer.h"
+
 #include "Engine/Vientiane/ReflectiveShadowMap.h"
+#include "Engine/Vientiane/LPVIndirectLighting.h"
+
 #include "PostProcessRenderer.h"
 #include "Renderer2D.h"
 #include "RendererData.h"
@@ -41,6 +44,7 @@
 #include "GridRenderer.h"
 #include "GeometryRenderer.h"
 #include "FinalPass.h"
+
 
 #include "Others/Randomizer.h"
 #include "ImGui/ImGuiHelpers.h"
@@ -148,6 +152,7 @@ namespace maple
 
 		reflective_shadow_map::registerShadowMap(beginQ, renderQ, executePoint);
 		light_propagation_volume::registerLPV(beginQ, renderQ, executePoint);
+		lpv_indirect_lighting::registerLPVIndirectLight(renderQ, executePoint);
 		deferred_offscreen::registerDeferredOffScreenRenderer(beginQ, renderQ, executePoint);
 		post_process::registerSSAOPass(beginQ, renderQ, executePoint);
 		deferred_lighting::registerDeferredLighting(beginQ, renderQ, executePoint);

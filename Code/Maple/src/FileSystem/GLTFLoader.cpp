@@ -160,10 +160,14 @@ namespace maple
 				textures.metallic = textureName(pbr.metallicRoughnessTexture.index);
 
 				//TODO: correct way of handling this
-				if (textures.metallic)
+				if (textures.metallic) 
+				{
 					properties.workflow = PBR_WORKFLOW_METALLIC_ROUGHNESS;
+				}
 				else
+				{
 					properties.workflow = PBR_WORKFLOW_SEPARATE_TEXTURES;
+				}
 
 				// metallic-roughness workflow:
 				auto baseColourFactor = mat.values.find("baseColorFactor");
@@ -197,7 +201,7 @@ namespace maple
 
 					if (metallicGlossinessWorkflow->second.Has("metallicGlossinessTexture"))
 					{
-						int index = metallicGlossinessWorkflow->second.Get("metallicGlossinessTexture").Get("index").Get<int>();
+						int index = metallicGlossinessWorkflow->second.Get("metallicGlossinessTexture").Get("index").Get<int32_t>();
 						textures.roughness = loadedTextures[gltfModel.textures[index].source];
 						properties.workflow = PBR_WORKFLOW_SPECULAR_GLOSINESS;
 					}
@@ -205,25 +209,41 @@ namespace maple
 					if (metallicGlossinessWorkflow->second.Has("diffuseFactor"))
 					{
 						auto& factor = metallicGlossinessWorkflow->second.Get("diffuseFactor");
-						properties.albedoColor.x = factor.ArrayLen() > 0 ? float(factor.Get(0).IsNumber() ? factor.Get(0).Get<double>() : factor.Get(0).Get<int>()) : 1.0f;
-						properties.albedoColor.y = factor.ArrayLen() > 1 ? float(factor.Get(1).IsNumber() ? factor.Get(1).Get<double>() : factor.Get(1).Get<int>()) : 1.0f;
-						properties.albedoColor.z = factor.ArrayLen() > 2 ? float(factor.Get(2).IsNumber() ? factor.Get(2).Get<double>() : factor.Get(2).Get<int>()) : 1.0f;
-						properties.albedoColor.w = factor.ArrayLen() > 3 ? float(factor.Get(3).IsNumber() ? factor.Get(3).Get<double>() : factor.Get(3).Get<int>()) : 1.0f;
+						properties.albedoColor.x = factor.ArrayLen() > 0 ? float(factor.Get(0).IsNumber() ? factor.Get(0).Get<double>() : factor.Get(0).Get<int32_t>()) : 1.0f;
+						properties.albedoColor.y = factor.ArrayLen() > 1 ? float(factor.Get(1).IsNumber() ? factor.Get(1).Get<double>() : factor.Get(1).Get<int32_t>()) : 1.0f;
+						properties.albedoColor.z = factor.ArrayLen() > 2 ? float(factor.Get(2).IsNumber() ? factor.Get(2).Get<double>() : factor.Get(2).Get<int32_t>()) : 1.0f;
+						properties.albedoColor.w = factor.ArrayLen() > 3 ? float(factor.Get(3).IsNumber() ? factor.Get(3).Get<double>() : factor.Get(3).Get<int32_t>()) : 1.0f;
 					}
 					if (metallicGlossinessWorkflow->second.Has("metallicFactor"))
 					{
 						auto& factor = metallicGlossinessWorkflow->second.Get("metallicFactor");
-						properties.metallicColor.x = factor.ArrayLen() > 0 ? float(factor.Get(0).IsNumber() ? factor.Get(0).Get<double>() : factor.Get(0).Get<int>()) : 1.0f;
-						properties.metallicColor.y = factor.ArrayLen() > 0 ? float(factor.Get(1).IsNumber() ? factor.Get(1).Get<double>() : factor.Get(1).Get<int>()) : 1.0f;
-						properties.metallicColor.z = factor.ArrayLen() > 0 ? float(factor.Get(2).IsNumber() ? factor.Get(2).Get<double>() : factor.Get(2).Get<int>()) : 1.0f;
-						properties.metallicColor.w = factor.ArrayLen() > 0 ? float(factor.Get(3).IsNumber() ? factor.Get(3).Get<double>() : factor.Get(3).Get<int>()) : 1.0f;
+						properties.metallicColor.x = factor.ArrayLen() > 0 ? float(factor.Get(0).IsNumber() ? factor.Get(0).Get<double>() : factor.Get(0).Get<int32_t>()) : 1.0f;
+						properties.metallicColor.y = factor.ArrayLen() > 0 ? float(factor.Get(1).IsNumber() ? factor.Get(1).Get<double>() : factor.Get(1).Get<int32_t>()) : 1.0f;
+						properties.metallicColor.z = factor.ArrayLen() > 0 ? float(factor.Get(2).IsNumber() ? factor.Get(2).Get<double>() : factor.Get(2).Get<int32_t>()) : 1.0f;
+						properties.metallicColor.w = factor.ArrayLen() > 0 ? float(factor.Get(3).IsNumber() ? factor.Get(3).Get<double>() : factor.Get(3).Get<int32_t>()) : 1.0f;
 					}
 					if (metallicGlossinessWorkflow->second.Has("glossinessFactor"))
 					{
 						auto& factor = metallicGlossinessWorkflow->second.Get("glossinessFactor");
-						properties.roughnessColor = glm::vec4(1.0f - float(factor.IsNumber() ? factor.Get<double>() : factor.Get<int>()));
+						properties.roughnessColor = glm::vec4(1.0f - float(factor.IsNumber() ? factor.Get<double>() : factor.Get<int32_t>()));
 					}
 				}
+
+				properties.usingAlbedoMap = textures.albedo != nullptr? 1.f : 0;
+				properties.usingNormalMap = textures.normal != nullptr ? 1.f : 0;
+				properties.usingAOMap = textures.ao != nullptr ? 1.f : 0;
+
+				if (properties.workflow == PBR_WORKFLOW_METALLIC_ROUGHNESS && textures.metallic != nullptr)
+				{
+					properties.usingMetallicMap = 1.0;
+					properties.usingRoughnessMap = 0.0;
+				}
+				else 
+				{
+					properties.usingMetallicMap = textures.metallic != nullptr ? 1.f : 0;
+					properties.usingRoughnessMap = textures.roughness != nullptr ? 1.f : 0;
+				}
+				properties.usingEmissiveMap = 0.f;
 
 				pbrMaterial->setTextures(textures);
 				pbrMaterial->setMaterialProperites(properties);
@@ -370,7 +390,7 @@ namespace maple
 			return meshes;
 		}
 
-		inline auto loadNode(int32_t nodeIndex, const glm::mat4& parentTransform, tinygltf::Model& model, std::vector<std::shared_ptr<Material>>& materials, std::unordered_map<std::string, std::shared_ptr<Mesh>>& outMeshes)
+		inline auto loadNode(const std::string & parentName, int32_t nodeIndex, const glm::mat4& parentTransform, tinygltf::Model& model, std::vector<std::shared_ptr<Material>>& materials, std::unordered_map<std::string, std::shared_ptr<Mesh>>& outMeshes)
 		{
 			PROFILE_FUNCTION();
 			if (nodeIndex < 0)
@@ -444,7 +464,13 @@ namespace maple
 
 				for (auto& mesh : meshes)
 				{
-					const std::string subname = node.name;
+					std::string subname = node.name;
+					
+					if (subname == "") 
+					{
+						subname = parentName + "_" + std::to_string(subIndex);
+					}
+
 					mesh->setName(subname);
 
 					int32_t materialIndex = model.meshes[node.mesh].primitives[subIndex].material;
@@ -459,9 +485,10 @@ namespace maple
 
 			if (!node.children.empty())
 			{
-				for (int child : node.children)
+				for (int32_t child : node.children)
 				{
-					loadNode(child, transform.getLocalMatrix(), model, materials, outMeshes);
+					auto name = parentName + "_child_" + std::to_string(child);
+					loadNode(name,child, transform.getLocalMatrix(), model, materials, outMeshes);
 				}
 			}
 		}
@@ -471,6 +498,7 @@ namespace maple
 	auto GLTFLoader::load(const std::string& obj, std::unordered_map<std::string, std::shared_ptr<Mesh>>& meshes)-> void
 	{
 		auto extension = StringUtils::getExtension(obj);
+		auto name = StringUtils::getFileNameWithoutExtension(obj);
 		PROFILE_FUNCTION();
 		tinygltf::Model model;
 		tinygltf::TinyGLTF loader;
@@ -500,16 +528,16 @@ namespace maple
 			LOGW(warn);
 		}
 
-		if (!ret) 
+		if (ret) 
 		{
 			PROFILE_SCOPE("Parse GLTF Model");
 
-			auto LoadedMaterials = loadMaterials(model);
+			auto loadedMaterials = loadMaterials(model);
 
 			const tinygltf::Scene& gltfScene = model.scenes[std::max(0, model.defaultScene)];
 			for (size_t i = 0; i < gltfScene.nodes.size(); i++)
 			{
-				loadNode(gltfScene.nodes[i], glm::mat4(1.0f), model, LoadedMaterials, meshes);
+				loadNode(name,gltfScene.nodes[i], glm::mat4(1.0f), model, loadedMaterials, meshes);
 			}
 		}
 	}

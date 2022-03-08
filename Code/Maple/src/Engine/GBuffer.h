@@ -20,6 +20,7 @@ namespace maple
 		SSAO_BLUR,
 		SSR_SCREEN,
 		SCREEN,
+		INDIRECT_LIGHTING,
 		PREV_DISPLAY,
 		VIEW_POSITION,        //Deferred Render - View Space Positions  need to be optimized. they can be performed very well in post processing
 		VIEW_NORMALS,

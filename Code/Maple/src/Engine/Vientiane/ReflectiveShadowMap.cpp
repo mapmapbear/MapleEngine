@@ -31,8 +31,6 @@
 
 #include <ecs/ecs.h>
 
-#include <omp.h>
-
 namespace maple
 {
 	namespace        //private block

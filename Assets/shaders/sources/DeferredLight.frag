@@ -55,12 +55,12 @@ layout(set = 0, binding = 6)  uniform sampler2D uPBRSampler;
 layout(set = 0, binding = 7)  uniform samplerCube uIrradianceMap;
 layout(set = 0, binding = 8)  uniform samplerCube uPrefilterMap;
 layout(set = 0, binding = 9)  uniform sampler2D uPreintegratedFG;
-
+layout(set = 0, binding = 10)  uniform sampler2D uIndirectLight; 
 //layout(set = 0, binding = 13) uniform sampler2D uViewPositionSampler;
 //layout(set = 0, binding = 14) uniform sampler2D uViewNormalSampler; //GI
-layout(set = 0, binding = 10) uniform sampler2D uOutputSampler; //used for debug
+layout(set = 0, binding = 11) uniform sampler2D uOutputSampler; //used for debug
 
-layout(set = 0, binding = 11) uniform UniformBufferLight
+layout(set = 0, binding = 12) uniform UniformBufferLight
 {
 	Light lights[MAX_LIGHTS];
 	mat4 shadowTransform[MAX_SHADOWMAPS];
@@ -373,7 +373,7 @@ vec3 indirectIllumination(vec3 fragPos, vec3 normal, vec3 fragColor)
 }
 */
 
-vec3 lighting(vec3 F0, vec3 wsPos, Material material)
+vec3 lighting(vec3 F0, vec3 wsPos, Material material,vec2 fragTexCoord)
 {
 	vec3 result = vec3(0.0);
 	
@@ -424,11 +424,11 @@ vec3 lighting(vec3 F0, vec3 wsPos, Material material)
 			vec4 shadowCoord = (ubo.biasMat * ubo.shadowTransform[cascadeIndex]) * vec4(wsPos, 1.0);
 			shadowCoord = shadowCoord * ( 1.0 / shadowCoord.w);
 			value =  PCFShadow(shadowCoord , cascadeIndex);
-			//indirect = indirectIllumination(wsPos, material.normal, material.view);
+			indirect = texture(uIndirectLight,fragTexCoord).rgb;
 		}
 		
 		vec3 Li = light.direction.xyz;
-		vec3 Lradiance = lightColor;
+		vec3 Lradiance = lightColor + indirect;
 		vec3 Lh = normalize(Li + material.view);
 		
 		// Calculate angles between surface normal and various light vectors.
@@ -447,7 +447,7 @@ vec3 lighting(vec3 F0, vec3 wsPos, Material material)
 		// Cook-Torrance
 		vec3 specularBRDF = (F * D * G) / max(EPSILON, 4.0 * cosLi * material.normalDotView);
 		
-		result += (diffuseBRDF + specularBRDF) * Lradiance * cosLi * value + indirect;
+		result += (diffuseBRDF + specularBRDF) * Lradiance * cosLi * value;// + indirect;
 		//result += indirect;
 	}
 
@@ -535,7 +535,7 @@ void main()
 	// Fresnel reflectance, metals use albedo
 	vec3 F0 = mix(Fdielectric, material.albedo.xyz, material.metallic.x);
 	
-	vec3 lightContribution = lighting(F0, wsPos, material);
+	vec3 lightContribution = lighting(F0, wsPos, material,fragTexCoord);
 	vec3 iblContribution = IBL(F0, Lr, material);
 
 	vec3 finalColor = (lightContribution + iblContribution) * material.ao * material.ssao;

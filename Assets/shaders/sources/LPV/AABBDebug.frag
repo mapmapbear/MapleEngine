@@ -11,9 +11,9 @@ layout(set = 1, binding = 0) uniform UniformBufferObjectFrag
 	float cellSize;
 }ubo;
 
-layout(set = 1, binding = 1) uniform isampler3D uRAccumulatorLPV;
-layout(set = 1, binding = 2) uniform isampler3D uGAccumulatorLPV;
-layout(set = 1, binding = 3) uniform isampler3D uBAccumulatorLPV;
+layout(set = 1, binding = 1) uniform usampler3D uRAccumulatorLPV;
+layout(set = 1, binding = 2) uniform usampler3D uGAccumulatorLPV;
+layout(set = 1, binding = 3) uniform usampler3D uBAccumulatorLPV;
 
 layout (location = 0) out vec4 outColor;
 
@@ -30,5 +30,6 @@ void main()
 			dot(shIntensity, texelFetch2(uGAccumulatorLPV, cellCoords) ),
 			dot(shIntensity, texelFetch2(uBAccumulatorLPV, cellCoords) )
 		);
-	outColor = vec4(max(lpvIntensity, 0 ) * 10,1);
+
+	outColor = vec4(max(lpvIntensity, 0) ,1);
 }

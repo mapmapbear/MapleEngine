@@ -4,9 +4,9 @@ layout (local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
 
 #include "LPVCommon.glsl"
 
-layout(r32i ,binding = 0) uniform iimage3D LPVGridR;
-layout(r32i ,binding = 1) uniform iimage3D LPVGridG;
-layout(r32i ,binding = 2) uniform iimage3D LPVGridB;
+layout(r32ui ,binding = 0) uniform coherent uimage3D LPVGridR;
+layout(r32ui ,binding = 1) uniform coherent uimage3D LPVGridG;
+layout(r32ui ,binding = 2) uniform coherent uimage3D LPVGridB;
 
 layout(binding = 3) uniform sampler2D uFluxSampler;
 layout(binding = 4) uniform sampler2D uRSMWorldSampler;
@@ -37,4 +37,4 @@ void main()
 	imgStoreAdd(LPVGridR,volumeCellIndex,SHCoeffsR);
 	imgStoreAdd(LPVGridG,volumeCellIndex,SHCoeffsG);
 	imgStoreAdd(LPVGridB,volumeCellIndex,SHCoeffsB);
-}
+} 

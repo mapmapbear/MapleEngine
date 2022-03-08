@@ -141,8 +141,8 @@ void main()
 	else if( materialProperties.workflow == PBR_WORKFLOW_METALLIC_ROUGHNESS)
 	{
 		vec3 tex = texture(uMetallicMap, fragTexCoord).rgb;
-		metallic = tex.b;
-		roughness = tex.g;
+		metallic  = (1.0 - materialProperties.usingMetallicMap ) * materialProperties.metallicColor.r  + materialProperties.usingMetallicMap  * tex.b;
+ 		roughness = (1.0 - materialProperties.usingMetallicMap) * materialProperties.metallicColor.r + materialProperties.usingMetallicMap * tex.g;
 	}
 	else if( materialProperties.workflow == PBR_WORKFLOW_SPECULAR_GLOSINESS)
 	{

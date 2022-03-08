@@ -27,8 +27,10 @@ void main()
 {
     vec4 worldPosition =  pushConsts.transform * vec4(inPosition, 1.0);
     fragPosition = worldPosition;
+    
     vec4 testColor = inColor;
 	fragTexCoord = inTexCoord;
+
     fragNormal =  normalize(transpose(inverse(mat3(  pushConsts.transform ) ) ) * inNormal);
 
 	gl_Position = ubo.lightProjection * worldPosition;

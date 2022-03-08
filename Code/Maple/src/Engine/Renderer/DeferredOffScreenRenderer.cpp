@@ -366,6 +366,7 @@ namespace maple
 			descriptorSet->setTexture("uPBRSampler", rendererData.gbuffer->getBuffer(GBufferTextures::PBR));
 			descriptorSet->setTexture("uSSAOSampler", rendererData.gbuffer->getBuffer(GBufferTextures::SSAO_BLUR));
 			descriptorSet->setTexture("uDepthSampler", rendererData.gbuffer->getDepthBuffer());
+			descriptorSet->setTexture("uIndirectLight", rendererData.gbuffer->getBuffer(GBufferTextures::INDIRECT_LIGHTING));
 			descriptorSet->setTexture("uShadowMap", shadow.shadowTexture);
 
 			if (!envQuery.empty())
