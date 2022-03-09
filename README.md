@@ -12,8 +12,8 @@ Maple-Engine is my own engine for leaning mordern engine and rendering technique
 ### Atmospheric Scattering
 ![](https://flwmxd.github.io/images/Atmosphere.png)
 
-### RSM
-![](https://flwmxd.github.io/images/RSM.png)
+### LPV
+![](https://flwmxd.github.io/images/LPV.png)
 
 ## Current Features
 

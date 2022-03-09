@@ -102,16 +102,18 @@ namespace maple
 
 				if (mp->diffuse_texname.length() > 0)
 				{
-					std::shared_ptr<Texture2D> texture = loadMaterialTextures("Albedo", texturesCache, mp->diffuse_texname, directory, TextureParameters(TextureFilter::Nearest, TextureFilter::Nearest, mp->diffuse_texopt.clamp ? TextureWrap::ClampToEdge : TextureWrap::Repeat));
+					std::shared_ptr<Texture2D> texture = loadMaterialTextures("Albedo", 
+						texturesCache, 
+						mp->diffuse_texname, directory, TextureParameters(TextureFilter::Nearest, TextureFilter::Nearest, mp->diffuse_texopt.clamp ? TextureWrap::ClampToEdge : TextureWrap::Repeat));
 					if (texture)
 						textures.albedo = texture;
 				}
 
 				if (mp->bump_texname.length() > 0)
 				{
-					std::shared_ptr<Texture2D> texture = loadMaterialTextures("Normal", texturesCache, mp->bump_texname, directory, TextureParameters(TextureFilter::Nearest, TextureFilter::Nearest, mp->bump_texopt.clamp ? TextureWrap::ClampToEdge : TextureWrap::Repeat));
-					if (texture)
-						textures.normal = texture;        //pbrMaterial->SetNormalMap(texture);
+					//std::shared_ptr<Texture2D> texture = loadMaterialTextures("Normal", texturesCache, mp->bump_texname, directory, TextureParameters(TextureFilter::Nearest, TextureFilter::Nearest, mp->bump_texopt.clamp ? TextureWrap::ClampToEdge : TextureWrap::Repeat));
+					//if (texture)
+					//	textures.normal = texture;        //pbrMaterial->SetNormalMap(texture);
 				}
 
 				if (mp->roughness_texname.length() > 0)
@@ -128,12 +130,12 @@ namespace maple
 						textures.metallic = texture;
 				}
 
-				if (mp->specular_highlight_texname.length() > 0)
+			/*	if (mp->specular_highlight_texname.length() > 0)
 				{
 					std::shared_ptr<Texture2D> texture = loadMaterialTextures("Metallic", texturesCache, mp->specular_highlight_texname, directory, TextureParameters(TextureFilter::Nearest, TextureFilter::Nearest, mp->specular_texopt.clamp ? TextureWrap::ClampToEdge : TextureWrap::Repeat));
 					if (texture)
 						textures.metallic = texture;
-				}
+				}*/
 			}
 			pbrMaterial->setTextures(textures);
 			auto mesh = std::make_shared<Mesh>(indices, vertices);

@@ -17,7 +17,11 @@ namespace maple
 			std::shared_ptr<Texture3D> lpvGridR;
 			std::shared_ptr<Texture3D> lpvGridG;
 			std::shared_ptr<Texture3D> lpvGridB;
-			std::shared_ptr<Texture3D> lpvGeometryVolume;
+			
+			std::shared_ptr<Texture3D> lpvGeometryVolumeR;
+			std::shared_ptr<Texture3D> lpvGeometryVolumeG;
+			std::shared_ptr<Texture3D> lpvGeometryVolumeB;
+
 			std::shared_ptr<Texture3D> lpvAccumulatorR;
 			std::shared_ptr<Texture3D> lpvAccumulatorG;
 			std::shared_ptr<Texture3D> lpvAccumulatorB;

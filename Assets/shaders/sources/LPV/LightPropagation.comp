@@ -14,17 +14,21 @@ layout(r32ui ,binding = 5) uniform uimage3D LPVGridB_;//save current result
 layout( binding = 6) uniform usampler3D LPVGridR;//pre-result
 layout( binding = 7) uniform usampler3D LPVGridG;
 layout( binding = 8) uniform usampler3D LPVGridB;
-layout( binding = 9) uniform sampler3D uGeometryVolume;
 
-layout( binding = 10) uniform UniformObject
+layout( binding = 9 ) uniform usampler3D uGeometryVolumeR;
+layout( binding = 10) uniform usampler3D uGeometryVolumeG;
+layout( binding = 11) uniform usampler3D uGeometryVolumeB;
+
+layout( binding = 12) uniform UniformObject
 {
 	vec3 gridDim;
 	float occlusionAmplifier;
+	int step;
 }ubo; 
 
 
-const float directFaceSubtendedSolidAngle =  0.4006696846f; 
-const float sideFaceSubtendedSolidAngle = 0.4234413544f; 
+const float directFaceSubtendedSolidAngle =  0.4006696846f / PI; 
+const float sideFaceSubtendedSolidAngle = 0.4234413544f / PI;  
 
 const ivec3 propDirections[6] = {
 	//+Z
@@ -74,40 +78,71 @@ void main()
 		GSHcoeffsNeighbour = texelFetch2(LPVGridG, neighbourCellIndex);
 		BSHcoeffsNeighbour = texelFetch2(LPVGridB, neighbourCellIndex);
 
-		
-		vec3 occCoord = (vec3(neighbourCellIndex.xyz) + 0.5 * mainDirection) / ubo.gridDim;
-		vec4 occCoeffs = texture(uGeometryVolume, occCoord);
 
-		float occlusionValue = 1.0 - clamp(ubo.occlusionAmplifier * dot(occCoeffs, dirToSH(-mainDirection)),0.0,1.0 );
-		float occludedDirectFaceContribution = occlusionValue * directFaceSubtendedSolidAngle;
+		float redOcclusionValue = 1.0;
+        float greenOcclusionValue = 1.0;
+        float blueOcclusionValue = 1.0;
+ 	    
+		 // No occlusion in the first step
+		if(ubo.step > 1)
+		{
+			vec3 halfDir =  0.5 * mainDirection;
+		    ivec3 occCoord = ivec3(volumeCellIndex - halfDir);
+
+			vec4 redOccCoeffs = texelFetch2(uGeometryVolumeR, occCoord);
+            vec4 greenOccCoeffs = texelFetch2(uGeometryVolumeG, occCoord);
+            vec4 blueOccCoeffs = texelFetch2(uGeometryVolumeB, occCoord);
+
+            redOcclusionValue = 1.0 - clamp(ubo.occlusionAmplifier * dot(redOccCoeffs, dirToSH(-mainDirection)), 0.0, 1.0);
+            greenOcclusionValue = 1.0 - clamp(ubo.occlusionAmplifier * dot(greenOccCoeffs, dirToSH(-mainDirection)), 0.0, 1.0);
+            blueOcclusionValue = 1.0 - clamp(ubo.occlusionAmplifier * dot(blueOccCoeffs, dirToSH(-mainDirection)), 0.0, 1.0);
+		}
+
+		float rOccludedDirectFaceContribution = redOcclusionValue * directFaceSubtendedSolidAngle;
+		float gOccludedDirectFaceContribution = greenOcclusionValue * directFaceSubtendedSolidAngle;
+		float bOccludedDirectFaceContribution = blueOcclusionValue * directFaceSubtendedSolidAngle;
+	
 		vec4 mainDirectionCosineLobeSH = evalCosineLobeToDir(mainDirection);
 		vec4 mainDirectionSH = dirToSH(mainDirection);
-		cR += occludedDirectFaceContribution * max(0.0, dot(RSHcoeffsNeighbour, mainDirectionCosineLobeSH)) * mainDirectionSH;
-		cG += occludedDirectFaceContribution * max(0.0, dot(GSHcoeffsNeighbour, mainDirectionCosineLobeSH)) * mainDirectionSH;
-		cB += occludedDirectFaceContribution * max(0.0, dot(BSHcoeffsNeighbour, mainDirectionCosineLobeSH)) * mainDirectionSH;
+
+		cR += rOccludedDirectFaceContribution * max(0.0, dot(RSHcoeffsNeighbour, mainDirectionSH)) * mainDirectionCosineLobeSH;
+		cG += gOccludedDirectFaceContribution * max(0.0, dot(GSHcoeffsNeighbour, mainDirectionSH)) * mainDirectionCosineLobeSH;
+		cB += bOccludedDirectFaceContribution * max(0.0, dot(BSHcoeffsNeighbour, mainDirectionSH)) * mainDirectionCosineLobeSH;
 	
 		for(int face = 0; face < 4; face++) {
 			vec3 evalDirection = getEvalSideDirection(face, mainDirection);
 			vec3 reprojDirection = getReprojSideDirection(face, mainDirection);
 
-			vec3 occCoord = (vec3(neighbourCellIndex.xyz) + 0.5 * evalDirection) / ubo.gridDim;
-			vec4 occCoeffs = texture(uGeometryVolume, occCoord);
+			 // No occlusion in the first step
+			if(ubo.step > 1)
+			{
+				vec3 halfDir =  0.5 * mainDirection;
+		   		ivec3 occCoord = ivec3(volumeCellIndex - halfDir);
+				vec4 redOccCoeffs = texelFetch2(uGeometryVolumeR, occCoord);
+				vec4 greenOccCoeffs = texelFetch2(uGeometryVolumeG, occCoord);
+				vec4 blueOccCoeffs = texelFetch2(uGeometryVolumeB, occCoord);
 
+				redOcclusionValue = 1.0 - clamp(ubo.occlusionAmplifier * dot(redOccCoeffs, dirToSH(-mainDirection)), 0.0, 1.0);
+				greenOcclusionValue = 1.0 - clamp(ubo.occlusionAmplifier * dot(greenOccCoeffs, dirToSH(-mainDirection)), 0.0, 1.0);
+				blueOcclusionValue = 1.0 - clamp(ubo.occlusionAmplifier * dot(blueOccCoeffs, dirToSH(-mainDirection)), 0.0, 1.0);
+			}
 
-			occlusionValue = 1.0 - clamp(ubo.occlusionAmplifier * dot(occCoeffs, dirToSH(-evalDirection)),0.0,1.0);
-			float occludedSideFaceContribution = occlusionValue * sideFaceSubtendedSolidAngle;
-			vec4 reprojDirectionCosineLobeSH = dirToSH(reprojDirection);
-			vec4 evalDirectionSH = evalCosineLobeToDir(evalDirection);
+			rOccludedDirectFaceContribution = redOcclusionValue * sideFaceSubtendedSolidAngle;
+			gOccludedDirectFaceContribution = greenOcclusionValue * sideFaceSubtendedSolidAngle;
+			bOccludedDirectFaceContribution = blueOcclusionValue * sideFaceSubtendedSolidAngle;
+
+			vec4 reprojDirectionCosineLobeSH = evalCosineLobeToDir(evalDirection);
+			vec4 evalDirectionSH = dirToSH(reprojDirection);
 			
-			cR += occludedSideFaceContribution * max(0.0, dot(RSHcoeffsNeighbour, evalDirectionSH)) * reprojDirectionCosineLobeSH;
-			cG += occludedSideFaceContribution * max(0.0, dot(GSHcoeffsNeighbour, evalDirectionSH)) * reprojDirectionCosineLobeSH;
-			cB += occludedSideFaceContribution * max(0.0, dot(BSHcoeffsNeighbour, evalDirectionSH)) * reprojDirectionCosineLobeSH;
+			cR += rOccludedDirectFaceContribution * max(0.0, dot(RSHcoeffsNeighbour, evalDirectionSH)) * reprojDirectionCosineLobeSH;
+			cG += gOccludedDirectFaceContribution * max(0.0, dot(GSHcoeffsNeighbour, evalDirectionSH)) * reprojDirectionCosineLobeSH;
+			cB += bOccludedDirectFaceContribution * max(0.0, dot(BSHcoeffsNeighbour, evalDirectionSH)) * reprojDirectionCosineLobeSH;
 		}
 	}
 
-	imgStoreAdd(LPVGridR_,volumeCellIndex,(cR / PI));
-	imgStoreAdd(LPVGridG_,volumeCellIndex,(cG / PI));
-	imgStoreAdd(LPVGridB_,volumeCellIndex,(cB / PI));
+	imgStoreAdd(LPVGridR_,volumeCellIndex,cR);
+	imgStoreAdd(LPVGridG_,volumeCellIndex,cG);
+	imgStoreAdd(LPVGridB_,volumeCellIndex,cB);
 
 	vec4 R = imgLoad(LPVGridR_, volumeCellIndex);
 	vec4 G = imgLoad(LPVGridG_, volumeCellIndex);

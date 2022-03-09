@@ -14,6 +14,7 @@ layout(binding = 5) uniform UniformBufferObject
 {
 	vec3 minAABB;
 	float cellSize;
+	float gridSize;
 }ubo;
 
 ivec3 convertPointToGridIndex(vec3 vPos) {
@@ -22,19 +23,24 @@ ivec3 convertPointToGridIndex(vec3 vPos) {
 
 void main()
 {
- 	ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
+	ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
 
 	vec3 rsmWorldPos = texelFetch(uRSMWorldSampler, pixel, 0).xyz;
 	ivec3 volumeCellIndex = convertPointToGridIndex(rsmWorldPos);
 	vec3 cellCenter = (volumeCellIndex - 0.5) *  ubo.cellSize + ubo.minAABB;
 	vec3 vplToCell = normalize(rsmWorldPos - cellCenter);//dir
 
+	float rsmSize = float(textureSize(uFluxSampler,0));
+	float surfelWeight = float(ubo.gridSize) / float(rsmSize);
+	vec4 SHCoeffs = (evalCosineLobeToDir(vplToCell) / PI) * surfelWeight;
+
 	vec4 rsmFlux = texelFetch(uFluxSampler, pixel,0);
-	vec4 SHCoeffsR = dirToSH(vplToCell) * rsmFlux.r;
-	vec4 SHCoeffsG = dirToSH(vplToCell) * rsmFlux.g;
-	vec4 SHCoeffsB = dirToSH(vplToCell) * rsmFlux.b;
+	vec4 SHCoeffsR = SHCoeffs * rsmFlux.r;
+	vec4 SHCoeffsG = SHCoeffs * rsmFlux.g;
+	vec4 SHCoeffsB = SHCoeffs * rsmFlux.b;
 
 	imgStoreAdd(LPVGridR,volumeCellIndex,SHCoeffsR);
 	imgStoreAdd(LPVGridG,volumeCellIndex,SHCoeffsG);
 	imgStoreAdd(LPVGridB,volumeCellIndex,SHCoeffsB);
+
 } 

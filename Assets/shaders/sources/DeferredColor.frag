@@ -132,6 +132,7 @@ void main()
 
 	float metallic = 0.0;
 	float roughness = 0.0;
+	float ao		= getAO();
 
 	if(materialProperties.workflow == PBR_WORKFLOW_SEPARATE_TEXTURES)
 	{
@@ -141,23 +142,24 @@ void main()
 	else if( materialProperties.workflow == PBR_WORKFLOW_METALLIC_ROUGHNESS)
 	{
 		vec3 tex = texture(uMetallicMap, fragTexCoord).rgb;
-		metallic  = (1.0 - materialProperties.usingMetallicMap ) * materialProperties.metallicColor.r  + materialProperties.usingMetallicMap  * tex.b;
- 		roughness = (1.0 - materialProperties.usingMetallicMap) * materialProperties.metallicColor.r + materialProperties.usingMetallicMap * tex.g;
+		//ao  	  = tex.r;
+		metallic  = tex.b;
+ 		roughness = tex.g;
 	}
 	else if( materialProperties.workflow == PBR_WORKFLOW_SPECULAR_GLOSINESS)
 	{
 		vec3 tex = texture(uMetallicMap, fragTexCoord).rgb;
 		metallic = tex.b;
-		roughness = tex.g;
+		roughness = tex.g * materialProperties.roughnessColor.r;
 	}
 
 	vec3 emissive   = getEmissive();
-	float ao		= getAO();
 
-    outColor    	= texColor + vec4(emissive,0);
-	outPosition		= vec4(fragPosition.xyz, 1);
-	outNormal   	= vec4(getNormalFromMap(), 1);
-	outPBR      	= vec4(metallic, roughness, ao, 1);
+
+    outColor    	= texColor;// + vec4(emissive,0);
+	outPosition		= vec4(fragPosition.xyz, emissive.x);
+	outNormal   	= vec4(getNormalFromMap(), emissive.y);
+	outPBR      	= vec4(metallic, roughness, ao, emissive.z);
 
 	outViewPosition = fragViewPosition;
 	outViewNormal   = vec4(transpose(inverse(mat3(ubo.view))) * outNormal.xyz, 1);

@@ -172,7 +172,12 @@ namespace maple
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "shadowCount", &numShadows);
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "mode", &renderMode);
 
-	
+			if (directionaLight != nullptr) 
+			{
+				int32_t enableIndirect = directionaLight->enableLPV ? 1 : 0;
+				data.descriptorLightSet[0]->setUniform("UniformBufferLight", "enableIndirectLight", &enableIndirect);
+			}
+
 			data.descriptorLightSet[0]->setTexture("uPreintegratedFG", data.preintegratedFG);
 			data.descriptorLightSet[0]->setTexture("uShadowMap", shadowData.shadowTexture);
 

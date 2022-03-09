@@ -36,7 +36,9 @@ namespace maple
 				grid.lpvGridB = Texture3D::create(dimension.x * 4, dimension.y, dimension.z, paramemters);
 				grid.lpvGridG = Texture3D::create(dimension.x * 4, dimension.y, dimension.z, paramemters);
 				
-				grid.lpvGeometryVolume = Texture3D::create(dimension.x, dimension.y, dimension.z, { TextureFormat::RGBA32, TextureFilter::Nearest, TextureWrap::ClampToEdge });
+				grid.lpvGeometryVolumeR = Texture3D::create(dimension.x * 4, dimension.y, dimension.z, paramemters);
+				grid.lpvGeometryVolumeG = Texture3D::create(dimension.x * 4, dimension.y, dimension.z, paramemters);
+				grid.lpvGeometryVolumeB = Texture3D::create(dimension.x * 4, dimension.y, dimension.z, paramemters);
 
 				grid.lpvAccumulatorB = Texture3D::create(dimension.x * 4, dimension.y, dimension.z, paramemters);
 				grid.lpvAccumulatorG = Texture3D::create(dimension.x * 4, dimension.y, dimension.z, paramemters);
@@ -59,7 +61,11 @@ namespace maple
 				grid.lpvGridR->buildTexture3D(TextureFormat::R32UI,dimension.x * 4, dimension.y, dimension.z);
 				grid.lpvGridB->buildTexture3D(TextureFormat::R32UI,dimension.x * 4, dimension.y, dimension.z);
 				grid.lpvGridG->buildTexture3D(TextureFormat::R32UI,dimension.x * 4, dimension.y, dimension.z);
-				grid.lpvGeometryVolume->buildTexture3D(TextureFormat::RGBA32, dimension.x, dimension.y, dimension.z);
+
+				grid.lpvGeometryVolumeR->buildTexture3D(TextureFormat::R32UI, dimension.x * 4, dimension.y, dimension.z);
+				grid.lpvGeometryVolumeG->buildTexture3D(TextureFormat::R32UI, dimension.x * 4, dimension.y, dimension.z);
+				grid.lpvGeometryVolumeB->buildTexture3D(TextureFormat::R32UI, dimension.x * 4, dimension.y, dimension.z);
+
 				grid.lpvAccumulatorB->buildTexture3D(TextureFormat::R32UI, dimension.x * 4, dimension.y, dimension.z);
 				grid.lpvAccumulatorG->buildTexture3D(TextureFormat::R32UI, dimension.x * 4, dimension.y, dimension.z);
 				grid.lpvAccumulatorR->buildTexture3D(TextureFormat::R32UI, dimension.x * 4, dimension.y, dimension.z);
@@ -150,10 +156,11 @@ namespace maple
 					updateGrid(lpv, aabb.box);
 					injectLight.boundingBox.min = aabb.box->min;
 					injectLight.boundingBox.max = aabb.box->max;
+					auto gridSize = std::max(aabb.box->size().x, aabb.box->size().y);
+					injectLight.descriptors[0]->setUniform("UniformBufferObject", "gridSize", &gridSize);
+					injectLight.descriptors[0]->setUniform("UniformBufferObject", "minAABB", glm::value_ptr(injectLight.boundingBox.min));
+					injectLight.descriptors[0]->setUniform("UniformBufferObject", "cellSize", &lpv.cellSize);
 				}
-
-				injectLight.descriptors[0]->setUniform("UniformBufferObject", "minAABB", glm::value_ptr(injectLight.boundingBox.min));
-				injectLight.descriptors[0]->setUniform("UniformBufferObject", "cellSize", &lpv.cellSize);
 			}
 
 			inline auto render(Entity entity, ecs::World world)
@@ -215,11 +222,17 @@ namespace maple
 				if (lpv.lpvGridR == nullptr)
 					return;
 
-				lpv.lpvGeometryVolume->clear();
+				lpv.lpvGeometryVolumeR->clear();
+				lpv.lpvGeometryVolumeG->clear();
+				lpv.lpvGeometryVolumeB->clear();
 
-				geometry.descriptors[0]->setTexture("uGeometryVolume", lpv.lpvGeometryVolume);
+				geometry.descriptors[0]->setTexture("uGeometryVolumeR", lpv.lpvGeometryVolumeR);
+				geometry.descriptors[0]->setTexture("uGeometryVolumeG", lpv.lpvGeometryVolumeG);
+				geometry.descriptors[0]->setTexture("uGeometryVolumeB", lpv.lpvGeometryVolumeB);
 				geometry.descriptors[0]->setTexture("uRSMNormalSampler", rsm.normalTexture);
 				geometry.descriptors[0]->setTexture("uRSMWorldSampler", rsm.worldTexture);
+				geometry.descriptors[0]->setTexture("uFluxSampler", rsm.fluxTexture);
+
 				geometry.descriptors[0]->update();
 
 				PipelineInfo pipelineInfo;
@@ -258,7 +271,9 @@ namespace maple
 				auto [lpv, data, aabb, rendererData] = entity;
 				if (lpv.lpvGridR == nullptr)
 					return;
-				data.descriptors[0]->setTexture("uGeometryVolume", lpv.lpvGeometryVolume);
+				data.descriptors[0]->setTexture("uGeometryVolumeR", lpv.lpvGeometryVolumeR);
+				data.descriptors[0]->setTexture("uGeometryVolumeG", lpv.lpvGeometryVolumeG);
+				data.descriptors[0]->setTexture("uGeometryVolumeB", lpv.lpvGeometryVolumeB);
 
 				data.descriptors[0]->setTexture("RAccumulatorLPV_", lpv.lpvAccumulatorR);
 				data.descriptors[0]->setTexture("GAccumulatorLPV_", lpv.lpvAccumulatorG);
@@ -291,7 +306,8 @@ namespace maple
 
 					data.descriptors[0]->setTexture("LPVGridR_", lpv.lpvRs[i]);
 					data.descriptors[0]->setTexture("LPVGridG_", lpv.lpvGs[i]);
-					data.descriptors[0]->setTexture("LPVGridB_", lpv.lpvBs[i]);
+					data.descriptors[0]->setTexture("LPVGridB_", lpv.lpvBs[i]);  
+					data.descriptors[0]->setUniform("UniformObject", "step", &i );
 					data.descriptors[0]->update();
 
 		
@@ -402,9 +418,9 @@ namespace maple
 			executePoint->registerWithinQueue<inject_geometry_pass::render>(renderer);
 			executePoint->registerWithinQueue<propagation_pass::beginScene>(begin);
 			executePoint->registerWithinQueue<propagation_pass::render>(renderer);
-/*
+
 			executePoint->registerWithinQueue<aabb_debug::beginScene>(begin);
-			executePoint->registerWithinQueue<aabb_debug::render>(renderer);*/
+			executePoint->registerWithinQueue<aabb_debug::render>(renderer);
 		}
 	};
 };        // namespace maple

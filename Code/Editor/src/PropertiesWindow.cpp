@@ -447,6 +447,7 @@ namespace MM
 
 		ImGuiHelper::property("Show Frustum", light.showFrustum);
 		ImGuiHelper::property("Reflective Shadow Map", light.reflectiveShadowMap);
+		ImGuiHelper::property("Light Propagation Volume", light.enableLPV);
 
 		ImGui::AlignTextToFramePadding();
 		ImGui::TextUnformatted("Light Type");

@@ -27,7 +27,7 @@ void main()
 	vec3 worldNormal = texelFetch(uWorldNormalSampler,pixel,0).xyz;
 	vec3 worldPosition = texelFetch(uWorldPositionSampler, pixel,0).xyz;
 
-	vec4 shIntensity = dirToSH(worldNormal);
+	vec4 shIntensity = dirToSH(normalize(worldNormal));
 	ivec3 cellIndex = convertPointToGridIndex(worldPosition);
 
 	vec3 lpvIntensity  = vec3(0);

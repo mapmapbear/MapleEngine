@@ -79,7 +79,7 @@ layout(set = 0, binding = 12) uniform UniformBufferLight
 	int cubeMapMipLevels;
 	float initialBias;
 	int ssaoEnable;
-	int padding1;
+	int enableIndirectLight;
 	int padding2;
 } ubo;
 
@@ -209,7 +209,7 @@ float random(vec4 seed4)
 float textureProj(vec4 shadowCoord, vec2 offset, int cascadeIndex)
 {
 	float shadow = 1.0;
-	float ambient = 0.3;
+	float ambient = 0.1;
 	
 	if ( shadowCoord.z > -1.0 && shadowCoord.z < 1.0 && shadowCoord.w > 0)
 	{
@@ -424,11 +424,14 @@ vec3 lighting(vec3 F0, vec3 wsPos, Material material,vec2 fragTexCoord)
 			vec4 shadowCoord = (ubo.biasMat * ubo.shadowTransform[cascadeIndex]) * vec4(wsPos, 1.0);
 			shadowCoord = shadowCoord * ( 1.0 / shadowCoord.w);
 			value =  PCFShadow(shadowCoord , cascadeIndex);
-			indirect = texture(uIndirectLight,fragTexCoord).rgb;
+			if(ubo.enableIndirectLight == 1)
+			{
+				indirect = texture(uIndirectLight,fragTexCoord).rgb;
+			}
 		}
 		
 		vec3 Li = light.direction.xyz;
-		vec3 Lradiance = lightColor + indirect;
+		vec3 Lradiance = lightColor;
 		vec3 Lh = normalize(Li + material.view);
 		
 		// Calculate angles between surface normal and various light vectors.
@@ -447,7 +450,10 @@ vec3 lighting(vec3 F0, vec3 wsPos, Material material,vec2 fragTexCoord)
 		// Cook-Torrance
 		vec3 specularBRDF = (F * D * G) / max(EPSILON, 4.0 * cosLi * material.normalDotView);
 		
-		result += (diffuseBRDF + specularBRDF) * Lradiance * cosLi * value;// + indirect;
+		vec3 directShading = (diffuseBRDF + specularBRDF) * Lradiance * cosLi * value;
+		vec3 indirectShading = (diffuseBRDF + specularBRDF) * indirect * cosLi;
+
+		result += directShading + indirectShading;
 		//result += indirect;
 	}
 
