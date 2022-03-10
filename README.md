@@ -12,7 +12,7 @@ Maple-Engine is my own engine for leaning mordern engine and rendering technique
 ### Atmospheric Scattering
 ![](https://flwmxd.github.io/images/Atmosphere.png)
 
-### LPV
+### Light Propagation Volumes
 ![](https://flwmxd.github.io/images/LPV.png)
 
 ## Current Features
@@ -20,6 +20,7 @@ Maple-Engine is my own engine for leaning mordern engine and rendering technique
 - OpenGL/Vulkan backends 
 - Entity-component system( Based on entt )
 - PBR/IBL
+- Global Illumination(Light Propagation Volumes)
 - Directional lights + Cascaded shadow maps
 - Soft shadows (PCF)
 - Screen Space Ambient Occlusion (SSAO)
@@ -40,12 +41,13 @@ Maple-Engine is my own engine for leaning mordern engine and rendering technique
 
 Feature     					 	| Completion 	| Notes 
 :-          					 	| :-         	| :-
-Reflective Shadow Map				| 50%		  	| High priority
-Screen space global illumination 	| 0%		  	| High priority
-Light propagation volumes		 	| 0%       	    | High priority
+Reflective Shadow Map				| 100%		  	| High priority
+Light propagation volumes		 	| 100%       	    | High priority
 C# scripting                     	| 80%			| Using Mono (no engine API exposed yet)
-Animation and State Machine       	| 0%			| Implemented in Raven Engine
 Vulkan porting 	 				    | 90%	  		| support Compute and Tessellation shader
+Precomputed Light Field Probes 	| 0%		  	| High priority
+Screen space global illumination 	| 0%		  	| High priority
+Animation and State Machine       	| 0%			| Implemented in Raven Engine
 Precomputed Atmospheric Scattering 	| -          	| Low priority
 Subsurface Scattering 			 	| -          	| Low priority
 Ray traced shadows				 	| -          	| -
