@@ -76,15 +76,15 @@ namespace maple
 		irradianceCaptureColor = Texture2D::create();
 		irradianceCaptureColor->buildTexture(
 		    TextureFormat::RGBA32,
-		    Environment::IrradianceMapSize,
-		    Environment::IrradianceMapSize,
+		    component::Environment::IrradianceMapSize,
+		    component::Environment::IrradianceMapSize,
 		    false, false, false);
 
 		prefilterCaptureColor = Texture2D::create();
 		prefilterCaptureColor->buildTexture(
 		    TextureFormat::RGBA32,
-		    Environment::PrefilterMapSize,
-		    Environment::PrefilterMapSize,
+		    component::Environment::PrefilterMapSize,
+		    component::Environment::PrefilterMapSize,
 		    false, false, false);
 
 		cube = Mesh::createCube();
@@ -130,7 +130,7 @@ namespace maple
 	{
 	}
 
-	auto PrefilterRenderer::beginScene(Environment & env) -> void
+	auto PrefilterRenderer::beginScene(component::Environment & env) -> void
 	{
 		if (equirectangularMap != env.getEquirectangularMap() && !env.isPseudoSky())
 		{

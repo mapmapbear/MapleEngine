@@ -14,7 +14,7 @@ namespace maple
 	auto EntityManager::create(const std::string &name) -> Entity
 	{
 		auto e = registry.create();
-		registry.emplace<NameComponent>(e, name);
+		registry.emplace<component::NameComponent>(e, name);
 		return Entity(e, scene->getRegistry());
 	}
 
@@ -28,13 +28,13 @@ namespace maple
 
 	auto EntityManager::removeAllChildren(entt::entity entity, bool root) -> void
 	{
-		auto hierarchyComponent = registry.try_get<Hierarchy>(entity);
+		auto hierarchyComponent = registry.try_get<component::Hierarchy>(entity);
 		if (hierarchyComponent)
 		{
 			entt::entity child = hierarchyComponent->getFirst();
 			while (child != entt::null)
 			{
-				auto hierarchyComponent = registry.try_get<Hierarchy>(child);
+				auto hierarchyComponent = registry.try_get<component::Hierarchy>(child);
 				auto next               = hierarchyComponent ? hierarchyComponent->getNext() : entt::null;
 				removeAllChildren(child, false);
 				child = next;
@@ -46,13 +46,13 @@ namespace maple
 
 	auto EntityManager::removeEntity(entt::entity entity) -> void
 	{
-		auto hierarchyComponent = registry.try_get<Hierarchy>(entity);
+		auto hierarchyComponent = registry.try_get<component::Hierarchy>(entity);
 		if (hierarchyComponent)
 		{
 			entt::entity child = hierarchyComponent->getFirst();
 			while (child != entt::null)
 			{
-				auto hierarchyComponent = registry.try_get<Hierarchy>(child);
+				auto hierarchyComponent = registry.try_get<component::Hierarchy>(child);
 				auto next               = hierarchyComponent ? hierarchyComponent->getNext() : entt::null;
 				removeEntity(child);
 				child = next;
@@ -63,10 +63,10 @@ namespace maple
 
 	auto EntityManager::getEntityByName(const std::string &name) -> Entity
 	{
-		auto views = registry.view<NameComponent>();
+		auto views = registry.view<component::NameComponent>();
 		for (auto &view : views)
 		{
-			auto &comp = registry.get<NameComponent>(view);
+			auto &comp = registry.get<component::NameComponent>(view);
 			if (comp.name == name)
 			{
 				return {view, scene->getRegistry()};

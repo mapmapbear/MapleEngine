@@ -13,7 +13,6 @@ namespace maple
 	class Texture2D;
 	class TextureDepth;
 	class Scene;
-	class Transform;
 
 	class PreviewWindow : public EditorWindow
 	{

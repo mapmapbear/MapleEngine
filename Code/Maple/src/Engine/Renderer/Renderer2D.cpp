@@ -20,6 +20,7 @@
 #include "Engine/Camera.h"
 #include "Engine/Profiler.h"
 #include "Scene/Component/Sprite.h"
+#include "Scene/Component/Transform.h"
 
 #include "RendererData.h"
 #include "Application.h"
@@ -186,8 +187,8 @@ namespace maple
 				::To<ecs::Entity>;
 
 			using SpriteDefine = ecs::Chain
-				::Write<Sprite>
-				::Write<Transform>;
+				::Write<component::Sprite>
+				::Write<component::Transform>;
 
 			using SpriteEntity = SpriteDefine
 				::To<ecs::Entity>;
@@ -196,8 +197,8 @@ namespace maple
 				::To<ecs::Query>;
 
 			using AnimatedSpriteDefine = ecs::Chain
-				::Write<AnimatedSprite>
-				::Write<Transform>;
+				::Write<component::AnimatedSprite>
+				::Write<component::Transform>;
 
 			using AnimatedSpriteEntity = AnimatedSpriteDefine
 				::To<ecs::Entity>;

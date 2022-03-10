@@ -11,7 +11,7 @@
 
 namespace maple
 {
-	class MAPLE_EXPORT Camera : public Component
+	class MAPLE_EXPORT Camera : public component::Component
 	{
 	  public:
 		constexpr static char *ICON = ICON_MDI_CAMERA;

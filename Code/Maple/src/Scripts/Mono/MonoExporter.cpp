@@ -58,7 +58,7 @@ namespace maple::MonoExporter
 
 	static ExportVector3 Transform_GetPosition(void* handle)
 	{
-		Transform* transform = static_cast<Transform*>(handle);
+		component::Transform* transform = static_cast<component::Transform*>(handle);
 		return ExportVector3{
 			transform->getWorldPosition().x,
 			transform->getWorldPosition().y,
@@ -67,7 +67,7 @@ namespace maple::MonoExporter
 	}
 
 	static void Transform_SetPosition(void* handle, const ExportVector3 & v) {
-		static_cast<Transform*>(handle)->setLocalPosition({ v.x, v.y, v.z });
+		static_cast<component::Transform*>(handle)->setLocalPosition({ v.x, v.y, v.z });
 	}
 
 	static auto Input_IsKeyPressed(const KeyCode::Id key) {

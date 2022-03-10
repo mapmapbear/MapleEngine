@@ -12,6 +12,7 @@ set(CMAKE_CXX_STANDARD 17)
 file(GLOB EDITOR_STATIC_SRC
 	src/*.cpp
 	src/*.h
+	src/*.inl
 	src/Plugin/*.cpp
 	src/Plugin/*.h
 	src/UI/*.cpp

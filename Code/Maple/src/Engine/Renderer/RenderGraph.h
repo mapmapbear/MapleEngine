@@ -15,9 +15,13 @@ namespace maple
 	class Scene;
 	class GBuffer;
 	class Texture;
-	class Light;
 	class PrefilterRenderer;
-	class Transform;
+
+	namespace component
+	{
+		class Light;
+		class Transform;
+	};
 
 	class MAPLE_EXPORT RenderGraph
 	{

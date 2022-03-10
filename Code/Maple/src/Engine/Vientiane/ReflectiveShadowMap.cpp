@@ -35,7 +35,7 @@ namespace maple
 {
 	namespace        //private block
 	{
-		inline auto updateCascades(const component::CameraView & camera, component::ShadowMapData& shadowData, Light *light)
+		inline auto updateCascades(const component::CameraView & camera, component::ShadowMapData& shadowData, component::Light *light)
 		{
 			PROFILE_FUNCTION();
 
@@ -179,17 +179,17 @@ namespace maple
 			::To<ecs::Entity>;
 
 		using LightQuery = ecs::Chain
-			::Write<Light>
+			::Write<component::Light>
 			::To<ecs::Query>;
 
 		using MeshQuery = ecs::Chain
-			::Write<MeshRenderer>
-			::Write<Transform>
+			::Write<component::MeshRenderer>
+			::Write<component::Transform>
 			::To<ecs::Query>;
 
 		using MeshEntity = ecs::Chain
-			::Write<MeshRenderer>
-			::Write<Transform>
+			::Write<component::MeshRenderer>
+			::Write<component::Transform>
 			::To<ecs::Entity>;
 
 		inline auto beginScene(Entity entity, LightQuery lightQuery, MeshQuery meshQuery, ecs::World world)
@@ -203,12 +203,12 @@ namespace maple
 
 			if (!lightQuery.empty())
 			{
-				Light* directionaLight = nullptr;
+				component::Light* directionaLight = nullptr;
 
 				for (auto entity : lightQuery)
 				{
 					auto [light] = lightQuery.convert(entity);
-					if (static_cast<LightType>(light.lightData.type) == LightType::DirectionalLight)
+					if (static_cast<component::LightType>(light.lightData.type) == component::LightType::DirectionalLight)
 					{
 						directionaLight = &light;
 						break;

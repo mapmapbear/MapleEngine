@@ -28,17 +28,17 @@ namespace maple
 		Application::getSceneManager()->addScene("PreviewScene", scene);
 
 		auto entity = scene->createEntity("Light");
-		entity.addComponent<Light>();
+		entity.addComponent<component::Light>();
 
 
-		auto &transform = entity.getComponent<Transform>();
+		auto &transform = entity.getComponent<component::Transform>();
 		transform.setLocalOrientation(glm::radians(glm::vec3(45.0, 15.0, 45.0)));
 
 		auto controller = scene->createEntity("CameraController");
-		controller.addComponent<EditorCameraController>();
+		controller.addComponent<component::EditorCameraController>();
 
 		auto meshRoot = scene->createEntity("MeshRoot");
-		meshRoot.addComponent<Transform>();
+		meshRoot.addComponent<component::Transform>();
 
 		scene->setUseSceneCamera(true);
 		scene->getCamera().second->setLocalPosition({0, 0, 3});
@@ -75,7 +75,7 @@ namespace maple
 			auto entity = scene->getEntityManager()->getEntityByName("MeshRoot");
 			if (entity)
 			{
-				auto &transform = entity.getComponent<Transform>();
+				auto &transform = entity.getComponent<component::Transform>();
 				auto  quat      = glm::quat(transform.getLocalOrientation());
 				ImGui::gizmo3D("##gizmo2", quat, 96);
 			}
@@ -110,7 +110,7 @@ namespace maple
 
 	auto PreviewWindow::handleInput(float dt) -> void
 	{
-		auto       group    = scene->getRegistry().view<EditorCameraController>();
+		auto       group    = scene->getRegistry().view<component::EditorCameraController>();
 		const auto mousePos = Input::getInput()->getMousePosition();
 		if (previousCurserPos == glm::vec2{0, 0})
 		{
@@ -118,7 +118,7 @@ namespace maple
 		}
 		for (auto &entity : group)
 		{
-			auto &controller = group.get<EditorCameraController>(entity);
+			auto &controller = group.get<component::EditorCameraController>(entity);
 			auto  camera     = scene->getCamera();
 			controller.updateScroll(*camera.second, Input::getInput()->getScrollOffset(), dt);
 			handleRotation(dt, mousePos);
@@ -133,7 +133,7 @@ namespace maple
 		auto entity = scene->getEntityManager()->getEntityByName("MeshRoot");
 		if (Input::getInput()->isMouseHeld(KeyCode::MouseKey::ButtonLeft) && entity)
 		{
-			auto &transform        = entity.getComponent<Transform>();
+			auto &transform        = entity.getComponent<component::Transform>();
 			float mouseSensitivity = 0.02f;
 			rotateVelocity         = rotateVelocity + (pos - previousCurserPos) * mouseSensitivity;
 			glm::vec3 euler        = glm::degrees(transform.getLocalOrientation());

@@ -18,7 +18,7 @@
 namespace maple
 {
 
-	MonoScript::MonoScript(const std::string& name, MonoComponent* component, MonoSystem* system):
+	MonoScript::MonoScript(const std::string& name, component::MonoComponent* component, MonoSystem* system):
 		component(component), name(name)
 	{
 		className = StringUtils::getFileNameWithoutExtension(name);
@@ -60,7 +60,7 @@ namespace maple
 			destoryFunc = clazz->getMethodExact("OnDestory", "");
 			auto entity = component->getEntity();
 			scriptObject->setValue(&component->getEntityId(), "_internal_entity_handle");
-			scriptObject->setValue(entity.tryGetComponent<Transform>(), "_internal_entity_handle");
+			scriptObject->setValue(entity.tryGetComponent<component::Transform>(), "_internal_entity_handle");
 			scriptObject->construct();
 		}
 	}

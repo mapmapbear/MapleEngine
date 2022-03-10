@@ -69,9 +69,9 @@ namespace maple
 				::To<ecs::Entity>;
 
 			using Query = ecs::Chain
-				::Read<Atmosphere>
-				::Read<Light>
-				::Read<Transform>
+				::Read<component::Atmosphere>
+				::Read<component::Light>
+				::Read<component::Transform>
 				::To<ecs::Query>;
 
 			inline auto system(Entity entity, Query query, ecs::World world)

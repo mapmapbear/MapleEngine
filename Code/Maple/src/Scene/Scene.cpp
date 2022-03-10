@@ -12,6 +12,7 @@
 #include "Scene/Component/Transform.h"
 #include "Scene/Component/VolumetricCloud.h"
 #include "Scene/Component/BoundingBox.h"
+#include "Scene/Component/LightProbe.h"
 
 #include "SceneGraph.h"
 
@@ -41,18 +42,19 @@ namespace maple
 	{
 		LOGV("{0} {1}", __FUNCTION__, initName);
 		entityManager = std::make_shared<EntityManager>(this);
-		entityManager->addDependency<Camera, Transform>();
-		entityManager->addDependency<Light, Transform>();
-		entityManager->addDependency<MeshRenderer, Transform>();
-		entityManager->addDependency<Model, Transform>();
-		entityManager->addDependency<Sprite, Transform>();
-		entityManager->addDependency<AnimatedSprite, Transform>();
+		entityManager->addDependency<Camera, component::Transform>();
+		entityManager->addDependency<component::Light, component::Transform>();
+		entityManager->addDependency<component::MeshRenderer, component::Transform>();
+		entityManager->addDependency<component::Model, component::Transform>();
+		entityManager->addDependency<component::Sprite, component::Transform>();
+		entityManager->addDependency<component::AnimatedSprite, component::Transform>();
+		entityManager->addDependency<component::VolumetricCloud, component::Light>();
 
-		entityManager->addDependency<VolumetricCloud, Light>();
+		entityManager->addDependency<component::LightProbe, component::Transform>();
 
 		sceneGraph = std::make_shared<SceneGraph>();
 		sceneGraph->init(entityManager->getRegistry());
-		entityManager->getRegistry().on_construct<MeshRenderer>().connect<&Scene::onMeshRenderCreated>(this);
+		entityManager->getRegistry().on_construct<component::MeshRenderer>().connect<&Scene::onMeshRenderCreated>(this);
 
 		globalEntity = createEntity("global");
 
@@ -148,15 +150,15 @@ namespace maple
 		copyComponents(entity, newEntity);
 	}
 
-	auto Scene::getCamera() -> std::pair<Camera *, Transform *>
+	auto Scene::getCamera() -> std::pair<Camera *, component::Transform *>
 	{
-		auto camsEttView = getRegistry().group<Camera>(entt::get<Transform>);   //entityManager->getEntitiesWithTypes<Camera, Transform>();
+		auto camsEttView = getRegistry().group<Camera>(entt::get<component::Transform>);   //entityManager->getEntitiesWithTypes<Camera, Transform>();
 
 		if (!camsEttView.empty() && useSceneCamera)
 		{
 			Entity     entity(camsEttView.front(), getRegistry());
 			Camera &   sceneCam   = entity.getComponent<Camera>();
-			Transform &sceneCamTr = entity.getComponent<Transform>();
+			component::Transform &sceneCamTr = entity.getComponent<component::Transform>();
 			return {&sceneCam, &sceneCamTr};
 		}
 		return {overrideCamera, overrideTransform};
@@ -174,7 +176,7 @@ namespace maple
 		sceneBox.clear();
 		
 		using Query = ecs::Chain
-			::Write<MeshRenderer>
+			::Write<component::MeshRenderer>
 			::To<ecs::Query>;
 
 		Query query(entityManager->getRegistry());
@@ -217,11 +219,11 @@ namespace maple
 	auto Scene::updateCameraController(float dt) -> void
 	{
 		PROFILE_FUNCTION();
-		auto controller = entityManager->getRegistry().group<CameraControllerComponent>(entt::get<Transform>);
+		auto controller = entityManager->getRegistry().group<component::CameraControllerComponent>(entt::get<component::Transform>);
 		for (auto entity : controller)
 		{
 			const auto mousePos = Input::getInput()->getMousePosition();
-			auto &[con, trans]  = controller.get<CameraControllerComponent, Transform>(entity);
+			auto &[con, trans]  = controller.get<component::CameraControllerComponent, component::Transform>(entity);
 			if (Application::get()->isSceneActive() &&
 			    Application::get()->getEditorState() == EditorState::Play &&
 			    con.getController())
@@ -238,10 +240,10 @@ namespace maple
 		updateCameraController(dt);
 		getBoundingBox();
 		sceneGraph->update(entityManager->getRegistry());
-		auto view = entityManager->getRegistry().view<AnimatedSprite, Transform>();
+		auto view = entityManager->getRegistry().view<component::AnimatedSprite, component::Transform>();
 		for (auto entity : view)
 		{
-			const auto &[anim, trans] = view.get<AnimatedSprite, Transform>(entity);
+			const auto &[anim, trans] = view.get<component::AnimatedSprite, component::Transform>(entity);
 			anim.onUpdate(dt);
 		}
 	}

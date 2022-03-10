@@ -7,6 +7,7 @@
 #include "Scene/System/ExecutePoint.h"
 #include "RHI/Texture.h"
 #include <vector>
+#include <IconsMaterialDesignIcons.h>
 
 namespace maple
 {
@@ -14,6 +15,8 @@ namespace maple
 	{
 		struct LPVGrid
 		{
+			constexpr static char* ICON = ICON_MDI_TRACK_LIGHT;
+
 			std::shared_ptr<Texture3D> lpvGridR;
 			std::shared_ptr<Texture3D> lpvGridG;
 			std::shared_ptr<Texture3D> lpvGridB;
@@ -39,5 +42,6 @@ namespace maple
 	namespace light_propagation_volume
 	{
 		auto registerLPV(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void;
+		auto registerLPVDebug(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void;
 	};
 };        // namespace maple

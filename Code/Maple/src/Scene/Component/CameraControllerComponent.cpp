@@ -7,45 +7,47 @@
 
 namespace maple 
 {
-	CameraControllerComponent::ControllerType CameraControllerComponent::stringToType(const std::string& type)
+	namespace component
 	{
-		if (type == "FPS")
-			return ControllerType::FPS;
-		if (type == "Editor")
-			return ControllerType::EditorCamera;
-		return ControllerType::Custom;
-	}
-
-	CameraControllerComponent::CameraControllerComponent(ControllerType type)
-	{
-		setControllerType(type);
-	}
-
-	auto CameraControllerComponent::setControllerType(CameraControllerComponent::ControllerType type) -> void
-	{
-		this->type = type;
-		switch (type)
+		CameraControllerComponent::ControllerType CameraControllerComponent::stringToType(const std::string& type)
 		{
-		case ControllerType::FPS:
-			LOGW("{0} does not implement", __FUNCTION__);
-			break;
-		case ControllerType::EditorCamera:
-			cameraController = std::make_shared<EditorCameraController>();
-			break;
+			if (type == "FPS")
+				return ControllerType::FPS;
+			if (type == "Editor")
+				return ControllerType::EditorCamera;
+			return ControllerType::Custom;
+		}
+
+		CameraControllerComponent::CameraControllerComponent(ControllerType type)
+		{
+			setControllerType(type);
+		}
+
+		auto CameraControllerComponent::setControllerType(CameraControllerComponent::ControllerType type) -> void
+		{
+			this->type = type;
+			switch (type)
+			{
+			case ControllerType::FPS:
+				LOGW("{0} does not implement", __FUNCTION__);
+				break;
+			case ControllerType::EditorCamera:
+				cameraController = std::make_shared<EditorCameraController>();
+				break;
+			}
+		}
+
+		auto CameraControllerComponent::typeToString(ControllerType type) -> std::string
+		{
+			switch (type)
+			{
+			case ControllerType::FPS:
+				return "FPS";
+			case ControllerType::EditorCamera:
+				return "Editor";
+			}
+			return "Custom";
 		}
 	}
-
-	auto CameraControllerComponent::typeToString(ControllerType type) -> std::string
-	{
-		switch (type)
-		{
-		case ControllerType::FPS:
-			return "FPS";
-		case ControllerType::EditorCamera:
-			return "Editor";
-		}
-		return "Custom";
-	}
-
 };
 

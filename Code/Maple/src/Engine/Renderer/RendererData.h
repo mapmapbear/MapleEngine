@@ -6,13 +6,13 @@
 #include <glm/glm.hpp>
 namespace maple
 {
-	class Transform;
 	class GBuffer;
 	class CommandBuffer;
 	class Mesh;
 
 	namespace component
 	{
+		class Transform;
 		struct CameraView
 		{
 			glm::mat4  proj;
@@ -23,7 +23,7 @@ namespace maple
 			float      farPlane;
 			float      fov;
 			Frustum    frustum;
-			Transform *cameraTransform;
+			component::Transform *cameraTransform;
 		};
 
 		struct EnvironmentData

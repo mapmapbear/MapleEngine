@@ -32,11 +32,11 @@ namespace maple
 	{
 		auto &editor = *static_cast<Editor *>(Application::get());
 
-		auto group = registry.group(entt::get<T, Transform>);
+		auto group = registry.group(entt::get<T, component::Transform>);
 		bool click = false;
 		for (auto entity : group)
 		{
-			const auto &[component, trans] = group.template get<T, Transform>(entity);
+			const auto &[component, trans] = group.template get<T, component::Transform>(entity);
 
 			auto pos = trans.getWorldPosition();
 
@@ -82,7 +82,7 @@ namespace maple
 		if (ImGui::Begin(STATIC_NAME, &active, flags))
 		{
 			Camera *   camera    = nullptr;
-			Transform *transform = nullptr;
+			component::Transform *transform = nullptr;
 
 			bool gameView = false;
 
@@ -100,11 +100,11 @@ namespace maple
 				currentScene->setOverrideTransform(nullptr);
 
 				auto &registry   = currentScene->getRegistry();
-				auto  cameraView = registry.view<Camera, Transform>();
+				auto  cameraView = registry.view<Camera, component::Transform>();
 				if (!cameraView.empty())
 				{
 					camera    = &registry.get<Camera>(cameraView.front());
-					transform = &registry.get<Transform>(cameraView.front());
+					transform = &registry.get<component::Transform>(cameraView.front());
 				}
 			}
 			bool      click = false;
@@ -234,7 +234,7 @@ namespace maple
 
 		const auto viewProj = proj * view;
 
-		bool click = showGizmo<Light>(width, height, xpos, ypos, viewProj, f, registry, FileType::Lighting);
+		bool click = showGizmo<component::Light>(width, height, xpos, ypos, viewProj, f, registry, FileType::Lighting);
 		click      = click || showGizmo<Camera>(width, height, xpos, ypos, viewProj, f, registry, FileType::Camera);
 		return click;
 	}

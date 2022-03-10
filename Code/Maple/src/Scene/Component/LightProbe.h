@@ -1,13 +1,18 @@
 //////////////////////////////////////////////////////////////////////////////
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
-
-#include "CaptureGraph.h"
+#pragma once
+#include "Component.h"
+#include <glm/glm.hpp>
 
 namespace maple
 {
-	namespace CaptureGraph
+	namespace component 
 	{
-
+		class LightProbe : public Component
+		{
+		public:
+			constexpr static char* ICON = ICON_MDI_LIGHTBULB;
+		};
 	}
-};
+};        // namespace maple

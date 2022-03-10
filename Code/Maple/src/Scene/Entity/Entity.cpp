@@ -8,21 +8,21 @@ namespace maple
 {
 	auto Entity::isActive() -> bool
 	{
-		if (hasComponent<ActiveComponent>())
-			return registry->get<ActiveComponent>(entityHandle).active;
+		if (hasComponent<component::ActiveComponent>())
+			return registry->get<component::ActiveComponent>(entityHandle).active;
 
 		return true;
 	}
 
 	auto Entity::setActive(bool isActive) -> void
 	{
-		getOrAddComponent<ActiveComponent>().active = isActive;
+		getOrAddComponent<component::ActiveComponent>().active = isActive;
 	}
 
 	auto Entity::setParent(const Entity &entity) -> void
 	{
 		bool acceptable         = false;
-		auto hierarchyComponent = tryGetComponent<Hierarchy>();
+		auto hierarchyComponent = tryGetComponent<component::Hierarchy>();
 		if (hierarchyComponent != nullptr)
 		{
 			acceptable = entity.entityHandle != entityHandle && (!entity.isParent(*this)) && (hierarchyComponent->getParent() != entityHandle);
@@ -34,10 +34,10 @@ namespace maple
 			return;
 
 		if (hierarchyComponent)
-			Hierarchy::reparent(entityHandle, entity.entityHandle, *registry, *hierarchyComponent);
+			component::Hierarchy::reparent(entityHandle, entity.entityHandle, *registry, *hierarchyComponent);
 		else
 		{
-			registry->emplace<Hierarchy>(entityHandle, entity.entityHandle);
+			registry->emplace<component::Hierarchy>(entityHandle, entity.entityHandle);
 		}
 	}
 
@@ -63,7 +63,7 @@ namespace maple
 			{
 				for (auto entt : children)
 				{
-					auto &nameComp = entt.getComponent<NameComponent>();
+					auto &nameComp = entt.getComponent<component::NameComponent>();
 					if (layers[i] == nameComp.name)
 					{
 						ent      = entt;
@@ -81,7 +81,7 @@ namespace maple
 		auto children = getChildren();
 		for (auto entt : children)
 		{
-			auto &nameComp = entt.getComponent<NameComponent>();
+			auto &nameComp = entt.getComponent<component::NameComponent>();
 			if (name == nameComp.name)
 			{
 				return entt;
@@ -97,7 +97,7 @@ namespace maple
 
 	Entity Entity::getParent()
 	{
-		auto hierarchyComp = tryGetComponent<Hierarchy>();
+		auto hierarchyComp = tryGetComponent<component::Hierarchy>();
 		if (hierarchyComp)
 			return Entity(hierarchyComp->getParent(), *registry);
 		else
@@ -107,14 +107,14 @@ namespace maple
 	std::vector<Entity> Entity::getChildren()
 	{
 		std::vector<Entity> children;
-		auto                hierarchyComponent = tryGetComponent<Hierarchy>();
+		auto                hierarchyComponent = tryGetComponent<component::Hierarchy>();
 		if (hierarchyComponent)
 		{
 			entt::entity child = hierarchyComponent->getFirst();
 			while (child != entt::null && registry->valid(child))
 			{
 				children.emplace_back(child, *registry);
-				hierarchyComponent = registry->try_get<Hierarchy>(child);
+				hierarchyComponent = registry->try_get<component::Hierarchy>(child);
 				if (hierarchyComponent)
 					child = hierarchyComponent->getNext();
 			}
@@ -124,13 +124,13 @@ namespace maple
 
 	auto Entity::removeAllChildren() -> void
 	{
-		auto hierarchyComponent = registry->try_get<Hierarchy>(entityHandle);
+		auto hierarchyComponent = registry->try_get<component::Hierarchy>(entityHandle);
 		if (hierarchyComponent)
 		{
 			entt::entity child = hierarchyComponent->getFirst();
 			while (child != entt::null)
 			{
-				auto   hierarchyComponent = registry->try_get<Hierarchy>(child);
+				auto   hierarchyComponent = registry->try_get<component::Hierarchy>(child);
 				auto   next               = hierarchyComponent ? hierarchyComponent->getNext() : entt::null;
 				Entity ent                = {child, *registry};
 				ent.removeAllChildren();
@@ -142,7 +142,7 @@ namespace maple
 
 	bool Entity::isParent(const Entity &potentialParent) const
 	{
-		auto nodeHierarchyComponent = registry->try_get<Hierarchy>(entityHandle);
+		auto nodeHierarchyComponent = registry->try_get<component::Hierarchy>(entityHandle);
 		if (nodeHierarchyComponent)
 		{
 			auto parent = nodeHierarchyComponent->getParent();
@@ -154,7 +154,7 @@ namespace maple
 				}
 				else
 				{
-					nodeHierarchyComponent = registry->try_get<Hierarchy>(parent);
+					nodeHierarchyComponent = registry->try_get<component::Hierarchy>(parent);
 					parent                 = nodeHierarchyComponent ? nodeHierarchyComponent->getParent() : entt::null;
 				}
 			}

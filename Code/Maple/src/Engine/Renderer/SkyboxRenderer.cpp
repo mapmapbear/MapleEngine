@@ -114,12 +114,12 @@ namespace maple
 			::To<ecs::Entity>;
 
 		using Query = ecs::Chain
-			::Write<Environment>
+			::Write<component::Environment>
 			::To<ecs::Query>;
 
 		using SunLightQuery = ecs::Chain
-			::Read<Light>
-			::Read<Transform>
+			::Read<component::Light>
+			::Read<component::Transform>
 			::To<ecs::Query>;
 
 		inline auto beginScene(Entity entity, Query query, SunLightQuery sunLightQuery, ecs::World world)
@@ -129,7 +129,7 @@ namespace maple
 			if (!query.empty())
 			{
 				auto entityHandle = *query.begin();
-				auto& envData = query.getComponent<Environment>(entityHandle);
+				auto& envData = query.getComponent<component::Environment>(entityHandle);
 
 				skyboxData.pseudoSky = envData.isPseudoSky();
 				if (envData.isPseudoSky())

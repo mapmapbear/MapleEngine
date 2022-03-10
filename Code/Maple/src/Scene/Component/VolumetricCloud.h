@@ -9,48 +9,51 @@
 
 namespace maple
 {
-	class VolumetricCloud : public Component
+	namespace component
 	{
-	  public:
-		constexpr static char *ICON = ICON_MDI_WEATHER_CLOUDY;
-
-		float cloudSpeed = 450.0;
-		float coverage   = 0.45;
-		float crispiness = 40.;
-		float curliness  = .1;
-		float density    = 0.02;
-		float absorption = 0.35;
-
-		float earthRadius       = 600000.0;
-		float sphereInnerRadius = 5000.0;
-		float sphereOuterRadius = 17000.0;
-
-		float perlinFrequency = 0.8;
-
-		bool enableGodRays;
-		bool enablePowder;
-		bool postProcess;
-
-		template <class Archive>
-		inline auto serialize(Archive &archive) -> void
+		class VolumetricCloud : public Component
 		{
-			archive(
-			    cloudSpeed,
-			    coverage,
-			    crispiness,
-			    curliness,
-			    density,
-			    absorption,
-			    earthRadius,
-			    sphereInnerRadius,
-			    sphereOuterRadius,
-			    perlinFrequency,
-			    enableGodRays,
-			    enablePowder,
-			    postProcess,
-			    entity);
-		}
+		public:
+			constexpr static char* ICON = ICON_MDI_WEATHER_CLOUDY;
 
-		bool weathDirty = true;
+			float cloudSpeed = 450.0;
+			float coverage = 0.45;
+			float crispiness = 40.;
+			float curliness = .1;
+			float density = 0.02;
+			float absorption = 0.35;
+
+			float earthRadius = 600000.0;
+			float sphereInnerRadius = 5000.0;
+			float sphereOuterRadius = 17000.0;
+
+			float perlinFrequency = 0.8;
+
+			bool enableGodRays;
+			bool enablePowder;
+			bool postProcess;
+
+			template <class Archive>
+			inline auto serialize(Archive& archive) -> void
+			{
+				archive(
+					cloudSpeed,
+					coverage,
+					crispiness,
+					curliness,
+					density,
+					absorption,
+					earthRadius,
+					sphereInnerRadius,
+					sphereOuterRadius,
+					perlinFrequency,
+					enableGodRays,
+					enablePowder,
+					postProcess,
+					entity);
+			}
+
+			bool weathDirty = true;
+		};
 	};
 };        // namespace maple

@@ -7,15 +7,18 @@
 
 namespace maple
 {
-	class LuaComponent;
 	class Scene;
+	namespace component 
+	{
+		class LuaComponent;
+	}
 	class MetaFile 
 	{
 	public:
 		MetaFile() = default;
-		auto save(const LuaComponent* comp, const std::string& name) const -> void;
-		auto load(LuaComponent* comp, const std::string& name, Scene* scene) -> void;
+		auto save(const component::LuaComponent* comp, const std::string& name) const -> void;
+		auto load(component::LuaComponent* comp, const std::string& name, Scene* scene) -> void;
 	private:
-		friend class LuaComponent;
+		friend class component::LuaComponent;
 	};
 };

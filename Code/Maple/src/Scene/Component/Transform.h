@@ -20,130 +20,125 @@ namespace maple
 	constexpr glm::vec3 BACK(0.0f, 0.0f, -1.0f);
 	constexpr glm::vec3 ONE(1.0f, 1.0f, 1.0f);
 
-	class MAPLE_EXPORT Transform final : public Component
+	namespace component 
 	{
-	  public:
-		constexpr static char *ICON = ICON_MDI_VECTOR_LINE;
-
-		Transform();
-		Transform(const glm::mat4 &matrix);
-		Transform(const glm::vec3 &position);
-		~Transform();
-
-		auto setWorldMatrix(const glm::mat4 &mat) -> void;
-		auto setLocalTransform(const glm::mat4 &localMat) -> void;
-		auto setOffsetTransform(const glm::mat4 &localMat) -> void;
-		auto setLocalPosition(const glm::vec3 &localPos) -> void;
-		auto setLocalScale(const glm::vec3 &localScale) -> void;
-		auto setLocalOrientation(const glm::vec3 &rotation) -> void;
-		auto setLocalOrientation(const glm::quat &rotation) -> void;
-
-		auto lookAt(const glm::vec3 &target) -> void;
-
-		inline auto &getWorldMatrix()
+		class MAPLE_EXPORT Transform final : public Component
 		{
-			if (dirty)
-				updateLocalMatrix();
-			return worldMatrix;
-		}
+		  public:
+			constexpr static char* ICON = ICON_MDI_VECTOR_LINE;
 
-		inline const auto &getWorldMatrixInverse()
-		{
-			if (dirty)
-				updateLocalMatrix();
-			return worldMatrixInverse;
-		}
+			Transform();
+			Transform(const glm::mat4& matrix);
+			Transform(const glm::vec3& position);
+			~Transform();
 
-		inline auto &getLocalMatrix()
-		{
-			if (dirty)
-				updateLocalMatrix();
-			return localMatrix;
-		}
-		inline auto getWorldPosition() const
-		{
-			return glm::vec3{worldMatrix[3][0], worldMatrix[3][1], worldMatrix[3][2]};
-		}
-		inline auto getWorldOrientation() const
-		{
-			return glm::quat_cast(worldMatrix);
+			auto setWorldMatrix(const glm::mat4& mat) -> void;
+			auto setLocalTransform(const glm::mat4& localMat) -> void;
+			auto setOffsetTransform(const glm::mat4& localMat) -> void;
+			auto setLocalPosition(const glm::vec3& localPos) -> void;
+			auto setLocalScale(const glm::vec3& localScale) -> void;
+			auto setLocalOrientation(const glm::vec3& rotation) -> void;
+			auto setLocalOrientation(const glm::quat& rotation) -> void;
+
+			auto lookAt(const glm::vec3& target) -> void;
+
+			inline auto& getWorldMatrix()
+			{
+				if (dirty)
+					updateLocalMatrix();
+				return worldMatrix;
+			}
+
+			inline const auto& getWorldMatrixInverse()
+			{
+				if (dirty)
+					updateLocalMatrix();
+				return worldMatrixInverse;
+			}
+
+			inline auto& getLocalMatrix()
+			{
+				if (dirty)
+					updateLocalMatrix();
+				return localMatrix;
+			}
+			inline auto getWorldPosition() const
+			{
+				return glm::vec3{worldMatrix[3][0], worldMatrix[3][1], worldMatrix[3][2]};
+			}
+			inline auto getWorldOrientation() const
+			{
+				return glm::quat_cast(worldMatrix);
+			};
+			inline auto& getLocalPosition() const
+			{
+				return localPosition;
+			}
+			inline auto& getLocalScale() const
+			{
+				return localScale;
+			}
+			inline auto& getLocalOrientation() const
+			{
+				return localOrientation;
+			}
+
+			inline auto& getOffsetMatrix() const
+			{
+				return offsetMatrix;
+			}
+
+			inline auto hasUpdated() const
+			{
+				return hasUpdate;
+			}
+			inline auto setHasUpdated(bool set)
+			{
+				hasUpdate = set;
+			}
+
+			auto resetTransform() -> void;
+			auto updateLocalMatrix() -> void;
+			auto applyTransform() -> void;
+
+			auto getUpDirection() const->glm::vec3;
+			auto getRightDirection() const->glm::vec3;
+			auto getForwardDirection() const->glm::vec3;
+
+			static auto getScaleFromMatrix(const glm::mat4& mat)->glm::vec3;
+
+			template <typename Archive>
+			inline auto save(Archive& archive) const -> void
+			{
+				archive(cereal::make_nvp("Position", localPosition), cereal::make_nvp("Rotation", localOrientation), cereal::make_nvp("Scale", localScale), cereal::make_nvp("Id", entity));
+			}
+
+			template <typename Archive>
+			inline auto load(Archive& archive) -> void
+			{
+				archive(cereal::make_nvp("Position", localPosition), cereal::make_nvp("Rotation", localOrientation), cereal::make_nvp("Scale", localScale), cereal::make_nvp("Id", entity));
+				dirty = true;
+				initLocalPosition = localPosition;
+				initLocalScale = localScale;
+				initLocalOrientation = localOrientation;
+			}
+
+		  protected:
+			glm::mat4 localMatrix = glm::mat4(1);
+			glm::mat4 worldMatrix = glm::mat4(1);
+			glm::mat4 offsetMatrix = glm::mat4(1);
+			glm::mat4 worldMatrixInverse = glm::mat4(1);
+
+			glm::vec3 localPosition = {};
+			glm::vec3 localScale = {};
+			glm::vec3 localOrientation = {};
+
+			glm::vec3 initLocalPosition = {};
+			glm::vec3 initLocalScale = {};
+			glm::vec3 initLocalOrientation = {};
+
+			bool hasUpdate = false;
+			bool dirty = false;
 		};
-		inline auto &getLocalPosition() const
-		{
-			return localPosition;
-		}
-		inline auto &getLocalScale() const
-		{
-			return localScale;
-		}
-		inline auto &getLocalOrientation() const
-		{
-			return localOrientation;
-		}
-
-		inline auto &getOffsetMatrix() const
-		{
-			return offsetMatrix;
-		}
-
-		inline auto hasUpdated() const
-		{
-			return hasUpdate;
-		}
-		inline auto setHasUpdated(bool set)
-		{
-			hasUpdate = set;
-		}
-
-		auto resetTransform() -> void;
-		auto updateLocalMatrix() -> void;
-		auto applyTransform() -> void;
-
-		auto getUpDirection() const -> glm::vec3;
-		auto getRightDirection() const -> glm::vec3;
-		auto getForwardDirection() const -> glm::vec3;
-
-		static auto getScaleFromMatrix(const glm::mat4 &mat) -> glm::vec3;
-
-		template <typename Archive>
-		inline auto save(Archive &archive) const -> void
-		{
-			archive(cereal::make_nvp("Position", localPosition), cereal::make_nvp("Rotation", localOrientation), cereal::make_nvp("Scale", localScale), cereal::make_nvp("Id", entity));
-		}
-
-		template <typename Archive>
-		inline auto load(Archive &archive) -> void
-		{
-			archive(cereal::make_nvp("Position", localPosition), cereal::make_nvp("Rotation", localOrientation), cereal::make_nvp("Scale", localScale), cereal::make_nvp("Id", entity));
-			dirty                = true;
-			initLocalPosition    = localPosition;
-			initLocalScale       = localScale;
-			initLocalOrientation = localOrientation;
-		}
-
-	  protected:
-		glm::mat4 localMatrix        = glm::mat4(1);
-		glm::mat4 worldMatrix        = glm::mat4(1);
-		glm::mat4 offsetMatrix       = glm::mat4(1);
-		glm::mat4 worldMatrixInverse = glm::mat4(1);
-
-		glm::vec3 localPosition    = {};
-		glm::vec3 localScale       = {};
-		glm::vec3 localOrientation = {};
-
-		glm::vec3 initLocalPosition    = {};
-		glm::vec3 initLocalScale       = {};
-		glm::vec3 initLocalOrientation = {};
-
-		bool hasUpdate = false;
-		bool dirty     = false;
-	};
-
-	class MAPLE_EXPORT BoneWarpper : public Component
-	{
-	  public:
-		Mesh *                mesh;
-		std::vector<uint32_t> indices;
-	};
-
+	}
 };        // namespace maple

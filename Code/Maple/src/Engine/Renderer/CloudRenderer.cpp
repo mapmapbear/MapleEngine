@@ -193,9 +193,9 @@ namespace maple
 			::To<ecs::Entity>;
 
 		using Query = ecs::Chain
-			::Read<VolumetricCloud>
-			::Read<Light>
-			::Read<Transform>
+			::Read<component::VolumetricCloud>
+			::Read<component::Light>
+			::Read<component::Transform>
 			::To<ecs::Query>;
 
 		inline auto system(Entity entity, Query query, ecs::World world)

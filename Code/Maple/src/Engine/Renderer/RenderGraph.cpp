@@ -138,10 +138,8 @@ namespace maple
 		});
 
 		executePoint->registerGlobalComponent<capture_graph::component::RenderGraph>();
-
 		executePoint->registerGlobalComponent<component::CameraView>();
 		executePoint->registerGlobalComponent<component::FinalPass>();
-
 
 		static ExecuteQueue beginQ;
 		static ExecuteQueue renderQ;
@@ -151,11 +149,12 @@ namespace maple
 		executePoint->registerWithinQueue<on_begin_renderer::system>(renderQ);
 
 		reflective_shadow_map::registerShadowMap(beginQ, renderQ, executePoint);
+		deferred_offscreen::registerDeferredOffScreenRenderer(beginQ, renderQ, executePoint);
 		light_propagation_volume::registerLPV(beginQ, renderQ, executePoint);
 		lpv_indirect_lighting::registerLPVIndirectLight(renderQ, executePoint);
-		deferred_offscreen::registerDeferredOffScreenRenderer(beginQ, renderQ, executePoint);
 		post_process::registerSSAOPass(beginQ, renderQ, executePoint);
 		deferred_lighting::registerDeferredLighting(beginQ, renderQ, executePoint);
+		light_propagation_volume::registerLPVDebug(beginQ, renderQ, executePoint);
 		atmosphere_pass::registerAtmosphere(beginQ,renderQ, executePoint);
 		skybox_renderer::registerSkyboxRenderer(beginQ, renderQ, executePoint);
 		cloud_renderer::registerCloudRenderer(beginQ, renderQ, executePoint);

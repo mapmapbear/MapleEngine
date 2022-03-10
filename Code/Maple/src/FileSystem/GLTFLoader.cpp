@@ -104,7 +104,7 @@ namespace maple
 			PROFILE_FUNCTION();
 			std::vector<std::shared_ptr<Texture2D>> loadedTextures;
 			std::vector<std::shared_ptr<Material>> loadedMaterials;
-			loadedTextures.reserve(gltfModel.textures.size());
+			loadedTextures.resize(gltfModel.textures.size());
 			loadedMaterials.reserve(gltfModel.materials.size());
 
 			for (tinygltf::Texture& gltfTexture : gltfModel.textures)
@@ -128,7 +128,7 @@ namespace maple
 						params = TextureParameters(getFilter(imageAndSampler.sampler->minFilter), getFilter(imageAndSampler.sampler->magFilter), getWrapMode(imageAndSampler.sampler->wrapS));
 
 					auto texture2D = Texture2D::create(imageAndSampler.image->width, imageAndSampler.image->height, imageAndSampler.image->image.data(), params);
-					loadedTextures.emplace_back(texture2D);
+					loadedTextures[gltfTexture.source] = texture2D;
 				}
 			}
 
@@ -256,7 +256,7 @@ namespace maple
 			return loadedMaterials;
 		}
 
-		inline auto loadMesh(tinygltf::Model& model, tinygltf::Mesh& mesh, std::vector<std::shared_ptr<Material>>& materials, Transform& parentTransform) -> std::vector<std::shared_ptr<Mesh>>
+		inline auto loadMesh(tinygltf::Model& model, tinygltf::Mesh& mesh, std::vector<std::shared_ptr<Material>>& materials, component::Transform& parentTransform) -> std::vector<std::shared_ptr<Mesh>>
 		{
 			std::vector<std::shared_ptr<Mesh>> meshes;
 
@@ -406,7 +406,7 @@ namespace maple
 			LOGI("GLTF.asset.version : {0}", model.asset.version);
 			LOGI("GLTF.asset.minVersion : {0}", model.asset.minVersion);
 
-			Transform transform;
+			component::Transform transform;
 			glm::mat4 matrix;
 			glm::mat4 position = glm::mat4(1.0f);
 			glm::mat4 rotation = glm::mat4(1.0f);

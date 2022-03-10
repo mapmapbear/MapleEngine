@@ -91,20 +91,20 @@ namespace maple
 			::To<ecs::Entity>;
 
 		using LightDefine = ecs::Chain
-			::Write<Light>
-			::Read<Transform>;
+			::Write<component::Light>
+			::Read<component::Transform>;
 
 		using Query = LightDefine
 			::To<ecs::Query>;
 
 		using EnvQuery = ecs::Chain
-			::Read<Environment>
+			::Read<component::Environment>
 			::To<ecs::Query>;
 
 		using MeshQuery = ecs::Chain
-			::Write<MeshRenderer>
-			::Write<Transform>
-			::ReadIfExist<StencilComponent>
+			::Write<component::MeshRenderer>
+			::Write<component::Transform>
+			::ReadIfExist<component::StencilComponent>
 			::To<ecs::Query>;
 
 		using LightEntity = LightDefine::To<ecs::Entity>;
@@ -128,9 +128,9 @@ namespace maple
 			data.descriptorColorSet[2]->setUniform("UBO", "nearPlane", &cameraView.nearPlane);
 			data.descriptorColorSet[2]->setUniform("UBO", "farPlane", &cameraView.farPlane);
 
-			Light *directionaLight = nullptr;
+			component::Light *directionaLight = nullptr;
 
-			LightData lights[32] = {};
+			component::LightData lights[32] = {};
 			uint32_t  numLights  = 0;
 
 			{
@@ -141,7 +141,7 @@ namespace maple
 					light.lightData.position  = {transform.getWorldPosition(), 1.f};
 					light.lightData.direction = {glm::normalize(transform.getWorldOrientation() * maple::FORWARD), 1.f};
 
-					if (static_cast<LightType>(light.lightData.type) == LightType::DirectionalLight)
+					if (static_cast<component::LightType>(light.lightData.type) == component::LightType::DirectionalLight)
 						directionaLight = &light;
 
 					lights[numLights] = light.lightData;
@@ -156,7 +156,7 @@ namespace maple
 			//auto cubeMapMipLevels = envData->environmentMap ? envData->environmentMap->getMipMapLevels() - 1 : 0;
 			int32_t renderMode = 0;
 			auto cameraPos = glm::vec4{cameraView.cameraTransform->getWorldPosition(), 1.f};
-			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "lights", lights, sizeof(LightData) * numLights, false);
+			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "lights", lights, sizeof(component::LightData) * numLights, false);
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "cameraPosition", &cameraPos);
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "viewMatrix", &cameraView.view);
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "lightView", &lightView);
@@ -239,7 +239,7 @@ namespace maple
 								pipelineInfo.depthTarget = renderData.gbuffer->getDepthBuffer();
 							}
 
-							if (meshQuery.hasComponent<StencilComponent>(entityHandle))
+							if (meshQuery.hasComponent<component::StencilComponent>(entityHandle))
 							{
 								pipelineInfo.shader = data.stencilShader;
 								pipelineInfo.stencilTest = true;
@@ -354,7 +354,7 @@ namespace maple
 			::To<ecs::Entity>;
 		
 		using EnvQuery = ecs::Chain
-			::Read<Environment>
+			::Read<component::Environment>
 			::To<ecs::Query>;
 
 		inline auto onRender(Entity entity, EnvQuery envQuery, ecs::World world)

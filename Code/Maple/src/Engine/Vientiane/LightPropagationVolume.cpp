@@ -28,6 +28,9 @@ namespace maple
 		inline auto updateGrid(component::LPVGrid& grid, maple::BoundingBox * box) 
 		{
 			auto dimension = box->size();
+
+			dimension = glm::min(glm::vec3(32,32,32), dimension);
+
 			TextureParameters paramemters(TextureFormat::R32UI, TextureFilter::Nearest, TextureWrap::ClampToEdge);
 			if (grid.lpvGridB == nullptr) 
 			{
@@ -409,8 +412,6 @@ namespace maple
 			executePoint->registerGlobalComponent<component::InjectLightData>();
 			executePoint->registerGlobalComponent<component::InjectGeometryVolume>();
 			executePoint->registerGlobalComponent<component::PropagationData>();
-			executePoint->registerGlobalComponent<component::DebugAABBData>();
-
 
 			executePoint->registerWithinQueue<inject_light_pass::beginScene>(begin);
 			executePoint->registerWithinQueue<inject_light_pass::render>(renderer);
@@ -418,9 +419,14 @@ namespace maple
 			executePoint->registerWithinQueue<inject_geometry_pass::render>(renderer);
 			executePoint->registerWithinQueue<propagation_pass::beginScene>(begin);
 			executePoint->registerWithinQueue<propagation_pass::render>(renderer);
+		}
 
+		auto registerLPVDebug(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void
+		{
+			executePoint->registerGlobalComponent<component::DebugAABBData>();
 			executePoint->registerWithinQueue<aabb_debug::beginScene>(begin);
 			executePoint->registerWithinQueue<aabb_debug::render>(renderer);
 		}
+
 	};
 };        // namespace maple

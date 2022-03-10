@@ -14,83 +14,85 @@ namespace maple
 {
 	class Mesh;
 	class MeshResource;
-
-	enum class PrimitiveType : int32_t
+	namespace component
 	{
-		Plane    = 0,
-		Quad     = 1,
-		Cube     = 2,
-		Pyramid  = 3,
-		Sphere   = 4,
-		Capsule  = 5,
-		Cylinder = 6,
-		Terrain  = 7,
-		File     = 8,
-		Length
-	};
-
-	class MAPLE_EXPORT Model final : public Component
-	{
-	  public:
-		Model() = default;
-		Model(const std::string &file);
-
-		template <class Archive>
-		auto save(Archive &archive) const -> void
+		enum class PrimitiveType : int32_t
 		{
-			archive(filePath, type, entity);
-		}
+			Plane = 0,
+			Quad = 1,
+			Cube = 2,
+			Pyramid = 3,
+			Sphere = 4,
+			Capsule = 5,
+			Cylinder = 6,
+			Terrain = 7,
+			File = 8,
+			Length
+		};
 
-		template <class Archive>
-		auto load(Archive &archive) -> void
+		class MAPLE_EXPORT Model final : public Component
 		{
-			archive(filePath, type, entity);
-			load();
-		}
+		  public:
+			Model() = default;
+			Model(const std::string& file);
 
-		std::string                   filePath;
-		PrimitiveType                 type = PrimitiveType::Length;
-		std::shared_ptr<MeshResource> resource;
+			template <class Archive>
+			auto save(Archive& archive) const -> void
+			{
+				archive(filePath, type, entity);
+			}
 
-	  private:
-		auto load() -> void;
-	};
+			template <class Archive>
+			auto load(Archive& archive) -> void
+			{
+				archive(filePath, type, entity);
+				load();
+			}
 
-	class MAPLE_EXPORT MeshRenderer : public Component
-	{
-	  public:
-		constexpr static char *ICON = ICON_MDI_SHAPE;
+			std::string                   filePath;
+			PrimitiveType                 type = PrimitiveType::Length;
+			std::shared_ptr<MeshResource> resource;
 
-		MeshRenderer() = default;
-		MeshRenderer(const std::shared_ptr<Mesh> &mesh);
+		  private:
+			auto load() -> void;
+		};
 
-		template <class Archive>
-		inline auto save(Archive &archive) const -> void
+		class MAPLE_EXPORT MeshRenderer : public Component
 		{
-			archive(mesh->getName(), entity, cereal::make_nvp("material", mesh->getMaterial()));
-		}
+		public:
+			constexpr static char* ICON = ICON_MDI_SHAPE;
 
-		template <class Archive>
-		inline auto load(Archive &archive) -> void
-		{
-			archive(meshName, entity, cereal::make_nvp("material", material));
-		}
+			MeshRenderer() = default;
+			MeshRenderer(const std::shared_ptr<Mesh>& mesh);
 
-		auto loadFromModel() -> void;
+			template <class Archive>
+			inline auto save(Archive& archive) const -> void
+			{
+				archive(mesh->getName(), entity, cereal::make_nvp("material", mesh->getMaterial()));
+			}
 
-		inline auto &getMesh()
-		{
-			if (mesh == nullptr)
-				getMesh(meshName);
-			return mesh;
-		}
+			template <class Archive>
+			inline auto load(Archive& archive) -> void
+			{
+				archive(meshName, entity, cereal::make_nvp("material", material));
+			}
 
-		auto isActive() const -> bool;
+			auto loadFromModel() -> void;
 
-	  private:
-		std::shared_ptr<Mesh>     mesh;
-		auto                      getMesh(const std::string &name) -> void;
-		std::string               meshName;
-		std::shared_ptr<Material> material;
-	};
+			inline auto& getMesh()
+			{
+				if (mesh == nullptr)
+					getMesh(meshName);
+				return mesh;
+			}
+
+			auto isActive() const -> bool;
+
+		private:
+			std::shared_ptr<Mesh>     mesh;
+			auto                      getMesh(const std::string& name) -> void;
+			std::string               meshName;
+			std::shared_ptr<Material> material;
+		};
+	}
 };        // namespace maple

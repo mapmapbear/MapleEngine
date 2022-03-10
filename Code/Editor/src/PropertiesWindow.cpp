@@ -12,6 +12,7 @@
 #include "Scene/Component/Sprite.h"
 #include "Scene/Component/Transform.h"
 #include "Scene/Component/VolumetricCloud.h"
+#include "Scene/Component/LightProbe.h"
 
 #include "Scene/Entity/Entity.h"
 #include "Scene/Scene.h"
@@ -31,19 +32,21 @@
 
 #include "ImGui/ImNotification.h"
 
+#include "Inspector.inl"
+
 namespace MM
 {
 	namespace
 	{
-		std::string lightTypeToString(maple::LightType type)
+		std::string lightTypeToString(maple::component::LightType type)
 		{
 			switch (type)
 			{
-				case maple::LightType::DirectionalLight:
+				case maple::component::LightType::DirectionalLight:
 					return "Directional Light";
-				case maple::LightType::SpotLight:
+				case maple::component::LightType::SpotLight:
 					return "Spot Light";
-				case maple::LightType::PointLight:
+				case maple::component::LightType::PointLight:
 					return "Point Light";
 				default:
 					return "ERROR";
@@ -53,13 +56,13 @@ namespace MM
 		int32_t stringToLightType(const std::string &type)
 		{
 			if (type == "Directional")
-				return int32_t(maple::LightType::DirectionalLight);
+				return int32_t(maple::component::LightType::DirectionalLight);
 
 			if (type == "Point")
-				return int32_t(maple::LightType::PointLight);
+				return int32_t(maple::component::LightType::PointLight);
 
 			if (type == "Spot")
-				return int32_t(maple::LightType::SpotLight);
+				return int32_t(maple::component::LightType::SpotLight);
 			return 0;
 		}
 	}        // namespace
@@ -67,9 +70,9 @@ namespace MM
 	using namespace maple;
 
 	template <>
-	auto ComponentEditorWidget<Transform>(entt::registry &reg, entt::registry::entity_type e) -> void
+	auto ComponentEditorWidget<component::Transform>(entt::registry &reg, entt::registry::entity_type e) -> void
 	{
-		auto &transform = reg.get<Transform>(e);
+		auto &transform = reg.get<component::Transform>(e);
 
 		auto rotation = glm::degrees(transform.getLocalOrientation());
 		auto position = transform.getLocalPosition();
@@ -213,9 +216,9 @@ namespace MM
 	}
 
 	template <>
-	void ComponentEditorWidget<Sprite>(entt::registry &reg, entt::registry::entity_type e)
+	void ComponentEditorWidget<component::Sprite>(entt::registry &reg, entt::registry::entity_type e)
 	{
-		auto &sprite = reg.get<Sprite>(e);
+		auto &sprite = reg.get<component::Sprite>(e);
 
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
 		ImGui::Columns(2);
@@ -249,7 +252,7 @@ namespace MM
 
 			ImVec2 imageButtonSize(64, 64);
 
-			auto                callback = std::bind(&Sprite::loadQuad, &sprite, std::placeholders::_1);
+			auto                callback = std::bind(&component::Sprite::loadQuad, &sprite, std::placeholders::_1);
 			const ImGuiPayload *payload  = ImGui::GetDragDropPayload();
 			auto                min      = ImGui::GetCursorPos();
 			auto                max      = min + imageButtonSize + ImGui::GetStyle().FramePadding;
@@ -328,9 +331,9 @@ namespace MM
 	}
 
 	template <>
-	void ComponentEditorWidget<AnimatedSprite>(entt::registry &reg, entt::registry::entity_type e)
+	void ComponentEditorWidget<component::AnimatedSprite>(entt::registry &reg, entt::registry::entity_type e)
 	{
-		auto &sprite = reg.get<AnimatedSprite>(e);
+		auto &sprite = reg.get<component::AnimatedSprite>(e);
 
 		ImGui::Columns(2);
 
@@ -383,9 +386,9 @@ namespace MM
 	}
 
 	template <>
-	void ComponentEditorWidget<MeshRenderer>(entt::registry &reg, entt::registry::entity_type e)
+	void ComponentEditorWidget<component::MeshRenderer>(entt::registry &reg, entt::registry::entity_type e)
 	{
-		auto &mesh = reg.get<MeshRenderer>(e);
+		auto &mesh = reg.get<component::MeshRenderer>(e);
 
 		auto material = mesh.getMesh()->getMaterial();
 
@@ -429,20 +432,20 @@ namespace MM
 	}
 
 	template <>
-	void ComponentEditorWidget<Light>(entt::registry &reg, entt::registry::entity_type e)
+	void ComponentEditorWidget<component::Light>(entt::registry &reg, entt::registry::entity_type e)
 	{
-		auto &light = reg.get<Light>(e);
+		auto &light = reg.get<component::Light>(e);
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
 		ImGui::Columns(2);
 		ImGui::Separator();
 
-		if (static_cast<LightType>(light.lightData.type) != LightType::DirectionalLight)
+		if (static_cast<component::LightType>(light.lightData.type) != component::LightType::DirectionalLight)
 			ImGuiHelper::property("Radius", light.lightData.radius, 1.0f, 100.0f);
 
 		ImGuiHelper::property("Color", light.lightData.color, true, ImGuiHelper::PropertyFlag::ColorProperty);
 		ImGuiHelper::property("Intensity", light.lightData.intensity, 0.0f, 100.0f);
 
-		if (static_cast<LightType>(light.lightData.type) == LightType::SpotLight)
+		if (static_cast<component::LightType>(light.lightData.type) == component::LightType::SpotLight)
 			ImGuiHelper::property("Angle", light.lightData.angle, -1.0f, 1.0f);
 
 		ImGuiHelper::property("Show Frustum", light.showFrustum);
@@ -455,7 +458,7 @@ namespace MM
 		ImGui::PushItemWidth(-1);
 
 		const char *lights[]  = {"Directional Light", "Spot Light", "Point Light"};
-		auto        currLight = lightTypeToString(LightType(int32_t(light.lightData.type)));
+		auto        currLight = lightTypeToString(component::LightType(int32_t(light.lightData.type)));
 
 		if (ImGui::BeginCombo("LightType", currLight.c_str(), 0))
 		{
@@ -475,9 +478,9 @@ namespace MM
 	}
 
 	template <>
-	void ComponentEditorWidget<MonoComponent>(entt::registry &reg, entt::registry::entity_type e)
+	void ComponentEditorWidget<component::MonoComponent>(entt::registry &reg, entt::registry::entity_type e)
 	{
-		auto &mono = reg.get<MonoComponent>(e);
+		auto &mono = reg.get<component::MonoComponent>(e);
 		ImGui::PushID("add c# script");
 		static std::string path = "scripts/";
 		ImGui::PushItemWidth(-1);
@@ -500,9 +503,9 @@ namespace MM
 	}
 
 	template <>
-	void ComponentEditorWidget<Environment>(entt::registry &reg, entt::registry::entity_type e)
+	void ComponentEditorWidget<component::Environment>(entt::registry &reg, entt::registry::entity_type e)
 	{
-		auto &env = reg.get<Environment>(e);
+		auto &env = reg.get<component::Environment>(e);
 
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
 		ImGui::Columns(2);
@@ -608,9 +611,9 @@ namespace MM
 	}
 
 	template <>
-	void ComponentEditorWidget<CameraControllerComponent>(entt::registry &reg, entt::registry::entity_type e)
+	void ComponentEditorWidget<component::CameraControllerComponent>(entt::registry &reg, entt::registry::entity_type e)
 	{
-		auto &controllerComp = reg.get<CameraControllerComponent>(e);
+		auto &controllerComp = reg.get<component::CameraControllerComponent>(e);
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
 		ImGui::Columns(2);
 		ImGui::Separator();
@@ -621,7 +624,7 @@ namespace MM
 		ImGui::PushItemWidth(-1);
 
 		const std::array<std::string, 2> controllerTypes   = {"FPS", "Editor"};
-		std::string                      currentController = CameraControllerComponent::typeToString(controllerComp.getType());
+		std::string                      currentController = component::CameraControllerComponent::typeToString(controllerComp.getType());
 		if (ImGui::BeginCombo("", currentController.c_str(), 0))        // The second parameter is the label previewed before opening the combo.
 		{
 			for (auto n = 0; n < controllerTypes.size(); n++)
@@ -629,7 +632,7 @@ namespace MM
 				bool isSelected = currentController == controllerTypes[n];
 				if (ImGui::Selectable(controllerTypes[n].c_str(), currentController.c_str()))
 				{
-					controllerComp.setControllerType(CameraControllerComponent::stringToType(controllerTypes[n]));
+					controllerComp.setControllerType(component::CameraControllerComponent::stringToType(controllerTypes[n]));
 				}
 				if (isSelected)
 					ImGui::SetItemDefaultFocus();
@@ -646,40 +649,40 @@ namespace MM
 	}
 
 	template <>
-	void ComponentEditorWidget<Atmosphere>(entt::registry &reg, entt::registry::entity_type e)
+	void ComponentEditorWidget<component::Atmosphere>(entt::registry &reg, entt::registry::entity_type e)
 	{
-		auto &atmosphere = reg.get<Atmosphere>(e);
+		auto &atmosphere = reg.get<component::Atmosphere>(e);
 		auto &data       = atmosphere.getData();
 
 		ImGui::Columns(3);
 		ImGui::Separator();
 
-		ImGuiHelper::propertyWithDefault("Surface Radius", atmosphere.getData().surfaceRadius, 1.f, 1.f, Atmosphere::SURFACE_RADIUS, ImGuiHelper::PropertyFlag::InputFloat);
-		ImGuiHelper::propertyWithDefault("Atmosphere Radius", atmosphere.getData().atmosphereRadius, 1.f, 1.f, Atmosphere::ATMOSPHE_RERADIUS, ImGuiHelper::PropertyFlag::InputFloat);
+		ImGuiHelper::propertyWithDefault("Surface Radius", atmosphere.getData().surfaceRadius, 1.f, 1.f, component::Atmosphere::SURFACE_RADIUS, ImGuiHelper::PropertyFlag::InputFloat);
+		ImGuiHelper::propertyWithDefault("Atmosphere Radius", atmosphere.getData().atmosphereRadius, 1.f, 1.f, component::Atmosphere::ATMOSPHE_RERADIUS, ImGuiHelper::PropertyFlag::InputFloat);
 
-		ImGuiHelper::propertyWithDefault("Center Point", atmosphere.getData().centerPoint, -10000.f, 0.f, {0.f, -Atmosphere::SURFACE_RADIUS, 0.f}, ImGuiHelper::PropertyFlag::InputFloat);
+		ImGuiHelper::propertyWithDefault("Center Point", atmosphere.getData().centerPoint, -10000.f, 0.f, {0.f, -component::Atmosphere::SURFACE_RADIUS, 0.f}, ImGuiHelper::PropertyFlag::InputFloat);
 		auto mie = 10000.f * atmosphere.getData().mieScattering;
 
-		if (ImGuiHelper::propertyWithDefault("Mie Scattering", mie, 0.f, 10.f, Atmosphere::MIE_SCATTERING * 10000.f, ImGuiHelper::PropertyFlag::InputFloat, 0.01))
+		if (ImGuiHelper::propertyWithDefault("Mie Scattering", mie, 0.f, 10.f, component::Atmosphere::MIE_SCATTERING * 10000.f, ImGuiHelper::PropertyFlag::InputFloat, 0.01))
 		{
 			atmosphere.getData().mieScattering = mie / 10000.f;
 		}
 		auto ray = 10000.f * atmosphere.getData().rayleighScattering;
 
-		if (ImGuiHelper::propertyWithDefault("Ray Scattering", ray, 0.f, 10.f, Atmosphere::RAYLEIGH_SCATTERING * 10000.f, ImGuiHelper::PropertyFlag::InputFloat, 0.01))
+		if (ImGuiHelper::propertyWithDefault("Ray Scattering", ray, 0.f, 10.f, component::Atmosphere::RAYLEIGH_SCATTERING * 10000.f, ImGuiHelper::PropertyFlag::InputFloat, 0.01))
 		{
 			atmosphere.getData().rayleighScattering = ray / 10000.f;
 		}
-		ImGuiHelper::propertyWithDefault("Anisotropy(g)", atmosphere.getData().g, 0.f, 1.f, Atmosphere::G, ImGuiHelper::PropertyFlag::InputFloat, 0.01);
+		ImGuiHelper::propertyWithDefault("Anisotropy(g)", atmosphere.getData().g, 0.f, 1.f, component::Atmosphere::G, ImGuiHelper::PropertyFlag::InputFloat, 0.01);
 
 		ImGui::Columns(1);
 		ImGui::Separator();
 	}
 
 	template <>
-	void ComponentEditorWidget<VolumetricCloud>(entt::registry &reg, entt::registry::entity_type e)
+	void ComponentEditorWidget<component::VolumetricCloud>(entt::registry &reg, entt::registry::entity_type e)
 	{
-		auto &cloud = reg.get<VolumetricCloud>(e);
+		auto &cloud = reg.get<component::VolumetricCloud>(e);
 
 		ImGui::Columns(2);
 		ImGui::Separator();
@@ -737,12 +740,12 @@ namespace maple
 		{
 			if (selected != entt::null)
 			{
-				auto activeComponent = registry.try_get<ActiveComponent>(selected);
+				auto activeComponent = registry.try_get<component::ActiveComponent>(selected);
 				bool active          = activeComponent ? activeComponent->active : true;
 				if (ImGui::Checkbox("##ActiveCheckbox", &active))
 				{
 					if (!activeComponent)
-						registry.emplace<ActiveComponent>(selected, active);
+						registry.emplace<component::ActiveComponent>(selected, active);
 					else
 						activeComponent->active = active;
 				}
@@ -750,10 +753,10 @@ namespace maple
 				ImGui::TextUnformatted(ICON_MDI_CUBE);
 				ImGui::SameLine();
 
-				bool        hasName = registry.has<NameComponent>(selected);
+				bool        hasName = registry.has<component::NameComponent>(selected);
 				std::string name;
 				if (hasName)
-					name = registry.get<NameComponent>(selected).name;
+					name = registry.get<component::NameComponent>(selected).name;
 				else
 					name = std::to_string(entt::to_integral(selected));
 
@@ -761,7 +764,7 @@ namespace maple
 				strcpy(objName, name.c_str());
 
 				if (ImGui::InputText("##Name", objName, IM_ARRAYSIZE(objName)))
-					registry.get_or_emplace<NameComponent>(selected).name = objName;
+					registry.get_or_emplace<component::NameComponent>(selected).name = objName;
 
 				ImGui::Separator();
 
@@ -787,41 +790,12 @@ namespace maple
 	auto PropertiesWindow::onSceneCreated(Scene *scene) -> void
 	{
 		enttEditor.clear();
-
 		auto &editor  = static_cast<Editor &>(*Application::get());
-		auto &iconMap = editor.getComponentIconMap();
-
-#define TRIVIAL_COMPONENT(ComponentType, show, showName)         \
-	{                                                            \
-		std::string name = ComponentType::ICON;                  \
-		name += "\t";                                            \
-		if (showName != std::string(""))                         \
-		{                                                        \
-			name += showName;                                    \
-		}                                                        \
-		else                                                     \
-		{                                                        \
-			name += ## #ComponentType;                           \
-		}                                                        \
-		enttEditor.registerComponent<ComponentType>(name, show); \
-	}
-
-		TRIVIAL_COMPONENT(Transform, true, "");
-		TRIVIAL_COMPONENT(Light, true, "");
-		TRIVIAL_COMPONENT(Camera, true, "");
-		TRIVIAL_COMPONENT(CameraControllerComponent, true, "Camera Controller");
-		TRIVIAL_COMPONENT(Environment, true, "");
-		TRIVIAL_COMPONENT(Sprite, true, "");
-		TRIVIAL_COMPONENT(AnimatedSprite, true, "Animation Sprite");
-		TRIVIAL_COMPONENT(MeshRenderer, false, "Mesh Renderer");
-		TRIVIAL_COMPONENT(Atmosphere, true, "");
-		TRIVIAL_COMPONENT(VolumetricCloud, true, "Volumetric Cloud");
-
+		registerInspector(enttEditor);
 		MM::EntityEditor<entt::entity>::ComponentInfo info;
 		info.hasChildren = true;
-
 		info.childrenDraw = [](entt::registry &registry, entt::entity ent) {
-			auto mono = registry.try_get<MonoComponent>(ent);
+			auto mono = registry.try_get<component::MonoComponent>(ent);
 
 			if (mono)
 			{
@@ -852,12 +826,11 @@ namespace maple
 				}
 			}
 		};
-		enttEditor.registerComponent<MonoComponent>(info);
-
+		enttEditor.registerComponent<component::MonoComponent>(info);
 		enttEditor.acceptFile = [&](const std::string &fileName, entt::registry &registry, entt::entity &ent) {
 			if (StringUtils::isCSharpFile(fileName))
 			{
-				auto &mono = registry.get_or_emplace<MonoComponent>(ent);
+				auto &mono = registry.get_or_emplace<component::MonoComponent>(ent);
 				mono.setEntity(ent);
 				mono.addScript(fileName, Application::get()->getSystemManager()->getSystem<MonoSystem>());
 			}

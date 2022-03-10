@@ -16,12 +16,17 @@ namespace maple
 	class TextureCube;
 	class TextureDepth;
 	class UniformBuffer;
-	class Environment;
 	class GBuffer;
 	class DescriptorSet;
 	class Shader;
 	class Scene;
 	class FrameBuffer;
+
+	namespace component 
+	{
+		class Environment;
+	}
+
 	namespace capture_graph
 	{
 		namespace component
@@ -40,7 +45,7 @@ namespace maple
 		auto init() -> void;
 		auto present() -> void;
 		auto renderScene(capture_graph::component::RenderGraph& graph) -> void;
-		auto beginScene(Environment & env) -> void;
+		auto beginScene(component::Environment & env) -> void;
 
 	  private:
 		auto updateIrradianceDescriptor() -> void;
@@ -80,6 +85,6 @@ namespace maple
 
 		std::shared_ptr<Mesh> cube;
 		std::shared_ptr<Mesh> cube2;
-		Environment *         envComponent = nullptr;
+		component::Environment *         envComponent = nullptr;
 	};
 };        // namespace maple

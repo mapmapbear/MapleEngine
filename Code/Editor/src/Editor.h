@@ -179,8 +179,8 @@ namespace maple
 		std::vector<std::unique_ptr<EditorPlugin>> plugins;
 
 		LoadingDialog          dialog;
-		Transform              editorCameraTransform;
-		EditorCameraController editorCameraController;
+		component::Transform              editorCameraTransform;
+		component::EditorCameraController editorCameraController;
 
 		std::string selectResource;
 		std::string editingResource;

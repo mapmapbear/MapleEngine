@@ -16,7 +16,10 @@ namespace maple
 	class Entity;
 	class SceneGraph;
 	class Camera;
-	class Transform;
+	namespace component 
+	{
+		class Transform;
+	}
 
 	class MAPLE_EXPORT Scene
 	{
@@ -34,7 +37,7 @@ namespace maple
 		{
 			this->overrideCamera = overrideCamera;
 		}
-		inline auto setOverrideTransform(Transform *overrideTransform)
+		inline auto setOverrideTransform(component::Transform *overrideTransform)
 		{
 			this->overrideTransform = overrideTransform;
 		}
@@ -83,7 +86,7 @@ namespace maple
 		auto duplicateEntity(const Entity &entity, const Entity &parent) -> void;
 		auto duplicateEntity(const Entity &entity) -> void;
 
-		auto getCamera() -> std::pair<Camera *, Transform *>;
+		auto getCamera() -> std::pair<Camera *, component::Transform *>;
 
 		auto removeAllChildren(entt::entity entity) -> void;
 
@@ -136,7 +139,7 @@ namespace maple
 
 		bool                              inited            = false;
 		Camera *                          overrideCamera    = nullptr;
-		Transform *                       overrideTransform = nullptr;
+		component::Transform *                       overrideTransform = nullptr;
 		std::function<void(Scene *scene)> initCallback;
 
 		int32_t version;

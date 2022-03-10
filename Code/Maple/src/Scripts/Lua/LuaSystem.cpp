@@ -18,10 +18,10 @@ namespace maple
 	{
 		if (Application::get()->getEditorState() == EditorState::Play) 
 		{
-			auto view = scene->getRegistry().view<LuaComponent>();
+			auto view = scene->getRegistry().view<component::LuaComponent>();
 			for (auto v : view)
 			{
-				auto& lua = scene->getRegistry().get<LuaComponent>(v);
+				auto& lua = scene->getRegistry().get<component::LuaComponent>(v);
 				lua.onUpdate(dt);
 			}
 		}

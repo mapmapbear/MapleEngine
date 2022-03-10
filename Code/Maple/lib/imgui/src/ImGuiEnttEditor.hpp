@@ -55,11 +55,14 @@ namespace MM {
 	template <class Component, class EntityType>
 	void ComponentEditorWidget([[maybe_unused]] entt::basic_registry<EntityType>& registry, [[maybe_unused]] EntityType entity) {}
 
-	template <class Component, class EntityType>
+	template <class TComponent, class EntityType>
 	void ComponentAddAction(entt::basic_registry<EntityType>& registry, EntityType entity)
 	{
-		auto & ent = registry.template emplace<Component>(entity);
-		ent.setEntity(entity);
+		auto & ent = registry.template emplace<TComponent>(entity);
+		if constexpr (std::is_base_of<maple::component::Component, TComponent >::value)
+		{
+			ent.setEntity(entity);
+		}
 	}
 
 	template <class Component, class EntityType>

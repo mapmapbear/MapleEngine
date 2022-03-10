@@ -210,26 +210,26 @@ namespace maple
 		auto &registry = getSceneManager()->getCurrentScene()->getRegistry();
 		if (cameraSelected || camera->isOrthographic())
 		{
-			auto view = registry.view<Camera, Transform>();
+			auto view = registry.view<Camera, component::Transform>();
 			for (auto v : view)
 			{
-				auto &[camera, trans] = registry.get<Camera, Transform>(v);
+				auto &[camera, trans] = registry.get<Camera, component::Transform>(v);
 				GeometryRenderer::drawFrustum(camera.getFrustum(glm::inverse(trans.getWorldMatrix())));
 			}
 		}
 
-		if (auto sprite = registry.try_get<Sprite>(selectedNode))
+		if (auto sprite = registry.try_get<component::Sprite>(selectedNode))
 		{
-			auto &transform = registry.get<Transform>(selectedNode);
+			auto &transform = registry.get<component::Transform>(selectedNode);
 			auto  pos       = transform.getWorldPosition() + glm::vec3(sprite->getQuad().getOffset(), 0);
 			auto  w         = sprite->getQuad().getWidth();
 			auto  h         = sprite->getQuad().getHeight();
 			GeometryRenderer::drawRect(pos.x, pos.y, w, h);
 		}
 
-		if (auto sprite = registry.try_get<AnimatedSprite>(selectedNode))
+		if (auto sprite = registry.try_get<component::AnimatedSprite>(selectedNode))
 		{
-			auto &transform = registry.get<Transform>(selectedNode);
+			auto &transform = registry.get<component::Transform>(selectedNode);
 			auto  pos       = transform.getWorldPosition() + glm::vec3(sprite->getQuad().getOffset(), 0);
 			auto  w         = sprite->getQuad().getWidth();
 			auto  h         = sprite->getQuad().getHeight();
@@ -273,7 +273,7 @@ namespace maple
 			ImGuizmo::SetOrthographic(camera->isOrthographic());
 
 			auto &registry  = sceneManager->getCurrentScene()->getRegistry();
-			auto  transform = registry.try_get<Transform>(selectedNode);
+			auto  transform = registry.try_get < component::Transform > (selectedNode);
 			if (transform != nullptr)
 			{
 				auto model = transform->getWorldMatrix();
@@ -295,7 +295,7 @@ namespace maple
 					{
 						auto mat = glm::make_mat4(delta);
 
-						transform->setLocalScale(Transform::getScaleFromMatrix(mat));
+						transform->setLocalScale(component::Transform::getScaleFromMatrix(mat));
 					}
 					else
 					{
@@ -535,11 +535,11 @@ namespace maple
 
 		if (enable)
 		{
-			registry.emplace_or_replace<StencilComponent>(selectedNode);
+			registry.emplace_or_replace<component::StencilComponent>(selectedNode);
 		}
 		else
 		{
-			registry.remove_if_exists<StencilComponent>(selectedNode);
+			registry.remove_if_exists<component::StencilComponent>(selectedNode);
 		}
 	}
 
@@ -612,21 +612,21 @@ namespace maple
 					{
 						auto  name        = StringUtils::getFileNameWithoutExtension(filePath);
 						auto  modelEntity = scene->createEntity(name);
-						auto &model       = modelEntity.addComponent<Model>(filePath);
+						auto &model       = modelEntity.addComponent<component::Model>(filePath);
 						if (model.resource->getMeshes().size() == 1)
 						{
-							modelEntity.addComponent<MeshRenderer>(model.resource->getMeshes().begin()->second);
+							modelEntity.addComponent<component::MeshRenderer>(model.resource->getMeshes().begin()->second);
 						}
 						else
 						{
 							for (auto &mesh : model.resource->getMeshes())
 							{
 								auto child = scene->createEntity(mesh.first);
-								child.addComponent<MeshRenderer>(mesh.second);
+								child.addComponent<component::MeshRenderer>(mesh.second);
 								child.setParent(modelEntity);
 							}
 						}
-						model.type = PrimitiveType::File;
+						model.type = component::PrimitiveType::File;
 						modelEntity.setParent(meshRoot);
 					}
 				}
@@ -658,9 +658,9 @@ namespace maple
 					break;
 				case maple::FileType::Material: {
 					auto entity                       = scene->createEntity("Sphere");
-					entity.addComponent<Model>().type = PrimitiveType::Sphere;
+					entity.addComponent<component::Model>().type = component::PrimitiveType::Sphere;
 					auto  mesh                        = Mesh::createSphere();
-					auto &meshRender                  = entity.addComponent<MeshRenderer>(mesh);
+					auto &meshRender                  = entity.addComponent<component::MeshRenderer>(mesh);
 					mesh->setMaterial(Material::create(filePath));
 					entity.setParent(meshRoot);
 				}
@@ -683,23 +683,23 @@ namespace maple
 		{
 			auto  name        = StringUtils::getFileNameWithoutExtension(filePath);
 			auto  modelEntity = sceneManager->getCurrentScene()->createEntity(name);
-			auto &model       = modelEntity.addComponent<Model>(filePath);
+			auto &model       = modelEntity.addComponent<component::Model>(filePath);
 
 			if (model.resource->getMeshes().size() == 1)
 			{
-				modelEntity.addComponent<MeshRenderer>(model.resource->getMeshes().begin()->second);
+				modelEntity.addComponent<component::MeshRenderer>(model.resource->getMeshes().begin()->second);
 			}
 			else
 			{
 				for (auto &mesh : model.resource->getMeshes())
 				{
 					auto child = sceneManager->getCurrentScene()->createEntity(mesh.first);
-					child.addComponent<MeshRenderer>(mesh.second);
+					child.addComponent<component::MeshRenderer>(mesh.second);
 					child.setParent(modelEntity);
 				}
 			}
 
-			model.type   = PrimitiveType::File;
+			model.type   = component::PrimitiveType::File;
 			selectedNode = modelEntity.getHandle();
 		}
 		else if (StringUtils::isAudioFile(filePath))
@@ -798,10 +798,10 @@ namespace maple
 		float        closestDist   = INFINITY;
 		entt::entity closestEntity = entt::null;
 
-		auto group = registry.group<MeshRenderer>(entt::get<Transform>);
+		auto group = registry.group<component::MeshRenderer>(entt::get<component::Transform>);
 		for (auto entity : group)
 		{
-			const auto &[mesh, trans] = group.get<MeshRenderer, Transform>(entity);
+			const auto &[mesh, trans] = group.get<component::MeshRenderer, component::Transform>(entity);
 			if (mesh.getMesh() != nullptr)
 			{
 				auto &worldTransform = trans.getWorldMatrix();
@@ -833,8 +833,8 @@ namespace maple
 		{
 			if (timer.elapsed(timer.current(), lastClick) / 1000000.f < 1.f)
 			{
-				auto &trans = registry.get<Transform>(selectedNode);
-				auto &model = registry.get<MeshRenderer>(selectedNode);
+				auto &trans = registry.get<component::Transform>(selectedNode);
+				auto &model = registry.get<component::MeshRenderer>(selectedNode);
 				if (auto mesh = model.getMesh(); mesh != nullptr)
 				{
 					auto bb = mesh->getBoundingBox()->transform(trans.getWorldMatrix());
@@ -851,11 +851,11 @@ namespace maple
 			setImGuizmoOperation(ImGuizmo::OPERATION::TRANSLATE);
 			return;
 		}
-		auto spriteGroup = registry.group<Sprite>(entt::get<Transform>);
+		auto spriteGroup = registry.group<component::Sprite>(entt::get<component::Transform>);
 
 		for (auto entity : spriteGroup)
 		{
-			const auto &[sprite, trans]     = spriteGroup.get<Sprite, Transform>(entity);
+			const auto &[sprite, trans]     = spriteGroup.get<component::Sprite, component::Transform>(entity);
 			auto &           worldTransform = trans.getWorldMatrix();
 			const glm::vec2 &min            = sprite.getQuad().getOffset();
 			glm::vec2        max            = min + glm::vec2{sprite.getQuad().getWidth(), sprite.getQuad().getHeight()};
@@ -872,11 +872,11 @@ namespace maple
 			}
 		}
 
-		auto animSpriteGroup = registry.group<AnimatedSprite>(entt::get<Transform>);
+		auto animSpriteGroup = registry.group<component::AnimatedSprite>(entt::get<component::Transform>);
 
 		for (auto entity : animSpriteGroup)
 		{
-			const auto &[sprite, trans]     = animSpriteGroup.get<AnimatedSprite, Transform>(entity);
+			const auto &[sprite, trans]     = animSpriteGroup.get<component::AnimatedSprite, component::Transform>(entity);
 			auto &           worldTransform = trans.getWorldMatrix();
 			const glm::vec2 &min            = sprite.getQuad().getOffset();
 			glm::vec2        max            = min + glm::vec2{sprite.getQuad().getWidth(), sprite.getQuad().getHeight()};
@@ -895,11 +895,11 @@ namespace maple
 
 		if (selectedNode != entt::null && selectedNode == closestEntity)
 		{
-			auto &  trans  = registry.get<Transform>(selectedNode);
-			Sprite *sprite = registry.try_get<Sprite>(selectedNode);
+			auto &  trans  = registry.get<component::Transform>(selectedNode);
+			auto sprite = registry.try_get<component::Sprite>(selectedNode);
 			if (sprite == nullptr)
 			{
-				sprite = registry.try_get<AnimatedSprite>(selectedNode);
+				sprite = registry.try_get<component::AnimatedSprite>(selectedNode);
 			}
 			if (sprite != nullptr)
 			{

@@ -58,10 +58,10 @@ namespace maple
 				.addFunction("setActive", &Entity::setActive)
 				.addFunction("isActive", &Entity::isActive)
 
-				.EXPORT_COMPONENTS(NameComponent)
-				.EXPORT_COMPONENTS(ActiveComponent)
-				.EXPORT_COMPONENTS(Transform)
-				.EXPORT_COMPONENTS(LuaComponent)
+				.EXPORT_COMPONENTS(component::NameComponent)
+				.EXPORT_COMPONENTS(component::ActiveComponent)
+				.EXPORT_COMPONENTS(component::Transform)
+				.EXPORT_COMPONENTS(component::LuaComponent)
 
 				.endClass()
 
@@ -70,18 +70,18 @@ namespace maple
 				.addFunction("getRegistry", &EntityManager::getRegistry)
 				.endClass()
 
-				.beginClass<NameComponent>("NameComponent")
-				.addProperty("name", &NameComponent::name)
-				.addFunction("getEntity", &NameComponent::getEntity)
+				.beginClass<component::NameComponent>("NameComponent")
+				.addProperty("name", &component::NameComponent::name)
+				.addFunction("getEntity", &component::NameComponent::getEntity)
 				.endClass()
 
 
-				.beginClass<ActiveComponent>("ActiveComponent")
-				.addProperty("active", &ActiveComponent::active)
-				.addFunction("getEntity", &ActiveComponent::getEntity)
+				.beginClass<component::ActiveComponent>("ActiveComponent")
+				.addProperty("active", &component::ActiveComponent::active)
+				.addFunction("getEntity", &component::ActiveComponent::getEntity)
 				.endClass()
 
-				.beginClass<LuaComponent>("LuaComponent")
+				.beginClass<component::LuaComponent>("LuaComponent")
 				.endClass();
 
 	

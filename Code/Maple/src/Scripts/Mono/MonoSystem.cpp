@@ -25,10 +25,10 @@ namespace maple
 		MonoVirtualMachine::get()->loadAssembly("./", "MapleLibrary.dll");
 		//MonoVirtualMachine::get()->loadAssembly("./", "MapleAssembly.dll");
 		handler.compileHandler = [&](RecompileScriptsEvent * event) {
-			auto view = event->scene->getRegistry().view<MonoComponent>();
+			auto view = event->scene->getRegistry().view<component::MonoComponent>();
 			for (auto v : view)
 			{
-				auto& mono = event->scene->getRegistry().get<MonoComponent>(v);
+				auto& mono = event->scene->getRegistry().get<component::MonoComponent>(v);
 				for (auto& script : mono.getScripts())
 				{
 					script.second->loadFunction();
@@ -43,10 +43,10 @@ namespace maple
 	{
 		if (Application::get()->getEditorState() == EditorState::Play)
 		{
-			auto view = scene->getRegistry().view<MonoComponent>();
+			auto view = scene->getRegistry().view<component::MonoComponent>();
 			for (auto v : view)
 			{
-				auto& mono = scene->getRegistry().get<MonoComponent>(v);
+				auto& mono = scene->getRegistry().get<component::MonoComponent>(v);
 				for (auto& script : mono.getScripts())
 				{
 					script.second->onStart(this);
@@ -60,10 +60,10 @@ namespace maple
 	{
 		if (Application::get()->getEditorState() == EditorState::Play) 
 		{
-			auto view = scene->getRegistry().view<MonoComponent>();
+			auto view = scene->getRegistry().view<component::MonoComponent>();
 			for (auto v : view)
 			{
-				auto& mono = scene->getRegistry().get<MonoComponent>(v);
+				auto& mono = scene->getRegistry().get<component::MonoComponent>(v);
 				for (auto & script : mono.getScripts())
 				{
 					script.second->onUpdate(dt,this);

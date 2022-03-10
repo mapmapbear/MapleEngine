@@ -12,7 +12,7 @@
 
 namespace maple
 {
-	auto MetaFile::save(const LuaComponent* comp, const std::string & fileName) const -> void
+	auto MetaFile::save(const component::LuaComponent* comp, const std::string & fileName) const -> void
 	{
 		std::ofstream os(fileName, std::ios::binary);
 		cereal::JSONOutputArchive archive(os);
@@ -74,7 +74,7 @@ namespace maple
 		}
 	}
 
-	auto MetaFile::load(LuaComponent* comp, const std::string& fileName,Scene * scene) -> void
+	auto MetaFile::load(component::LuaComponent* comp, const std::string& fileName,Scene * scene) -> void
 	{
 		std::ifstream os(fileName);
 		if (os.good()) 

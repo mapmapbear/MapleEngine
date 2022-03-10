@@ -11,14 +11,18 @@
 namespace maple 
 {
 	class MonoSystem;
-	class MonoComponent;
 	class MapleMonoObject;
 	class MapleMonoMethod;
+
+	namespace component 
+	{
+		class MonoComponent;
+	}
 
 	class MAPLE_EXPORT MonoScript final
 	{
 	public:
-		MonoScript(const std::string & name, MonoComponent * component, MonoSystem* system);
+		MonoScript(const std::string & name, component::MonoComponent * component, MonoSystem* system);
 		~MonoScript();
 		auto onStart(MonoSystem* system) -> void;
 		auto onUpdate(float dt,MonoSystem * system) -> void;
@@ -27,7 +31,7 @@ namespace maple
 		auto loadFunction() -> void;
 	private:
 
-		MonoComponent* component = nullptr;
+		component::MonoComponent* component = nullptr;
 		uint32_t id = 0;
 		std::string name;
 		std::string className;
