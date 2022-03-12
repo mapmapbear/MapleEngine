@@ -66,13 +66,13 @@ namespace maple
 		monoVm->init();
 		renderGraph->init(window->getWidth(), window->getHeight());
 
-		appDelegate->onInit();
-
 		systemManager->addSystem<LuaSystem>()->onInit();
 		systemManager->addSystem<MonoSystem>()->onInit();
 
 		imGuiManager = systemManager->addSystem<ImGuiSystem>(false);
 		imGuiManager->onInit();
+
+		appDelegate->onInit();
 	}
 
 	auto Application::start() -> int32_t
@@ -223,6 +223,11 @@ namespace maple
 				func.first.set_value(func.second());
 			}
 		}
+	}
+
+	auto AppDelegate::getScene()->Scene* 
+	{
+		return Application::get()->getCurrentScene();
 	}
 
 	maple::Application *Application::app = nullptr;

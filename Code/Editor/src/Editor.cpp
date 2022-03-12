@@ -675,11 +675,13 @@ namespace maple
 
 	auto Editor::openFileInEditor(const std::string &filePath) -> void
 	{
+		auto ext = StringUtils::getExtension(filePath);
+
 		if (StringUtils::isTextFile(filePath))
 		{
 			LOGW("OpenFile file : {0} did not implement", filePath);
 		}
-		else if (StringUtils::isModelFile(filePath))
+		else if ( StringUtils::isModelFile(filePath) || loaderFactory->getSupportExtensions().count(ext) >= 1 )
 		{
 			auto  name        = StringUtils::getFileNameWithoutExtension(filePath);
 			auto  modelEntity = sceneManager->getCurrentScene()->createEntity(name);

@@ -129,6 +129,7 @@ target_include_directories(Editor PUBLIC
 	${LIB_SRC_DIR}/glad/include
 	${LIB_SRC_DIR}/imGuIZMO/
 	${LIB_SRC_DIR}/ecs
+	${LIB_SRC_DIR}/mio
 )
 
 
@@ -148,6 +149,7 @@ target_include_directories(Game PUBLIC
 	${LIB_SRC_DIR}/cereal/include
 	${LIB_SRC_DIR}/glad/include
 	${LIB_SRC_DIR}/ecs
+	${LIB_SRC_DIR}/mio
 )
 
 target_link_libraries(

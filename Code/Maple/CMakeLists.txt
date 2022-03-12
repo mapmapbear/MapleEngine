@@ -34,6 +34,7 @@ add_subdirectory(lib/tracy)
 add_subdirectory(lib/glad)
 add_subdirectory(lib/nativefiledialog)
 add_subdirectory(lib/imgui-node-editor)
+add_subdirectory(lib/libiconv)
 
 file(GLOB_RECURSE SHADERS_GLSL 
 	${ASSET_SHADER_DIR}/*.vert 
@@ -191,6 +192,7 @@ endif()
 		${ENGINE_LIB_SRC_DIR}/imgui-notify
 		${ENGINE_LIB_SRC_DIR}/imgui-node-editor
 		${ENGINE_LIB_SRC_DIR}/tinygltf
+		${ENGINE_LIB_SRC_DIR}/mio
 	)
 
 	target_link_libraries(MapleEngine 
@@ -214,6 +216,7 @@ endif()
 		glad
 		filedlg
 		imgui-node-editor
+		iconv
 	)
 
 find_package(OpenMP)
@@ -221,7 +224,7 @@ if(OpenMP_CXX_FOUND)
     target_link_libraries(MapleEngine OpenMP::OpenMP_CXX)
 endif()
 
-	set_target_properties(lua zlib tinyobjloader tellenc spirvCross ktx spdlog_headers_for_ide stb_image glad TracyClient filedlg imgui-node-editor PROPERTIES FOLDER Library)
+	set_target_properties(lua zlib tinyobjloader tellenc spirvCross ktx spdlog_headers_for_ide stb_image glad TracyClient filedlg imgui-node-editor iconv PROPERTIES FOLDER Library)
 	
 
 endif()

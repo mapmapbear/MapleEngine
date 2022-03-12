@@ -44,6 +44,7 @@ namespace maple
 	  public:
 		virtual auto onInit() -> void    = 0;
 		virtual auto onDestory() -> void = 0;
+		auto getScene()->Scene*;
 	};
 
 	class DefaultDelegate final : public AppDelegate

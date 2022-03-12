@@ -12,6 +12,7 @@
 
 #include "Console.h"
 #include <cpp_utf8.h>
+#include <iconv.h>
 
 #ifdef _WIN32
 #include <direct.h>
@@ -305,6 +306,21 @@ namespace maple
 		return u"";
 	}
 
+
+	auto StringUtils::codeConvert(const char* fromCharset, const char* toCharset, const char* inBuf, size_t inlen, char* outBuf, size_t outlen) ->int32_t
+	{
+		iconv_t cd;
+		const char* temp = inBuf;
+		char** pout = &outBuf;
+		memset(outBuf, 0, outlen);
+		cd = iconv_open(toCharset, fromCharset);
+		if (cd == nullptr)
+			return -1;
+
+		iconv(cd, const_cast<char**>(&inBuf), &inlen, pout, &outlen);
+		iconv_close(cd);
+		return outlen;
+	}
 
 #ifdef _WIN32
 	const std::string  StringUtils::delimiter = "\\";

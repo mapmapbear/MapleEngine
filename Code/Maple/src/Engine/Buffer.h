@@ -6,6 +6,7 @@
 #include "Others/Console.h"
 #include <cstdint>
 #include <memory>
+#include <glm/glm.hpp>
 
 namespace maple
 {
@@ -68,7 +69,7 @@ namespace maple
 
 		inline auto readBytes(uint32_t size, uint32_t offset)
 		{
-			MAPLE_ASSERT(offset + size <= size, "Index out of bounds");
+			MAPLE_ASSERT(offset + size <= this->size, "Index out of bounds");
 			uint8_t *buffer = new uint8_t[size];
 			memcpy(buffer, (uint8_t *) data + offset, size);
 			return buffer;
@@ -104,6 +105,69 @@ namespace maple
 		inline auto getSize() const
 		{
 			return size;
+		}
+	};
+
+
+	struct BinaryReader
+	{
+		const uint8_t* data;
+		uint32_t size;
+		uint32_t offset;
+
+		BinaryReader(const uint8_t* data, uint32_t size) :
+			data(data), size(size), offset(0)
+		{
+		}
+
+		template <typename T>
+		inline auto& read()
+		{
+			T & t = *(T*)((uint8_t*)data + offset);
+			offset += sizeof(T);
+			return t;
+		}
+
+		inline auto readVec2() -> glm::vec2
+		{
+			glm::vec2 vec = {};
+			vec.x = read<float>();
+			vec.y = read<float>();
+			return vec;
+		}
+
+		inline auto readVec3() -> glm::vec3
+		{
+			glm::vec3 vec = {};
+			vec.x = read<float>();
+			vec.y = read<float>();
+			vec.z = read<float>();
+			return vec;
+		}
+
+		inline auto readVec4() -> glm::vec4
+		{
+			glm::vec4 vec = {};
+			vec.x = read<float>();
+			vec.y = read<float>();
+			vec.z = read<float>();
+			vec.w = read<float>();
+			return vec;
+		}
+
+		inline auto readBytes(uint32_t size) -> std::unique_ptr<uint8_t[]>
+		{
+			MAPLE_ASSERT(offset + size <= this->size, "Index out of bounds");
+			uint8_t* buffer = new uint8_t[size];
+			memcpy(buffer, (uint8_t*)data + offset, size);
+			offset += size;
+			return std::unique_ptr<uint8_t[]>(buffer);
+		}
+
+		inline auto skip(uint32_t size) 
+		{
+			MAPLE_ASSERT(offset + size <= this->size, "Index out of bounds");
+			offset += size;
 		}
 	};
 

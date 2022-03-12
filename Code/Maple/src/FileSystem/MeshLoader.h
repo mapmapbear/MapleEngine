@@ -5,6 +5,9 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <unordered_map>
+#include <unordered_set>
+
 #include "Engine/Mesh.h"
 #include "Engine/Core.h"
 
@@ -29,8 +32,13 @@ namespace maple
 		template<typename T> 
 		auto addModelLoader() -> void;
 		auto load(const std::string& obj, std::unordered_map<std::string, std::shared_ptr<Mesh>>&)-> void;
+
+		inline auto& getSupportExtensions() const{
+			return supportExtensions;
+		}
 	private:
 		std::unordered_map<std::string, std::shared_ptr<ModelLoader>> loaders;
+		std::unordered_set<std::string> supportExtensions;
 	};
 
 	template<typename T>
@@ -40,6 +48,7 @@ namespace maple
 		for (auto ext : T::EXTENSIONS) 
 		{
 			loaders.emplace(ext, loader);
+			supportExtensions.emplace(ext);
 		}
 	}
 };
