@@ -22,7 +22,7 @@ namespace maple
 
 		if (auto loader = loaders.find(extension); loader != loaders.end()) 
 		{
-			loader->second->load(obj, meshes);
+			loader->second->load(obj, extension, meshes);
 		}
 		else 
 		{

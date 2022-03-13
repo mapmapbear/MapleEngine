@@ -175,6 +175,11 @@ namespace maple
 						auto clickPos = Input::getInput()->getMousePosition() - glm::vec2(vMin.x, vMin.y);
 						editor.clickObject(editor.getScreenRay(int32_t(clickPos.x), int32_t(clickPos.y), camera, int32_t(sceneViewSize.x), int32_t(sceneViewSize.y)));
 					}
+
+					if (ImGui::IsMouseClicked(ImGuiMouseButton_Right)) 
+					{
+						editor.setSelected(entt::entity{ entt::null });
+					}
 				}
 			}
 		}

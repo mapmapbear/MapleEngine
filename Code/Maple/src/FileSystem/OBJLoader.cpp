@@ -33,7 +33,7 @@ namespace maple
 	}
 
 
-	auto OBJLoader::load(const std::string& obj, std::unordered_map<std::string, std::shared_ptr<Mesh>>& meshes)-> void
+	auto OBJLoader::load(const std::string& obj, const std::string& extension, std::unordered_map<std::string, std::shared_ptr<Mesh>>& meshes)-> void
 	{
 		PROFILE_FUNCTION();
 		std::string resolvedPath = obj;

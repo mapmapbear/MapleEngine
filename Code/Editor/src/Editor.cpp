@@ -683,26 +683,7 @@ namespace maple
 		}
 		else if ( StringUtils::isModelFile(filePath) || loaderFactory->getSupportExtensions().count(ext) >= 1 )
 		{
-			auto  name        = StringUtils::getFileNameWithoutExtension(filePath);
-			auto  modelEntity = sceneManager->getCurrentScene()->createEntity(name);
-			auto &model       = modelEntity.addComponent<component::Model>(filePath);
-
-			if (model.resource->getMeshes().size() == 1)
-			{
-				modelEntity.addComponent<component::MeshRenderer>(model.resource->getMeshes().begin()->second);
-			}
-			else
-			{
-				for (auto &mesh : model.resource->getMeshes())
-				{
-					auto child = sceneManager->getCurrentScene()->createEntity(mesh.first);
-					child.addComponent<component::MeshRenderer>(mesh.second);
-					child.setParent(modelEntity);
-				}
-			}
-
-			model.type   = component::PrimitiveType::File;
-			selectedNode = modelEntity.getHandle();
+			selectedNode = sceneManager->getCurrentScene()->addMesh(filePath).getHandle();
 		}
 		else if (StringUtils::isAudioFile(filePath))
 		{

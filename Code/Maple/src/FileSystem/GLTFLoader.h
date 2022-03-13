@@ -10,6 +10,6 @@ namespace maple
 	{
 	public:
 		static constexpr char* EXTENSIONS[] = {"gltf","glb"};
-		auto load(const std::string& obj, std::unordered_map<std::string, std::shared_ptr<Mesh>>&)-> void override;
+		auto load(const std::string& obj, const std::string& extension, std::unordered_map<std::string, std::shared_ptr<Mesh>>&)-> void override;
 	};
 };

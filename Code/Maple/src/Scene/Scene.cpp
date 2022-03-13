@@ -198,6 +198,28 @@ namespace maple
 		boxDirty = true;
 	}
 
+	auto Scene::addMesh(const std::string& file) -> Entity
+	{
+		auto  name = StringUtils::getFileNameWithoutExtension(file);
+		auto  modelEntity = createEntity(name);
+		auto& model = modelEntity.addComponent<component::Model>(file);
+		if (model.resource->getMeshes().size() == 1)
+		{
+			modelEntity.addComponent<component::MeshRenderer>(model.resource->getMeshes().begin()->second);
+		}
+		else
+		{
+			for (auto& mesh : model.resource->getMeshes())
+			{
+				auto child = createEntity(mesh.first);
+				child.addComponent<component::MeshRenderer>(mesh.second);
+				child.setParent(modelEntity);
+			}
+		}
+		model.type = component::PrimitiveType::File;
+		return modelEntity;
+	}
+
 	auto Scene::copyComponents(const Entity& from, const Entity& to) -> void
 	{
 		LOGW("Not implementation {0}", __FUNCTION__);

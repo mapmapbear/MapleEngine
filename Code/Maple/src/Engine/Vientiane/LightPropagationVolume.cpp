@@ -423,9 +423,10 @@ namespace maple
 
 		auto registerLPVDebug(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void
 		{
+/*
 			executePoint->registerGlobalComponent<component::DebugAABBData>();
 			executePoint->registerWithinQueue<aabb_debug::beginScene>(begin);
-			executePoint->registerWithinQueue<aabb_debug::render>(renderer);
+			executePoint->registerWithinQueue<aabb_debug::render>(renderer);*/
 		}
 
 	};

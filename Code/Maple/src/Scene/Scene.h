@@ -123,6 +123,9 @@ namespace maple
 
 		auto calculateBoundingBox() -> void;
 		auto onMeshRenderCreated() -> void;
+		
+		auto addMesh(const std::string& file) -> Entity;
+
 	  protected:
 		auto updateCameraController(float dt) -> void;
 		auto copyComponents(const Entity &from, const Entity &to) -> void;

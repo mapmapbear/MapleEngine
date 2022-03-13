@@ -495,9 +495,8 @@ namespace maple
 	}
 	
 
-	auto GLTFLoader::load(const std::string& obj, std::unordered_map<std::string, std::shared_ptr<Mesh>>& meshes)-> void
+	auto GLTFLoader::load(const std::string& obj, const std::string& extension, std::unordered_map<std::string, std::shared_ptr<Mesh>>& meshes)-> void
 	{
-		auto extension = StringUtils::getExtension(obj);
 		auto name = StringUtils::getFileNameWithoutExtension(obj);
 		PROFILE_FUNCTION();
 		tinygltf::Model model;
