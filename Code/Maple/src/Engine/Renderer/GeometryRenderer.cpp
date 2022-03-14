@@ -16,10 +16,14 @@
 #include "RHI/VertexBuffer.h"
 #include "RenderGraph.h"
 #include "Scene/Component/Transform.h"
+#include "Scene/Component/Light.h"
 #include "Scene/Scene.h"
 
 #include "RendererData.h"
 #include "Application.h"
+
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 #include <ecs/ecs.h>
 
@@ -126,7 +130,7 @@ namespace maple
 				{
 					DescriptorInfo descriptorLineInfo{};
 					descriptorLineInfo.layoutIndex = 0;
-					descriptorLineInfo.shader = pointShader.get();
+					descriptorLineInfo.shader = lineShader.get();
 					lineDescriptorSet.emplace_back(DescriptorSet::create(descriptorLineInfo));
 
 					lineVertexBuffers = VertexBuffer::create(BufferUsage::Dynamic);
@@ -212,7 +216,81 @@ namespace maple
 		renderData.triangles.push_back({v0, v1, v2, color});
 	}
 
-	namespace on_begin_scene 
+	auto GeometryRenderer::drawLight(component::Light* light, const glm::quat& rotation, const glm::vec4& color) -> void
+	{
+		if (light->lightData.type < 0.1f)
+		{
+			glm::vec3 offset(0.0f, 0.1f, 0.0f);
+			drawLine(glm::vec3(light->lightData.position) + offset, glm::vec3(light->lightData.position + (light->lightData.direction) * 2.0f) + offset, color);
+			drawLine(glm::vec3(light->lightData.position) - offset, glm::vec3(light->lightData.position + (light->lightData.direction) * 2.0f) - offset, color);
+			drawLine(glm::vec3(light->lightData.position), glm::vec3(light->lightData.position + (light->lightData.direction) * 2.0f), color);
+
+			drawCone(60, 4, 30.0f, 1.5f, (light->lightData.position - (light->lightData.direction) * 1.5f), rotation, color);
+		}
+		//Spot
+		else if (light->lightData.type < 1.1f)
+		{
+			drawCone(60, 4, light->lightData.angle , light->lightData.intensity, light->lightData.position, rotation, color);
+		}
+		//Point
+		else
+		{
+			drawSphere(light->lightData.radius / 2.0f, light->lightData.position, color);
+		}
+	}
+
+	auto GeometryRenderer::drawCone(int32_t numCircleVerts, int32_t numLinesToCircle, float angle, float length, const glm::vec3& position, const glm::quat& rotation, const glm::vec4& color) -> void
+	{
+		float endAngle = std::tan(angle * 0.5f) * length;
+		glm::vec3 forward = glm::normalize(rotation * maple::FORWARD);
+		glm::vec3 endPosition = position + forward * length;
+		float offset = 0.0f;
+		drawCircle(numCircleVerts, endAngle, endPosition, rotation, color);
+
+		for (int i = 0; i < numLinesToCircle; i++)
+		{
+			float a = i * 90.0f;
+			glm::vec3 point = rotation * glm::vec3(std::cos(a),std::sin(a), 0.0f) * endAngle;
+			drawLine(position, position + point + forward * length, color);
+		}
+	}
+
+	auto GeometryRenderer::drawSphere(float radius, const glm::vec3& position, const glm::vec4& color) -> void
+	{
+		drawCircle(60, radius, position, glm::quat(glm::vec3(0.0f, 0.0f, 0.0f)), color);
+		drawCircle(60, radius, position, glm::quat(glm::vec3(45.0f, 0.0f, 0.0f)), color);
+
+		drawCircle(60, radius, position, glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), color);
+		drawCircle(60, radius, position, glm::quat(glm::vec3(0.0f, 90.0f, 0.0f)), color);
+
+
+		drawCircle(60, radius, position, glm::quat(glm::vec3(0.0f, 0, 45.0f)), color);
+		drawCircle(60, radius, position, glm::quat(glm::vec3(0.0f, 0, 90.0f)), color);
+
+		drawCircle(60, radius, position, glm::quat(glm::vec3(0.0f, 90.f, 90.0f)), color);
+		drawCircle(60, radius, position, glm::quat(glm::vec3(0.0f, 45.f, 90.0f)), color);
+	}
+
+
+	auto GeometryRenderer::drawCircle(int32_t numVerts, float radius, const glm::vec3& position, const glm::quat& rotation, const glm::vec4& color) -> void
+	{
+		float step = 360.0f / float(numVerts);
+
+		for (int i = 0; i < numVerts; i++)
+		{
+			float cx = std::cos(step * i) * radius;
+			float cy = std::sin(step * i) * radius;
+			glm::vec3 current = glm::vec3(cx, cy, 0.0f);
+
+			float nx = std::cos(step * (i + 1)) * radius;
+			float ny = std::sin(step * (i + 1)) * radius;
+			glm::vec3 next = glm::vec3(nx, ny, 0.0f);
+
+			drawLine(position + (rotation * current), position + (rotation * next), color);
+		}
+	}
+
+	namespace on_begin_scene
 	{
 		using Entity = ecs::Chain
 			::Read<component::RendererData>

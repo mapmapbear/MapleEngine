@@ -193,7 +193,7 @@ namespace maple
 			::Write<component::Transform>
 			::To<ecs::Entity>;
 
-		inline auto beginScene(Entity entity, LightQuery lightQuery, MeshQuery meshQuery, ecs::World world)
+		auto beginScene(Entity entity, LightQuery lightQuery, MeshQuery meshQuery, ecs::World world)
 		{
 			auto [shadowData,cameraView,rsm] = entity;
 
@@ -246,8 +246,6 @@ namespace maple
 										if (mesh.getMesh()->getSubMeshCount() <= 1) // at least two subMeshes.
 										{
 											cmd.material = !mesh.getMesh()->getMaterial().empty() ? mesh.getMesh()->getMaterial()[0].get() : nullptr;
-											if (cmd.material)
-												cmd.material->bind();
 										}
 									}
 								}});

@@ -12,6 +12,11 @@ namespace maple
 {
 	class BoundingBox;
 
+	namespace component 
+	{
+		class Light;
+	};
+
 	namespace geometry_renderer 
 	{
 		auto registerGeometryRenderer(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void;
@@ -25,5 +30,9 @@ namespace maple
 		static auto drawRect(int32_t x, int32_t y, int32_t width, int32_t height) -> void;
 		static auto drawBox(const BoundingBox &box, const glm::vec4 &color) -> void;
 		static auto drawTriangle(const glm::vec3 &v0, const glm::vec3 &v1, const glm::vec3 &v2, const glm::vec4 &color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)) -> void;
+		static auto drawLight(component::Light* light, const glm::quat& rotation, const glm::vec4& color) -> void;
+		static auto drawCone(int32_t numCircleVerts, int32_t numLinesToCircle, float angle, float length, const glm::vec3& position, const glm::quat& rotation, const glm::vec4& color) -> void;
+		static auto drawSphere(float radius, const glm::vec3& position, const glm::vec4& color) -> void;
+		static auto drawCircle(int32_t numVerts, float radius, const glm::vec3& position, const glm::quat& rotation, const glm::vec4& color) -> void;
 	};
 };        // namespace maple

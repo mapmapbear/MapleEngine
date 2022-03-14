@@ -236,6 +236,14 @@ namespace maple
 			GeometryRenderer::drawRect(pos.x, pos.y, w, h);
 		}
 
+		if (auto light = registry.try_get<component::Light>(selectedNode))
+		{
+			auto& transform = registry.get<component::Transform>(selectedNode);
+			auto  pos = transform.getWorldPosition();
+			GeometryRenderer::drawLight(light, transform.getWorldOrientation(), glm::vec4(glm::vec3(light->lightData.color), 0.2f));
+		}
+
+
 		//drawGrid();
 	}
 

@@ -325,7 +325,7 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 		//NumDrawCalls++;
-		GLCall(glDrawElements(drawTypeToGL(type), count, dataTypeToGL(DataType::UnsignedInt), nullptr));
+		GLCall(	glDrawElements( drawTypeToGL(type), count, dataTypeToGL(DataType::UnsignedInt), (void*)(sizeof(uint32_t) * start) ) );
 	}
 
 	auto GLRenderDevice::drawArraysInternal(CommandBuffer* commandBuffer, DrawType type, uint32_t count, uint32_t start /*= 0*/) const -> void

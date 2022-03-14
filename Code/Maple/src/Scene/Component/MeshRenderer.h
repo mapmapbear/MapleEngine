@@ -90,7 +90,7 @@ namespace maple
 
 			inline auto setCastShadow(bool shadow)  { castShadow = shadow; }
 
-			bool castShadow = false;
+			bool castShadow = true;
 
 		private:
 			std::shared_ptr<Mesh>     mesh;

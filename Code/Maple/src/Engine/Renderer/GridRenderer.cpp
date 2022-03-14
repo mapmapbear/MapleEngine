@@ -46,8 +46,8 @@ namespace maple
 			struct UniformBufferObject
 			{
 				glm::vec4 cameraPos;
-				float     scale = 500.0f;
-				float     res = 1.4f;
+				float     near_ = 0.1;
+				float     far_ = 3000.f;
 				float     maxDistance = 600.0f;
 				float     p1;
 			} systemBuffer;
@@ -55,7 +55,7 @@ namespace maple
 			GridData() 
 			{
 				gridShader = Shader::create("shaders/Grid.shader");
-				quad = Mesh::createPlane(500, 500, maple::UP);
+				quad = Mesh::createQuad();
 				descriptorSet = DescriptorSet::create({ 0, gridShader.get() });
 			}
 		};
@@ -72,8 +72,11 @@ namespace maple
 		inline auto system(Entity entity,ecs::World world)
 		{
 			auto [render, grid, camera] = entity;
-			grid.descriptorSet->setUniformBufferData("UniformBufferObject", glm::value_ptr(camera.projView));
+			grid.descriptorSet->setUniform("UniformBufferObject", "proj", glm::value_ptr(camera.proj));
+			grid.descriptorSet->setUniform("UniformBufferObject", "view", glm::value_ptr(camera.view));
 			grid.systemBuffer.cameraPos = glm::vec4(camera.cameraTransform->getWorldPosition(), 1.f);
+			grid.systemBuffer.near_ = camera.nearPlane;
+			grid.systemBuffer.far_ = camera.farPlane;
 			grid.descriptorSet->setUniformBufferData("UniformBuffer", &grid.systemBuffer);
 		}
 	}
@@ -90,7 +93,7 @@ namespace maple
 
 			PipelineInfo pipeInfo;
 			pipeInfo.shader = grid.gridShader;
-			pipeInfo.cullMode = CullMode::None;
+			pipeInfo.cullMode = CullMode::Back;
 			pipeInfo.transparencyEnabled = true;
 			pipeInfo.depthBiasEnabled = false;
 			pipeInfo.clearTargets = false;
