@@ -32,6 +32,11 @@ namespace maple
 		indexBuffer = IndexBuffer::create(indices.data(), indices.size());
 	}
 
+	auto Mesh::setIndicies(uint32_t range) -> void
+	{
+		subMeshIndex.emplace_back(range);
+	}
+
 	auto Mesh::createQuad(bool screen) -> std::shared_ptr<Mesh>
 	{
 		std::vector<Vertex> data(4);

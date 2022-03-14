@@ -68,13 +68,11 @@ namespace maple
 			template <class Archive>
 			inline auto save(Archive& archive) const -> void
 			{
-				archive(mesh->getName(), entity, cereal::make_nvp("material", mesh->getMaterial()));
 			}
 
 			template <class Archive>
 			inline auto load(Archive& archive) -> void
 			{
-				archive(meshName, entity, cereal::make_nvp("material", material));
 			}
 
 			auto loadFromModel() -> void;
@@ -87,12 +85,17 @@ namespace maple
 			}
 
 			auto isActive() const -> bool;
+			
+			inline auto isCastShadow() const { return castShadow; }
+
+			inline auto setCastShadow(bool shadow)  { castShadow = shadow; }
+
+			bool castShadow = false;
 
 		private:
 			std::shared_ptr<Mesh>     mesh;
 			auto                      getMesh(const std::string& name) -> void;
 			std::string               meshName;
-			std::shared_ptr<Material> material;
 		};
 	}
 };        // namespace maple

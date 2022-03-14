@@ -10,6 +10,7 @@
 #include "Engine/Profiler.h"
 #include "Engine/Mesh.h"
 
+
 #include "ImGui/ImGuiHelpers.h"
 #include "Math/Frustum.h"
 #include "Math/MathUtils.h"
@@ -215,7 +216,7 @@ namespace maple
 					}
 				}
 
-				if (directionaLight)
+				if (directionaLight && directionaLight->castShadow)
 				{
 					rsm.descriptorSets[1]->setUniform("UBO", "light", &directionaLight->lightData);
 
@@ -233,15 +234,23 @@ namespace maple
 						{
 							meshQuery.forEach([&, i](MeshEntity meshEntity) {
 								auto [mesh, trans] = meshEntity;
-								auto inside = shadowData.cascadeFrustums[i].isInside(mesh.getMesh()->getBoundingBox());
-								if (inside)
+								if (mesh.castShadow) 
 								{
-									auto& cmd = shadowData.cascadeCommandQueue[i].emplace_back();
-									cmd.mesh = mesh.getMesh().get();
-									cmd.transform = trans.getWorldMatrix();
-									cmd.material = mesh.getMesh()->getMaterial().get();
-								}
-								});
+									auto inside = shadowData.cascadeFrustums[i].isInside(mesh.getMesh()->getBoundingBox());
+									if (inside)
+									{
+										auto& cmd = shadowData.cascadeCommandQueue[i].emplace_back();
+										cmd.mesh = mesh.getMesh().get();
+										cmd.transform = trans.getWorldMatrix();
+
+										if (mesh.getMesh()->getSubMeshCount() <= 1) // at least two subMeshes.
+										{
+											cmd.material = !mesh.getMesh()->getMaterial().empty() ? mesh.getMesh()->getMaterial()[0].get() : nullptr;
+											if (cmd.material)
+												cmd.material->bind();
+										}
+									}
+								}});
 						}
 				}
 			}
@@ -346,15 +355,44 @@ namespace maple
 				pushConstants.setValue("transform", (void*)&trans);
 
 				rsm.shader->bindPushConstants(commandBuffer, pipeline.get());
-				if (command.material != nullptr)
+			
+				if (mesh->getSubMeshCount() > 1)
 				{
-					descriptorSet->setUniform("UBO", "albedoColor", &command.material->getProperties().albedoColor);
-					descriptorSet->setUniform("UBO", "usingAlbedoMap", &command.material->getProperties().usingAlbedoMap);
-					descriptorSet->setTexture("uDiffuseMap", command.material->getTextures().albedo);
-					descriptorSet->update();
+					auto& materials = mesh->getMaterial();
+					auto& indices = mesh->getSubMeshIndex();
+					auto start = 0;
+					mesh->getVertexBuffer()->bind(commandBuffer, pipeline.get());
+					mesh->getIndexBuffer()->bind(commandBuffer);
+					for (auto i = 0; i <= indices.size(); i++)
+					{
+						auto & material = materials[i];
+						auto end = i == indices.size() ? command.mesh->getIndexBuffer()->getCount() : indices[i];
+
+						descriptorSet->setUniform("UBO", "albedoColor", &material->getProperties().albedoColor);
+						descriptorSet->setUniform("UBO", "usingAlbedoMap", &material->getProperties().usingAlbedoMap);
+						descriptorSet->setTexture("uDiffuseMap", material->getTextures().albedo);
+						descriptorSet->update();
+
+						Renderer::bindDescriptorSets(pipeline.get(), commandBuffer, 0, rsm.descriptorSets);
+						Renderer::drawIndexed(commandBuffer, DrawType::Triangle, end - start, start);
+
+						start = end;
+					}
+					mesh->getVertexBuffer()->unbind();
+					mesh->getIndexBuffer()->unbind();
 				}
-				Renderer::bindDescriptorSets(pipeline.get(), commandBuffer, 0, rsm.descriptorSets);
-				Renderer::drawMesh(commandBuffer, pipeline.get(), mesh);
+				else 
+				{
+					if (command.material != nullptr)
+					{
+						descriptorSet->setUniform("UBO", "albedoColor", &command.material->getProperties().albedoColor);
+						descriptorSet->setUniform("UBO", "usingAlbedoMap", &command.material->getProperties().usingAlbedoMap);
+						descriptorSet->setTexture("uDiffuseMap", command.material->getTextures().albedo);
+						descriptorSet->update();
+					}
+					Renderer::bindDescriptorSets(pipeline.get(), commandBuffer, 0, rsm.descriptorSets);
+					Renderer::drawMesh(commandBuffer, pipeline.get(), mesh);
+				}
 			}
 
 			if (commandBuffer)

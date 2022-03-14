@@ -216,7 +216,7 @@ namespace MM
 	}
 
 	template <>
-	void ComponentEditorWidget<component::Sprite>(entt::registry &reg, entt::registry::entity_type e)
+	inline auto ComponentEditorWidget<component::Sprite>(entt::registry &reg, entt::registry::entity_type e) -> void
 	{
 		auto &sprite = reg.get<component::Sprite>(e);
 
@@ -331,7 +331,7 @@ namespace MM
 	}
 
 	template <>
-	void ComponentEditorWidget<component::AnimatedSprite>(entt::registry &reg, entt::registry::entity_type e)
+	inline auto ComponentEditorWidget<component::AnimatedSprite>(entt::registry &reg, entt::registry::entity_type e) -> void
 	{
 		auto &sprite = reg.get<component::AnimatedSprite>(e);
 
@@ -386,53 +386,69 @@ namespace MM
 	}
 
 	template <>
-	void ComponentEditorWidget<component::MeshRenderer>(entt::registry &reg, entt::registry::entity_type e)
+	inline auto ComponentEditorWidget<component::MeshRenderer>(entt::registry &reg, entt::registry::entity_type e) -> void
 	{
 		auto &mesh = reg.get<component::MeshRenderer>(e);
 
-		auto material = mesh.getMesh()->getMaterial();
+		auto & materials = mesh.getMesh()->getMaterial();
 
-		std::string matName = "Material";
-		if (!material)
+		const std::string matName = "Material";
+		if (materials.empty())
 		{
 			ImGui::TextUnformatted("Empty Material");
 			if (ImGui::Button("Add Material", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f)))
 				mesh.getMesh()->setMaterial(std::make_shared<Material>());
 		}
-		else if (ImGui::TreeNodeEx(matName.c_str(), 0))
+		else 
 		{
-			auto &prop     = material->getProperties();
-			auto  color    = glm::vec4(0.f);
-			auto  textures = material->getTextures();
+			for (auto i = 0;i< materials.size();i++)
+			{
+				auto& material = materials[i];
+				std::string name = matName + "_" + std::to_string(i);
+				if (ImGui::TreeNodeEx(name.c_str(), 0))
+				{
+					auto& prop = material->getProperties();
+					auto  color = glm::vec4(0.f);
+					auto  textures = material->getTextures();
 
-			bool update = false;
+					bool update = false;
 
-			MM::textureWidget("Albedo", material.get(), textures.albedo, prop.usingAlbedoMap, prop.albedoColor, std::bind(&Material::setAlbedoTexture, material, std::placeholders::_1), update);
-			ImGui::Separator();
+					MM::textureWidget("Albedo", material.get(), textures.albedo, prop.usingAlbedoMap, prop.albedoColor, std::bind(&Material::setAlbedoTexture, material, std::placeholders::_1), update);
+					ImGui::Separator();
 
-			MM::textureWidget("Normal", material.get(), textures.normal, prop.usingNormalMap, color, std::bind(&Material::setNormalTexture, material, std::placeholders::_1), update);
-			ImGui::Separator();
+					MM::textureWidget("Normal", material.get(), textures.normal, prop.usingNormalMap, color, std::bind(&Material::setNormalTexture, material, std::placeholders::_1), update);
+					ImGui::Separator();
 
-			MM::textureWidget("Metallic", material.get(), textures.metallic, prop.usingMetallicMap, prop.metallicColor, std::bind(&Material::setMetallicTexture, material, std::placeholders::_1), update);
-			ImGui::Separator();
+					MM::textureWidget("Metallic", material.get(), textures.metallic, prop.usingMetallicMap, prop.metallicColor, std::bind(&Material::setMetallicTexture, material, std::placeholders::_1), update);
+					ImGui::Separator();
 
-			MM::textureWidget("Roughness", material.get(), textures.roughness, prop.usingRoughnessMap, prop.roughnessColor, std::bind(&Material::setRoughnessTexture, material, std::placeholders::_1), update);
-			ImGui::Separator();
+					MM::textureWidget("Roughness", material.get(), textures.roughness, prop.usingRoughnessMap, prop.roughnessColor, std::bind(&Material::setRoughnessTexture, material, std::placeholders::_1), update);
+					ImGui::Separator();
 
-			MM::textureWidget("AO", material.get(), textures.ao, prop.usingAOMap, color, std::bind(&Material::setAOTexture, material, std::placeholders::_1), update);
-			ImGui::Separator();
+					MM::textureWidget("AO", material.get(), textures.ao, prop.usingAOMap, color, std::bind(&Material::setAOTexture, material, std::placeholders::_1), update);
+					ImGui::Separator();
 
-			MM::textureWidget("Emissive", material.get(), textures.emissive, prop.usingEmissiveMap, prop.emissiveColor, std::bind(&Material::setEmissiveTexture, material, std::placeholders::_1), update);
+					MM::textureWidget("Emissive", material.get(), textures.emissive, prop.usingEmissiveMap, prop.emissiveColor, std::bind(&Material::setEmissiveTexture, material, std::placeholders::_1), update);
 
-			if (update)
-				material->setMaterialProperites(prop);
+					if (update)
+						material->setMaterialProperites(prop);
 
-			ImGui::TreePop();
+					ImGui::TreePop();
+				}
+			}
 		}
+
+		ImGui::Columns(2);
+		ImGui::Separator();
+
+		ImGuiHelper::property("Cast Shadow", mesh.castShadow);
+
+		ImGui::Columns(1);
+
 	}
 
 	template <>
-	void ComponentEditorWidget<component::Light>(entt::registry &reg, entt::registry::entity_type e)
+	inline auto ComponentEditorWidget<component::Light>(entt::registry &reg, entt::registry::entity_type e) -> void
 	{
 		auto &light = reg.get<component::Light>(e);
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
@@ -451,6 +467,8 @@ namespace MM
 		ImGuiHelper::property("Show Frustum", light.showFrustum);
 		ImGuiHelper::property("Reflective Shadow Map", light.reflectiveShadowMap);
 		ImGuiHelper::property("Light Propagation Volume", light.enableLPV);
+		ImGuiHelper::property("Cast Shadow", light.castShadow);
+
 
 		ImGui::AlignTextToFramePadding();
 		ImGui::TextUnformatted("Light Type");
@@ -478,7 +496,7 @@ namespace MM
 	}
 
 	template <>
-	void ComponentEditorWidget<component::MonoComponent>(entt::registry &reg, entt::registry::entity_type e)
+	inline auto ComponentEditorWidget<component::MonoComponent>(entt::registry &reg, entt::registry::entity_type e) -> void
 	{
 		auto &mono = reg.get<component::MonoComponent>(e);
 		ImGui::PushID("add c# script");
@@ -503,7 +521,7 @@ namespace MM
 	}
 
 	template <>
-	void ComponentEditorWidget<component::Environment>(entt::registry &reg, entt::registry::entity_type e)
+	inline auto ComponentEditorWidget<component::Environment>(entt::registry &reg, entt::registry::entity_type e) -> void
 	{
 		auto &env = reg.get<component::Environment>(e);
 
@@ -572,7 +590,7 @@ namespace MM
 	}
 
 	template <>
-	void ComponentEditorWidget<Camera>(entt::registry &reg, entt::registry::entity_type e)
+	inline auto ComponentEditorWidget<Camera>(entt::registry &reg, entt::registry::entity_type e) -> void
 	{
 		auto &camera = reg.get<Camera>(e);
 
@@ -611,7 +629,7 @@ namespace MM
 	}
 
 	template <>
-	void ComponentEditorWidget<component::CameraControllerComponent>(entt::registry &reg, entt::registry::entity_type e)
+	inline auto ComponentEditorWidget<component::CameraControllerComponent>(entt::registry &reg, entt::registry::entity_type e) -> void
 	{
 		auto &controllerComp = reg.get<component::CameraControllerComponent>(e);
 		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
@@ -649,7 +667,7 @@ namespace MM
 	}
 
 	template <>
-	void ComponentEditorWidget<component::Atmosphere>(entt::registry &reg, entt::registry::entity_type e)
+	inline auto ComponentEditorWidget<component::Atmosphere>(entt::registry &reg, entt::registry::entity_type e) -> void
 	{
 		auto &atmosphere = reg.get<component::Atmosphere>(e);
 		auto &data       = atmosphere.getData();
@@ -680,7 +698,7 @@ namespace MM
 	}
 
 	template <>
-	void ComponentEditorWidget<component::VolumetricCloud>(entt::registry &reg, entt::registry::entity_type e)
+	inline auto ComponentEditorWidget<component::VolumetricCloud>(entt::registry &reg, entt::registry::entity_type e) -> void
 	{
 		auto &cloud = reg.get<component::VolumetricCloud>(e);
 

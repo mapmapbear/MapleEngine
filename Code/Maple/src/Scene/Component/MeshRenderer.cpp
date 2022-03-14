@@ -25,8 +25,6 @@ namespace maple
 		auto MeshRenderer::loadFromModel() -> void
 		{
 			getMesh(meshName);
-			if (mesh)
-				mesh->setMaterial(material);
 		}
 
 		auto MeshRenderer::getMesh(const std::string& name) -> void

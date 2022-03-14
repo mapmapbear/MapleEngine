@@ -27,9 +27,9 @@ namespace maple
 	{
 		inline auto updateGrid(component::LPVGrid& grid, maple::BoundingBox * box) 
 		{
-			auto dimension = box->size();
+			auto dimension = glm::vec3(32, 32, 32);//box->size();
 
-			dimension = glm::min(glm::vec3(32,32,32), dimension);
+			//dimension = glm::min(glm::vec3(32,32,32), dimension);
 
 			TextureParameters paramemters(TextureFormat::R32UI, TextureFilter::Nearest, TextureWrap::ClampToEdge);
 			if (grid.lpvGridB == nullptr) 
@@ -162,6 +162,13 @@ namespace maple
 					auto gridSize = std::max(aabb.box->size().x, aabb.box->size().y);
 					injectLight.descriptors[0]->setUniform("UniformBufferObject", "gridSize", &gridSize);
 					injectLight.descriptors[0]->setUniform("UniformBufferObject", "minAABB", glm::value_ptr(injectLight.boundingBox.min));
+
+					auto size = aabb.box->size();
+					auto maxValue = std::max(size.x,std::max(size.y,size.z));
+					
+					/*if (maxValue > 32)
+						lpv.cellSize = maxValue / 32.f;*/
+
 					injectLight.descriptors[0]->setUniform("UniformBufferObject", "cellSize", &lpv.cellSize);
 				}
 			}

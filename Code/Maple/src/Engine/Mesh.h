@@ -36,7 +36,13 @@ namespace maple
 
 		inline auto setMaterial(const std::shared_ptr<Material> &material)
 		{
-			this->material = material;
+			materials.clear();
+			materials.emplace_back(material);
+		}
+
+		inline auto setMaterial(const std::vector<std::shared_ptr<Material>> & material)
+		{
+			materials = material;
 		}
 
 		inline auto setIndicesSize(uint32_t size)
@@ -47,6 +53,21 @@ namespace maple
 		{
 			return size;
 		}
+
+		inline auto setSubMeshCount(uint32_t subMesh) 
+		{
+			subMeshCount = subMesh;
+		}
+
+		inline auto setSubMeshIndex(const std::vector<uint32_t> & idx)
+		{
+			subMeshIndex = idx;
+		}
+
+		inline auto getSubMeshCount() const { return subMeshCount; }
+
+		inline auto& getSubMeshIndex() const { return subMeshIndex; }
+
 		inline auto &getIndexBuffer()
 		{
 			return indexBuffer;
@@ -57,7 +78,7 @@ namespace maple
 		}
 		inline auto &getMaterial()
 		{
-			return material;
+			return materials;
 		}
 		inline auto &getDescriptorSet()
 		{
@@ -95,6 +116,8 @@ namespace maple
 			return MeshType::MESH;
 		}
 
+		auto setIndicies(uint32_t range) -> void;
+
 		static auto createQuad(bool screen = false) -> std::shared_ptr<Mesh>;
 		static auto createQuaterScreenQuad() -> std::shared_ptr<Mesh>;
 		static auto createCube() -> std::shared_ptr<Mesh>;
@@ -112,12 +135,14 @@ namespace maple
 		std::shared_ptr<VertexBuffer>  vertexBuffer;
 		std::shared_ptr<Texture>       texture;
 		std::shared_ptr<DescriptorSet> descriptorSet;
-		std::shared_ptr<Material>      material;
+		std::vector<std::shared_ptr<Material>> materials;
 
 		std::shared_ptr<BoundingBox> boundingBox;
 
 		uint32_t    size   = 0;
 		bool        active = true;
 		std::string name;
+		uint32_t subMeshCount = 0;
+		std::vector<uint32_t> subMeshIndex;
 	};
 };        // namespace maple

@@ -176,6 +176,8 @@ namespace maple
 			{
 				int32_t enableIndirect = directionaLight->enableLPV ? 1 : 0;
 				data.descriptorLightSet[0]->setUniform("UniformBufferLight", "enableIndirectLight", &enableIndirect);
+				int32_t enableShadow = directionaLight->castShadow ? 1 : 0;
+				data.descriptorLightSet[0]->setUniform("UniformBufferLight", "enableShadow", &enableShadow);
 			}
 
 			data.descriptorLightSet[0]->setTexture("uPreintegratedFG", data.preintegratedFG);
@@ -219,8 +221,16 @@ namespace maple
 							auto& cmd = data.commandQueue.emplace_back();
 							cmd.mesh = mesh.getMesh().get();
 							cmd.transform = worldTransform;
-							cmd.material = mesh.getMesh()->getMaterial() ? mesh.getMesh()->getMaterial().get() : data.defaultMaterial.get();
-							cmd.material->bind();
+
+							if (mesh.getMesh()->getSubMeshCount() <= 1) 
+							{
+								cmd.material = !mesh.getMesh()->getMaterial().empty() ? mesh.getMesh()->getMaterial()[0].get() : data.defaultMaterial.get();
+								cmd.material->bind();
+							}
+							else 
+							{
+								cmd.material = nullptr;
+							}
 
 							auto depthTest = data.depthTest;
 							pipelineInfo.colorTargets[0] = renderData.gbuffer->getBuffer(GBufferTextures::COLOR);
@@ -231,10 +241,18 @@ namespace maple
 							pipelineInfo.colorTargets[5] = renderData.gbuffer->getBuffer(GBufferTextures::VIEW_NORMALS);
 							pipelineInfo.colorTargets[6] = renderData.gbuffer->getBuffer(GBufferTextures::VELOCITY);
 			
-							pipelineInfo.cullMode = cmd.material->isFlagOf(Material::RenderFlags::TwoSided) ? CullMode::None : CullMode::Back;
-							pipelineInfo.transparencyEnabled = cmd.material->isFlagOf(Material::RenderFlags::AlphaBlend);
+							if (cmd.material != nullptr)
+							{
+								pipelineInfo.cullMode = cmd.material->isFlagOf(Material::RenderFlags::TwoSided) ? CullMode::None : CullMode::Back;
+								pipelineInfo.transparencyEnabled = cmd.material->isFlagOf(Material::RenderFlags::AlphaBlend);
+							}
+							else 
+							{
+								pipelineInfo.cullMode =CullMode::Back;
+								pipelineInfo.transparencyEnabled = false;
+							}
 
-							if (depthTest && cmd.material->isFlagOf(Material::RenderFlags::DepthTest))
+							if (cmd.material == nullptr || (depthTest && cmd.material->isFlagOf(Material::RenderFlags::DepthTest)))
 							{
 								pipelineInfo.depthTarget = renderData.gbuffer->getDepthBuffer();
 							}
@@ -291,7 +309,7 @@ namespace maple
 
 			for (auto& command : data.commandQueue)
 			{
-				data.descriptorColorSet[1] = command.material->getDescriptorSet();
+				
 
 				pipeline = Pipeline::get(command.pipelineInfo);
 
@@ -303,8 +321,39 @@ namespace maple
 				auto& pushConstants = data.deferredColorShader->getPushConstants()[0];
 				pushConstants.setValue("transform", &command.transform);
 				data.deferredColorShader->bindPushConstants(renderData.commandBuffer, pipeline.get());
-				Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, data.descriptorColorSet);
-				Renderer::drawMesh(renderData.commandBuffer, pipeline.get(), command.mesh);
+
+				if (command.mesh->getSubMeshCount() > 1)
+				{
+					auto& materials = command.mesh->getMaterial();
+					auto& indices = command.mesh->getSubMeshIndex();
+					auto start = 0;
+					command.mesh->getVertexBuffer()->bind(renderData.commandBuffer, pipeline.get());
+					command.mesh->getIndexBuffer()->bind(renderData.commandBuffer);
+
+					for (auto i = 0; i <= indices.size(); i++)
+					{
+						auto& material = materials[i];
+						auto end = i == indices.size() ? command.mesh->getIndexBuffer()->getCount() : indices[i];
+						data.descriptorColorSet[1] = material->getDescriptorSet();
+						material->bind();
+
+						Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, data.descriptorColorSet);
+						Renderer::drawIndexed(renderData.commandBuffer, DrawType::Triangle, end - start, start);
+
+						start = end;
+					}
+
+
+
+					command.mesh->getVertexBuffer()->unbind();
+					command.mesh->getIndexBuffer()->unbind();
+				}
+				else
+				{
+					data.descriptorColorSet[1] = command.material->getDescriptorSet();
+					Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, data.descriptorColorSet);
+					Renderer::drawMesh(renderData.commandBuffer, pipeline.get(), command.mesh);
+				}
 
 				if (command.stencilPipelineInfo.stencilTest)
 				{
