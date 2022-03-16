@@ -177,13 +177,13 @@ namespace maple
 #endif        // MAPLE_VULKAN
 	}
 
-	auto Texture3D::create(uint32_t width, uint32_t height, uint32_t depth, TextureParameters parameters) -> std::shared_ptr<Texture3D>
+	auto Texture3D::create(uint32_t width, uint32_t height, uint32_t depth, TextureParameters parameters, TextureLoadOptions loadOptions) -> std::shared_ptr<Texture3D>
 	{
 #ifdef MAPLE_OPENGL
-		return std::make_shared <GLTexture3D>(width, height, depth, parameters);
+		return std::make_shared <GLTexture3D>(width, height, depth, parameters, loadOptions);
 #endif        // MAPLE_OPENGL
 #ifdef MAPLE_VULKAN
-		return std::make_shared <VulkanTexture3D>(width, height, depth, parameters);
+		return std::make_shared <VulkanTexture3D>(width, height, depth, parameters, loadOptions);
 #endif        // MAPLE_VULKAN
 	}
 }        // namespace maple

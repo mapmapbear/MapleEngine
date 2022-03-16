@@ -9,7 +9,9 @@
 #include "Engine/Material.h"
 #include "Engine/Profiler.h"
 #include "Engine/Mesh.h"
-
+#include "Engine/Renderer/RendererData.h"
+#include "Engine/CaptureGraph.h"
+#include "Engine/Renderer/GeometryRenderer.h"
 
 #include "ImGui/ImGuiHelpers.h"
 #include "Math/Frustum.h"
@@ -18,15 +20,13 @@
 #include "Scene/Component/Light.h"
 #include "Scene/Scene.h"
 #include "Scene/Component/MeshRenderer.h"
+#include "Scene/Component/BoundingBox.h"
 
 #include "RHI/CommandBuffer.h"
 #include "RHI/DescriptorSet.h"
 #include "RHI/Pipeline.h"
 #include "RHI/Shader.h"
 #include "RHI/Texture.h"
-
-#include "Engine/Renderer/RendererData.h"
-#include "Engine/CaptureGraph.h"
 
 #include "Application.h"
 
@@ -95,7 +95,7 @@ namespace maple
 				glm::vec3 maxExtents = glm::vec3(radius);
 				glm::vec3 minExtents = -maxExtents;
 
-				glm::vec3 lightDir         = glm::normalize(glm::vec3(light->lightData.direction) * -1.f);
+				glm::vec3 lightDir         = glm::normalize(glm::vec3(light->lightData.direction));
 				glm::mat4 lightViewMatrix  = glm::lookAt(frustumCenter - lightDir * -minExtents.z, frustumCenter, maple::UP);
 				glm::mat4 lightOrthoMatrix = glm::ortho(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, 0.0f, maxExtents.z - minExtents.z);
 
@@ -105,7 +105,6 @@ namespace maple
 				{
 					shadowData.lightMatrix = lightViewMatrix;
 					shadowData.lightDir = lightDir;
-					shadowData.lightArea = radius * radius * 4 ;
 				}
 			}
 		}
@@ -133,42 +132,27 @@ namespace maple
 
 	component::ReflectiveShadowData::ReflectiveShadowData()
 	{
-		{
-			shader = Shader::create("shaders/LPV/ReflectiveShadowMap.shader");
-			descriptorSets.resize(2);
-			descriptorSets[0] = DescriptorSet::create({0, shader.get()});
-			descriptorSets[1] = DescriptorSet::create({1, shader.get()});
+		shader = Shader::create("shaders/LPV/ReflectiveShadowMap.shader");
+		descriptorSets.resize(2);
+		descriptorSets[0] = DescriptorSet::create({ 0, shader.get() });
+		descriptorSets[1] = DescriptorSet::create({ 1, shader.get() });
 
-			for (int32_t i = 0; i < NUM_RSM; i++)
-			{
-				float *sample     = MathUtils::hammersley(i, 2, NUM_RSM);
-				vpl.vplSamples[i] = {
-				    sample[0],
-				    sample[1],
-				    sample[0] * std::sin(M_PI_TWO * sample[1]),
-				    sample[0] * std::cos(M_PI_TWO * sample[1])};
-				delete[] sample;
-			}
+		TextureParameters parameters;
 
-			TextureParameters parameters;
+		parameters.format = TextureFormat::RGBA32;
+		parameters.wrap = TextureWrap::ClampToBorder;
 
-			parameters.format = TextureFormat::RGBA32;
-			parameters.wrap   = TextureWrap::ClampToBorder;
+		fluxTexture = Texture2D::create(SHADOW_SIZE, SHADOW_SIZE, nullptr, parameters);
+		fluxTexture->setName("uFluxSampler");
 
-			fluxTexture = Texture2D::create(SHADOW_SIZE, SHADOW_SIZE, nullptr, parameters);
-			fluxTexture->setName("uFluxSampler");
+		worldTexture = Texture2D::create(SHADOW_SIZE, SHADOW_SIZE, nullptr, parameters);
+		worldTexture->setName("uRSMWorldSampler");
 
-			worldTexture = Texture2D::create(SHADOW_SIZE, SHADOW_SIZE, nullptr, parameters);
-			worldTexture->setName("uRSMWorldSampler");
+		normalTexture = Texture2D::create(SHADOW_SIZE, SHADOW_SIZE, nullptr, parameters);
+		normalTexture->setName("uRSMNormalSampler");
 
-			normalTexture = Texture2D::create(SHADOW_SIZE, SHADOW_SIZE, nullptr, parameters);
-			normalTexture->setName("uRSMNormalSampler");
-
-			fluxDepth = TextureDepth::create(SHADOW_SIZE, SHADOW_SIZE);
-			fluxDepth->setName("uFluxDepthSampler");
-
-			descriptorSets[1]->setUniformBufferData("VirtualPointLight", &vpl);
-		}
+		fluxDepth = TextureDepth::create(SHADOW_SIZE, SHADOW_SIZE);
+		fluxDepth->setName("uFluxDepthSampler");
 	}
 
 	namespace shadow_map_pass
@@ -306,8 +290,98 @@ namespace maple
 
 	namespace reflective_shadow_map_pass
 	{
+		namespace begin_scene 
+		{
+			using Entity = ecs::Chain
+				::Read<component::CameraView>
+				::Write<component::ReflectiveShadowData>
+				::Read<component::BoundingBoxComponent>
+				::To<ecs::Entity>;
+
+			using LightQuery = ecs::Chain
+				::Write<component::Light>
+				::To<ecs::Query>;
+
+			using MeshQuery = ecs::Chain
+				::Write<component::MeshRenderer>
+				::Write<component::Transform>
+				::To<ecs::Query>;
+
+			using MeshEntity = ecs::Chain
+				::Write<component::MeshRenderer>
+				::Write<component::Transform>
+				::To<ecs::Entity>;
+
+			inline auto system(Entity entity, LightQuery lightQuery, MeshQuery meshQuery, ecs::World world)
+			{
+				auto [cameraView, rsm,aabb] = entity;
+				rsm.commandQueue.clear();
+
+				if (!aabb.box) 
+				{
+					return;
+				}
+				
+				if (!lightQuery.empty())
+				{
+					component::Light* directionaLight = nullptr;
+
+					for (auto entity : lightQuery)
+					{
+						auto [light] = lightQuery.convert(entity);
+						if (static_cast<component::LightType>(light.lightData.type) == component::LightType::DirectionalLight)
+						{
+							directionaLight = &light;
+							break;
+						}
+					}
+
+					if (directionaLight)
+					{
+						rsm.descriptorSets[1]->setUniform("UBO", "light", &directionaLight->lightData);
+
+						if (directionaLight)
+						{
+							float distance = glm::length(aabb.box->max - aabb.box->min) / 2;
+
+							glm::vec3 maxExtents = glm::vec3(distance);
+							glm::vec3 minExtents = -maxExtents;
+
+							glm::vec3 lightDir = glm::normalize(glm::vec3(directionaLight->lightData.direction) );
+							glm::mat4 lightViewMatrix = glm::lookAt(aabb.box->center() + lightDir * minExtents.z, aabb.box->center(), maple::UP);
+							const auto len = (maxExtents.z - minExtents.z);
+
+							auto lightOrthoMatrix = glm::ortho(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, -len, len);
+
+							rsm.projView = lightOrthoMatrix * lightViewMatrix;
+							rsm.frustum.from(rsm.projView);
+							rsm.lightArea = distance * distance * 4;
+						}
+					
+						for (auto meshEntity : meshQuery)
+						{
+							auto [mesh, trans] = meshQuery.convert(meshEntity);
+
+							auto inside = rsm.frustum.isInside(mesh.getMesh()->getBoundingBox());
+
+							if (inside)
+							{
+								auto& cmd = rsm.commandQueue.emplace_back();
+								cmd.mesh = mesh.getMesh().get();
+								cmd.transform = trans.getWorldMatrix();
+
+								if (mesh.getMesh()->getSubMeshCount() <= 1) // at least two subMeshes.
+								{
+									cmd.material = !mesh.getMesh()->getMaterial().empty() ? mesh.getMesh()->getMaterial()[0].get() : nullptr;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
 		using Entity = ecs::Chain
-			::Read<component::ShadowMapData>
 			::Read<component::ReflectiveShadowData>
 			::Read<component::RendererData>
 			::Write<capture_graph::component::RenderGraph>
@@ -315,11 +389,11 @@ namespace maple
 
 		inline auto onRender(Entity entity, ecs::World world)
 		{
-			auto [shadow, rsm,renderData,renderGraph] = entity;
+			auto [rsm,renderData,renderGraph] = entity;
 
 			auto descriptorSet = rsm.descriptorSets[1];
 
-			rsm.descriptorSets[0]->setUniform("UniformBufferObject", "lightProjection", &shadow.shadowProjView);
+			rsm.descriptorSets[0]->setUniform("UniformBufferObject", "lightProjection", &rsm.projView);
 
 			rsm.descriptorSets[0]->update();
 			rsm.descriptorSets[1]->update();
@@ -344,7 +418,7 @@ namespace maple
 			else
 				pipeline->bind(commandBuffer);
 
-			for (auto& command : shadow.cascadeCommandQueue[0])
+			for (auto& command : rsm.commandQueue)
 			{
 				Mesh* mesh = command.mesh;
 				const auto& trans = command.transform;
@@ -409,6 +483,8 @@ namespace maple
 
 			executePoint->registerWithinQueue<shadow_map_pass::beginScene>(begin);
 			executePoint->registerWithinQueue<shadow_map_pass::onRender>(renderer);
+
+			executePoint->registerWithinQueue<reflective_shadow_map_pass::begin_scene::system>(begin);
 			executePoint->registerWithinQueue<reflective_shadow_map_pass::onRender>(renderer);
 		}
 	};

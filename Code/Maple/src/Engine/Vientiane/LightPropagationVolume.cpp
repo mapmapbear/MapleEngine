@@ -159,15 +159,14 @@ namespace maple
 					updateGrid(lpv, aabb.box);
 					injectLight.boundingBox.min = aabb.box->min;
 					injectLight.boundingBox.max = aabb.box->max;
-					auto gridSize = std::max(aabb.box->size().x, aabb.box->size().y);
+					auto size = aabb.box->size();
+					auto gridSize = 32.f;
 					injectLight.descriptors[0]->setUniform("UniformBufferObject", "gridSize", &gridSize);
 					injectLight.descriptors[0]->setUniform("UniformBufferObject", "minAABB", glm::value_ptr(injectLight.boundingBox.min));
 
-					auto size = aabb.box->size();
-					auto maxValue = std::max(size.x,std::max(size.y,size.z));
-					
-					/*if (maxValue > 32)
-						lpv.cellSize = maxValue / 32.f;*/
+					auto maxValue = std::max(size.x, std::max(size.y, size.z));
+					if (maxValue > 32)
+						lpv.cellSize = maxValue / 32.f;
 
 					injectLight.descriptors[0]->setUniform("UniformBufferObject", "cellSize", &lpv.cellSize);
 				}
@@ -223,7 +222,7 @@ namespace maple
 				geometry.descriptors[0]->setUniform("UniformBufferObject", "minAABB", glm::value_ptr(aabb.box->min));
 				geometry.descriptors[0]->setUniform("UniformBufferObject", "cellSize", &lpv.cellSize);
 				geometry.descriptors[0]->setUniform("UniformBufferObject", "lightDir", glm::value_ptr(shadowData.lightDir));
-				geometry.descriptors[0]->setUniform("UniformBufferObject", "rsmArea", &shadowData.lightArea);
+				geometry.descriptors[0]->setUniform("UniformBufferObject", "rsmArea", &rsm.lightArea);
 			}
 
 			inline auto render(Entity entity, ecs::World world)
@@ -300,14 +299,13 @@ namespace maple
 				lpv.lpvAccumulatorG->clear();
 				lpv.lpvAccumulatorB->clear();
 
-				auto aabbSize = aabb.box->size();
 				PipelineInfo pipelineInfo;
 				pipelineInfo.shader = data.shader;
-				pipelineInfo.groupCountX = aabbSize.x / data.shader->getLocalSizeX();
-				pipelineInfo.groupCountY = aabbSize.y / data.shader->getLocalSizeY();
-				pipelineInfo.groupCountZ = aabbSize.z / data.shader->getLocalSizeZ();
+				pipelineInfo.groupCountX = 32 / data.shader->getLocalSizeX();
+				pipelineInfo.groupCountY = 32 / data.shader->getLocalSizeY();
+				pipelineInfo.groupCountZ = 32 / data.shader->getLocalSizeZ();
 				auto pipeline = Pipeline::get(pipelineInfo);
-
+				pipeline->bind(rendererData.commandBuffer);
 				for (auto i = 1; i <= lpv.propagateCount; i++)
 				{
 					data.descriptors[0]->setTexture("LPVGridR", lpv.lpvRs[i - 1]);
@@ -319,13 +317,10 @@ namespace maple
 					data.descriptors[0]->setTexture("LPVGridB_", lpv.lpvBs[i]);  
 					data.descriptors[0]->setUniform("UniformObject", "step", &i );
 					data.descriptors[0]->update();
-
-		
-					pipeline->bind(rendererData.commandBuffer);
 					Renderer::bindDescriptorSets(pipeline.get(), rendererData.commandBuffer, 0, data.descriptors);
 					Renderer::dispatch(rendererData.commandBuffer, pipelineInfo.groupCountX, pipelineInfo.groupCountY, pipelineInfo.groupCountZ);
-					pipeline->end(rendererData.commandBuffer);
 				}
+				pipeline->end(rendererData.commandBuffer);
 			}
 		};
 		
@@ -386,15 +381,17 @@ namespace maple
 				else
 					pipeline->bind(renderData.commandBuffer);
 
-				for (int32_t i = min.x; i < max.x; i++) 
+				const auto r = 0.1 * lpv.cellSize;
+
+				for (int32_t i = min.x; i < max.x; i += lpv.cellSize)
 				{
-					for (int32_t j = min.y; j < max.y; j++)
+					for (int32_t j = min.y; j < max.y; j += lpv.cellSize)
 					{
-						for (int32_t k = min.z; k < max.z; k++)
+						for (int32_t k = min.z; k < max.z; k += lpv.cellSize)
 						{
 							glm::mat4 model = glm::mat4(1);
 							model = glm::translate(model, glm::vec3(i, j, k));
-							model = glm::scale(model, glm::vec3(0.1, 0.1, 0.1));
+							model = glm::scale(model, glm::vec3(r,r,r));
 
 							auto& pushConstants = data.shader->getPushConstants()[0];
 							pushConstants.setValue("transform", &model);
@@ -424,14 +421,15 @@ namespace maple
 			executePoint->registerWithinQueue<inject_light_pass::render>(renderer);
 			executePoint->registerWithinQueue<inject_geometry_pass::beginScene>(begin);
 			executePoint->registerWithinQueue<inject_geometry_pass::render>(renderer);
+
 			executePoint->registerWithinQueue<propagation_pass::beginScene>(begin);
 			executePoint->registerWithinQueue<propagation_pass::render>(renderer);
 		}
 
 		auto registerLPVDebug(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void
 		{
-/*
 			executePoint->registerGlobalComponent<component::DebugAABBData>();
+/*
 			executePoint->registerWithinQueue<aabb_debug::beginScene>(begin);
 			executePoint->registerWithinQueue<aabb_debug::render>(renderer);*/
 		}

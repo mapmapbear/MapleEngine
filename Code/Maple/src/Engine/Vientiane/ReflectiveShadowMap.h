@@ -18,8 +18,7 @@ namespace maple
 		{
 			constexpr static char* ICON = ICON_MDI_BOX_SHADOW;
 
-			static constexpr int32_t NUM_RSM     = 256;
-			constexpr static int32_t SHADOW_SIZE = 256;
+			constexpr static int32_t SHADOW_SIZE = 512;
 
 			bool                                        enable = false;
 			std::shared_ptr<Shader>                     shader;
@@ -28,16 +27,10 @@ namespace maple
 			std::shared_ptr<Texture2D>                  worldTexture;
 			std::shared_ptr<Texture2D>                  normalTexture;
 			std::shared_ptr<TextureDepth>               fluxDepth;
-
-			struct VPL        // Virtual Point Light
-			{
-				glm::vec4 vplSamples[NUM_RSM];        //
-				float     rsmRMax         = 1;
-				float     rsmIntensity    = 1.;
-				float     numberOfSamples = 30.f;
-				float     padding2;
-			} vpl;
-
+			std::vector<RenderCommand>				    commandQueue;
+			Frustum										frustum;
+			glm::mat4									projView;
+			float										lightArea = 1.0f;
 			ReflectiveShadowData();
 		};
 
@@ -52,7 +45,6 @@ namespace maple
 			float shadowFade            = 40.0f;
 			float cascadeTransitionFade = 3.0f;
 			float initialBias           = 0.005f;
-			float lightArea				= 1.0f;//used for rsm
 			bool  shadowMapsInvalidated = true;
 
 			uint32_t  shadowMapNum                  = 4;

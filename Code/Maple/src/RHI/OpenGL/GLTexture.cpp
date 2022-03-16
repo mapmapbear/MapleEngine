@@ -696,8 +696,8 @@ namespace maple
 		GLCall(glBindTexture(GL_TEXTURE_2D_ARRAY, 0));
 	}
 
-	GLTexture3D::GLTexture3D(uint32_t width, uint32_t height, uint32_t depth, TextureParameters parameters) :
-	    width(width), height(height), depth(depth), parameters(parameters)
+	GLTexture3D::GLTexture3D(uint32_t width, uint32_t height, uint32_t depth, TextureParameters parameters, TextureLoadOptions loadOptions) :
+	    width(width), height(height), depth(depth), parameters(parameters), loadOptions(loadOptions)
 	{
 		init(width, height, depth);
 	}
@@ -718,9 +718,14 @@ namespace maple
 		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, textureWrapToGL(parameters.wrap)));
 
 		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, parameters.magFilter == TextureFilter::Linear? GL_LINEAR : GL_NEAREST));
-		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, parameters.minFilter == TextureFilter::Linear ? GL_LINEAR : GL_NEAREST));
-		//GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR));
-
+		if (loadOptions.generateMipMaps)
+		{
+			GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, parameters.minFilter == TextureFilter::Linear ? GL_LINEAR : GL_NEAREST));
+		}
+		else 
+		{
+			GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, parameters.minFilter == TextureFilter::Linear ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST));
+		}
 /*
 * 
 * 
@@ -740,7 +745,10 @@ namespace maple
 		auto dataType = textureDataType(parameters.format);
 
 		GLCall(glTexImage3D(GL_TEXTURE_3D, 0, internalFormat, width, height, depth, 0, textureFormat, dataType, NULL));
-		//GLCall(glGenerateMipmap(GL_TEXTURE_3D));
+		if (loadOptions.generateMipMaps)
+		{
+			GLCall(glGenerateMipmap(GL_TEXTURE_3D));
+		}
 		GLCall(glBindImageTexture(0, handle, 0, GL_FALSE, 0, GL_READ_WRITE, internalFormat));
 	}
 
@@ -787,16 +795,24 @@ namespace maple
 		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, textureWrapToGL(parameters.wrap)));
 
 		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, parameters.magFilter == TextureFilter::Linear ? GL_LINEAR : GL_NEAREST));
-		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, parameters.minFilter == TextureFilter::Linear ? GL_LINEAR : GL_NEAREST));
-
-
-		//GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR));
+		if (loadOptions.generateMipMaps)
+		{
+			GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, parameters.minFilter == TextureFilter::Linear ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST));
+		}
+		else 
+		{
+			GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, parameters.minFilter == TextureFilter::Linear ? GL_LINEAR : GL_NEAREST));
+		}
 
 		auto internalFormat = textureFormatToGL(format, false);
 		auto textureFormat = internalFormatToFormat(internalFormat);
 		auto dataType = textureDataType(format);
 
 		GLCall(glTexImage3D(GL_TEXTURE_3D, 0, internalFormat, width, height, depth, 0, textureFormat, dataType, NULL));
+		if (loadOptions.generateMipMaps) 
+		{
+			GLCall(glGenerateMipmap(GL_TEXTURE_3D));
+		}
 		GLCall(glBindTexture(GL_TEXTURE_3D, 0));
 	}
 

@@ -107,7 +107,7 @@ namespace maple
 	class MAPLE_EXPORT Texture3D : public Texture2D
 	{
 	  public:
-		  static auto create(uint32_t width, uint32_t height, uint32_t depth, TextureParameters parameters = {})->std::shared_ptr<Texture3D>;
+		  static auto create(uint32_t width, uint32_t height, uint32_t depth, TextureParameters parameters = {}, TextureLoadOptions loadOptions = {})->std::shared_ptr<Texture3D>;
 
 		virtual auto update(int32_t x, int32_t y, int32_t w, int32_t h, const void *buffer) -> void
 		{}

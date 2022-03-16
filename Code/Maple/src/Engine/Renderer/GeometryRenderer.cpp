@@ -155,22 +155,25 @@ namespace maple
 		renderData.lines.push_back({start, end, color});
 	}
 
-	auto GeometryRenderer::drawFrustum(const Frustum &frustum) -> void
+	auto GeometryRenderer::drawFrustum(const Frustum &frustum, const glm::vec4& color) -> void
 	{
 		auto *vertices = frustum.vertices;
 
-		drawLine(vertices[0], vertices[1]);
-		drawLine(vertices[1], vertices[2]);
-		drawLine(vertices[2], vertices[3]);
-		drawLine(vertices[3], vertices[0]);
-		drawLine(vertices[4], vertices[5]);
-		drawLine(vertices[5], vertices[6]);
-		drawLine(vertices[6], vertices[7]);
-		drawLine(vertices[7], vertices[4]);
-		drawLine(vertices[0], vertices[4]);
-		drawLine(vertices[1], vertices[5]);
-		drawLine(vertices[2], vertices[6]);
-		drawLine(vertices[3], vertices[7]);
+		auto c = color * 0.6f;
+		c.a = 1.0f;
+
+		drawLine(vertices[0], vertices[1], c);
+		drawLine(vertices[1], vertices[2], c);
+		drawLine(vertices[2], vertices[3], c);
+		drawLine(vertices[3], vertices[0], c);
+		drawLine(vertices[4], vertices[5], color);
+		drawLine(vertices[5], vertices[6], color);
+		drawLine(vertices[6], vertices[7], color);
+		drawLine(vertices[7], vertices[4], color);
+		drawLine(vertices[0], vertices[4], color);
+		drawLine(vertices[1], vertices[5], color);
+		drawLine(vertices[2], vertices[6], color);
+		drawLine(vertices[3], vertices[7], color);
 	}
 
 	auto GeometryRenderer::drawRect(int32_t x, int32_t y, int32_t width, int32_t height) -> void
@@ -249,7 +252,7 @@ namespace maple
 
 		for (int i = 0; i < numLinesToCircle; i++)
 		{
-			float a = i * 90.0f;
+			float a = glm::radians(i * 90.0f);
 			glm::vec3 point = rotation * glm::vec3(std::cos(a),std::sin(a), 0.0f) * endAngle;
 			drawLine(position, position + point + forward * length, color);
 		}
