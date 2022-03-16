@@ -70,6 +70,17 @@ namespace MM
 	using namespace maple;
 
 	template <>
+	inline auto ComponentEditorWidget<component::SSAOData>( entt::registry& reg, entt::registry::entity_type e ) -> void
+	{
+		auto& ssao = reg.get<component::SSAOData>( e );
+		ImGui::Columns( 2 );
+		ImGui::Separator();
+		ImGuiHelper::property( "SSAO Enable", ssao.enable );
+		ImGuiHelper::property( "SSAO Radius", ssao.ssaoRadius,0.f,100.f);
+		ImGui::Columns( 1 );
+	}
+	
+	template <>
 	auto ComponentEditorWidget<component::Transform>(entt::registry &reg, entt::registry::entity_type e) -> void
 	{
 		auto &transform = reg.get<component::Transform>(e);
