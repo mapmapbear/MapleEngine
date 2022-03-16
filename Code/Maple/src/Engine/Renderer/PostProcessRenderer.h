@@ -20,6 +20,7 @@ namespace maple
 			std::vector<std::shared_ptr<DescriptorSet>> ssaoBlurSet;
 			bool  enable = false;
 			float bias = 0.025;
+			float ssaoRadius = 0.25f;
 			SSAOData();
 		};
 
