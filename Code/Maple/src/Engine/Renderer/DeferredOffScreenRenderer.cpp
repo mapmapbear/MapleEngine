@@ -189,11 +189,11 @@ namespace maple
 			if (!env.empty())
 			{
 				auto [evnData] = env.convert(*env.begin());
-				data.descriptorLightSet[0]->setTexture("uPrefilterMap", evnData.getEnvironment());
+				data.descriptorLightSet[0]->setTexture("uPrefilterMap", evnData.getPrefilteredEnvironment());
 				data.descriptorLightSet[0]->setTexture("uIrradianceMap", evnData.getIrradianceMap());
-				if (evnData.getEnvironment() != nullptr) 
+				if (evnData.getPrefilteredEnvironment() != nullptr)
 				{
-					int32_t cubeMapMipLevels = evnData.getEnvironment()->getMipMapLevels() - 1;
+					int32_t cubeMapMipLevels = evnData.getPrefilteredEnvironment()->getMipMapLevels() - 1;
 					data.descriptorLightSet[0]->setUniform("UniformBufferLight", "cubeMapMipLevels", &cubeMapMipLevels);
 				}
 	
@@ -435,7 +435,7 @@ namespace maple
 			{
 				auto [envData] = envQuery.convert(*envQuery.begin());
 				descriptorSet->setTexture("uIrradianceMap", envData.getIrradianceMap());
-				descriptorSet->setTexture("uPrefilterMap", envData.getEnvironment());
+				descriptorSet->setTexture("uPrefilterMap", envData.getPrefilteredEnvironment());
 				descriptorSet->setTexture("uPreintegratedFG", data.preintegratedFG);
 			}
 			descriptorSet->update();

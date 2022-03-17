@@ -160,7 +160,7 @@ namespace maple
 
 	auto PrefilterRenderer::generateSkybox(capture_graph::component::RenderGraph& graph) -> void
 	{
-		const auto maxMipLevels = 5;
+		
 		const auto proj         = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
 		cubeMapSet->setUniform("UniformBufferObject", "proj", glm::value_ptr(proj));
 
@@ -223,7 +223,7 @@ namespace maple
 			constants[0].setValue("projView", glm::value_ptr(captureProjView[faceId]));
 			irradianceShader->bindPushConstants(cmd, pipeline.get());
 
-			Application::getRenderDevice()->bindDescriptorSets(pipeline.get(), cmd, 0, {irradianceSet});
+			Renderer::bindDescriptorSets(pipeline.get(), cmd, 0, {irradianceSet});
 			Renderer::drawMesh(cmd, pipeline.get(), cube.get());
 
 			pipeline->end(cmd);
@@ -250,10 +250,11 @@ namespace maple
 
 		auto cmd = Application::getGraphicsContext()->getSwapChain()->getCurrentCommandBuffer();
 
-		constexpr auto maxMipLevels = 5;
-		for (auto mip = 0; mip < maxMipLevels; ++mip)
+		auto maxMips = 5;// std::pow(component::Environment::PrefilterMapSize, 2);
+
+		for (auto mip = 0; mip < maxMips; ++mip)
 		{
-			auto roughness = (float) mip / (float) (maxMipLevels - 1);
+			auto roughness = (float) mip / (float)(maxMips - 1);
 
 			prefilterSet->setUniform("UniformBufferRoughness", "constRoughness", &roughness, true);
 

@@ -38,7 +38,6 @@ namespace maple
 	{
 	  public:
 		static constexpr int32_t SkyboxSize = 512;
-
 		PrefilterRenderer();
 		~PrefilterRenderer();
 
@@ -86,5 +85,6 @@ namespace maple
 		std::shared_ptr<Mesh> cube;
 		std::shared_ptr<Mesh> cube2;
 		component::Environment *         envComponent = nullptr;
+		int32_t maxMips = 8;
 	};
 };        // namespace maple
