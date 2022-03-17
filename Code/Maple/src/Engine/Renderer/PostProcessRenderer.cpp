@@ -80,11 +80,12 @@ namespace maple
 			::Write<component::SSAOData>
 			::Read<component::RendererData>
 			::Write<capture_graph::component::RenderGraph>
+			::Read<component::CameraView>
 			::To<ecs::Entity>;
 
 		inline auto system(Entity entity, ecs::World world)
 		{
-			auto [ssaoData, renderData,graph] = entity;
+			auto [ssaoData, renderData,graph,camera] = entity;
 
 			if (!ssaoData.enable)
 				return;
@@ -93,6 +94,8 @@ namespace maple
 			descriptorSet->setTexture("uViewPositionSampler", renderData.gbuffer->getBuffer(GBufferTextures::VIEW_POSITION));
 			descriptorSet->setTexture("uViewNormalSampler", renderData.gbuffer->getBuffer(GBufferTextures::VIEW_NORMALS));
 			descriptorSet->setTexture("uSsaoNoise", renderData.gbuffer->getSSAONoise());
+			descriptorSet->setUniform("UBO", "ssaoRadius", &ssaoData.ssaoRadius);
+			descriptorSet->setUniform("UBO", "projection", &camera.proj);
 			descriptorSet->update();
 
 			auto commandBuffer = renderData.commandBuffer;

@@ -17,12 +17,12 @@
 #include "Scene/Entity/Entity.h"
 #include "Scene/Scene.h"
 #include "Scene/SceneManager.h"
-#include <glm/gtc/type_ptr.hpp>
 
 #include "Scripts/Mono/MonoComponent.h"
 #include "Scripts/Mono/MonoScript.h"
 #include "Scripts/Mono/MonoSystem.h"
 
+#include "Engine/Renderer/PostProcessRenderer.h"
 #include "Engine/Camera.h"
 #include "Engine/Material.h"
 #include "Engine/Mesh.h"
@@ -33,6 +33,8 @@
 #include "ImGui/ImNotification.h"
 
 #include "Inspector.inl"
+
+#include <glm/gtc/type_ptr.hpp>
 
 namespace MM
 {
@@ -78,6 +80,17 @@ namespace MM
 		ImGuiHelper::property( "SSAO Enable", ssao.enable );
 		ImGuiHelper::property( "SSAO Radius", ssao.ssaoRadius,0.f,100.f);
 		ImGui::Columns( 1 );
+	}
+
+
+	template <>
+	inline auto ComponentEditorWidget<component::LPVGrid>(entt::registry& reg, entt::registry::entity_type e) -> void
+	{
+		auto& lpv = reg.get<component::LPVGrid>(e);
+		ImGui::Columns(2);
+		ImGui::Separator();
+		ImGuiHelper::property("Indirect Light Attenuation", lpv.indirectLightAttenuation, 0.f, 1.f,maple::ImGuiHelper::PropertyFlag::InputFloat);
+		ImGui::Columns(1);
 	}
 	
 	template <>

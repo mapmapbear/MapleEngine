@@ -26,6 +26,7 @@
 #include "PostProcessRenderer.h"
 
 #include "Engine/Vientiane/ReflectiveShadowMap.h"
+#include "Engine/Vientiane/LightPropagationVolume.h"
 
 #include "Application.h"
 #include "ImGui/ImGuiHelpers.h"
@@ -88,6 +89,7 @@ namespace maple
 			::Read<component::CameraView>
 			::Read<component::RendererData>
 			::Read<component::SSAOData>
+			::Read<component::LPVGrid>
 			::To<ecs::Entity>;
 
 		using LightDefine = ecs::Chain
@@ -111,7 +113,7 @@ namespace maple
 
 		inline auto beginScene(Entity entity, Query lightQuery, EnvQuery env, MeshQuery meshQuery,ecs::World world)
 		{
-			auto [data, shadowData, cameraView,renderData,ssao] = entity;
+			auto [data, shadowData, cameraView,renderData,ssao,lpvData] = entity;
 			data.commandQueue.clear();
 			auto descriptorSet = data.descriptorColorSet[0];
 
@@ -171,6 +173,7 @@ namespace maple
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "lightCount", &numLights);
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "shadowCount", &numShadows);
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "mode", &renderMode);
+			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "indirectLightAttenuation", &lpvData.indirectLightAttenuation);
 
 			if (directionaLight != nullptr) 
 			{
@@ -188,12 +191,17 @@ namespace maple
 				auto [evnData] = env.convert(*env.begin());
 				data.descriptorLightSet[0]->setTexture("uPrefilterMap", evnData.getEnvironment());
 				data.descriptorLightSet[0]->setTexture("uIrradianceMap", evnData.getIrradianceMap());
+				if (evnData.getEnvironment() != nullptr) 
+				{
+					int32_t cubeMapMipLevels = evnData.getEnvironment()->getMipMapLevels() - 1;
+					data.descriptorLightSet[0]->setUniform("UniformBufferLight", "cubeMapMipLevels", &cubeMapMipLevels);
+				}
+	
 			}
 
 			int32_t ssaoEnable = ssao.enable ? 1 : 0;
-			int32_t cubeMapMipLevels = 0;
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "ssaoEnable", &ssaoEnable);
-			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "cubeMapMipLevels", &cubeMapMipLevels);
+			
 
 
 			PipelineInfo pipelineInfo{};

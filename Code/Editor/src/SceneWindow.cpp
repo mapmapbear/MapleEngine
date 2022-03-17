@@ -162,11 +162,11 @@ namespace maple
 				{
 					const float *cameraViewPtr = glm::value_ptr(transform->getWorldMatrixInverse());
 
-					if (camera->isOrthographic())
+					/*if (camera->isOrthographic())
 					{
 						draw2DGrid(ImGui::GetWindowDrawList(),
 						           {transform->getWorldPosition().x, transform->getWorldPosition().y}, vMin, sceneViewSize, 1.0f, 1.5f);
-					}
+					}*/
 
 					editor.onImGuizmo();
 

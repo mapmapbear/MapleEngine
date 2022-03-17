@@ -25,7 +25,7 @@ namespace maple
 	struct MaterialProperties
 	{
 		glm::vec4 albedoColor       = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
-		glm::vec4 roughnessColor    = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+		glm::vec4 roughnessColor    = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 		glm::vec4 metallicColor     = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 		glm::vec4 emissiveColor     = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 		float     usingAlbedoMap    = 1.0f;

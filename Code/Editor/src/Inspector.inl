@@ -4,7 +4,9 @@
 #pragma once
 #include "Engine/Vientiane/ReflectiveShadowMap.h"
 #include "Engine/Vientiane/LightPropagationVolume.h"
+#include "Engine/Renderer/PostProcessRenderer.h"
 #include "Scene/Component/BoundingBox.h"
+
 
 namespace maple
 {
@@ -33,5 +35,6 @@ namespace maple
 		TRIVIAL_COMPONENT(component::ReflectiveShadowData, false, "Reflective Shadow Map");
 		TRIVIAL_COMPONENT(component::ShadowMapData, false, "Shadow Map");
 		TRIVIAL_COMPONENT(component::BoundingBoxComponent, false, "BoundingBox");
+		TRIVIAL_COMPONENT(component::SSAOData, false, "SSAO Data");
 	}
 }

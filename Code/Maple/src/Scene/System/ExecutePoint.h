@@ -16,8 +16,8 @@ namespace maple
 	{
 		std::string name;
 		std::vector<std::function<void(entt::registry& )>> jobs;
-		std::function<void(const std::string&, ecs::World)> preCall = [](const std::string&, ecs::World) {};
-		std::function<void(const std::string&, ecs::World)> postCall = [](const std::string&, ecs::World) {};
+		std::function<void(ecs::World)> preCall =  [](ecs::World) {};
+		std::function<void(ecs::World)> postCall = [](ecs::World) {};
 	};
 
 	class ExecutePoint
@@ -93,10 +93,12 @@ namespace maple
 
 			  for (auto g : graph)
 			  {
+				  g->preCall(ecs::World{ reg });
 				  for (auto& func : g->jobs)
 				  {
 					  func(reg);
 				  }
+				  g->postCall(ecs::World{ reg });
 			  }
 		  }
 
@@ -112,8 +114,7 @@ namespace maple
 			queue.jobs.emplace_back([&](entt::registry& reg) {
 				auto call = ecs::CallBuilder::template buildCall(TSystem{});
 				constexpr auto reflectStr = ecs::CallBuilder::template buildFullCallName(TSystem{});
-				std::string str = { reflectStr.data(),reflectStr.size() };
-				PROFILE_SCOPE(str.c_str());
+				PROFILE_SCOPE(reflectStr.c_str());
 				call(TSystem{}, reg);
 			});
 		}

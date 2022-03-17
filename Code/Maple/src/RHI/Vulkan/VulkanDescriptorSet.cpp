@@ -109,6 +109,7 @@ namespace maple
 	auto VulkanDescriptorSet::update() -> void
 	{
 		PROFILE_FUNCTION();
+
 		dynamic = false;
 
 		int32_t  descriptorWritesCount = 0;

@@ -144,6 +144,14 @@ namespace maple
 		static ExecuteQueue beginQ;
 		static ExecuteQueue renderQ;
 
+		beginQ.preCall = []( ecs::World world) {
+			DescriptorSet::toggleUpdate(false);
+		};
+
+		beginQ.postCall = [](ecs::World world) {
+			DescriptorSet::toggleUpdate(true);
+		};
+
 		executePoint->registerQueue(beginQ);
 		executePoint->registerQueue(renderQ);
 		executePoint->registerWithinQueue<on_begin_renderer::system>(renderQ);

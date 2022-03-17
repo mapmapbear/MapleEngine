@@ -1,3 +1,7 @@
+//////////////////////////////////////////////////////////////////////////////
+// This file is part of the Maple Engine                              		//
+//////////////////////////////////////////////////////////////////////////////
+
 #include "GLDescriptorSet.h"
 #include "Engine/Core.h"
 #include "Engine/Profiler.h"
@@ -39,6 +43,7 @@ namespace maple
 	auto GLDescriptorSet::update() -> void
 	{
 		PROFILE_FUNCTION();
+
 		for (auto &bufferInfo : uniformBuffers)
 		{
 			if (bufferInfo.second.dirty)

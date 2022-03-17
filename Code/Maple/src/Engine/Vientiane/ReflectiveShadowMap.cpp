@@ -186,6 +186,7 @@ namespace maple
 				shadowData.cascadeCommandQueue[i].clear();
 			}
 
+
 			if (!lightQuery.empty())
 			{
 				component::Light* directionaLight = nullptr;
@@ -234,6 +235,8 @@ namespace maple
 									}
 								}});
 						}
+
+					shadowData.descriptorSet[0]->setUniform("UniformBufferObject", "projView", shadowData.shadowProjView);
 				}
 			}
 		}
@@ -248,7 +251,6 @@ namespace maple
 		{
 			auto [shadowData, rendererData,renderGraph] = entity;
 
-			shadowData.descriptorSet[0]->setUniform("UniformBufferObject", "projView", shadowData.shadowProjView);
 			shadowData.descriptorSet[0]->update();
 
 			PipelineInfo pipelineInfo;
