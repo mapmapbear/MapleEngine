@@ -62,7 +62,14 @@ namespace maple
 		{
 			bool isDir = std::filesystem::is_directory(entry);
 			if (isDir) {
-				addPath(entry.path().string());
+				try
+				{
+					addPath(entry.path().string());
+				}
+				catch (...)
+				{
+					LOGW("{0} : catch an error",__FUNCTION__);
+				}
 			}
 		}
 	}

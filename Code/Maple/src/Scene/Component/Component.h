@@ -18,6 +18,14 @@ namespace maple
 
 	namespace component 
 	{
+
+		struct DeltaTime 
+		{
+			constexpr static char* ICON = ICON_MDI_TIMELAPSE;
+
+			float dt;
+		};
+
 		class MAPLE_EXPORT Component
 		{
 		public:

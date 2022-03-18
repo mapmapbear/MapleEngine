@@ -36,5 +36,6 @@ namespace maple
 		TRIVIAL_COMPONENT(component::ShadowMapData, false, "Shadow Map");
 		TRIVIAL_COMPONENT(component::BoundingBoxComponent, false, "BoundingBox");
 		TRIVIAL_COMPONENT(component::SSAOData, false, "SSAO Data");
+		TRIVIAL_COMPONENT(component::DeltaTime, false, "Delta Time");
 	}
 }

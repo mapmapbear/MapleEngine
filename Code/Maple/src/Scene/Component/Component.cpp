@@ -209,7 +209,7 @@ namespace maple
 				height = equirectangularMap->getHeight();
 				numMips = equirectangularMap->getMipMapLevels();
 				irradianceMap = TextureCube::create(IrradianceMapSize, TextureFormat::RGBA32, 1);
-				prefilteredEnvironment = TextureCube::create(PrefilterMapSize, TextureFormat::RGBA32, 5);
+				prefilteredEnvironment = TextureCube::create(PrefilterMapSize, TextureFormat::RGBA32, 7);
 			}
 		}
 	}

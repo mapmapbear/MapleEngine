@@ -35,6 +35,7 @@ add_subdirectory(lib/glad)
 add_subdirectory(lib/nativefiledialog)
 add_subdirectory(lib/imgui-node-editor)
 add_subdirectory(lib/libiconv)
+add_subdirectory(lib/OpenFBX)
 
 file(GLOB_RECURSE SHADERS_GLSL 
 	${ASSET_SHADER_DIR}/*.vert 
@@ -217,6 +218,7 @@ endif()
 		filedlg
 		imgui-node-editor
 		iconv
+		OpenFBX
 	)
 
 find_package(OpenMP)
@@ -224,7 +226,7 @@ if(OpenMP_CXX_FOUND)
     target_link_libraries(MapleEngine OpenMP::OpenMP_CXX)
 endif()
 
-	set_target_properties(lua zlib tinyobjloader tellenc spirvCross ktx spdlog_headers_for_ide stb_image glad TracyClient filedlg imgui-node-editor iconv PROPERTIES FOLDER Library)
+	set_target_properties(OpenFBX lua zlib tinyobjloader tellenc spirvCross ktx spdlog_headers_for_ide stb_image glad TracyClient filedlg imgui-node-editor iconv PROPERTIES FOLDER Library)
 	
 
 endif()
