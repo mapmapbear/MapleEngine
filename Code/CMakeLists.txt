@@ -130,6 +130,7 @@ target_include_directories(Editor PUBLIC
 	${LIB_SRC_DIR}/imGuIZMO/
 	${LIB_SRC_DIR}/ecs
 	${LIB_SRC_DIR}/mio
+	${LIB_SRC_DIR}/OpenFBX
 )
 
 
@@ -150,6 +151,7 @@ target_include_directories(Game PUBLIC
 	${LIB_SRC_DIR}/glad/include
 	${LIB_SRC_DIR}/ecs
 	${LIB_SRC_DIR}/mio
+	${LIB_SRC_DIR}/OpenFBX
 )
 
 target_link_libraries(

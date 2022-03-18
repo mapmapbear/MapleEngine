@@ -507,10 +507,20 @@ namespace maple
 		{
 			bool isDir = std::filesystem::is_directory(entry);
 
-			auto       test = std::vector<std::string>();
+			std::vector<std::string> test;
 			const char del  = *delimiter.c_str();
 
-			auto dirData = parseFilename(entry.path().string(), del, test);
+			std::string dirData;
+			try
+			{
+				dirData = parseFilename(entry.path().string(), del, test);
+			}
+			catch (...)
+			{
+				LOGW("{0} : catch an error", __FUNCTION__);
+				continue;
+			}
+				
 			auto fileExt = parseFiletype(dirData);
 
 			auto fileInfo          = std::make_shared<FileInfo>();

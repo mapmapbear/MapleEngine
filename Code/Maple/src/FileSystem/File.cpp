@@ -200,14 +200,23 @@ namespace maple
 			std::filesystem::directory_iterator list(str);
 			for (auto &it : list)
 			{
-				if (it.status().type() == std::filesystem::file_type::directory)
+				try
 				{
-					listFolder(it.path().string(), out, predict);
+					auto path = it.path().string();
+
+					if (it.status().type() == std::filesystem::file_type::directory)
+					{
+						listFolder(path, out, predict);
+					}
+					else
+					{
+						if (predict == nullptr || predict(it.path().string()))
+							out.emplace_back(path);
+					}
 				}
-				else
+				catch (...)
 				{
-					if (predict == nullptr || predict(it.path().string()))
-						out.emplace_back(it.path().string());
+					LOGW("{0} : catch an error", __FUNCTION__);
 				}
 			}
 		}

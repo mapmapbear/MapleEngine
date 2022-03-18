@@ -93,12 +93,12 @@ namespace maple
 
 			  for (auto g : graph)
 			  {
-				  g->preCall(ecs::World{ reg });
+				  g->preCall(ecs::World{ reg,globalEntity });
 				  for (auto& func : g->jobs)
 				  {
 					  func(reg);
 				  }
-				  g->postCall(ecs::World{ reg });
+				  g->postCall(ecs::World{ reg,globalEntity });
 			  }
 		  }
 
@@ -115,7 +115,7 @@ namespace maple
 				auto call = ecs::CallBuilder::template buildCall(TSystem{});
 				constexpr auto reflectStr = ecs::CallBuilder::template buildFullCallName(TSystem{});
 				PROFILE_SCOPE(reflectStr.c_str());
-				call(TSystem{}, reg);
+				call(TSystem{}, reg, globalEntity);
 			});
 		}
 

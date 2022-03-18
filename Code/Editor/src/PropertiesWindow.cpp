@@ -83,6 +83,18 @@ namespace MM
 	}
 
 
+
+	template <>
+	inline auto ComponentEditorWidget<component::DeltaTime>(entt::registry& reg, entt::registry::entity_type e) -> void
+	{
+		auto& dt = reg.get<component::DeltaTime>(e);
+		ImGui::Columns(2);
+		ImGui::Separator();
+		ImGuiHelper::showProperty("Delta Time", dt.dt);
+		ImGui::Columns(1);
+	}
+
+
 	template <>
 	inline auto ComponentEditorWidget<component::LPVGrid>(entt::registry& reg, entt::registry::entity_type e) -> void
 	{

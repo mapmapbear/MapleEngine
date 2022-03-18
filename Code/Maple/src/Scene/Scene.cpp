@@ -56,9 +56,10 @@ namespace maple
 		sceneGraph->init(entityManager->getRegistry());
 		entityManager->getRegistry().on_construct<component::MeshRenderer>().connect<&Scene::onMeshRenderCreated>(this);
 
-		globalEntity = createEntity("global");
+		globalEntity = createEntity("Global");
 
 		getGlobalComponent<component::BoundingBoxComponent>();
+		getGlobalComponent<component::DeltaTime>();
 	}
 
 	auto Scene::getRegistry() -> entt::registry &
@@ -179,7 +180,7 @@ namespace maple
 			::Write<component::MeshRenderer>
 			::To<ecs::Query>;
 
-		Query query(entityManager->getRegistry());
+		Query query(entityManager->getRegistry(),globalEntity);
 
 		for (auto entity : query)
 		{
@@ -259,6 +260,8 @@ namespace maple
 	auto Scene::onUpdate(float dt) -> void
 	{
 		PROFILE_FUNCTION();
+		auto& deltaTime = getGlobalComponent<component::DeltaTime>();
+		deltaTime.dt = dt;
 		updateCameraController(dt);
 		getBoundingBox();
 		sceneGraph->update(entityManager->getRegistry());
@@ -268,5 +271,7 @@ namespace maple
 			const auto &[anim, trans] = view.get<component::AnimatedSprite, component::Transform>(entity);
 			anim.onUpdate(dt);
 		}
+
+	
 	}
 };        // namespace maple

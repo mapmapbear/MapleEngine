@@ -124,6 +124,7 @@ namespace maple
 		ImNotification::onImGui();
 
 		systemManager->onUpdate(delta, scene);
+
 		executePoint->setGlobalEntity(scene->getGlobalEntity());
 		executePoint->onUpdate(delta, scene->getRegistry());
 
