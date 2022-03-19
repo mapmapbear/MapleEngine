@@ -26,6 +26,7 @@ Maple-Engine is my own engine for leaning mordern engine and rendering technique
 - Screen Space Ambient Occlusion (SSAO)
 - Screen Space Reflections(SSR)
 - Lua Scripting
+- Skinned Mesh
 - C# Scripting (Mono)
 - Ray-marched volumetric lighting
 - Atmospheric Scattering
@@ -45,6 +46,7 @@ Reflective Shadow Map				| 100%		  	| High priority
 Light propagation volumes		 	| 100%       	    | High priority
 C# scripting                     	| 80%			| Using Mono (no engine API exposed yet)
 Vulkan porting 	 				    | 90%	  		| support Compute and Tessellation shader
+Skinned Mesh                | 70%       | High priority
 Precomputed Light Field Probes 	| 0%		  	| High priority
 Screen space global illumination 	| 0%		  	| High priority
 Animation and State Machine       	| 0%			| Implemented in Raven Engine
