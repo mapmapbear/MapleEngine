@@ -13,7 +13,8 @@ Maple-Engine is my own engine for leaning mordern engine and rendering technique
 ![](https://flwmxd.github.io/images/Atmosphere.png)
 
 ### Light Propagation Volumes
-![](https://flwmxd.github.io/images/LPV_GI.png)
+
+![image](https://github.com/flwmxd/MapleEngine/blob/main/Screenshot/LPV_GI.png)
 
 ## Current Features
 
