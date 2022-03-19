@@ -101,7 +101,7 @@ namespace MM
 		auto& lpv = reg.get<component::LPVGrid>(e);
 		ImGui::Columns(2);
 		ImGui::Separator();
-		ImGuiHelper::property("Indirect Light Attenuation", lpv.indirectLightAttenuation, 0.f, 1.f,maple::ImGuiHelper::PropertyFlag::InputFloat);
+		ImGuiHelper::property("Indirect Light Attenuation", lpv.indirectLightAttenuation, 0.f, 1.f,maple::ImGuiHelper::PropertyFlag::DragFloat);
 		ImGui::Columns(1);
 	}
 	
@@ -422,11 +422,35 @@ namespace MM
 	}
 
 	template <>
-	inline auto ComponentEditorWidget<component::MeshRenderer>(entt::registry &reg, entt::registry::entity_type e) -> void
+	inline auto ComponentEditorWidget<component::SkinnedMeshRenderer>(entt::registry& reg, entt::registry::entity_type e) -> void
 	{
-		auto &mesh = reg.get<component::MeshRenderer>(e);
+		auto& mesh = reg.get<component::SkinnedMeshRenderer>(e);
 
-		auto & materials = mesh.getMesh()->getMaterial();
+		auto& materials = mesh.getMesh()->getMaterial();
+
+		ImGui::Columns(2);
+
+
+		if (auto box = mesh.getMesh()->getBoundingBox(); box != nullptr)
+		{
+			ImGui::Separator();
+			ImGui::Columns(1);
+			ImGui::TextUnformatted("Bounds");
+			ImGui::Columns(2);
+
+			auto size = box->size();
+			auto center = box->center();
+
+			ImGuiHelper::property("Center", center, 0, 0, ImGuiHelper::PropertyFlag::DragFloat);
+			ImGuiHelper::property("Extend", size, 0, 0, ImGuiHelper::PropertyFlag::DragFloat);
+			ImGui::Separator();
+		}
+
+		ImGuiHelper::property("Cast Shadow", mesh.castShadow);
+
+
+		ImGui::Columns(1);
+		ImGui::Separator();
 
 		const std::string matName = "Material";
 		if (materials.empty())
@@ -435,9 +459,9 @@ namespace MM
 			if (ImGui::Button("Add Material", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f)))
 				mesh.getMesh()->setMaterial(std::make_shared<Material>());
 		}
-		else 
+		else
 		{
-			for (auto i = 0;i< materials.size();i++)
+			for (auto i = 0; i < materials.size(); i++)
 			{
 				auto& material = materials[i];
 				std::string name = matName + "_" + std::to_string(i);
@@ -473,14 +497,85 @@ namespace MM
 				}
 			}
 		}
+	}
 
+
+	template <>
+	inline auto ComponentEditorWidget<component::MeshRenderer>(entt::registry &reg, entt::registry::entity_type e) -> void
+	{
+		auto &mesh = reg.get<component::MeshRenderer>(e);
+
+		auto & materials = mesh.getMesh()->getMaterial();
+	
 		ImGui::Columns(2);
-		ImGui::Separator();
 
+
+		if (auto box = mesh.getMesh()->getBoundingBox(); box != nullptr) 
+		{
+			ImGui::Separator();
+			ImGui::Columns(1);
+			ImGui::TextUnformatted("Bounds");
+			ImGui::Columns(2);
+
+			auto size = box->size();
+			auto center = box->center();
+
+			ImGuiHelper::property("Center", center, 0, 0, ImGuiHelper::PropertyFlag::DragFloat);
+			ImGuiHelper::property("Extend", size, 0, 0, ImGuiHelper::PropertyFlag::DragFloat);
+			ImGui::Separator();
+		}
+	
 		ImGuiHelper::property("Cast Shadow", mesh.castShadow);
 
-		ImGui::Columns(1);
 
+		ImGui::Columns(1);
+		ImGui::Separator();
+
+		const std::string matName = "Material";
+		if (materials.empty())
+		{
+			ImGui::TextUnformatted("Empty Material");
+			if (ImGui::Button("Add Material", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f)))
+				mesh.getMesh()->setMaterial(std::make_shared<Material>());
+		}
+		else
+		{
+			for (auto i = 0; i < materials.size(); i++)
+			{
+				auto& material = materials[i];
+				std::string name = matName + "_" + std::to_string(i);
+				if (ImGui::TreeNodeEx(name.c_str(), 0))
+				{
+					auto& prop = material->getProperties();
+					auto  color = glm::vec4(0.f);
+					auto  textures = material->getTextures();
+
+					bool update = false;
+
+					MM::textureWidget("Albedo", material.get(), textures.albedo, prop.usingAlbedoMap, prop.albedoColor, std::bind(&Material::setAlbedoTexture, material, std::placeholders::_1), update);
+					ImGui::Separator();
+
+					MM::textureWidget("Normal", material.get(), textures.normal, prop.usingNormalMap, color, std::bind(&Material::setNormalTexture, material, std::placeholders::_1), update);
+					ImGui::Separator();
+
+					MM::textureWidget("Metallic", material.get(), textures.metallic, prop.usingMetallicMap, prop.metallicColor, std::bind(&Material::setMetallicTexture, material, std::placeholders::_1), update);
+					ImGui::Separator();
+
+					MM::textureWidget("Roughness", material.get(), textures.roughness, prop.usingRoughnessMap, prop.roughnessColor, std::bind(&Material::setRoughnessTexture, material, std::placeholders::_1), update);
+					ImGui::Separator();
+
+					MM::textureWidget("AO", material.get(), textures.ao, prop.usingAOMap, color, std::bind(&Material::setAOTexture, material, std::placeholders::_1), update);
+					ImGui::Separator();
+
+					MM::textureWidget("Emissive", material.get(), textures.emissive, prop.usingEmissiveMap, prop.emissiveColor, std::bind(&Material::setEmissiveTexture, material, std::placeholders::_1), update);
+
+					if (update)
+						material->setMaterialProperites(prop);
+
+					ImGui::TreePop();
+				}
+			}
+		}
 	}
 
 	template <>
@@ -711,23 +806,23 @@ namespace MM
 		ImGui::Columns(3);
 		ImGui::Separator();
 
-		ImGuiHelper::propertyWithDefault("Surface Radius", atmosphere.getData().surfaceRadius, 1.f, 1.f, component::Atmosphere::SURFACE_RADIUS, ImGuiHelper::PropertyFlag::InputFloat);
-		ImGuiHelper::propertyWithDefault("Atmosphere Radius", atmosphere.getData().atmosphereRadius, 1.f, 1.f, component::Atmosphere::ATMOSPHE_RERADIUS, ImGuiHelper::PropertyFlag::InputFloat);
+		ImGuiHelper::propertyWithDefault("Surface Radius", atmosphere.getData().surfaceRadius, 1.f, 1.f, component::Atmosphere::SURFACE_RADIUS, ImGuiHelper::PropertyFlag::DragFloat);
+		ImGuiHelper::propertyWithDefault("Atmosphere Radius", atmosphere.getData().atmosphereRadius, 1.f, 1.f, component::Atmosphere::ATMOSPHE_RERADIUS, ImGuiHelper::PropertyFlag::DragFloat);
 
-		ImGuiHelper::propertyWithDefault("Center Point", atmosphere.getData().centerPoint, -10000.f, 0.f, {0.f, -component::Atmosphere::SURFACE_RADIUS, 0.f}, ImGuiHelper::PropertyFlag::InputFloat);
+		ImGuiHelper::propertyWithDefault("Center Point", atmosphere.getData().centerPoint, -10000.f, 0.f, {0.f, -component::Atmosphere::SURFACE_RADIUS, 0.f}, ImGuiHelper::PropertyFlag::DragFloat);
 		auto mie = 10000.f * atmosphere.getData().mieScattering;
 
-		if (ImGuiHelper::propertyWithDefault("Mie Scattering", mie, 0.f, 10.f, component::Atmosphere::MIE_SCATTERING * 10000.f, ImGuiHelper::PropertyFlag::InputFloat, 0.01))
+		if (ImGuiHelper::propertyWithDefault("Mie Scattering", mie, 0.f, 10.f, component::Atmosphere::MIE_SCATTERING * 10000.f, ImGuiHelper::PropertyFlag::DragFloat, 0.01))
 		{
 			atmosphere.getData().mieScattering = mie / 10000.f;
 		}
 		auto ray = 10000.f * atmosphere.getData().rayleighScattering;
 
-		if (ImGuiHelper::propertyWithDefault("Ray Scattering", ray, 0.f, 10.f, component::Atmosphere::RAYLEIGH_SCATTERING * 10000.f, ImGuiHelper::PropertyFlag::InputFloat, 0.01))
+		if (ImGuiHelper::propertyWithDefault("Ray Scattering", ray, 0.f, 10.f, component::Atmosphere::RAYLEIGH_SCATTERING * 10000.f, ImGuiHelper::PropertyFlag::DragFloat, 0.01))
 		{
 			atmosphere.getData().rayleighScattering = ray / 10000.f;
 		}
-		ImGuiHelper::propertyWithDefault("Anisotropy(g)", atmosphere.getData().g, 0.f, 1.f, component::Atmosphere::G, ImGuiHelper::PropertyFlag::InputFloat, 0.01);
+		ImGuiHelper::propertyWithDefault("Anisotropy(g)", atmosphere.getData().g, 0.f, 1.f, component::Atmosphere::G, ImGuiHelper::PropertyFlag::DragFloat, 0.01);
 
 		ImGui::Columns(1);
 		ImGui::Separator();

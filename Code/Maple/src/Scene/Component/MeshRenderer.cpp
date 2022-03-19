@@ -22,11 +22,6 @@ namespace maple
 		{
 		}
 
-		auto MeshRenderer::loadFromModel() -> void
-		{
-			getMesh(meshName);
-		}
-
 		auto MeshRenderer::getMesh(const std::string& name) -> void
 		{
 			auto currentScene = Application::get()->getSceneManager()->getCurrentScene();
@@ -74,6 +69,27 @@ namespace maple
 			{
 				resource = Application::getCache()->emplace<MeshResource>(filePath);
 			}
+		}
+
+
+//##########################################################################################################################################
+		SkinnedMeshRenderer::SkinnedMeshRenderer(const std::shared_ptr<Mesh>& mesh)
+			:mesh(mesh)
+		{
+
+		}
+
+		auto SkinnedMeshRenderer::getMesh(const std::string& name) -> void
+		{
+			auto currentScene = Application::get()->getSceneManager()->getCurrentScene();
+			Entity ent{ entity, currentScene->getRegistry() };
+			auto model = ent.tryGetComponentFromParent<Model>();
+			mesh = model->resource->find(name);
+		}
+
+		auto SkinnedMeshRenderer::isActive() const -> bool
+		{
+			return mesh ? mesh->isActive() : false;
 		}
 	};
 };        // namespace maple

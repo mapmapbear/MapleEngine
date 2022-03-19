@@ -13,15 +13,17 @@
 
 namespace maple 
 {
+	class Skeleton;
+
 	namespace MeshLoader
 	{
-		auto MAPLE_EXPORT load(const std::string& obj, std::unordered_map<std::string, std::shared_ptr<Mesh>>&)-> void;
+		auto MAPLE_EXPORT load(const std::string& obj, std::unordered_map<std::string, std::shared_ptr<Mesh>>&, std::shared_ptr<Skeleton>& skeleton) -> void;
 	};
 
 	class MAPLE_EXPORT ModelLoader
 	{
 	public:
-		virtual auto load(const std::string& obj, const std::string& extension, std::unordered_map<std::string, std::shared_ptr<Mesh>>&)-> void = 0;
+		virtual auto load(const std::string& obj, const std::string& extension, std::unordered_map<std::string, std::shared_ptr<Mesh>>&, std::shared_ptr<Skeleton> & skeleton)-> void = 0;
 	};
 
 	class MAPLE_EXPORT ModelLoaderFactory
@@ -31,7 +33,7 @@ namespace maple
 
 		template<typename T> 
 		auto addModelLoader() -> void;
-		auto load(const std::string& obj, std::unordered_map<std::string, std::shared_ptr<Mesh>>&)-> void;
+		auto load(const std::string& obj, std::unordered_map<std::string, std::shared_ptr<Mesh>>&, std::shared_ptr<Skeleton>& skeleton)-> void;
 
 		inline auto& getSupportExtensions() const{
 			return supportExtensions;

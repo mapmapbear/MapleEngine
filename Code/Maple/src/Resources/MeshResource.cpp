@@ -9,7 +9,7 @@ namespace maple
 	MeshResource::MeshResource(const std::string& name)
 		:name(name)
 	{
-		MeshLoader::load(name,meshes);
+		MeshLoader::load(name,meshes, skeleton);
 	}
 
 	auto MeshResource::addMesh(const std::string& name, Mesh* mesh) -> void

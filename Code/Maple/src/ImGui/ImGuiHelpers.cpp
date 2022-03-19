@@ -51,7 +51,7 @@ namespace maple
 			ImGui::PushItemWidth(-1);
 
 			std::string id = "##" + name;
-			if ((int32_t) flags & (int32_t) PropertyFlag::InputFloat)
+			if ((int32_t) flags & (int32_t) PropertyFlag::DragFloat)
 			{
 				if (ImGui::DragFloat(id.c_str(), &value, speed, min, max, format))
 					updated = true;
@@ -127,7 +127,7 @@ namespace maple
 				if (ImGui::ColorEdit3(id.c_str(), glm::value_ptr(value), ImGuiColorEditFlags_NoInputs))
 					updated = true;
 			}
-			else if ((int32_t) flags & (int32_t) PropertyFlag::InputFloat)
+			else if ((int32_t) flags & (int32_t) PropertyFlag::DragFloat)
 			{
 				if (ImGui::DragFloat3(id.c_str(), glm::value_ptr(value), speed, min, max))
 					updated = true;
@@ -258,7 +258,7 @@ namespace maple
 			 ImGui::PushItemWidth(-1);
 
 			 std::string id = "##" + name;
-			 if (ImGui::InputFloat(id.c_str(), &value, 0, 0)) 
+			 if (ImGui::InputFloat(id.c_str(), &value, 0, 0,"%.3f", ImGuiInputTextFlags_ReadOnly))
 			 {
 				
 			 }

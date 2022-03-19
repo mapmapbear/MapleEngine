@@ -28,6 +28,7 @@ namespace maple
 		TRIVIAL_COMPONENT(component::Sprite, true, "Sprite");
 		TRIVIAL_COMPONENT(component::AnimatedSprite, true, "Animation Sprite");
 		TRIVIAL_COMPONENT(component::MeshRenderer, false, "Mesh Renderer");
+		TRIVIAL_COMPONENT(component::SkinnedMeshRenderer, false, "Skinned Mesh Renderer");
 		TRIVIAL_COMPONENT(component::Atmosphere, true, "Atmosphere");
 		TRIVIAL_COMPONENT(component::VolumetricCloud, true, "Volumetric Cloud");
 		TRIVIAL_COMPONENT(component::LightProbe, true, "Light Probe");

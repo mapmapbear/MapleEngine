@@ -109,9 +109,15 @@ namespace maple
 			::ReadIfExist<component::StencilComponent>
 			::To<ecs::Query>;
 
+		using SkinnedMeshQuery = ecs::Chain
+			::Write<component::SkinnedMeshRenderer>
+			::Write<component::Transform>
+			::ReadIfExist<component::StencilComponent>
+			::To<ecs::Query>;
+
 		using LightEntity = LightDefine::To<ecs::Entity>;
 
-		inline auto beginScene(Entity entity, Query lightQuery, EnvQuery env, MeshQuery meshQuery,ecs::World world)
+		inline auto beginScene(Entity entity, Query lightQuery, EnvQuery env, MeshQuery meshQuery, SkinnedMeshQuery skinnedMeshQuery, ecs::World world)
 		{
 			auto [data, shadowData, cameraView,renderData,ssao,lpvData] = entity;
 			data.commandQueue.clear();
@@ -211,87 +217,99 @@ namespace maple
 			pipelineInfo.clearTargets = false;
 			pipelineInfo.swapChainTarget = false;
 
+
+			auto forEachMesh = [&](const glm::mat4 & worldTransform, std::shared_ptr<Mesh> mesh, bool hasStencil)
+			{
+				//culling
+				auto bb = mesh->getBoundingBox();
+				auto inside = cameraView.frustum.isInside(bb);
+
+				if (inside)
+				{
+					auto& cmd = data.commandQueue.emplace_back();
+					cmd.mesh = mesh.get();
+					cmd.transform = worldTransform;
+
+					if (mesh->getSubMeshCount() <= 1)
+					{
+						cmd.material = !mesh->getMaterial().empty() ? mesh->getMaterial()[0].get() : data.defaultMaterial.get();
+						cmd.material->bind();
+					}
+					else
+					{
+						cmd.material = nullptr;
+					}
+
+					auto depthTest = data.depthTest;
+					pipelineInfo.colorTargets[0] = renderData.gbuffer->getBuffer(GBufferTextures::COLOR);
+					pipelineInfo.colorTargets[1] = renderData.gbuffer->getBuffer(GBufferTextures::POSITION);
+					pipelineInfo.colorTargets[2] = renderData.gbuffer->getBuffer(GBufferTextures::NORMALS);
+					pipelineInfo.colorTargets[3] = renderData.gbuffer->getBuffer(GBufferTextures::PBR);
+					pipelineInfo.colorTargets[4] = renderData.gbuffer->getBuffer(GBufferTextures::VIEW_POSITION);
+					pipelineInfo.colorTargets[5] = renderData.gbuffer->getBuffer(GBufferTextures::VIEW_NORMALS);
+					pipelineInfo.colorTargets[6] = renderData.gbuffer->getBuffer(GBufferTextures::VELOCITY);
+
+					if (cmd.material != nullptr)
+					{
+						pipelineInfo.cullMode = cmd.material->isFlagOf(Material::RenderFlags::TwoSided) ? CullMode::None : CullMode::Back;
+						pipelineInfo.transparencyEnabled = cmd.material->isFlagOf(Material::RenderFlags::AlphaBlend);
+					}
+					else
+					{
+						pipelineInfo.cullMode = CullMode::Back;
+						pipelineInfo.transparencyEnabled = false;
+					}
+
+					if (cmd.material == nullptr || (depthTest && cmd.material->isFlagOf(Material::RenderFlags::DepthTest)))
+					{
+						pipelineInfo.depthTarget = renderData.gbuffer->getDepthBuffer();
+					}
+
+					if (hasStencil)
+					{
+						pipelineInfo.shader = data.stencilShader;
+						pipelineInfo.stencilTest = true;
+						pipelineInfo.stencilMask = 0x00;
+						pipelineInfo.stencilFunc = StencilType::Notequal;
+						pipelineInfo.stencilFail = StencilType::Keep;
+						pipelineInfo.stencilDepthFail = StencilType::Keep;
+						pipelineInfo.stencilDepthPass = StencilType::Replace;
+						pipelineInfo.depthTest = true;
+						cmd.stencilPipelineInfo = pipelineInfo;
+						cmd.stencilPipelineInfo.colorTargets[0] = renderData.gbuffer->getBuffer(GBufferTextures::SCREEN);
+						cmd.stencilPipelineInfo.colorTargets[1] = nullptr;
+						cmd.stencilPipelineInfo.colorTargets[2] = nullptr;
+						cmd.stencilPipelineInfo.colorTargets[3] = nullptr;
+
+						pipelineInfo.shader = data.deferredColorShader;
+						pipelineInfo.stencilMask = 0xFF;
+						pipelineInfo.stencilFunc = StencilType::Always;
+						pipelineInfo.stencilFail = StencilType::Keep;
+						pipelineInfo.stencilDepthFail = StencilType::Keep;
+						pipelineInfo.stencilDepthPass = StencilType::Replace;
+						pipelineInfo.depthTest = true;
+					}
+					cmd.pipelineInfo = pipelineInfo;
+				}
+			};
+
 			for (auto entityHandle : meshQuery)
 			{
 				auto [mesh, trans] = meshQuery.convert(entityHandle);
-
-				//if (mesh.isActive())
 				{
 					const auto& worldTransform = trans.getWorldMatrix();
-
 					auto bb = mesh.getMesh()->getBoundingBox();
-			
-					{//culling
-						auto inside = cameraView.frustum.isInside(bb);
+					forEachMesh(worldTransform, mesh.getMesh(), meshQuery.hasComponent<component::StencilComponent>(entityHandle));
+				}
+			}
 
-						if (inside)
-						{
-							auto& cmd = data.commandQueue.emplace_back();
-							cmd.mesh = mesh.getMesh().get();
-							cmd.transform = worldTransform;
-
-							if (mesh.getMesh()->getSubMeshCount() <= 1) 
-							{
-								cmd.material = !mesh.getMesh()->getMaterial().empty() ? mesh.getMesh()->getMaterial()[0].get() : data.defaultMaterial.get();
-								cmd.material->bind();
-							}
-							else 
-							{
-								cmd.material = nullptr;
-							}
-
-							auto depthTest = data.depthTest;
-							pipelineInfo.colorTargets[0] = renderData.gbuffer->getBuffer(GBufferTextures::COLOR);
-							pipelineInfo.colorTargets[1] = renderData.gbuffer->getBuffer(GBufferTextures::POSITION);
-							pipelineInfo.colorTargets[2] = renderData.gbuffer->getBuffer(GBufferTextures::NORMALS);
-							pipelineInfo.colorTargets[3] = renderData.gbuffer->getBuffer(GBufferTextures::PBR);
-							pipelineInfo.colorTargets[4] = renderData.gbuffer->getBuffer(GBufferTextures::VIEW_POSITION);
-							pipelineInfo.colorTargets[5] = renderData.gbuffer->getBuffer(GBufferTextures::VIEW_NORMALS);
-							pipelineInfo.colorTargets[6] = renderData.gbuffer->getBuffer(GBufferTextures::VELOCITY);
-			
-							if (cmd.material != nullptr)
-							{
-								pipelineInfo.cullMode = cmd.material->isFlagOf(Material::RenderFlags::TwoSided) ? CullMode::None : CullMode::Back;
-								pipelineInfo.transparencyEnabled = cmd.material->isFlagOf(Material::RenderFlags::AlphaBlend);
-							}
-							else 
-							{
-								pipelineInfo.cullMode =CullMode::Back;
-								pipelineInfo.transparencyEnabled = false;
-							}
-
-							if (cmd.material == nullptr || (depthTest && cmd.material->isFlagOf(Material::RenderFlags::DepthTest)))
-							{
-								pipelineInfo.depthTarget = renderData.gbuffer->getDepthBuffer();
-							}
-
-							if (meshQuery.hasComponent<component::StencilComponent>(entityHandle))
-							{
-								pipelineInfo.shader = data.stencilShader;
-								pipelineInfo.stencilTest = true;
-								pipelineInfo.stencilMask = 0x00;
-								pipelineInfo.stencilFunc = StencilType::Notequal;
-								pipelineInfo.stencilFail = StencilType::Keep;
-								pipelineInfo.stencilDepthFail = StencilType::Keep;
-								pipelineInfo.stencilDepthPass = StencilType::Replace;
-								pipelineInfo.depthTest = true;
-								cmd.stencilPipelineInfo = pipelineInfo;
-								cmd.stencilPipelineInfo.colorTargets[0] = renderData.gbuffer->getBuffer(GBufferTextures::SCREEN);
-								cmd.stencilPipelineInfo.colorTargets[1] = nullptr;
-								cmd.stencilPipelineInfo.colorTargets[2] = nullptr;
-								cmd.stencilPipelineInfo.colorTargets[3] = nullptr;
-
-								pipelineInfo.shader = data.deferredColorShader;
-								pipelineInfo.stencilMask = 0xFF;
-								pipelineInfo.stencilFunc = StencilType::Always;
-								pipelineInfo.stencilFail = StencilType::Keep;
-								pipelineInfo.stencilDepthFail = StencilType::Keep;
-								pipelineInfo.stencilDepthPass = StencilType::Replace;
-								pipelineInfo.depthTest = true;
-							}
-							cmd.pipelineInfo = pipelineInfo;
-						}
-					}
+			for (auto entityHandle : skinnedMeshQuery)
+			{
+				auto [mesh, trans] = skinnedMeshQuery.convert(entityHandle);
+				{
+					const auto& worldTransform = trans.getWorldMatrix();
+					auto bb = mesh.getMesh()->getBoundingBox();
+					forEachMesh(worldTransform, mesh.getMesh(), skinnedMeshQuery.hasComponent<component::StencilComponent>(entityHandle));
 				}
 			}
 		}

@@ -22,7 +22,7 @@ namespace maple
 		{
 			None          = 0,
 			ColorProperty = 1,
-			InputFloat    = 2
+			DragFloat    = 2
 		};
 
 		MAPLE_EXPORT auto tooltip(const char *str) -> void;

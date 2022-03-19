@@ -121,6 +121,8 @@ file(GLOB VK_APP_SRC
 	src/Math/*.h
 	src/Thread/*.cpp
 	src/Thread/*.h
+	src/Animation/*.cpp
+	src/Animation/*.h
 )
 
 

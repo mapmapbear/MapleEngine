@@ -53,6 +53,8 @@
 #include "Math/Ray.h"
 #include "Scripts/Mono/MonoComponent.h"
 
+#include <ecs/ecs.h>
+
 namespace maple
 {
 	Editor::Editor(AppDelegate *appDelegate) :
@@ -782,35 +784,56 @@ namespace maple
 		plugins.emplace_back(std::make_unique<FunctionalPlugin>(callback));
 	}
 
-	auto Editor::clickObject(const Ray &ray) -> void
+	auto Editor::clickObject(const Ray& ray) -> void
 	{
-		auto &registry = getSceneManager()->getCurrentScene()->getRegistry();
+		auto& registry = getSceneManager()->getCurrentScene()->getRegistry();
 
-		float        closestDist   = INFINITY;
+		float        closestDist = INFINITY;
 		entt::entity closestEntity = entt::null;
 
-		auto group = registry.group<component::MeshRenderer>(entt::get<component::Transform>);
-		for (auto entity : group)
+		auto calculateClosest = [&](Mesh* mesh, component::Transform& trans, entt::entity entity)
 		{
-			const auto &[mesh, trans] = group.get<component::MeshRenderer, component::Transform>(entity);
-			if (mesh.getMesh() != nullptr)
+			if (mesh != nullptr)
 			{
-				auto &worldTransform = trans.getWorldMatrix();
+				auto& worldTransform = trans.getWorldMatrix();
 
-				if (mesh.getMesh()->getBoundingBox() == nullptr)
+				if (mesh->getBoundingBox() != nullptr)
 				{
-					continue;
-				}
-
-				auto  bbCopy = mesh.getMesh()->getBoundingBox()->transform(worldTransform);
-				float dist   = ray.hit(bbCopy);
-				LOGI("dist {0} {1}", (int32_t) entity, dist);
-				if (dist < INFINITY && dist < closestDist)
-				{
-					closestDist   = dist;
-					closestEntity = entity;
+					auto  bbCopy = mesh->getBoundingBox()->transform(worldTransform);
+					float dist = ray.hit(bbCopy);
+					if (dist < INFINITY && dist < closestDist)
+					{
+						closestDist = dist;
+						closestEntity = entity;
+					}
 				}
 			}
+		};
+
+		using Query = ecs::Chain
+			::Write<component::MeshRenderer>
+			::Write<component::Transform>
+			::To<ecs::Query>;
+
+		Query meshQuery(registry, entt::null);
+
+		for (auto entity : meshQuery)
+		{
+			auto [mesh, trans] = meshQuery.convert(entity);
+			calculateClosest(mesh.getMesh().get(), trans, entity);
+		}
+
+		using SkinnedQuery = ecs::Chain
+			::Write<component::SkinnedMeshRenderer>
+			::Write<component::Transform>
+			::To<ecs::Query>;
+
+		SkinnedQuery skinedQuery(registry, entt::null);
+
+		for (auto entity : skinedQuery)
+		{
+			auto [mesh, trans] = skinedQuery.convert(entity);
+			calculateClosest(mesh.getMesh().get(), trans, entity);
 		}
 
 		if (closestEntity == entt::null)
@@ -825,11 +848,24 @@ namespace maple
 			if (timer.elapsed(timer.current(), lastClick) / 1000000.f < 1.f)
 			{
 				auto &trans = registry.get<component::Transform>(selectedNode);
-				auto &model = registry.get<component::MeshRenderer>(selectedNode);
-				if (auto mesh = model.getMesh(); mesh != nullptr)
+				auto model = registry.try_get<component::MeshRenderer>(selectedNode);
+				auto skinned = registry.try_get<component::SkinnedMeshRenderer>(selectedNode);
+
+				if (model) 
 				{
-					auto bb = mesh->getBoundingBox()->transform(trans.getWorldMatrix());
-					focusCamera(trans.getWorldPosition(), glm::length(bb.max - bb.min));
+					if (auto mesh = model->getMesh(); mesh != nullptr)
+					{
+						auto bb = mesh->getBoundingBox()->transform(trans.getWorldMatrix());
+						focusCamera(trans.getWorldPosition(), glm::length(bb.max - bb.min));
+					}
+				}
+				if (skinned) 
+				{
+					if (auto mesh = skinned->getMesh(); mesh != nullptr)
+					{
+						auto bb = mesh->getBoundingBox()->transform(trans.getWorldMatrix());
+						focusCamera(trans.getWorldPosition(), glm::length(bb.max - bb.min));
+					}
 				}
 			}
 			else

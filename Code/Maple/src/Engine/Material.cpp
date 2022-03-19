@@ -113,7 +113,7 @@ namespace maple
 		else
 		{
 			descriptorSet->setTexture("uAlbedoMap", Texture2D::create("albedo", "textures/default/default_albedo.png"));
-			materialProperties.usingAlbedoMap = 1.0f;
+			materialProperties.usingAlbedoMap = 0.0f;
 		}
 
 		if (pbrMaterialTextures.metallic)

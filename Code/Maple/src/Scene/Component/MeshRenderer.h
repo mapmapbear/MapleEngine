@@ -57,6 +57,44 @@ namespace maple
 			auto load() -> void;
 		};
 
+		class MAPLE_EXPORT SkinnedMeshRenderer : public Component 
+		{
+		public:
+			constexpr static char* ICON = ICON_MDI_HUMAN;
+			SkinnedMeshRenderer(const std::shared_ptr<Mesh>& mesh);
+			SkinnedMeshRenderer() = default;
+
+			template <class Archive>
+			inline auto save(Archive& archive) const -> void
+			{
+			}
+
+			template <class Archive>
+			inline auto load(Archive& archive) -> void
+			{
+			}
+
+			inline auto& getMesh()
+			{
+				if (mesh == nullptr)
+					getMesh(meshName);
+				return mesh;
+			}
+
+			auto isActive() const -> bool;
+
+			inline auto isCastShadow() const { return castShadow; }
+
+			inline auto setCastShadow(bool shadow) { castShadow = shadow; }
+
+			bool castShadow = true;
+
+		private:
+			std::shared_ptr<Mesh>     mesh;
+			auto                      getMesh(const std::string& name) -> void;
+			std::string               meshName;
+		};
+
 		class MAPLE_EXPORT MeshRenderer : public Component
 		{
 		public:
@@ -74,8 +112,6 @@ namespace maple
 			inline auto load(Archive& archive) -> void
 			{
 			}
-
-			auto loadFromModel() -> void;
 
 			inline auto& getMesh()
 			{

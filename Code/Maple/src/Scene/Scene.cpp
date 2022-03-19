@@ -14,6 +14,8 @@
 #include "Scene/Component/BoundingBox.h"
 #include "Scene/Component/LightProbe.h"
 
+#include "FileSystem/Skeleton.h"
+
 #include "SceneGraph.h"
 
 #include "Devices/Input.h"
@@ -37,19 +39,34 @@
 
 namespace maple
 {
+	namespace
+	{
+		inline auto addEntity(Scene * scene, Entity parent, Skeleton* skeleton, const Bone& bone) -> void
+		{
+			auto entity = scene->createEntity(bone.name);
+			auto & transform = entity.addComponent<component::Transform>();
+			transform.setLocalTransform(bone.offsetMatrix);
+			entity.setParent(parent);
+
+			for (auto child : bone.children)
+			{
+				addEntity(scene, entity, skeleton, skeleton->getBones()[child]);
+			}
+		}
+	}
+
 	Scene::Scene(const std::string &initName) :
 	    name(initName)
 	{
-		LOGV("{0} {1}", __FUNCTION__, initName);
 		entityManager = std::make_shared<EntityManager>(this);
 		entityManager->addDependency<Camera, component::Transform>();
 		entityManager->addDependency<component::Light, component::Transform>();
 		entityManager->addDependency<component::MeshRenderer, component::Transform>();
+		entityManager->addDependency<component::SkinnedMeshRenderer, component::Transform>();
 		entityManager->addDependency<component::Model, component::Transform>();
 		entityManager->addDependency<component::Sprite, component::Transform>();
 		entityManager->addDependency<component::AnimatedSprite, component::Transform>();
 		entityManager->addDependency<component::VolumetricCloud, component::Light>();
-
 		entityManager->addDependency<component::LightProbe, component::Transform>();
 
 		sceneGraph = std::make_shared<SceneGraph>();
@@ -106,6 +123,7 @@ namespace maple
 
 	auto Scene::createEntity() -> Entity
 	{
+		PROFILE_FUNCTION();
 		dirty       = true;
 		auto entity = entityManager->create();
 		if (onEntityAdd)
@@ -145,6 +163,8 @@ namespace maple
 
 	auto Scene::duplicateEntity(const Entity &entity) -> void
 	{
+		PROFILE_FUNCTION();
+
 		dirty            = true;
 		Entity newEntity = entityManager->create();
 		//COPY
@@ -153,6 +173,8 @@ namespace maple
 
 	auto Scene::getCamera() -> std::pair<Camera *, component::Transform *>
 	{
+		PROFILE_FUNCTION();
+
 		auto camsEttView = getRegistry().group<Camera>(entt::get<component::Transform>);   //entityManager->getEntitiesWithTypes<Camera, Transform>();
 
 		if (!camsEttView.empty() && useSceneCamera)
@@ -167,11 +189,14 @@ namespace maple
 
 	auto Scene::removeAllChildren(entt::entity entity) -> void
 	{
+		PROFILE_FUNCTION();
+
 		entityManager->removeAllChildren(entity);
 	}
 
 	auto Scene::calculateBoundingBox() -> void
 	{
+		PROFILE_FUNCTION();
 		boxDirty = false;
 
 		sceneBox.clear();
@@ -201,6 +226,9 @@ namespace maple
 
 	auto Scene::addMesh(const std::string& file) -> Entity
 	{
+		PROFILE_FUNCTION();
+
+
 		auto  name = StringUtils::getFileNameWithoutExtension(file);
 		auto  modelEntity = createEntity(name);
 		auto& model = modelEntity.addComponent<component::Model>(file);
@@ -213,8 +241,25 @@ namespace maple
 			for (auto& mesh : model.resource->getMeshes())
 			{
 				auto child = createEntity(mesh.first);
-				child.addComponent<component::MeshRenderer>(mesh.second);
+				if (model.resource->getSkeleton())
+				{
+					child.addComponent<component::SkinnedMeshRenderer>(mesh.second);
+				}
+				else
+				{
+					child.addComponent<component::MeshRenderer>(mesh.second);
+				}
 				child.setParent(modelEntity);
+			}
+
+			auto skeleton = model.resource->getSkeleton();
+			if (skeleton)
+			{
+				skeleton->buildRoot();
+				for (auto child : skeleton->getRoots())
+				{
+					addEntity(this, modelEntity, skeleton.get(), skeleton->getBones()[child]);
+				}
 			}
 		}
 		model.type = component::PrimitiveType::File;
@@ -228,6 +273,8 @@ namespace maple
 
 	auto Scene::onInit() -> void
 	{
+		PROFILE_FUNCTION();
+
 		if (initCallback != nullptr)
 		{
 			initCallback(this);
@@ -271,7 +318,5 @@ namespace maple
 			const auto &[anim, trans] = view.get<component::AnimatedSprite, component::Transform>(entity);
 			anim.onUpdate(dt);
 		}
-
-	
 	}
 };        // namespace maple
