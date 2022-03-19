@@ -87,6 +87,7 @@ namespace maple
 		R32I,
 		R32UI,
 		RG8,
+		RG16F,
 		RGB8,
 		RGBA8,
 		RGB16,
@@ -130,16 +131,17 @@ namespace maple
 		TextureFilter minFilter;
 		TextureFilter magFilter;
 		TextureWrap   wrap;
+		TextureWrap   wrapT;
 		bool          srgb      = false;
 		uint16_t      msaaLevel = 1;
 
 		constexpr TextureParameters() :
-		    format(TextureFormat::RGBA8), minFilter(TextureFilter::Linear), magFilter(TextureFilter::Linear), wrap(TextureWrap::Repeat)
+		    format(TextureFormat::RGBA8), minFilter(TextureFilter::Linear), magFilter(TextureFilter::Linear), wrap(TextureWrap::Repeat), wrapT(TextureWrap::Repeat)
 		{
 		}
 
 		constexpr TextureParameters(TextureFormat format, TextureFilter filter, TextureWrap wrap) :
-		    format(format), minFilter(filter), magFilter(filter), wrap(wrap)
+		    format(format), minFilter(filter), magFilter(filter), wrap(wrap), wrapT(wrap)
 		{
 		}
 
@@ -148,32 +150,38 @@ namespace maple
 		{}
 
 		constexpr TextureParameters(TextureFormat format, TextureFilter minFilter, TextureFilter magFilter, TextureWrap wrap) :
-		    format(format), minFilter(minFilter), magFilter(magFilter), wrap(wrap)
+		    format(format), minFilter(minFilter), magFilter(magFilter), wrap(wrap), wrapT(TextureWrap::Repeat)
+		{
+		}
+
+		constexpr TextureParameters(TextureFilter minFilter, TextureFilter magFilter, TextureWrap wrapS, TextureWrap wrapT) :
+			format(TextureFormat::RGBA8), minFilter(minFilter), magFilter(magFilter), wrap(wrapS), wrapT(wrapT)
 		{
 		}
 
 		constexpr TextureParameters(TextureFilter minFilter, TextureFilter magFilter) :
-		    format(TextureFormat::RGBA8), minFilter(minFilter), magFilter(magFilter), wrap(TextureWrap::Clamp)
+		    format(TextureFormat::RGBA8), minFilter(minFilter), magFilter(magFilter), wrap(TextureWrap::Clamp), wrapT(TextureWrap::Clamp)
 		{
 		}
 
 		constexpr TextureParameters(TextureFilter minFilter, TextureFilter magFilter, TextureWrap wrap) :
-		    format(TextureFormat::RGBA8), minFilter(minFilter), magFilter(magFilter), wrap(wrap)
+		    format(TextureFormat::RGBA8), minFilter(minFilter), magFilter(magFilter), wrap(wrap), wrapT(wrap)
 		{
 		}
+	
 
 		constexpr TextureParameters(TextureWrap wrap) :
-		    format(TextureFormat::RGBA8), minFilter(TextureFilter::Linear), magFilter(TextureFilter::Linear), wrap(wrap)
+		    format(TextureFormat::RGBA8), minFilter(TextureFilter::Linear), magFilter(TextureFilter::Linear), wrap(wrap), wrapT(wrap)
 		{
 		}
 
 		constexpr TextureParameters(TextureFormat format) :
-		    format(format), minFilter(TextureFilter::Linear), magFilter(TextureFilter::Linear), wrap(TextureWrap::Clamp)
+		    format(format), minFilter(TextureFilter::Linear), magFilter(TextureFilter::Linear), wrap(TextureWrap::Clamp), wrapT(TextureWrap::Clamp)
 		{
 		}
 
 		constexpr TextureParameters(TextureFormat format, TextureWrap wrap) :
-		    format(format), minFilter(TextureFilter::Linear), magFilter(TextureFilter::Linear), wrap(wrap)
+		    format(format), minFilter(TextureFilter::Linear), magFilter(TextureFilter::Linear), wrap(wrap), wrapT(wrap)
 		{
 		}
 	};
@@ -185,7 +193,7 @@ namespace maple
 		bool generateMipMaps;
 
 		constexpr TextureLoadOptions() :
-		    TextureLoadOptions(false, false, false)
+		    TextureLoadOptions(false, true, false)
 		{
 		}
 

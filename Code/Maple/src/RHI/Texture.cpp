@@ -32,6 +32,8 @@ namespace maple
 				return 3;
 			case TextureFormat::RGBA8:
 				return 4;
+			case TextureFormat::RG16F:
+				return 4;
 			default:
 				return 0;
 		}

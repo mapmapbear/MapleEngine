@@ -17,15 +17,17 @@
 #include "Engine/Profiler.h"
 #include "Others/StringUtils.h"
 #include "RHI/Definitions.h"
+#include "Others/Console.h"
 
 namespace maple
 {
-	auto ImageLoader::loadAsset(const std::string &name, bool mipmaps) -> std::unique_ptr<Image>
+	auto ImageLoader::loadAsset(const std::string &name, bool mipmaps, bool flipY) -> std::unique_ptr<Image>
 	{
 		PROFILE_FUNCTION();
 		bool hdr = stbi_is_hdr(name.c_str());
+		LOGI("load image : {0}",name);
 
-		stbi_set_flip_vertically_on_load(1);
+		stbi_set_flip_vertically_on_load(flipY);
 
 		int32_t       width;
 		int32_t       height;

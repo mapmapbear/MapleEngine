@@ -252,7 +252,8 @@ namespace maple
 			ImGui::TextUnformatted(folder ? ICON_MDI_FOLDER : editor.getIconFontIcon(file->absolutePath));
 			ImGui::SameLine();
 
-			if (StringUtils::endWith(file->fileName, "obj"))
+			try {
+						if (StringUtils::endWith(file->fileName, "obj"))
 			{
 				if (ImGui::TreeNode(file->fileName.c_str()))
 				{
@@ -282,6 +283,10 @@ namespace maple
 					}
 				}
 			}
+			}
+			catch (...) {}
+
+
 		}
 
 		if (doubleClicked)

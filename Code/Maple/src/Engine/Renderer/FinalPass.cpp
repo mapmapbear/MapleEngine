@@ -37,7 +37,7 @@ namespace maple
 		{
 			auto [finalData, renderData,graph] = entity;
 			float gamma = 2.2;
-			int32_t toneMapIndex = 7;
+			int32_t toneMapIndex = 1;
 
 			finalData.finalDescriptorSet->setUniform("UniformBuffer", "gamma", &gamma);
 			finalData.finalDescriptorSet->setUniform("UniformBuffer", "toneMapIndex", &toneMapIndex);

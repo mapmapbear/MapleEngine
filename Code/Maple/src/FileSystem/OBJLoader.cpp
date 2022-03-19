@@ -26,7 +26,7 @@ namespace maple
 
 		{        // If texture hasn't been loaded already, load it
 			TextureLoadOptions options(false, true);
-			auto               texture = std::shared_ptr<Texture2D>(Texture2D::create(typeName, directory + "/" + name));
+			auto               texture = Texture2D::create(typeName, directory + "/" + name, format, {false,false,false});
 			texturesLoaded.push_back(texture);        // Store it as texture loaded for entire model, to ensure we won't unnecessary load duplicate textures.
 			return texture;
 		}

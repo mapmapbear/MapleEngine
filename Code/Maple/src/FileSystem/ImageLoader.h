@@ -13,7 +13,7 @@ namespace maple
     class ImageLoader final 
     {
     public:
-		static auto loadAsset(const std::string& name, bool mipmaps = true)->std::unique_ptr<Image>;
+        static auto loadAsset(const std::string& name, bool mipmaps = true, bool flipY = true)->std::unique_ptr<Image>;
         static auto loadAsset(const std::string& name, Image * image)-> void;
     };
 }

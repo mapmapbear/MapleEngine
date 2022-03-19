@@ -82,6 +82,15 @@ namespace MM
 		ImGui::Columns( 1 );
 	}
 
+	template <>
+	inline auto ComponentEditorWidget<component::ShadowMapData>(entt::registry& reg, entt::registry::entity_type e) -> void
+	{
+		auto& shadowMap = reg.get<component::ShadowMapData>(e);
+		ImGui::Columns(2);
+		ImGui::Separator();
+		ImGuiHelper::property("Cascade Split Lambda", shadowMap.cascadeSplitLambda);
+		ImGui::Columns(1);
+	}
 
 
 	template <>
@@ -177,7 +186,7 @@ namespace MM
 			bool showTexture    = !(hoveringButton && (payload != NULL && payload->IsDataType("AssetFile")));
 			if (tex && showTexture)
 			{
-				const bool flipImage = false;
+				const bool flipImage = true;
 				if (ImGui::ImageButton(tex->getHandle(), ImVec2{64, 64}, ImVec2(0.0f, flipImage ? 1.0f : 0.0f), ImVec2(1.0f, flipImage ? 0.0f : 1.0f)))
 				{
 				}

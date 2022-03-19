@@ -125,7 +125,7 @@ namespace maple
 				{
 					TextureParameters params;
 					if (gltfTexture.sampler != -1)
-						params = TextureParameters(getFilter(imageAndSampler.sampler->minFilter), getFilter(imageAndSampler.sampler->magFilter), getWrapMode(imageAndSampler.sampler->wrapS));
+						params = TextureParameters(getFilter(imageAndSampler.sampler->minFilter), getFilter(imageAndSampler.sampler->magFilter), getWrapMode(imageAndSampler.sampler->wrapS), getWrapMode(imageAndSampler.sampler->wrapT));
 
 					auto texture2D = Texture2D::create(imageAndSampler.image->width, imageAndSampler.image->height, imageAndSampler.image->image.data(), params);
 					loadedTextures[gltfTexture.source] = texture2D;
@@ -293,6 +293,7 @@ namespace maple
 						for (auto p = 0; p < positionCount; ++p)
 						{
 							vertices[p].pos = parentTransform.getWorldMatrix() * glm::vec4(positions[p],1.0);
+							vertices[p].color = { 1,1,1,1 };
 						}
 					}
 
@@ -506,6 +507,8 @@ namespace maple
 
 		bool ret;
 
+		stbi_set_flip_vertically_on_load(0);
+
 		if (extension == "glb") // assume binary glTF.
 		{
 			PROFILE_SCOPE(".glb binary loading");
@@ -539,5 +542,6 @@ namespace maple
 				loadNode(name,gltfScene.nodes[i], glm::mat4(1.0f), model, loadedMaterials, meshes);
 			}
 		}
+		stbi_set_flip_vertically_on_load(1);
 	}
 };            // namespace maple

@@ -46,6 +46,8 @@ namespace maple
 					return GL_R8;
 				case TextureFormat::RG8:
 					return GL_RG8;
+				case TextureFormat::RG16F:
+					return GL_RG16F;
 				case TextureFormat::RGB8:
 					return srgb ? GL_SRGB8 : GL_RGB8;
 				case TextureFormat::RGBA8:
@@ -87,6 +89,8 @@ namespace maple
 				return sizeof(int16_t);
 			case TextureFormat::RGB8:
 				return sizeof(int8_t) * 3;
+			case TextureFormat::RG16F:
+				return sizeof(int16_t) * 2;
 			case TextureFormat::RGB16:
 				return sizeof(int16_t) * 3;
 			case TextureFormat::RGBA16:
@@ -140,6 +144,8 @@ namespace maple
 					return GL_RGBA;
 				case GL_RGB16:
 					return GL_RGB;
+				case GL_RG16F:
+					return GL_RG;
 				case GL_RGBA16:
 					return GL_RGBA;
 				case GL_RGBA16F:
@@ -184,7 +190,7 @@ namespace maple
 	{
 		name = initName;
 
-		auto pixels = ImageLoader::loadAsset(fileName);
+		auto pixels = ImageLoader::loadAsset(fileName,loadOptions.generateMipMaps,loadOptions.flipY);
 
 		format = pixels->getPixelFormat();
 		width  = pixels->getWidth();
@@ -211,7 +217,7 @@ namespace maple
 		GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, parameters.minFilter == TextureFilter::Linear ? GL_LINEAR : GL_NEAREST));
 		GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, parameters.magFilter == TextureFilter::Linear ? GL_LINEAR : GL_NEAREST));
 		GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, textureWrapToGL(parameters.wrap)));
-		GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, textureWrapToGL(parameters.wrap)));
+		GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, textureWrapToGL(parameters.wrapT)));
 
 		uint32_t format = textureFormatToGL(parameters.format, parameters.srgb);
 

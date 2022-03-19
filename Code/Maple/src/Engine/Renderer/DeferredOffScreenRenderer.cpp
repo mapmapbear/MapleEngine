@@ -75,7 +75,7 @@ namespace maple
 			screenQuad            = Mesh::createQuad(true);
 
 
-			preintegratedFG = Texture2D::create("preintegrated", "textures/ibl_brdf_lut.png", { TextureFormat::RGBA8, TextureFilter::Linear, TextureFilter::Linear, TextureWrap::ClampToEdge });
+			preintegratedFG = Texture2D::create("preintegrated", "textures/ibl_brdf_lut.png", { TextureFormat::RG16F, TextureFilter::Linear, TextureFilter::Linear, TextureWrap::ClampToEdge });
 
 			stencilDescriptorSet = DescriptorSet::create({0,stencilShader.get()});
 		}

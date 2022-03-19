@@ -202,13 +202,13 @@ namespace maple
 			this->filePath = filePath;
 			if (filePath != "")
 			{
-				TextureLoadOptions options(false, false, true);
+				TextureLoadOptions options(false, true, true);
 				TextureParameters  parameters(TextureFormat::RGBA32, TextureWrap::ClampToEdge);
 				equirectangularMap = Texture2D::create(filePath, filePath, parameters, options);
 				width = equirectangularMap->getWidth();
 				height = equirectangularMap->getHeight();
 				numMips = equirectangularMap->getMipMapLevels();
-				irradianceMap = TextureCube::create(IrradianceMapSize, TextureFormat::RGBA32, 1);
+				irradianceMap = TextureCube::create(IrradianceMapSize, TextureFormat::RGBA32, 0);
 				prefilteredEnvironment = TextureCube::create(PrefilterMapSize, TextureFormat::RGBA32, 7);
 			}
 		}
