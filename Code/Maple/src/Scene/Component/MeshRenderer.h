@@ -5,7 +5,8 @@
 
 #include "Component.h"
 #include "Engine/Material.h"
-#include "Resources/MeshResource.h"
+#include "FileSystem/MeshResource.h"
+
 #include <cereal/types/memory.hpp>
 #include <memory>
 #include <vector>

@@ -128,6 +128,16 @@ namespace maple
 		static auto generateNormals(std::vector<Vertex> &vertices, const std::vector<uint32_t> &indices) -> void;
 		static auto generateTangents(std::vector<Vertex> &vertices, const std::vector<uint32_t> &indices) -> void;
 
+		inline auto& getBlendIndices(int32_t index)
+		{
+			return blendIndices[index];
+		}
+
+		inline auto& getBlendWeights(int32_t index)
+		{
+			return blendWeights[index];
+		}
+
 	  protected:
 		static auto generateTangent(const glm::vec3 &a, const glm::vec3 &b, const glm::vec3 &c, const glm::vec2 &ta, const glm::vec2 &tb, const glm::vec2 &tc) -> glm::vec3;
 
@@ -144,5 +154,10 @@ namespace maple
 		std::string name;
 		uint32_t subMeshCount = 0;
 		std::vector<uint32_t> subMeshIndex;
+
+		/// Skinned mesh blend indices (max 4 per bone)
+		std::vector<glm::ivec4> blendIndices;
+		/// Skinned mesh index buffer (max 4 per bone)
+		std::vector<glm::vec4> blendWeights;
 	};
 };        // namespace maple

@@ -18,7 +18,6 @@
 #include "Others/Timer.h"
 #include "RHI/GraphicsContext.h"
 #include "RHI/RenderDevice.h"
-#include "Resources/Cache.h"
 #include "Scene/SceneManager.h"
 #include "Scene/System/SystemManager.h"
 #include "Scripts/Lua/LuaVirtualMachine.h"
@@ -158,11 +157,6 @@ namespace maple
 			return get()->getSceneManager()->getCurrentScene();
 		}
 
-		inline static auto getCache()
-		{
-			return get()->cache;
-		}
-
 		inline static auto getExecutePoint()
 		{
 			return get()->executePoint;
@@ -189,7 +183,6 @@ namespace maple
 		std::shared_ptr<RenderDevice>       renderDevice;
 		std::shared_ptr<GraphicsContext>    graphicsContext;
 		std::shared_ptr<RenderGraph>        renderGraph;
-		std::shared_ptr<Cache>              cache;
 		std::shared_ptr<ExecutePoint>       executePoint;
 		std::shared_ptr<ModelLoaderFactory> loaderFactory;
 

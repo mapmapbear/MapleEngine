@@ -6,23 +6,23 @@
 #endif
 #include "AssetsWindow.h"
 #include "Others/Console.h"
-#include <IconsMaterialDesignIcons.h>
-#include <imgui.h>
-#include <imgui_internal.h>
-
-#include <algorithm>
-#include <cmath>
 
 #include "Editor.h"
 #include "Others/StringUtils.h"
-
-#include <filesystem>
-
 #include "Engine/Quad2D.h"
 #include "ImGui/ImGuiHelpers.h"
 #include "RHI/Texture.h"
-#include "Resources/MeshResource.h"
+#include "Loaders/Loader.h"
 #include "Window/NativeWindow.h"
+#include "FileSystem/MeshResource.h"
+
+#include <IconsMaterialDesignIcons.h>
+#include <imgui.h>
+#include <imgui_internal.h>
+#include <algorithm>
+#include <cmath>
+#include <filesystem>
+
 
 namespace maple
 {
@@ -253,36 +253,44 @@ namespace maple
 			ImGui::SameLine();
 
 			try {
-						if (StringUtils::endWith(file->fileName, "obj"))
-			{
-				if (ImGui::TreeNode(file->fileName.c_str()))
+				if (StringUtils::endWith(file->fileName, "obj"))
 				{
-					auto res = Application::getCache()->emplace<MeshResource>(file->absolutePath);
-
-					for (auto &mesh : res->getMeshes())
+					if (ImGui::TreeNode(file->fileName.c_str()))
 					{
-						if (ImGui::Selectable(mesh.first.c_str(), false, ImGuiSelectableFlags_AllowDoubleClick))
+						std::vector < std::shared_ptr<IResource> > out;
+						Loader::load(file->absolutePath, out);
+
+						for (auto& res : out)
 						{
-							if (ImGui::IsMouseDoubleClicked(0))
+							if(res->getResourceType() == FileType::Model)
 							{
-								doubleClicked = true;
+								auto meshes = std::static_pointer_cast<MeshResource>(res);
+
+								for (auto mesh : meshes->getMeshes())
+								{
+									if (ImGui::Selectable(mesh.first.c_str(), false, ImGuiSelectableFlags_AllowDoubleClick))
+									{
+										if (ImGui::IsMouseDoubleClicked(0))
+										{
+											doubleClicked = true;
+										}
+									}
+								}
 							}
 						}
+						ImGui::TreePop();
 					}
-
-					ImGui::TreePop();
 				}
-			}
-			else
-			{
-				if (ImGui::Selectable(file->fileName.c_str(), false, ImGuiSelectableFlags_AllowDoubleClick))
+				else
 				{
-					if (ImGui::IsMouseDoubleClicked(0))
+					if (ImGui::Selectable(file->fileName.c_str(), false, ImGuiSelectableFlags_AllowDoubleClick))
 					{
-						doubleClicked = true;
+						if (ImGui::IsMouseDoubleClicked(0))
+						{
+							doubleClicked = true;
+						}
 					}
 				}
-			}
 			}
 			catch (...) {}
 

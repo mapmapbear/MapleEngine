@@ -3,9 +3,19 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include "Skeleton.h"
+#include "Others/HashCode.h"
+
+#include <algorithm>
 
 namespace maple
 {
+
+	Skeleton::Skeleton(const std::string& name)
+		:filePath(name)
+	{
+
+	}
+
 	auto Skeleton::createBone(int32_t parentId) ->Bone&
 	{
 		auto& bone = bones.emplace_back();
@@ -34,4 +44,21 @@ namespace maple
 		}
 	}
 
+	auto Skeleton::buildHash() -> void
+	{
+		auto copyBones = bones;
+
+		std::sort(copyBones.begin(), copyBones.end(), [](const auto& left, const auto& right) {
+			size_t seed1;
+			size_t seed2;
+			HashCode::hashCode(seed1, left.name);
+			HashCode::hashCode(seed2, right.name);
+			return seed1 < seed2;
+		});
+
+		for (auto & bone : copyBones)
+		{
+			HashCode::hashCode(hashCode, bone.name);
+		}
+	}
 }

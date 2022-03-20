@@ -22,6 +22,9 @@
 #include "Scripts/Mono/MonoScript.h"
 #include "Scripts/Mono/MonoSystem.h"
 
+#include "Loaders/Loader.h"
+
+#include "Engine/Renderer/GridRenderer.h"
 #include "Engine/Renderer/PostProcessRenderer.h"
 #include "Engine/Camera.h"
 #include "Engine/Material.h"
@@ -80,6 +83,16 @@ namespace MM
 		ImGuiHelper::property( "SSAO Enable", ssao.enable );
 		ImGuiHelper::property( "SSAO Radius", ssao.ssaoRadius,0.f,100.f);
 		ImGui::Columns( 1 );
+	}
+
+	template <>
+	inline auto ComponentEditorWidget<component::GridRender>(entt::registry& reg, entt::registry::entity_type e) -> void
+	{
+		auto& data = reg.get<component::GridRender>(e);
+		ImGui::Columns(2);
+		ImGui::Separator();
+		ImGuiHelper::property("GridRender Enable", data.enable);
+		ImGui::Columns(1);
 	}
 
 	template <>
@@ -1003,7 +1016,7 @@ namespace maple
 
 		if (File::isKindOf(path, FileType::Material))
 		{
-			auto material = Application::getCache()->emplace<Material>(path);
+		/*	auto material = Application::getCache()->emplace<Material>(path);
 
 			std::string matName = "Material";
 
@@ -1040,7 +1053,7 @@ namespace maple
 				Serialization::serialize(material.get());
 				ImNotification::makeNotification("Tips", "save success", ImNotification::Type::Success);
 			}
-			ImGui::PopStyleVar();
+			ImGui::PopStyleVar();*/
 		}
 	}
 

@@ -8,6 +8,7 @@
 #include "Others/StringUtils.h"
 #include "Others/Console.h"
 #include "Scene/Component/Transform.h"
+#include "FileSystem/MeshResource.h"
 
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
@@ -391,7 +392,8 @@ namespace maple
 			return meshes;
 		}
 
-		inline auto loadNode(const std::string & parentName, int32_t nodeIndex, const glm::mat4& parentTransform, tinygltf::Model& model, std::vector<std::shared_ptr<Material>>& materials, std::unordered_map<std::string, std::shared_ptr<Mesh>>& outMeshes)
+		inline auto loadNode(const std::string & parentName, int32_t nodeIndex, const glm::mat4& parentTransform, 
+			tinygltf::Model& model, std::vector<std::shared_ptr<Material>>& materials, std::unordered_map<std::string, std::shared_ptr<Mesh>> & out)
 		{
 			PROFILE_FUNCTION();
 			if (nodeIndex < 0)
@@ -478,8 +480,7 @@ namespace maple
 					if (materialIndex >= 0)
 						mesh->setMaterial(materials[materialIndex]);
 
-					outMeshes.emplace(subname, mesh);
-
+					out[subname] = mesh;
 					subIndex++;
 				}
 			}
@@ -489,14 +490,14 @@ namespace maple
 				for (int32_t child : node.children)
 				{
 					auto name = parentName + "_child_" + std::to_string(child);
-					loadNode(name,child, transform.getLocalMatrix(), model, materials, outMeshes);
+					loadNode(name,child, transform.getLocalMatrix(), model, materials, out);
 				}
 			}
 		}
 	}
 	
 
-	auto GLTFLoader::load(const std::string& obj, const std::string& extension, std::unordered_map<std::string, std::shared_ptr<Mesh>>& meshes, std::shared_ptr<Skeleton>& skeleton)-> void
+	auto GLTFLoader::load(const std::string& obj, const std::string& extension, std::vector<std::shared_ptr<IResource>>& out)-> void
 	{
 		PROFILE_FUNCTION();
 		auto name = StringUtils::getFileNameWithoutExtension(obj);
@@ -530,6 +531,10 @@ namespace maple
 			LOGW(warn);
 		}
 
+		auto meshRes = std::make_shared<MeshResource>(obj);
+
+		out.emplace_back(meshRes);
+
 		if (ret) 
 		{
 			PROFILE_SCOPE("Parse GLTF Model");
@@ -539,7 +544,7 @@ namespace maple
 			const tinygltf::Scene& gltfScene = model.scenes[std::max(0, model.defaultScene)];
 			for (size_t i = 0; i < gltfScene.nodes.size(); i++)
 			{
-				loadNode(name,gltfScene.nodes[i], glm::mat4(1.0f), model, loadedMaterials, meshes);
+				loadNode(name,gltfScene.nodes[i], glm::mat4(1.0f), model, loadedMaterials, meshRes->getMeshes());
 			}
 		}
 		stbi_set_flip_vertically_on_load(1);

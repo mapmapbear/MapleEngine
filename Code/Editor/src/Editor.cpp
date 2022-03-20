@@ -39,7 +39,8 @@
 #include "Scene/SceneManager.h"
 
 #include "FileSystem/File.h"
-#include "FileSystem/MeshLoader.h"
+#include "Loaders/Loader.h"
+
 #include "Others/StringUtils.h"
 #include "Scene/Component/MeshRenderer.h"
 
@@ -732,31 +733,6 @@ namespace maple
 
 	auto Editor::processIcons() -> void
 	{
-		std::array<std::string, static_cast<int32_t>(FileType::Length)> files =
-		    {
-		        "editor-icons/icons8-file-100.png",
-		        "editor-icons/icons8-folder-100.png",
-		        "editor-icons/icons8-image-file-100.png",
-		        "editor-icons/icons8-object-100.png",
-		        "editor-icons/icons8-fbx-100.png",
-		        "editor-icons/icons8-obj-100.png",
-		        "editor-icons/icons8-document-100.png",
-		        "editor-icons/icons8-document-100.png",
-		        "editor-icons/icons8-dll-80.png",
-		        "editor-icons/icons8-maple-leaf-100.png",
-		        "editor-icons/icons8-mp3-100.png",
-		        "editor-icons/icons8-ogg-100.png",
-		        "editor-icons/icons8-aac-100.png",
-		        "editor-icons/icons8-wav-100.png",
-		        "editor-icons/icons8-ttf-100.png",
-		        "editor-icons/icons8-cs-80.png",
-
-		        "editor-icons/shader.png",          //shader
-		        "editor-icons/material.png",        //material
-
-		        "editor-icons/light.png",
-		        "editor-icons/camera.png",
-		    };
 #ifdef MAPLE_VULKAN
 		constexpr bool flipY = false;
 #else
@@ -764,7 +740,7 @@ namespace maple
 #endif        // MAPLE_VULKAN
 		textureAtlas = std::make_shared<TextureAtlas>(4096, 4096);
 		int32_t i    = 0;
-		for (auto &str : files)
+		for (auto &str : EditorInBuildIcon)
 		{
 			if (str != "")
 			{

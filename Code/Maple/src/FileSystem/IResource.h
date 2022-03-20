@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <string>
 #include <unordered_map>
+#include <array>
 
 namespace maple
 {
@@ -28,10 +29,41 @@ namespace maple
 		C_SHARP,
 		Shader,
 		Material,
+		Animation,
+		Skeleton,
 		//for gizmo
 		Lighting,
 		Camera,
 		Length
+	};
+
+	const std::array<std::string, static_cast<int32_t>(FileType::Length)> EditorInBuildIcon =
+	{
+		"editor-icons/icons8-file-100.png",
+		"editor-icons/icons8-folder-100.png",
+		"editor-icons/icons8-image-file-100.png",
+		"editor-icons/icons8-object-100.png",
+		"editor-icons/icons8-fbx-100.png",
+		"editor-icons/icons8-obj-100.png",
+		"editor-icons/icons8-document-100.png",
+		"editor-icons/icons8-document-100.png",
+		"editor-icons/icons8-dll-80.png",
+		"editor-icons/icons8-maple-leaf-100.png",
+		"editor-icons/icons8-mp3-100.png",
+		"editor-icons/icons8-ogg-100.png",
+		"editor-icons/icons8-aac-100.png",
+		"editor-icons/icons8-wav-100.png",
+		"editor-icons/icons8-ttf-100.png",
+		"editor-icons/icons8-cs-80.png",
+
+		"editor-icons/shader.png",          //shader
+		"editor-icons/material.png",        //material
+
+		"editor-icons/icons8-animation-85.png",          //Animation
+		"editor-icons/icons8-skeleton-64.png",        //Skeleton
+
+		"editor-icons/light.png",
+		"editor-icons/camera.png",
 	};
 
 	static std::unordered_map<std::string, FileType> ExtensionsToType = {

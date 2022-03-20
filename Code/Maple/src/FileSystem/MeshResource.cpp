@@ -2,14 +2,13 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #include "MeshResource.h"
-#include "FileSystem/MeshLoader.h"
+#include "Loaders/Loader.h"
 
 namespace maple 
 {
 	MeshResource::MeshResource(const std::string& name)
 		:name(name)
 	{
-		MeshLoader::load(name,meshes, skeleton);
 	}
 
 	auto MeshResource::addMesh(const std::string& name, Mesh* mesh) -> void

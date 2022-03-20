@@ -4,8 +4,8 @@
 #pragma once
 #include <memory>
 #include <string>
-#include "Image.h"
-#include "Resources/Cache.h"
+#include "FileSystem/Image.h"
+#include "Loader.h"
 
 namespace maple
 {
@@ -16,5 +16,6 @@ namespace maple
         static auto loadAsset(const std::string& name, bool mipmaps = true, bool flipY = true)->std::unique_ptr<Image>;
         static auto loadAsset(const std::string& name, Image * image)-> void;
     };
+
 }
 

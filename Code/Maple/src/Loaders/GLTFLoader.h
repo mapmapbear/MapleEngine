@@ -2,14 +2,14 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "MeshLoader.h"
+#include "Loader.h"
 
 namespace maple 
 {
-	class GLTFLoader : public ModelLoader
+	class GLTFLoader : public AssetsLoader
 	{
 	public:
 		static constexpr char* EXTENSIONS[] = {"gltf","glb"};
-		auto load(const std::string& obj, const std::string& extension, std::unordered_map<std::string, std::shared_ptr<Mesh>>&, std::shared_ptr<Skeleton>& skeleton)-> void override;
+		auto load(const std::string& fileName, const std::string& extension, std::vector<std::shared_ptr<IResource>>& out) -> void override;
 	};
 };

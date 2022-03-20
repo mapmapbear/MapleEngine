@@ -19,6 +19,14 @@
 #include "RHI/Definitions.h"
 #include "Others/Console.h"
 
+#ifdef MAPLE_VULKAN
+#include "RHI/Vulkan/VulkanTexture.h"
+#endif
+
+#ifdef MAPLE_OPENGL
+#include "RHI/OpenGL/GLTexture.h"
+#endif
+
 namespace maple
 {
 	auto ImageLoader::loadAsset(const std::string &name, bool mipmaps, bool flipY) -> std::unique_ptr<Image>

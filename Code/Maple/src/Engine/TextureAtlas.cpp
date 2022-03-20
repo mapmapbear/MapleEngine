@@ -3,7 +3,7 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include "TextureAtlas.h"
-#include "FileSystem/ImageLoader.h"
+#include "Loaders/ImageLoader.h"
 
 namespace maple
 {

@@ -7,6 +7,7 @@
 #include <vector>
 #include <string>
 #include "Engine/Core.h"
+#include "FileSystem/IResource.h"
 
 namespace maple
 {
@@ -27,9 +28,11 @@ namespace maple
 		glm::mat4 worldTransform;
 	};
 	
-	class MAPLE_EXPORT Skeleton 
+	class MAPLE_EXPORT Skeleton  : public IResource
 	{
 	public:
+		Skeleton(const std::string& name);
+
 		auto createBone(int32_t parentId = -1) ->Bone&;
 		auto getBoneIndex(const std::string& name) -> int32_t;
 		auto buildRoot() -> void;
@@ -37,9 +40,19 @@ namespace maple
 		inline auto& getBones() const { return bones; }
 		inline auto& getBones() { return bones; }
 		inline auto isValidBoneIndex(int32_t index) const { return index < bones.size() && index >= 0; }
+		inline auto getResourceType() const->FileType {
+			return FileType::Skeleton;
+		};
+		inline auto getPath() const->std::string { return filePath; }
+		auto buildHash() -> void;
+
+		inline auto getHashCode()->size_t { if (hashCode == -1) buildHash(); return hashCode; }
+
 	private:
 		std::vector<Bone> bones;
 		std::vector<int32_t> roots;
+		std::string filePath;
+		size_t hashCode = -1;
 	};
 
 }

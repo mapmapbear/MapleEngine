@@ -2,8 +2,10 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #include "FBXLoader.h"
-#include "Skeleton.h"
+#include "FileSystem/Skeleton.h"
+#include "FileSystem/MeshResource.h"
 
+#include "Animation/Animation.h"
 #include "Others/StringUtils.h"
 #include "Others/Console.h"
 #include "Engine/Core.h"
@@ -11,7 +13,9 @@
 #include "Scene/Component/Transform.h"
 #include "Math/BoundingBox.h"
 #include "FileSystem/File.h"
+#include "Math/MathUtils.h"
 
+#include <vector>
 #include <mio.hpp>
 #include <ofbx.h>
 
@@ -37,6 +41,15 @@ namespace maple
 		{
 			return { a.x - b.x, a.y - b.y };
 		}
+
+		inline auto getBonePath(const ofbx::Object* bone)->std::string
+		{
+			if (bone == nullptr) {
+				return "";
+			}
+			return getBonePath(bone->getParent()) + "/" + bone->name;
+		}
+
 
 		inline auto toGlm(const ofbx::Vec2& vec)
 		{
@@ -237,7 +250,7 @@ namespace maple
 			return toMatrix(node->getGlobalTransform());
 		}
 
-		inline auto loadBones(const ofbx::Object* parent, Skeleton * skeleton, int32_t parentId) -> void
+		inline auto loadBones(const ofbx::Object* parent, Skeleton * skeleton, int32_t parentId, std::vector<const ofbx::Object*> & sceneBones) -> void
 		{
 			int32_t i = 0;
 			while (const ofbx::Object* child = parent->resolveObjectLink(i++))
@@ -254,7 +267,59 @@ namespace maple
 						newBone.parentIdx = parentId;
 						auto& parent = skeleton->getBones()[parentId];
 						parent.children.emplace_back(boneIndex);
-						loadBones(child, skeleton, boneIndex);
+						sceneBones.emplace_back(child);
+						loadBones(child, skeleton, boneIndex, sceneBones);
+					}
+				}
+			}
+		}
+
+		inline auto loadWeight(const ofbx::Skin* skin, Mesh* mesh, Skeleton * skeleton) -> void
+		{
+			if(skeleton != nullptr)
+			{
+				for (int32_t clusterIndex = 0; clusterIndex < skin->getClusterCount(); clusterIndex++)
+				{
+					const ofbx::Cluster* cluster = skin->getCluster(clusterIndex);
+					if (cluster->getIndicesCount() == 0)
+						continue;
+
+					const auto link = cluster->getLink();
+
+					const int32_t boneIndex = skeleton->getBoneIndex(link->name);
+					if (boneIndex == -1)
+					{
+						LOGC("Missing bone");
+						return;
+					}
+					const int* clusterIndices = cluster->getIndices();
+					const double* clusterWeights = cluster->getWeights();
+					for (int32_t j = 0; j < cluster->getIndicesCount(); j++)
+					{
+						int32_t vtxIndex = clusterIndices[j];
+						float vtxWeight = (float)clusterWeights[j];
+
+						if (vtxWeight <= 0 || vtxIndex < 0)
+							continue;
+
+						auto& indices = mesh->getBlendIndices(vtxIndex);
+						auto& weights = mesh->getBlendWeights(vtxIndex);
+
+						for (int32_t k = 0; k < 4; k++)
+						{
+							if (vtxWeight >= weights[k])
+							{
+								for (int32_t l = 2; l >= k; l--)
+								{
+									indices[l + 1] = indices[l];
+									weights[l + 1] = weights[l];
+								}
+
+								indices[k] = boneIndex;
+								weights[k] = vtxWeight;
+								break;
+							}
+						}
 					}
 				}
 			}
@@ -273,11 +338,108 @@ namespace maple
 				print(skeleton, skeleton->getBones()[child], level + 1);
 			}
 		}
+
+		inline auto getCurveData(AnimationCurveProperty& curve, const ofbx::AnimationCurve* node)
+		{
+			if (node != nullptr)
+			{
+				auto times = node->getKeyTime();
+				for (auto i = 0; i < node->getKeyCount(); i++)
+				{
+					curve.curve.addKey(ofbx::fbxTimeToSeconds(times[i]), node->getKeyValue()[i], 1, 1);
+				}
+			}
+		}
+
+
+		inline auto loadClip(const ofbx::IScene* scene, int32_t index, float frameRate, const std::vector<const ofbx::Object*>& sceneBones)  -> std::shared_ptr<AnimationClip>
+		{
+			const ofbx::AnimationStack* stack = scene->getAnimationStack(index);
+			const ofbx::AnimationLayer* layer = stack->getLayer(0);
+			const ofbx::TakeInfo* takeInfo = scene->getTakeInfo(stack->name);
+			if (takeInfo == nullptr)
+				return nullptr;
+
+			const double localDuration = takeInfo->local_time_to - takeInfo->local_time_from;
+			if (localDuration <= MathUtils::EPS)
+				return nullptr;
+			auto animationDuration = (int32_t)(localDuration * frameRate + 0.5f);
+
+			auto clip = std::make_shared<AnimationClip>();
+
+			clip->wrapMode = AnimationWrapMode::Loop;
+			clip->length = localDuration;//animationDuration;
+
+			char name[256];
+			takeInfo->name.toString(name);
+			clip->name = name;
+			
+			// Import curves
+			for (int32_t i = 0; i < sceneBones.size(); i++)
+			{
+				const ofbx::AnimationCurveNode* translationNode = layer->getCurveNode(*sceneBones[i], "Lcl Translation");
+				const ofbx::AnimationCurveNode* rotationNode = layer->getCurveNode(*sceneBones[i], "Lcl Rotation");
+
+				if (rotationNode)
+				{
+					auto& curve0 = clip->curves.emplace_back();
+					curve0.path = getBonePath(sceneBones[i]);
+					auto& cur0 = curve0.properties.emplace_back();
+					getCurveData(cur0, rotationNode->getCurve(0));
+					cur0.type = AnimationCurvePropertyType::LocalRotationX;
+					auto& cur1 = curve0.properties.emplace_back();
+					getCurveData(cur1, rotationNode->getCurve(1));
+					cur1.type = AnimationCurvePropertyType::LocalRotationY;
+					auto& cur2 = curve0.properties.emplace_back();
+					getCurveData(cur2, rotationNode->getCurve(2));
+					cur2.type = AnimationCurvePropertyType::LocalRotationZ;
+				}
+
+				if (translationNode)
+				{
+					auto& curve = clip->curves.emplace_back();
+					curve.path = getBonePath(sceneBones[i]);
+					auto& cur0 = curve.properties.emplace_back();
+					getCurveData(cur0, translationNode->getCurve(0));
+					cur0.type = AnimationCurvePropertyType::LocalPositionX;
+					auto& cur1 = curve.properties.emplace_back();
+					getCurveData(cur1, translationNode->getCurve(1));
+					cur1.type = AnimationCurvePropertyType::LocalPositionY;
+					auto& cur2 = curve.properties.emplace_back();
+					getCurveData(cur2, translationNode->getCurve(2));
+					cur2.type = AnimationCurvePropertyType::LocalPositionZ;
+				}
+			}
+			return clip;
+		}
+
+		inline auto loadAnimation(const std::string& fileName, const ofbx::IScene* scene, const std::vector<const ofbx::Object*> & sceneBones, std::vector<std::shared_ptr<IResource>>& outRes)
+		{
+			float frameRate = scene->getSceneFrameRate();
+			if (frameRate <= 0)
+				frameRate = 30.0f;
+
+			auto animation = std::make_shared<Animation>(fileName);
+
+			const int32_t animCount = scene->getAnimationStackCount();
+			for (int32_t animIndex = 0; animIndex < animCount; animIndex++)
+			{
+				auto clip = loadClip(scene, animIndex, frameRate, sceneBones);
+				if (clip != nullptr) 
+				{
+					animation->addClip(clip);
+				}
+			}
+			if (animCount > 0) 
+			{
+				outRes.emplace_back(animation);
+			}
+		}
 	}
 
-	auto FBXLoader::load(const std::string& obj, const std::string& extension, std::unordered_map<std::string, std::shared_ptr<Mesh>>& meshes, std::shared_ptr<Skeleton>& skeleton)-> void
+	auto FBXLoader::load(const std::string& fileName, const std::string& extension, std::vector<std::shared_ptr<IResource>>& outRes) -> void
 	{
-		mio::mmap_source mmap(obj);
+		mio::mmap_source mmap(fileName);
 		MAPLE_ASSERT(mmap.is_open(), "open fbx file failed");
 
 		constexpr bool ignoreGeometry = false;
@@ -301,9 +463,36 @@ namespace maple
 			break;
 		}
 
-		int32_t meshCount = scene->getMeshCount();
+		int32_t i = 0;
+		std::vector<const ofbx::Object*> sceneBone;
+		auto skeleton = std::make_shared<Skeleton>(fileName);
+		while (const ofbx::Object* bone = scene->getRoot()->resolveObjectLink(i++))
+		{
+			if (bone->getType() == ofbx::Object::Type::LIMB_NODE)
+			{
+				auto boneIndex = skeleton->getBoneIndex(bone->name);//create a bone if missing
+				if (boneIndex == -1)
+				{
+					auto& newBone = skeleton->createBone();
+					newBone.name = bone->name;
+					newBone.offsetMatrix = toMatrix(bone->getLocalTransform());
+					boneIndex = newBone.id;
+					sceneBone.emplace_back(bone);
+				}
+				loadBones(bone, skeleton.get(), boneIndex, sceneBone);
+			}
+		}
 
-		for (int32_t i = 0; i < meshCount; ++i)
+		loadAnimation(fileName,scene, sceneBone, outRes);
+
+		if (!skeleton->getBones().empty())
+		{
+			outRes.emplace_back(skeleton);
+		}
+
+		auto meshes = std::make_shared<MeshResource>(fileName);
+		outRes.emplace_back(meshes);
+		for (int32_t i = 0; i < scene->getMeshCount(); ++i)
 		{
 			const auto fbxMesh = (const ofbx::Mesh*)scene->getMesh(i);
 			const auto geom = fbxMesh->getGeometry();
@@ -314,7 +503,10 @@ namespace maple
 			const auto tangents = geom->getTangents();
 			const auto colors = geom->getColors();
 			const auto uvs = geom->getUVs();
+			const auto materials = geom->getMaterials();
 
+
+			std::vector<std::shared_ptr<Material>> pbrMaterials;
 			std::vector<Vertex> tempVertices;
 			tempVertices.resize(vertexCount);
 			std::vector<uint32_t> indicesArray;
@@ -364,14 +556,43 @@ namespace maple
 				indicesArray[i] = index;
 			}
 
-			const ofbx::Material* material = fbxMesh->getMaterialCount() > 0 ? fbxMesh->getMaterial(0) : nullptr;
-	
+			
 			auto mesh = std::make_shared<Mesh>(indicesArray, tempVertices);
-			auto pbrMaterial = std::make_shared<Material>();
-			if (material)
+
+			for (auto i = 0;i< fbxMesh->getMaterialCount();i++)
 			{
-				auto pbrMaterial = loadMaterial(material, false);
-				mesh->setMaterial(pbrMaterial);
+				const ofbx::Material* material = fbxMesh->getMaterial(i);
+				pbrMaterials.emplace_back(loadMaterial(material, false));
+			}
+
+			mesh->setMaterial(pbrMaterials);
+		
+			const auto trianglesCount = vertexCount / 3;
+
+			std::vector<uint32_t> subMeshIdx;
+
+			if (fbxMesh->getMaterialCount() > 1) 
+			{
+				int32_t rangeStart = 0;
+				int32_t rangeStartVal = materials[rangeStart];
+				for (int32_t triangleIndex = 1; triangleIndex < trianglesCount; triangleIndex++)
+				{
+					if (rangeStartVal != materials[triangleIndex])
+					{
+						rangeStartVal = materials[triangleIndex];
+						subMeshIdx.emplace_back(materials[triangleIndex] * 3);
+					}
+				}
+
+				mesh->setSubMeshIndex(subMeshIdx);
+				mesh->setSubMeshCount(subMeshIdx.size());
+
+				MAPLE_ASSERT(subMeshIdx.size() == pbrMaterials.size(), "size is not same");
+			}
+			
+			if (geom->getSkin() != nullptr)
+			{
+				loadWeight(geom->getSkin(), mesh.get(), skeleton.get());
 			}
 
 			std::string name = fbxMesh->name;
@@ -379,39 +600,10 @@ namespace maple
 			MAPLE_ASSERT(name != "", "name should not be null");
 
 			mesh->setName(name);
-			meshes.emplace(name, mesh);
+			meshes->addMesh(name, mesh);
 
 			if (generatedTangents)
 				delete[] generatedTangents;
-
-		}
-
-		auto skeletonPtr = new Skeleton();
-
-		int32_t i = 0;
-		while (const ofbx::Object* bone = scene->getRoot()->resolveObjectLink(i++))
-		{
-			if (bone->getType() == ofbx::Object::Type::LIMB_NODE)
-			{
-				auto boneIndex = skeletonPtr->getBoneIndex(bone->name);//create a bone if missing
-				if (boneIndex == -1)
-				{
-					auto& newBone = skeletonPtr->createBone();
-					newBone.name = bone->name;
-					newBone.offsetMatrix = toMatrix(bone->getLocalTransform());
-					boneIndex = newBone.id;
-				}
-				loadBones(bone, skeletonPtr, boneIndex);
-			}
-		}
-
-		if (!skeletonPtr->getBones().empty()) 
-		{
-			skeleton.reset(skeletonPtr);
-		}
-		else 
-		{
-			delete skeletonPtr;
 		}
 	}
 };            // namespace maple

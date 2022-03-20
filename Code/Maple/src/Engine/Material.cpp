@@ -307,7 +307,8 @@ namespace maple
 
 	auto Material::create(const std::string &materialId) -> std::shared_ptr<Material>
 	{
-		return Application::getCache()->emplace<Material>(materialId);
+		//return Application::getCache()->emplace<Material>(materialId);
+		return nullptr;
 	}
 
 };        // namespace maple

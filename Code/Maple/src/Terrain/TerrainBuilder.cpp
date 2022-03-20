@@ -2,7 +2,7 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #include "TerrainBuilder.h"
-#include "FileSystem/ImageLoader.h"
+#include "Loaders/ImageLoader.h"
 #include <cmath>
 
 namespace maple 

@@ -86,10 +86,14 @@ namespace maple
 		using Entity = ecs::Chain
 			::Read<component::GridData>
 			::Read<component::RendererData>
+			::Read<component::GridRender>
 			::To<ecs::Entity>;
 		inline auto system(Entity entity, ecs::World world)
 		{
-			auto [grid,render] = entity;
+			auto [grid,render,data] = entity;
+
+			if (!data.enable)
+				return;
 
 			PipelineInfo pipeInfo;
 			pipeInfo.shader = grid.gridShader;
@@ -115,6 +119,7 @@ namespace maple
 		auto registerGridRenderer(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void
 		{
 			executePoint->registerGlobalComponent<component::GridData>();
+			executePoint->registerGlobalComponent<component::GridRender>();
 			executePoint->registerWithinQueue<on_begin::system>(begin);
 			executePoint->registerWithinQueue<on_render::system>(renderer);
 		}

@@ -9,7 +9,6 @@
 #include "Engine/Terrain.h"
 #include "Engine/Timestep.h"
 
-#include "FileSystem/MeshLoader.h"
 #include "Others/Console.h"
 #include "Window/WindowWin.h"
 
@@ -23,6 +22,8 @@
 #include "Scene/SceneManager.h"
 #include "Scene/System/ExecutePoint.h"
 #include "Scripts/Mono/MonoVirtualMachine.h"
+
+#include "Loaders/Loader.h"
 
 #include "RHI/Texture.h"
 
@@ -39,7 +40,6 @@ namespace maple
 		renderDevice    = RenderDevice::create();
 		graphicsContext = GraphicsContext::create();
 
-		cache         = std::make_shared<Cache>();
 		sceneManager  = std::make_unique<SceneManager>();
 		threadPool    = std::make_unique<ThreadPool>(4);
 		texturePool   = std::make_unique<TexturePool>();

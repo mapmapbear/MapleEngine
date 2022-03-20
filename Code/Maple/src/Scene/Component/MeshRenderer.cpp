@@ -3,15 +3,16 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #include "MeshRenderer.h"
-#include "Application.h"
 #include "Engine/Mesh.h"
 #include "ImGui/ImGuiHelpers.h"
 #include "Scene/Component/Transform.h"
 #include "Scene/Entity/EntityManager.h"
 #include "Scene/Scene.h"
 #include "Scene/SceneManager.h"
+#include "Loaders/Loader.h"
+#include "FileSystem/MeshResource.h"
 
-#include <imgui.h>
+#include "Application.h"
 
 namespace maple
 {
@@ -60,14 +61,26 @@ namespace maple
 		Model::Model(const std::string& file) :
 			filePath(file)
 		{
-			resource = Application::getCache()->emplace<MeshResource>(file);
+			type = PrimitiveType::File;
+			load();
 		}
 
 		auto Model::load() -> void
 		{
 			if (type == PrimitiveType::File)
 			{
-				resource = Application::getCache()->emplace<MeshResource>(filePath);
+				std::vector<std::shared_ptr<IResource>> out;
+				Loader::load(filePath, out);
+				if (!out.empty())
+				{
+					for (auto res : out)
+					{
+						if (res->getResourceType() == FileType::Model)
+						{
+							resource = std::static_pointer_cast<MeshResource>(res);
+						}
+					}
+				}
 			}
 		}
 

@@ -6,7 +6,7 @@
 #include "Engine/Profiler.h"
 #include "Others/Console.h"
 
-#include "FileSystem/ImageLoader.h"
+#include "Loaders/ImageLoader.h"
 
 namespace maple
 {

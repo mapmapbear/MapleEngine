@@ -335,8 +335,6 @@ namespace maple
 
 			for (auto& command : data.commandQueue)
 			{
-				
-
 				pipeline = Pipeline::get(command.pipelineInfo);
 
 				if (renderData.commandBuffer)
@@ -368,9 +366,6 @@ namespace maple
 
 						start = end;
 					}
-
-
-
 					command.mesh->getVertexBuffer()->unbind();
 					command.mesh->getIndexBuffer()->unbind();
 				}

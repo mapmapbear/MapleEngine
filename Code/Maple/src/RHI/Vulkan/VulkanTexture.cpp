@@ -4,7 +4,7 @@
 
 #include "VulkanTexture.h"
 #include "FileSystem/Image.h"
-#include "FileSystem/ImageLoader.h"
+#include "Loaders/ImageLoader.h"
 #include "Others/Console.h"
 #include "Others/StringUtils.h"
 #include "VulkanBuffer.h"

@@ -9,6 +9,7 @@
 #include "Engine/Profiler.h"
 #include "Others/StringUtils.h"
 #include "RHI/Texture.h"
+#include "FileSystem/MeshResource.h"
 
 namespace maple
 {
@@ -33,10 +34,10 @@ namespace maple
 	}
 
 
-	auto OBJLoader::load(const std::string& obj, const std::string& extension, std::unordered_map<std::string, std::shared_ptr<Mesh>>& meshes, std::shared_ptr<Skeleton>& skeleton)-> void
+	auto OBJLoader::load(const std::string& fileName, const std::string& extension, std::vector<std::shared_ptr<IResource>>& out) -> void
 	{
 		PROFILE_FUNCTION();
-		std::string resolvedPath = obj;
+		std::string resolvedPath = fileName;
 		auto        directory = resolvedPath.substr(0, resolvedPath.find_last_of(StringUtils::delimiter));
 		std::string name = directory.substr(directory.find_last_of(StringUtils::delimiter) + 1);
 
@@ -45,10 +46,12 @@ namespace maple
 		std::vector<tinyobj::material_t> materials;
 		std::string                      warn, err;
 
-		if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, obj.c_str(), directory.c_str()))
+		if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, fileName.c_str(), directory.c_str()))
 		{
 			throw std::runtime_error(warn + err);
 		}
+
+		auto meshes = std::make_shared<MeshResource>(fileName);
 
 		for (const auto& shape : shapes)
 		{
@@ -141,8 +144,9 @@ namespace maple
 			auto mesh = std::make_shared<Mesh>(indices, vertices);
 			mesh->setMaterial(pbrMaterial);
 			mesh->setName(shape.name);
-			meshes.emplace(shape.name, mesh);
+			meshes->addMesh(shape.name, mesh);
 		}
 
+		out.emplace_back(meshes);
 	}
 };            // namespace maple

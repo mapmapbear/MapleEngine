@@ -5,7 +5,7 @@
 #include "DescriptorSet.h"
 #include "Engine/Core.h"
 #include "FileSystem/IResource.h"
-#include "Resources/Cache.h"
+
 
 namespace spv
 {
@@ -88,6 +88,7 @@ namespace maple
 	class CommandBuffer;
 	class Pipeline;
 	class DescriptorSet;
+
 
 	class MAPLE_EXPORT Shader : public IResource
 	{

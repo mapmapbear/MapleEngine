@@ -2,17 +2,17 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "MeshLoader.h"
+#include "Loader.h"
 #include <string>
 #include <unordered_map>
 
 namespace maple 
 {
 	class Mesh;
-	class OBJLoader : public ModelLoader
+	class FBXLoader : public AssetsLoader
 	{
 	public:
-		static constexpr char* EXTENSIONS[] = {"obj"};
-		auto load(const std::string& obj, const std::string& extension, std::unordered_map<std::string, std::shared_ptr<Mesh>>&, std::shared_ptr<Skeleton>& skeleton)-> void override;
+		static constexpr char* EXTENSIONS[] = {"fbx"};
+		auto load(const std::string& fileName, const std::string& extension, std::vector<std::shared_ptr<IResource>>& out) -> void override;
 	};
 };

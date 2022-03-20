@@ -34,6 +34,7 @@
 #endif
 
 #include "Engine/CaptureGraph.h"
+#include "Loaders/Loader.h"
 
 #include "Application.h"
 
@@ -89,20 +90,21 @@ namespace maple
 	auto Shader::create(const std::string &filePath) -> std::shared_ptr<Shader>
 	{
 #ifdef MAPLE_VULKAN
-		return Application::getCache()->emplace<VulkanShader>(filePath);
+		return Application::getModelLoaderFactory()->emplace<VulkanShader>(filePath, filePath);
 #endif
+
 #ifdef MAPLE_OPENGL
-		return Application::getCache()->emplace<GLShader>(filePath);
+		return Application::getModelLoaderFactory()->emplace<GLShader>(filePath, filePath);
 #endif
 	}
 
 	auto Shader::create(const std::vector<uint32_t> &vertData, const std::vector<uint32_t> &fragData) -> std::shared_ptr<Shader>
 	{
 #ifdef MAPLE_VULKAN
-		return Application::getCache()->emplace<VulkanShader>(vertData, fragData);
+		return std::make_shared<VulkanShader>(vertData, fragData);
 #endif
 #ifdef MAPLE_OPENGL
-		return Application::getCache()->emplace<GLShader>(vertData, fragData);
+		return std::make_shared<GLShader>(vertData, fragData);
 #endif
 	}
 

@@ -123,6 +123,8 @@ file(GLOB VK_APP_SRC
 	src/Thread/*.h
 	src/Animation/*.cpp
 	src/Animation/*.h
+	src/Loaders/*.cpp
+	src/Loaders/*.h
 )
 
 

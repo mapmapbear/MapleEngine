@@ -24,6 +24,10 @@ namespace maple
 		{
 			return meshes;
 		}
+		inline auto& getMeshes() 
+		{
+			return meshes;
+		}
 
 		auto getResourceType() const -> FileType override
 		{
