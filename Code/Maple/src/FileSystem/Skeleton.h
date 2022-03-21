@@ -36,21 +36,20 @@ namespace maple
 		auto createBone(int32_t parentId = -1) ->Bone&;
 		auto getBoneIndex(const std::string& name) -> int32_t;
 		auto buildRoot() -> void;
-		inline auto getRoots() const { return roots; }
-		inline auto& getBones() const { return bones; }
-		inline auto& getBones() { return bones; }
-		inline auto isValidBoneIndex(int32_t index) const { return index < bones.size() && index >= 0; }
-		inline auto getResourceType() const->FileType {
-			return FileType::Skeleton;
-		};
-		inline auto getPath() const->std::string { return filePath; }
 		auto buildHash() -> void;
 
+		inline auto getRoot() const { return root; }
+		inline auto& getBones() const { return bones; }
+		inline auto& getBones() { return bones; }
+		inline auto& getBone(uint32_t idx) { return bones[idx]; }
+		inline auto isValidBoneIndex(int32_t index) const { return index < bones.size() && index >= 0; }
+		inline auto getResourceType() const->FileType { return FileType::Skeleton; };
+		inline auto getPath() const->std::string { return filePath; }
 		inline auto getHashCode()->size_t { if (hashCode == -1) buildHash(); return hashCode; }
-
+		
 	private:
 		std::vector<Bone> bones;
-		std::vector<int32_t> roots;
+		int32_t root = -1;
 		std::string filePath;
 		size_t hashCode = -1;
 	};

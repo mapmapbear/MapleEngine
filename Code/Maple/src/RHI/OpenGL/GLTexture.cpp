@@ -724,13 +724,14 @@ namespace maple
 		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, textureWrapToGL(parameters.wrap)));
 
 		GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, parameters.magFilter == TextureFilter::Linear? GL_LINEAR : GL_NEAREST));
+		
 		if (loadOptions.generateMipMaps)
 		{
-			GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, parameters.minFilter == TextureFilter::Linear ? GL_LINEAR : GL_NEAREST));
+			GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, parameters.minFilter == TextureFilter::Linear ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST));
 		}
 		else 
 		{
-			GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, parameters.minFilter == TextureFilter::Linear ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST));
+			GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, parameters.minFilter == TextureFilter::Linear ? GL_LINEAR : GL_NEAREST));
 		}
 /*
 * 

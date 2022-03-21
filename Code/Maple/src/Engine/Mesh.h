@@ -32,7 +32,8 @@ namespace maple
 		Mesh() = default;
 		Mesh(const std::shared_ptr<VertexBuffer> &vertexBuffer,
 		     const std::shared_ptr<IndexBuffer> & indexBuffer);
-		Mesh(const std::vector<uint32_t> &indices, const std::vector<Vertex> &vertices);
+		Mesh(const std::vector<uint32_t>& indices, const std::vector<Vertex>& vertices);
+		Mesh(const std::vector<uint32_t>& indices, const std::vector<SkinnedVertex>& vertices);
 
 		inline auto setMaterial(const std::shared_ptr<Material> &material)
 		{
@@ -136,6 +137,12 @@ namespace maple
 		inline auto& getBlendWeights(int32_t index)
 		{
 			return blendWeights[index];
+		}
+
+		inline auto resizeBlendWeight(uint32_t size)
+		{
+			blendIndices.resize(size);
+			blendWeights.resize(size);
 		}
 
 	  protected:

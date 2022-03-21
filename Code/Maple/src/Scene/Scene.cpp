@@ -41,17 +41,20 @@ namespace maple
 {
 	namespace
 	{
-		inline auto addEntity(Scene * scene, Entity parent, Skeleton* skeleton, const Bone& bone) -> void
+		inline auto addEntity(Scene * scene, Entity parent, Skeleton* skeleton, std::vector<component::Transform*> & transforms, int32_t idx) -> Entity
 		{
+			auto& bone = skeleton->getBone(idx);
 			auto entity = scene->createEntity(bone.name);
 			auto & transform = entity.addComponent<component::Transform>();
 			transform.setLocalTransform(bone.offsetMatrix);
 			entity.setParent(parent);
+			transforms[idx] = &transform;
 
 			for (auto child : bone.children)
 			{
-				addEntity(scene, entity, skeleton, skeleton->getBones()[child]);
+				addEntity(scene, entity, skeleton, transforms, child);
 			}
+			return entity;
 		}
 	}
 
@@ -228,7 +231,6 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 
-
 		auto  name = StringUtils::getFileNameWithoutExtension(file);
 		auto  modelEntity = createEntity(name);
 		auto& model = modelEntity.addComponent<component::Model>(file);
@@ -238,12 +240,22 @@ namespace maple
 		}
 		else
 		{
+			std::vector<component::Transform*> transforms;
+
+			if (model.skeleton)
+			{
+				transforms.resize(model.skeleton->getBones().size());
+				model.skeleton->buildRoot();
+				auto rootEntity = addEntity(this, modelEntity, model.skeleton.get(), transforms, model.skeleton->getRoot());
+			}
+
 			for (auto& mesh : model.resource->getMeshes())
 			{
 				auto child = createEntity(mesh.first);
-				if (model.resource->getSkeleton())
+				if (model.skeleton)
 				{
-					child.addComponent<component::SkinnedMeshRenderer>(mesh.second);
+					auto & meshRenderer = child.addComponent<component::SkinnedMeshRenderer>(mesh.second);
+					meshRenderer.setBoneTransform(transforms);
 				}
 				else
 				{
@@ -252,15 +264,6 @@ namespace maple
 				child.setParent(modelEntity);
 			}
 
-			auto skeleton = model.resource->getSkeleton();
-			if (skeleton)
-			{
-				skeleton->buildRoot();
-				for (auto child : skeleton->getRoots())
-				{
-					addEntity(this, modelEntity, skeleton.get(), skeleton->getBones()[child]);
-				}
-			}
 		}
 		model.type = component::PrimitiveType::File;
 		return modelEntity;

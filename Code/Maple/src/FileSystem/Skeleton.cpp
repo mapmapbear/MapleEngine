@@ -36,11 +36,13 @@ namespace maple
 
 	auto Skeleton::buildRoot() -> void
 	{
-		roots.clear();
 		for (auto& bone : bones)
 		{
-			if(bone.parentIdx == -1)
-				roots.emplace_back(bone.id);
+			if (bone.parentIdx == -1) 
+			{
+				root = bone.id;
+				break;
+			}
 		}
 	}
 
@@ -61,4 +63,5 @@ namespace maple
 			HashCode::hashCode(hashCode, bone.name);
 		}
 	}
+
 }

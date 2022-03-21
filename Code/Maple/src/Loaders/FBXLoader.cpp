@@ -274,10 +274,12 @@ namespace maple
 			}
 		}
 
-		inline auto loadWeight(const ofbx::Skin* skin, Mesh* mesh, Skeleton * skeleton) -> void
+		inline auto loadWeight(const ofbx::Skin* skin, Mesh* mesh, Skeleton * skeleton, uint32_t vertexCount) -> void
 		{
 			if(skeleton != nullptr)
 			{
+				mesh->resizeBlendWeight(vertexCount);
+
 				for (int32_t clusterIndex = 0; clusterIndex < skin->getClusterCount(); clusterIndex++)
 				{
 					const ofbx::Cluster* cluster = skin->getCluster(clusterIndex);
@@ -592,7 +594,7 @@ namespace maple
 			
 			if (geom->getSkin() != nullptr)
 			{
-				loadWeight(geom->getSkin(), mesh.get(), skeleton.get());
+				loadWeight(geom->getSkin(), mesh.get(), skeleton.get(), vertexCount);
 			}
 
 			std::string name = fbxMesh->name;

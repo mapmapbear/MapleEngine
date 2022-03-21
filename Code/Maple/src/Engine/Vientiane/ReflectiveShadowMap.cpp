@@ -186,7 +186,6 @@ namespace maple
 				shadowData.cascadeCommandQueue[i].clear();
 			}
 
-
 			if (!lightQuery.empty())
 			{
 				component::Light* directionaLight = nullptr;
@@ -221,7 +220,8 @@ namespace maple
 								auto [mesh, trans] = meshEntity;
 								if (mesh.castShadow) 
 								{
-									auto inside = shadowData.cascadeFrustums[i].isInside(mesh.getMesh()->getBoundingBox());
+									auto bb = mesh.getMesh()->getBoundingBox()->transform(trans.getWorldMatrix());
+									auto inside = shadowData.cascadeFrustums[i].isInside(bb);
 									if (inside)
 									{
 										auto& cmd = shadowData.cascadeCommandQueue[i].emplace_back();
@@ -245,11 +245,13 @@ namespace maple
 			::Write<component::ShadowMapData>
 			::Read<component::RendererData>
 			::Write<capture_graph::component::RenderGraph>
+			::Read<component::ReflectiveShadowData>
 			::To<ecs::Entity>;
 
 		inline auto onRender(RenderEntity entity, ecs::World world)
 		{
-			auto [shadowData, rendererData,renderGraph] = entity;
+			auto [shadowData, rendererData,renderGraph,rsm] = entity;
+
 
 			shadowData.descriptorSet[0]->update();
 
@@ -319,7 +321,7 @@ namespace maple
 				auto [cameraView, rsm,aabb] = entity;
 				rsm.commandQueue.clear();
 
-				if (!aabb.box) 
+				if (!aabb.box ) 
 				{
 					return;
 				}
@@ -364,7 +366,7 @@ namespace maple
 						{
 							auto [mesh, trans] = meshQuery.convert(meshEntity);
 
-							auto inside = rsm.frustum.isInside(mesh.getMesh()->getBoundingBox());
+							auto inside = rsm.frustum.isInside(mesh.getMesh()->getBoundingBox()->transform(trans.getWorldMatrix()));
 
 							if (inside)
 							{

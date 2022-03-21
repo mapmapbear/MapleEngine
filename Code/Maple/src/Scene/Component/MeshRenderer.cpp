@@ -1,7 +1,7 @@
-
 //////////////////////////////////////////////////////////////////////////////
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
+
 #include "MeshRenderer.h"
 #include "Engine/Mesh.h"
 #include "ImGui/ImGuiHelpers.h"
@@ -11,6 +11,7 @@
 #include "Scene/SceneManager.h"
 #include "Loaders/Loader.h"
 #include "FileSystem/MeshResource.h"
+#include "FileSystem/Skeleton.h"
 
 #include "Application.h"
 
@@ -69,16 +70,17 @@ namespace maple
 		{
 			if (type == PrimitiveType::File)
 			{
-				std::vector<std::shared_ptr<IResource>> out;
-				Loader::load(filePath, out);
-				if (!out.empty())
+				resources.clear();
+				Loader::load(filePath, resources);
+				for (auto res : resources)
 				{
-					for (auto res : out)
+					if (res->getResourceType() == FileType::Model)
 					{
-						if (res->getResourceType() == FileType::Model)
-						{
-							resource = std::static_pointer_cast<MeshResource>(res);
-						}
+						resource = std::static_pointer_cast<MeshResource>(res);
+					}
+					if (res->getResourceType() == FileType::Skeleton) 
+					{
+						skeleton = std::static_pointer_cast<Skeleton>(res);
 					}
 				}
 			}
@@ -103,6 +105,11 @@ namespace maple
 		auto SkinnedMeshRenderer::isActive() const -> bool
 		{
 			return mesh ? mesh->isActive() : false;
+		}
+
+		auto SkinnedMeshRenderer::buildTransform() -> void
+		{
+
 		}
 	};
 };        // namespace maple

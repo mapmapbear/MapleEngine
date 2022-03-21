@@ -766,7 +766,7 @@ namespace maple
 
 		float        closestDist = INFINITY;
 		entt::entity closestEntity = entt::null;
-
+		auto frustum = camera->getFrustum(editorCameraTransform.getWorldMatrixInverse());
 		auto calculateClosest = [&](Mesh* mesh, component::Transform& trans, entt::entity entity)
 		{
 			if (mesh != nullptr)
@@ -776,11 +776,15 @@ namespace maple
 				if (mesh->getBoundingBox() != nullptr)
 				{
 					auto  bbCopy = mesh->getBoundingBox()->transform(worldTransform);
-					float dist = ray.hit(bbCopy);
-					if (dist < INFINITY && dist < closestDist)
+
+					if (frustum.isInside(bbCopy)) 
 					{
-						closestDist = dist;
-						closestEntity = entity;
+						float dist = ray.hit(bbCopy);
+						if (dist < INFINITY && dist < closestDist)
+						{
+							closestDist = dist;
+							closestEntity = entity;
+						}
 					}
 				}
 			}

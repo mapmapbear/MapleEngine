@@ -37,15 +37,9 @@ namespace maple
 		{
 			return name;
 		};
-		
-		inline auto getSkeleton() 
-		{
-			return skeleton;
-		}
 
 	  private:
 		std::unordered_map<std::string, std::shared_ptr<Mesh>> meshes;
 		std::string                                            name;
-		std::shared_ptr<Skeleton>							   skeleton;
 	};
 };        // namespace maple

@@ -15,6 +15,8 @@ namespace maple
 {
 	class Mesh;
 	class MeshResource;
+	class Skeleton;
+
 	namespace component
 	{
 		enum class PrimitiveType : int32_t
@@ -53,7 +55,8 @@ namespace maple
 			std::string                   filePath;
 			PrimitiveType                 type = PrimitiveType::Length;
 			std::shared_ptr<MeshResource> resource;
-
+			std::vector<std::shared_ptr<IResource>> resources;
+			std::shared_ptr<Skeleton> skeleton;
 		  private:
 			auto load() -> void;
 		};
@@ -90,11 +93,24 @@ namespace maple
 
 			bool castShadow = true;
 
+			inline auto getSkeleton() { return skeleton; }
+
+			inline auto setBoneTransform(const std::vector<component::Transform*> & transforms) 
+			{ 
+				boneCompTransforms = transforms;
+			};
+
+			auto buildTransform() -> void;
+
 		private:
 			std::shared_ptr<Mesh>     mesh;
 			auto                      getMesh(const std::string& name) -> void;
 			std::string               meshName;
+			std::shared_ptr<Skeleton> skeleton;
+			std::vector<glm::mat4> boneTransforms;
+			std::vector<component::Transform*> boneCompTransforms;
 		};
+
 
 		class MAPLE_EXPORT MeshRenderer : public Component
 		{

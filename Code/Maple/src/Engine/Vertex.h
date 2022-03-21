@@ -55,6 +55,28 @@ namespace maple
 		}
 	};
 
+	struct SkinnedVertex
+	{
+		glm::vec3 pos;
+		glm::vec4 color;
+		glm::vec2 texCoord;
+		glm::vec3 normal;
+		glm::vec3 tangent;
+		glm::ivec4 boneIndices;
+		glm::vec4 boneWeights;
+
+		inline auto operator==(const SkinnedVertex& other) const -> bool
+		{
+			return pos == other.pos 
+				&& color == other.color 
+				&& texCoord == other.texCoord 
+				&& normal == other.normal 
+				&& tangent == other.tangent 
+				&& boneIndices == other.boneIndices
+				&& boneWeights == other.boneWeights;
+		}
+	};
+
 	struct Vertex2D
 	{
 		glm::vec3 vertex;

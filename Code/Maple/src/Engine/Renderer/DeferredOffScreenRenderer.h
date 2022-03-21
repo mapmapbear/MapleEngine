@@ -25,9 +25,11 @@ namespace maple
 			std::shared_ptr<Material>                   defaultMaterial;
 			std::vector<std::shared_ptr<DescriptorSet>> descriptorColorSet;
 			std::vector<std::shared_ptr<DescriptorSet>> descriptorLightSet;
+			std::shared_ptr<DescriptorSet>				descriptorAnim;
 
 			std::shared_ptr<Texture2D> preintegratedFG;
 			std::shared_ptr<Shader> deferredColorShader;        //stage 0 get all color information
+			std::shared_ptr<Shader> deferredColorAnimShader;   
 			std::shared_ptr<Shader> deferredLightShader;        //stage 1 process lighting
 			std::shared_ptr<Shader> stencilShader;
 

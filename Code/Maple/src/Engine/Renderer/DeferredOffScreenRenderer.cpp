@@ -23,6 +23,8 @@
 #include "Scene/Component/Component.h"
 #include "Scene/Scene.h"
 
+#include "FileSystem/Skeleton.h"
+
 #include "PostProcessRenderer.h"
 
 #include "Engine/Vientiane/ReflectiveShadowMap.h"
@@ -42,6 +44,8 @@ namespace maple
 		DeferredData::DeferredData()
 		{
 			deferredColorShader = Shader::create("shaders/DeferredColor.shader");
+			deferredColorAnimShader = Shader::create("shaders/DeferredColorAnim.shader");
+
 			deferredLightShader = Shader::create("shaders/DeferredLight.shader");
 			stencilShader = Shader::create("shaders/Outline.shader");
 			commandQueue.reserve(1000);
@@ -74,6 +78,7 @@ namespace maple
 			descriptorLightSet[0] = DescriptorSet::create(info);
 			screenQuad            = Mesh::createQuad(true);
 
+			descriptorAnim = DescriptorSet::create({0, deferredColorAnimShader.get()});
 
 			preintegratedFG = Texture2D::create("preintegrated", "textures/ibl_brdf_lut.png", { TextureFormat::RG16F, TextureFilter::Linear, TextureFilter::Linear, TextureWrap::ClampToEdge });
 
@@ -218,10 +223,11 @@ namespace maple
 			pipelineInfo.swapChainTarget = false;
 
 
-			auto forEachMesh = [&](const glm::mat4 & worldTransform, std::shared_ptr<Mesh> mesh, bool hasStencil)
+			auto forEachMesh = [&](const glm::mat4 & worldTransform, std::shared_ptr<Mesh> mesh, bool hasStencil,Skeleton * skeleton)
 			{
 				//culling
-				auto bb = mesh->getBoundingBox();
+				auto bb = mesh->getBoundingBox()->transform(worldTransform);
+
 				auto inside = cameraView.frustum.isInside(bb);
 
 				if (inside)
@@ -229,7 +235,7 @@ namespace maple
 					auto& cmd = data.commandQueue.emplace_back();
 					cmd.mesh = mesh.get();
 					cmd.transform = worldTransform;
-
+					cmd.skeleton = skeleton;
 					if (mesh->getSubMeshCount() <= 1)
 					{
 						cmd.material = !mesh->getMaterial().empty() ? mesh->getMaterial()[0].get() : data.defaultMaterial.get();
@@ -241,6 +247,9 @@ namespace maple
 					}
 
 					auto depthTest = data.depthTest;
+
+					pipelineInfo.shader = cmd.skeleton != nullptr ? data.deferredColorAnimShader : data.deferredColorShader;
+
 					pipelineInfo.colorTargets[0] = renderData.gbuffer->getBuffer(GBufferTextures::COLOR);
 					pipelineInfo.colorTargets[1] = renderData.gbuffer->getBuffer(GBufferTextures::POSITION);
 					pipelineInfo.colorTargets[2] = renderData.gbuffer->getBuffer(GBufferTextures::NORMALS);
@@ -281,7 +290,7 @@ namespace maple
 						cmd.stencilPipelineInfo.colorTargets[2] = nullptr;
 						cmd.stencilPipelineInfo.colorTargets[3] = nullptr;
 
-						pipelineInfo.shader = data.deferredColorShader;
+						pipelineInfo.shader = cmd.skeleton != nullptr ? data.deferredColorAnimShader : data.deferredColorShader;
 						pipelineInfo.stencilMask = 0xFF;
 						pipelineInfo.stencilFunc = StencilType::Always;
 						pipelineInfo.stencilFail = StencilType::Keep;
@@ -298,8 +307,7 @@ namespace maple
 				auto [mesh, trans] = meshQuery.convert(entityHandle);
 				{
 					const auto& worldTransform = trans.getWorldMatrix();
-					auto bb = mesh.getMesh()->getBoundingBox();
-					forEachMesh(worldTransform, mesh.getMesh(), meshQuery.hasComponent<component::StencilComponent>(entityHandle));
+					forEachMesh(worldTransform, mesh.getMesh(), meshQuery.hasComponent<component::StencilComponent>(entityHandle), nullptr);
 				}
 			}
 
@@ -308,8 +316,7 @@ namespace maple
 				auto [mesh, trans] = skinnedMeshQuery.convert(entityHandle);
 				{
 					const auto& worldTransform = trans.getWorldMatrix();
-					auto bb = mesh.getMesh()->getBoundingBox();
-					forEachMesh(worldTransform, mesh.getMesh(), skinnedMeshQuery.hasComponent<component::StencilComponent>(entityHandle));
+					forEachMesh(worldTransform, mesh.getMesh(), skinnedMeshQuery.hasComponent<component::StencilComponent>(entityHandle), mesh.getSkeleton().get());
 				}
 			}
 		}
@@ -342,9 +349,19 @@ namespace maple
 				else
 					pipeline->bind(renderData.commandBuffer);
 
-				auto& pushConstants = data.deferredColorShader->getPushConstants()[0];
+
+				auto& pushConstants = command.skeleton != nullptr ?
+					data.deferredColorAnimShader->getPushConstants()[0] : 
+					data.deferredColorShader->getPushConstants()[0];
+
 				pushConstants.setValue("transform", &command.transform);
 				data.deferredColorShader->bindPushConstants(renderData.commandBuffer, pipeline.get());
+
+				
+				if (command.skeleton != nullptr)
+				{
+					//data.descriptorAnim->setUniform("UniformBufferObjectAnim", "boneUbo", );
+				}
 
 				if (command.mesh->getSubMeshCount() > 1)
 				{
@@ -360,19 +377,36 @@ namespace maple
 						auto end = i == indices.size() ? command.mesh->getIndexBuffer()->getCount() : indices[i];
 						data.descriptorColorSet[1] = material->getDescriptorSet();
 						material->bind();
+						if (command.skeleton != nullptr)
+						{
+							Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, { data.descriptorAnim, data.descriptorColorSet[1] });
+						}
+						else 
+						{
+							Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, data.descriptorColorSet);
 
-						Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, data.descriptorColorSet);
+						}
 						Renderer::drawIndexed(renderData.commandBuffer, DrawType::Triangle, end - start, start);
 
 						start = end;
 					}
+
 					command.mesh->getVertexBuffer()->unbind();
 					command.mesh->getIndexBuffer()->unbind();
 				}
 				else
 				{
 					data.descriptorColorSet[1] = command.material->getDescriptorSet();
-					Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, data.descriptorColorSet);
+
+					if (command.skeleton != nullptr)
+					{
+						Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, { data.descriptorAnim, data.descriptorColorSet[1] });
+					}
+					else
+					{
+						Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, data.descriptorColorSet);
+
+					}
 					Renderer::drawMesh(renderData.commandBuffer, pipeline.get(), command.mesh);
 				}
 

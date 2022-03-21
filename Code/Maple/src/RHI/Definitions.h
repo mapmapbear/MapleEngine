@@ -321,6 +321,7 @@ namespace maple
 	{
 		Mesh *    mesh     = nullptr;
 		Material *material = nullptr;
+		Skeleton* skeleton = nullptr;
 
 		PipelineInfo pipelineInfo;
 		PipelineInfo stencilPipelineInfo;
