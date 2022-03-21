@@ -5,13 +5,9 @@
 
 layout (location = 0) out vec4 color;
 
-layout (location = 0) in Data
-{
-	vec3 position;
-	vec4 color;
-} fsIn;
+layout (location = 0) in vec4 inColor;
 
 void main()
 {
-	color = fsIn.color;
+	color = inColor;
 }

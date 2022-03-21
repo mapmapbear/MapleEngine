@@ -19,6 +19,7 @@ namespace maple
 
 	namespace component
 	{
+		class Transform;
 		enum class PrimitiveType : int32_t
 		{
 			Plane = 0,

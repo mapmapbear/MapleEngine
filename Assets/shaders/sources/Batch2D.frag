@@ -10,7 +10,7 @@ layout (location = 0) in OutData
 {
 	vec2 uv;
 	vec4 color;
-	int textureID;
+	flat int textureID;
 } data;
 
 layout(set = 1, binding = 0) uniform sampler2D textures[16];

@@ -359,6 +359,7 @@ namespace maple
 
 							rsm.projView = lightOrthoMatrix * lightViewMatrix;
 							rsm.frustum.from(rsm.projView);
+							rsm.lightMatrix = lightViewMatrix;
 							rsm.lightArea = distance * distance * 4;
 						}
 					

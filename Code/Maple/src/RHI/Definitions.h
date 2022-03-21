@@ -28,6 +28,7 @@ namespace maple
 	class FrameBuffer;
 	class Mesh;
 	class Material;
+	class Skeleton;
 
 	enum class TextureType : int32_t;
 	enum class TextureFormat;

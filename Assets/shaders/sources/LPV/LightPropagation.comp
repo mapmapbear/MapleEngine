@@ -2,14 +2,14 @@
 
 #include "LPVCommon.glsl"
 
-layout (local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+layout (local_size_x = 8, local_size_y = 8, local_size_z = 8) in;
 
-layout(r32ui ,binding = 0) uniform uimage3D RAccumulatorLPV_;
-layout(r32ui ,binding = 1) uniform uimage3D GAccumulatorLPV_;
-layout(r32ui ,binding = 2) uniform uimage3D BAccumulatorLPV_;
-layout(r32ui ,binding = 3) uniform uimage3D LPVGridR_;//save current result
-layout(r32ui ,binding = 4) uniform uimage3D LPVGridG_;//save current result
-layout(r32ui ,binding = 5) uniform uimage3D LPVGridB_;//save current result
+layout(r32ui ,binding = 0) uniform coherent uimage3D RAccumulatorLPV_;
+layout(r32ui ,binding = 1) uniform coherent uimage3D GAccumulatorLPV_;
+layout(r32ui ,binding = 2) uniform coherent uimage3D BAccumulatorLPV_;
+layout(r32ui ,binding = 3) uniform coherent uimage3D LPVGridR_;//save current result
+layout(r32ui ,binding = 4) uniform coherent uimage3D LPVGridG_;//save current result
+layout(r32ui ,binding = 5) uniform coherent uimage3D LPVGridB_;//save current result
 
 layout( binding = 6) uniform usampler3D LPVGridR;//pre-result
 layout( binding = 7) uniform usampler3D LPVGridG;
@@ -86,12 +86,20 @@ void main()
 		 // No occlusion in the first step
 		if(ubo.step > 1)
 		{
-			vec3 halfDir =  0.5 * mainDirection;
-		    ivec3 occCoord = ivec3(volumeCellIndex - halfDir);
+			/*vec3 halfDir =  0.5 * mainDirection;
+		    ivec3 occCoord = ivec3(volumeCellIndex - halfDir);*/
 
-			vec4 redOccCoeffs = texelFetch2(uGeometryVolumeR, occCoord);
-            vec4 greenOccCoeffs = texelFetch2(uGeometryVolumeG, occCoord);
-            vec4 blueOccCoeffs = texelFetch2(uGeometryVolumeB, occCoord);
+			vec4 redOccCoeffs1 = texelFetch2(uGeometryVolumeR, volumeCellIndex);
+            vec4 greenOccCoeffs1 = texelFetch2(uGeometryVolumeG, volumeCellIndex);
+            vec4 blueOccCoeffs1 = texelFetch2(uGeometryVolumeB, volumeCellIndex);
+
+			vec4 redOccCoeffs2 = texelFetch2(uGeometryVolumeR, neighbourCellIndex);
+            vec4 greenOccCoeffs2 = texelFetch2(uGeometryVolumeG, neighbourCellIndex);
+            vec4 blueOccCoeffs2 = texelFetch2(uGeometryVolumeB, neighbourCellIndex);
+
+			vec4 redOccCoeffs = (redOccCoeffs1 + redOccCoeffs2) / 2.0;
+			vec4 greenOccCoeffs = (greenOccCoeffs1 + greenOccCoeffs2) / 2.0;
+			vec4 blueOccCoeffs  = (blueOccCoeffs1 + blueOccCoeffs2) / 2.0;
 
             redOcclusionValue = 1.0 - clamp(ubo.occlusionAmplifier * dot(redOccCoeffs, dirToSH(-mainDirection)), 0.0, 1.0);
             greenOcclusionValue = 1.0 - clamp(ubo.occlusionAmplifier * dot(greenOccCoeffs, dirToSH(-mainDirection)), 0.0, 1.0);
@@ -116,11 +124,17 @@ void main()
 			 // No occlusion in the first step
 			if(ubo.step > 1)
 			{
-				vec3 halfDir =  0.5 * mainDirection;
-		   		ivec3 occCoord = ivec3(volumeCellIndex - halfDir);
-				vec4 redOccCoeffs = texelFetch2(uGeometryVolumeR, occCoord);
-				vec4 greenOccCoeffs = texelFetch2(uGeometryVolumeG, occCoord);
-				vec4 blueOccCoeffs = texelFetch2(uGeometryVolumeB, occCoord);
+				vec4 redOccCoeffs1 = texelFetch2(uGeometryVolumeR, volumeCellIndex);
+				vec4 greenOccCoeffs1 = texelFetch2(uGeometryVolumeG, volumeCellIndex);
+				vec4 blueOccCoeffs1 = texelFetch2(uGeometryVolumeB, volumeCellIndex);
+
+				vec4 redOccCoeffs2 = texelFetch2(uGeometryVolumeR, neighbourCellIndex);
+				vec4 greenOccCoeffs2 = texelFetch2(uGeometryVolumeG, neighbourCellIndex);
+				vec4 blueOccCoeffs2 = texelFetch2(uGeometryVolumeB, neighbourCellIndex);
+
+				vec4 redOccCoeffs = (redOccCoeffs1 + redOccCoeffs2) / 2.0;
+				vec4 greenOccCoeffs = (greenOccCoeffs1 + greenOccCoeffs2) / 2.0;
+				vec4 blueOccCoeffs  = (blueOccCoeffs1 + blueOccCoeffs2) / 2.0;
 
 				redOcclusionValue = 1.0 - clamp(ubo.occlusionAmplifier * dot(redOccCoeffs, dirToSH(-mainDirection)), 0.0, 1.0);
 				greenOcclusionValue = 1.0 - clamp(ubo.occlusionAmplifier * dot(greenOccCoeffs, dirToSH(-mainDirection)), 0.0, 1.0);

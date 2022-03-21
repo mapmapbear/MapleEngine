@@ -30,6 +30,7 @@ namespace maple
 			std::vector<RenderCommand>				    commandQueue;
 			Frustum										frustum;
 			glm::mat4									projView;
+			glm::mat4									lightMatrix;
 			float										lightArea = 1.0f;
 			ReflectiveShadowData();
 		};

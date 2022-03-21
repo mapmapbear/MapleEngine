@@ -123,7 +123,12 @@ namespace MM
 		auto& lpv = reg.get<component::LPVGrid>(e);
 		ImGui::Columns(2);
 		ImGui::Separator();
-		ImGuiHelper::property("Indirect Light Attenuation", lpv.indirectLightAttenuation, 0.f, 1.f,maple::ImGuiHelper::PropertyFlag::DragFloat);
+		ImGuiHelper::property("Indirect Light Attenuation", lpv.indirectLightAttenuation, 0.f, 2.f, maple::ImGuiHelper::PropertyFlag::DragFloat);
+		ImGuiHelper::property("OcclusionAmplifier", lpv.occlusionAmplifier, 0.f, 100.f, maple::ImGuiHelper::PropertyFlag::DragFloat);
+		ImGuiHelper::showProperty("CellSize", lpv.cellSize);
+		ImGuiHelper::property("DebugAABB", lpv.debugAABB);
+		if(lpv.debugAABB)
+			ImGuiHelper::property("ShowGeometry", lpv.showGeometry);
 		ImGui::Columns(1);
 	}
 	

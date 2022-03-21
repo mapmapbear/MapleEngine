@@ -165,8 +165,7 @@ namespace maple
 					injectLight.descriptors[0]->setUniform("UniformBufferObject", "minAABB", glm::value_ptr(injectLight.boundingBox.min));
 
 					auto maxValue = std::max(size.x, std::max(size.y, size.z));
-					if (maxValue > 32)
-						lpv.cellSize = maxValue / 32.f;
+					lpv.cellSize = maxValue / 32.f;
 
 					injectLight.descriptors[0]->setUniform("UniformBufferObject", "cellSize", &lpv.cellSize);
 				}
@@ -218,7 +217,7 @@ namespace maple
 				auto [lpv, geometry,aabb,shadowData,rsm, rendererData] = entity;
 				if (lpv.lpvGridR == nullptr)
 					return;
-				geometry.descriptors[0]->setUniform("UniformBufferObject", "lightViewMat", glm::value_ptr(shadowData.lightMatrix));
+				geometry.descriptors[0]->setUniform("UniformBufferObject", "lightViewMat", glm::value_ptr(rsm.lightMatrix));
 				geometry.descriptors[0]->setUniform("UniformBufferObject", "minAABB", glm::value_ptr(aabb.box->min));
 				geometry.descriptors[0]->setUniform("UniformBufferObject", "cellSize", &lpv.cellSize);
 				geometry.descriptors[0]->setUniform("UniformBufferObject", "lightDir", glm::value_ptr(shadowData.lightDir));
@@ -278,7 +277,7 @@ namespace maple
 			inline auto render(Entity entity, ecs::World world)
 			{
 				auto [lpv, data, aabb, rendererData] = entity;
-				if (lpv.lpvGridR == nullptr)
+				if (lpv.lpvGridR == nullptr )
 					return;
 				data.descriptors[0]->setTexture("uGeometryVolumeR", lpv.lpvGeometryVolumeR);
 				data.descriptors[0]->setTexture("uGeometryVolumeG", lpv.lpvGeometryVolumeG);
@@ -337,7 +336,7 @@ namespace maple
 			inline auto beginScene(Entity entity, ecs::World world)
 			{
 				auto [lpv, data, aabb, renderData,cameraView] = entity;
-				if (lpv.lpvGridR == nullptr)
+				if (lpv.lpvGridR == nullptr || !lpv.debugAABB)
 					return;
 
 				data.descriptors[0]->setUniform("UniformBufferObjectVert", "projView", glm::value_ptr(cameraView.projView));
@@ -349,13 +348,21 @@ namespace maple
 			inline auto render(Entity entity, ecs::World world)
 			{
 				auto [lpv, data, aabb, renderData, cameraView] = entity;
-				if (lpv.lpvGridR == nullptr)
+				if (lpv.lpvGridR == nullptr || !lpv.debugAABB)
 					return;
 
-				data.descriptors[1]->setTexture("uRAccumulatorLPV", lpv.lpvAccumulatorR);
-				data.descriptors[1]->setTexture("uGAccumulatorLPV", lpv.lpvAccumulatorG);
-				data.descriptors[1]->setTexture("uBAccumulatorLPV", lpv.lpvAccumulatorB);
-
+				if (lpv.showGeometry) 
+				{
+					data.descriptors[1]->setTexture("uRAccumulatorLPV", lpv.lpvGeometryVolumeR);
+					data.descriptors[1]->setTexture("uGAccumulatorLPV", lpv.lpvGeometryVolumeG);
+					data.descriptors[1]->setTexture("uBAccumulatorLPV", lpv.lpvGeometryVolumeB);
+				}
+				else 
+				{
+					data.descriptors[1]->setTexture("uRAccumulatorLPV", lpv.lpvAccumulatorR);
+					data.descriptors[1]->setTexture("uGAccumulatorLPV", lpv.lpvAccumulatorG);
+					data.descriptors[1]->setTexture("uBAccumulatorLPV", lpv.lpvAccumulatorB);
+				}
 
 				for (auto descriptor : data.descriptors)
 				{
@@ -383,11 +390,11 @@ namespace maple
 
 				const auto r = 0.1 * lpv.cellSize;
 
-				for (int32_t i = min.x; i < max.x; i += lpv.cellSize)
+				for (float i = min.x; i < max.x; i += lpv.cellSize)
 				{
-					for (int32_t j = min.y; j < max.y; j += lpv.cellSize)
+					for (float j = min.y; j < max.y; j += lpv.cellSize)
 					{
-						for (int32_t k = min.z; k < max.z; k += lpv.cellSize)
+						for (float k = min.z; k < max.z; k += lpv.cellSize)
 						{
 							glm::mat4 model = glm::mat4(1);
 							model = glm::translate(model, glm::vec3(i, j, k));
@@ -429,9 +436,8 @@ namespace maple
 		auto registerLPVDebug(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void
 		{
 			executePoint->registerGlobalComponent<component::DebugAABBData>();
-/*
 			executePoint->registerWithinQueue<aabb_debug::beginScene>(begin);
-			executePoint->registerWithinQueue<aabb_debug::render>(renderer);*/
+			executePoint->registerWithinQueue<aabb_debug::render>(renderer);
 		}
 
 	};

@@ -15,7 +15,7 @@ layout (location = 0) out OutData
 {
 	vec2 uv;
 	vec4 color;
-	int textureID;
+	flat int textureID;
 } data;
 
 void main()

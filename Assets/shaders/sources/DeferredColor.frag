@@ -8,7 +8,7 @@ const float PBR_WORKFLOW_SEPARATE_TEXTURES = 0.0f;
 const float PBR_WORKFLOW_METALLIC_ROUGHNESS = 1.0f;
 const float PBR_WORKFLOW_SPECULAR_GLOSINESS = 2.0f;
 
-layout(location = 0) in vec3 fragColor;
+layout(location = 0) in vec4 fragColor;
 layout(location = 1) in vec2 fragTexCoord;
 layout(location = 2) in vec4 fragPosition;
 layout(location = 3) in vec3 fragNormal;
@@ -60,17 +60,17 @@ layout(location = 4) out vec4 outViewPosition;
 layout(location = 5) out vec4 outViewNormal;
 layout(location = 6) out vec4 outVelocity;
 
+
 vec4 gammaCorrectTexture(vec4 samp)
 {
-	return samp;
 	return vec4(pow(samp.rgb, vec3(GAMMA)), samp.a);
 }
 
 vec3 gammaCorrectTextureRGB(vec4 samp)
 {
-	return samp.xyz;
 	return vec3(pow(samp.rgb, vec3(GAMMA)));
 }
+
 
 vec4 getAlbedo()
 {
@@ -89,12 +89,12 @@ float getRoughness()
 
 float getAO()
 {
-	return (1.0 - materialProperties.usingAOMap) + materialProperties.usingAOMap * texture(uAOMap, fragTexCoord).r;
+	return (1.0 - materialProperties.usingAOMap) + materialProperties.usingAOMap * gammaCorrectTextureRGB(texture(uAOMap, fragTexCoord)).r;
 }
 
 vec3 getEmissive()
 {
-	return (1.0 - materialProperties.usingEmissiveMap) * materialProperties.emissiveColor.rgb + materialProperties.usingEmissiveMap * texture(uEmissiveMap, fragTexCoord).rgb;
+	return (1.0 - materialProperties.usingEmissiveMap) * materialProperties.emissiveColor.rgb + materialProperties.usingEmissiveMap * gammaCorrectTextureRGB(texture(uEmissiveMap, fragTexCoord));
 }
 
 vec3 getNormalFromMap()
@@ -124,9 +124,10 @@ float linearDepth(float depth)
 	return (2.0f * ubo.nearPlane * ubo.farPlane) / (ubo.farPlane + ubo.nearPlane - z * (ubo.farPlane - ubo.nearPlane));	
 }
 
+
 void main()
 {
-	vec4 texColor = getAlbedo();
+	vec4 texColor = getAlbedo() * fragColor;
 	if(texColor.w < 0.01)
 		discard;
 
@@ -155,8 +156,8 @@ void main()
 
 	vec3 emissive   = getEmissive();
 
-
-    outColor    	= texColor;// + vec4(emissive,0);
+ 
+    outColor    	= gammaCorrectTexture(texColor);
 	outPosition		= vec4(fragPosition.xyz, emissive.x);
 	outNormal   	= vec4(getNormalFromMap(), emissive.y);
 	outPBR      	= vec4(metallic, roughness, ao, emissive.z);

@@ -9,6 +9,14 @@ layout(set = 0,binding = 0) uniform UniformBufferObject
 	mat4 projViewOld;
 } ubo;
 
+const int MAX_BONES = 100;
+
+layout(set = 0,binding = 1) uniform UniformBufferObjectAnim
+{    
+	mat4 boneTransforms[MAX_BONES];
+} boneUbo;
+
+
 layout(push_constant) uniform PushConsts
 {
 	mat4 transform;
@@ -19,6 +27,8 @@ layout(location = 1) in vec4 inColor;
 layout(location = 2) in vec2 inTexCoord;
 layout(location = 3) in vec3 inNormal;
 layout(location = 4) in vec3 inTangent;
+layout(location = 5) in ivec4 inBoneIndices;
+layout(location = 6) in vec4 inBoneWeights;
 
 
 layout(location = 0) out vec4 fragColor;
@@ -37,9 +47,18 @@ out gl_PerVertex
     vec4 gl_Position;
 };
 
+mat4 getSkinMat()
+{
+     mat4 boneTransform = boneUbo.boneTransforms[int(inBoneIndices[0])] * inBoneWeights[0];
+    boneTransform += boneUbo.boneTransforms[int(inBoneIndices[1])] * inBoneWeights[1];
+    boneTransform += boneUbo.boneTransforms[int(inBoneIndices[2])] * inBoneWeights[2];
+    boneTransform += boneUbo.boneTransforms[int(inBoneIndices[3])] * inBoneWeights[3];
+    return boneTransform;
+}
+
 void main() 
 {
-	fragPosition = pushConsts.transform * vec4(inPosition, 1.0);
+	fragPosition = pushConsts.transform * (getSkinMat() * vec4(inPosition, 1.0));
     vec4 pos =  ubo.projView * fragPosition;
     gl_Position = pos;
     

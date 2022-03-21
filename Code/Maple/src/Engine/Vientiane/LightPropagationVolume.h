@@ -36,7 +36,9 @@ namespace maple
 			int32_t propagateCount = 8;
 			float cellSize = 1.f;
 			float occlusionAmplifier = 1.0f;
-			float indirectLightAttenuation = 0.3f;
+			float indirectLightAttenuation = 1.f;
+			bool debugAABB = false;
+			bool showGeometry = false;
 		};
 	};
 
