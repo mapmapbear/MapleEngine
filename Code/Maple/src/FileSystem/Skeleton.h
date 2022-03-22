@@ -46,7 +46,8 @@ namespace maple
 		inline auto getResourceType() const->FileType { return FileType::Skeleton; };
 		inline auto getPath() const->std::string { return filePath; }
 		inline auto getHashCode()->size_t { if (hashCode == -1) buildHash(); return hashCode; }
-		
+		inline auto hasBones() const { return !bones.empty(); }
+
 	private:
 		std::vector<Bone> bones;
 		int32_t root = -1;

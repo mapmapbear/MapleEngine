@@ -101,7 +101,7 @@ namespace maple
 				boneCompTransforms = transforms;
 			};
 
-			auto buildTransform() -> void;
+			auto buildTransform() ->const std::vector<glm::mat4>*;
 
 		private:
 			std::shared_ptr<Mesh>     mesh;

@@ -322,12 +322,13 @@ namespace maple
 	{
 		Mesh *    mesh     = nullptr;
 		Material *material = nullptr;
-		Skeleton* skeleton = nullptr;
+		const std::vector<glm::mat4>* boneTransform = nullptr;
 
 		PipelineInfo pipelineInfo;
 		PipelineInfo stencilPipelineInfo;
 
 		glm::mat4 transform;
+
 	};
 
 	enum class MemoryBarrierFlags

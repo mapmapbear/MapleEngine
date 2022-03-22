@@ -40,7 +40,7 @@ namespace maple
 			boundingBox->merge(vertex.pos);
 		}
 		vertexBuffer = VertexBuffer::create();
-		vertexBuffer->setData(sizeof(Vertex) * vertices.size(), vertices.data());
+		vertexBuffer->setData(sizeof(SkinnedVertex) * vertices.size(), vertices.data());
 		indexBuffer = IndexBuffer::create(indices.data(), indices.size());
 	}
 

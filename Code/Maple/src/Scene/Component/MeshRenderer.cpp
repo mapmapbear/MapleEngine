@@ -88,6 +88,9 @@ namespace maple
 
 
 //##########################################################################################################################################
+//
+		constexpr int32_t MAX_BONES = 100;
+
 		SkinnedMeshRenderer::SkinnedMeshRenderer(const std::shared_ptr<Mesh>& mesh)
 			:mesh(mesh)
 		{
@@ -107,9 +110,19 @@ namespace maple
 			return mesh ? mesh->isActive() : false;
 		}
 
-		auto SkinnedMeshRenderer::buildTransform() -> void
+		auto SkinnedMeshRenderer::buildTransform() -> const std::vector<glm::mat4> *
 		{
+			if (boneTransforms.size() != MAX_BONES)
+			{
+				boneTransforms.resize(MAX_BONES);
+			}
 
+			for (auto i = 0;i< boneCompTransforms.size();i++)
+			{
+				boneTransforms[i] = boneCompTransforms[i]->getWorldMatrix();
+			}
+
+			return &boneTransforms;
 		}
 	};
 };        // namespace maple

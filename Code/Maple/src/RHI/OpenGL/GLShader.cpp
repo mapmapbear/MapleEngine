@@ -7,6 +7,8 @@
 
 #include "GLFunc.inl"
 
+#include "Others/Console.h"
+
 namespace maple
 {
 	namespace
@@ -33,9 +35,28 @@ namespace maple
 							layout.push<glm::vec4>(name, location);
 							break;
 					}
+					break;
+				case spirv_cross::SPIRType::Int:
+					switch (type.vecsize)
+					{
+					case 1:
+						layout.push<int32_t>(name, location);
+						break;
+					case 2:
+						layout.push<glm::ivec2>(name, location);
+						break;
+					case 3:
+						layout.push<glm::ivec3>(name, location);
+						break;
+					case 4:
+						layout.push<glm::ivec4>(name, location);
+						break;
+					}
+					break;
 				case spirv_cross::SPIRType::Double:
 					break;
 				default:
+					LOGE("Unknown spirv_cross::SPIRType %d ", type.basetype);
 					break;
 			}
 		}
@@ -274,6 +295,9 @@ namespace maple
 				case ShaderDataType::Mat4:
 					maple::setUniformMat4(location, *reinterpret_cast<const glm::mat4 *>(&data[offset]));
 					break;
+				case ShaderDataType::Mat4Array:
+					maple::setUniformMat4Array(location, *reinterpret_cast<const std::vector<glm::mat4>*>(&data[offset]));
+					break;
 				default:
 					MAPLE_ASSERT(false, "Unknown type!");
 			}
@@ -477,7 +501,7 @@ namespace maple
 				auto &member    = descriptor.members.emplace_back();
 				member.size     = (uint32_t) size;
 				member.offset   = offset;
-				member.type     = spirvTypeToDataType(type);
+				member.type     = spirvTypeToDataType(type, size);
 				member.fullName = uniformName;
 				member.name     = memberName;
 			}
@@ -518,7 +542,7 @@ namespace maple
 				auto &member    = pushConst.members.emplace_back();
 				member.size     = (uint32_t) size;
 				member.offset   = offset;
-				member.type     = spirvTypeToDataType(type);
+				member.type     = spirvTypeToDataType(type,size);
 				member.fullName = uniformName;
 				member.name     = memberName;
 			}

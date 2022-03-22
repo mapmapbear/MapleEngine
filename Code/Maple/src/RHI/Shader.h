@@ -116,7 +116,7 @@ namespace maple
 			return FileType::Shader;
 		}
 
-		auto spirvTypeToDataType(const spirv_cross::SPIRType &type) -> ShaderDataType;
+		auto spirvTypeToDataType(const spirv_cross::SPIRType &type,uint32_t size) -> ShaderDataType;
 		auto spirvTypeToTextureType(const spv::ImageFormat &format) -> TextureFormat;
 
 		virtual auto reload() -> void{};

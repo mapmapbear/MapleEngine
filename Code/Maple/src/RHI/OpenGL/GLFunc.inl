@@ -57,6 +57,7 @@ namespace maple
 	}
 	inline auto setUniformMat4Array(uint32_t location, const std::vector<glm::mat4> &matrix) -> void
 	{
-		//GLCall(glUniformMatrix4fv(location, matrix.size(), GL_FALSE, (uint8_t*)matrix.data());
+		if (location != GL_INVALID_INDEX)
+			GLCall(glUniformMatrix4fv(location, matrix.size(), GL_FALSE, (const float*)matrix.data()));
 	}
 };        // namespace maple

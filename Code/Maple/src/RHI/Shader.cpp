@@ -35,7 +35,7 @@ namespace maple
 		}
 	}        // namespace
 
-	auto Shader::spirvTypeToDataType(const spirv_cross::SPIRType &type) -> ShaderDataType
+	auto Shader::spirvTypeToDataType(const spirv_cross::SPIRType &type, uint32_t size) -> ShaderDataType
 	{
 		switch (type.basetype)
 		{
@@ -56,8 +56,13 @@ namespace maple
 			case spirv_cross::SPIRType::Float:
 				if (type.columns == 3)
 					return ShaderDataType::Mat3;
-				if (type.columns == 4)
+				if (type.columns == 4) {
+					if (size > sizeof(glm::mat4)) 
+					{
+						return ShaderDataType::Mat4Array;
+					}
 					return ShaderDataType::Mat4;
+				}
 
 				if (type.vecsize == 1)
 					return ShaderDataType::Float32;

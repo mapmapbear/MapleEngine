@@ -274,12 +274,10 @@ namespace maple
 			}
 		}
 
-		inline auto loadWeight(const ofbx::Skin* skin, Mesh* mesh, Skeleton * skeleton, uint32_t vertexCount) -> void
+		inline auto loadWeight(const ofbx::Skin* skin, Skeleton* skeleton, std::vector<SkinnedVertex> & vertices) -> void
 		{
 			if(skeleton != nullptr)
 			{
-				mesh->resizeBlendWeight(vertexCount);
-
 				for (int32_t clusterIndex = 0; clusterIndex < skin->getClusterCount(); clusterIndex++)
 				{
 					const ofbx::Cluster* cluster = skin->getCluster(clusterIndex);
@@ -304,8 +302,8 @@ namespace maple
 						if (vtxWeight <= 0 || vtxIndex < 0)
 							continue;
 
-						auto& indices = mesh->getBlendIndices(vtxIndex);
-						auto& weights = mesh->getBlendWeights(vtxIndex);
+						auto& indices = vertices[vtxIndex].boneIndices;
+						auto& weights = vertices[vtxIndex].boneWeights;
 
 						for (int32_t k = 0; k < 4; k++)
 						{
@@ -494,6 +492,7 @@ namespace maple
 
 		auto meshes = std::make_shared<MeshResource>(fileName);
 		outRes.emplace_back(meshes);
+
 		for (int32_t i = 0; i < scene->getMeshCount(); ++i)
 		{
 			const auto fbxMesh = (const ofbx::Mesh*)scene->getMesh(i);
@@ -507,12 +506,24 @@ namespace maple
 			const auto uvs = geom->getUVs();
 			const auto materials = geom->getMaterials();
 
-
 			std::vector<std::shared_ptr<Material>> pbrMaterials;
+	
 			std::vector<Vertex> tempVertices;
-			tempVertices.resize(vertexCount);
+			std::vector<SkinnedVertex> skinnedVertices;
+
+			if ( skeleton->hasBones() )
+			{
+				skinnedVertices.resize(vertexCount);
+			}
+			else 
+			{
+				tempVertices.resize(vertexCount);
+			}
+
 			std::vector<uint32_t> indicesArray;
+
 			indicesArray.resize(numIndices);
+
 			auto boundingBox = std::make_shared<BoundingBox>();
 
 			const auto indices = geom->getFaceIndices();
@@ -525,31 +536,42 @@ namespace maple
 			}
 
 			auto transform = getTransform(fbxMesh,orientation);
+			bool skin = skeleton->hasBones();
 
 			for (int32_t i = 0; i < vertexCount; ++i)
 			{
 				const ofbx::Vec3& cp = vertices[i];
-				auto& vertex = tempVertices[i];
-				vertex.pos = transform.getWorldMatrix() * glm::vec4(float(cp.x), float(cp.y), float(cp.z),1.0);
-				fixOrientation(vertex.pos,orientation);
-				boundingBox->merge(vertex.pos);
 
-				if (normals)
-				{
-					glm::mat3 matrix(transform.getWorldMatrix());
-					vertex.normal = glm::transpose(glm::inverse(matrix)) * glm::normalize(glm::vec3{ float(normals[i].x), float(normals[i].y), float(normals[i].z) });
+#define GEN_VERTEX(Vertices) { \
+					auto& vertex = Vertices[i]; \
+					vertex.pos = transform.getWorldMatrix() * glm::vec4(float(cp.x), float(cp.y), float(cp.z), 1.0); \
+					fixOrientation(vertex.pos, orientation); \
+					boundingBox->merge(vertex.pos); \
+					if (normals) \
+					{ \
+						glm::mat3 matrix(transform.getWorldMatrix()); \
+						vertex.normal = glm::transpose(glm::inverse(matrix)) * glm::normalize(glm::vec3{ float(normals[i].x), float(normals[i].y), float(normals[i].z) }); \
+					}\
+					if (uvs)\
+						vertex.texCoord = { float(uvs[i].x), 1.0f - float(uvs[i].y) };\
+					if (colors)\
+						vertex.color = { float(colors[i].x), float(colors[i].y), float(colors[i].z), float(colors[i].w) };\
+					else\
+						vertex.color = { 1,1,1,1 };\
+					if (tangents)\
+						vertex.tangent = transform.getWorldMatrix() * glm::vec4(float(tangents[i].x), float(tangents[i].y), float(tangents[i].z), 1.0);\
+					fixOrientation(vertex.normal, orientation);\
+					fixOrientation(vertex.tangent, orientation);\
 				}
-				if (uvs)
-					vertex.texCoord = { float(uvs[i].x), 1.0f - float(uvs[i].y) };
-				if (colors)
-					vertex.color = { float(colors[i].x), float(colors[i].y), float(colors[i].z), float(colors[i].w) };
-				else 
-					vertex.color = { 1,1,1,1 };
-				if (tangents)
-					vertex.tangent = transform.getWorldMatrix() * glm::vec4(float(tangents[i].x), float(tangents[i].y), float(tangents[i].z),1.0);
 
-				fixOrientation(vertex.normal, orientation);
-				fixOrientation(vertex.tangent, orientation);
+				if (skin) 
+				{
+					GEN_VERTEX(skinnedVertices);
+				}
+				else
+				{
+					GEN_VERTEX(tempVertices);
+				}
 			}
 
 			for (int32_t i = 0; i < numIndices; i++)
@@ -557,9 +579,21 @@ namespace maple
 				int32_t index = (i % 3 == 2) ? (-indices[i] - 1) : indices[i];
 				indicesArray[i] = index;
 			}
-
 			
-			auto mesh = std::make_shared<Mesh>(indicesArray, tempVertices);
+			if (geom->getSkin() != nullptr && skeleton->hasBones())
+			{
+				loadWeight(geom->getSkin(), skeleton.get(), skinnedVertices);
+			}
+
+			std::shared_ptr<Mesh> mesh;
+			if (skin) 
+			{
+				mesh = std::make_shared<Mesh>(indicesArray, skinnedVertices);
+			}
+			else
+			{
+				mesh = std::make_shared<Mesh>(indicesArray, tempVertices);
+			}
 
 			for (auto i = 0;i< fbxMesh->getMaterialCount();i++)
 			{
@@ -592,10 +626,6 @@ namespace maple
 				MAPLE_ASSERT(subMeshIdx.size() == pbrMaterials.size(), "size is not same");
 			}
 			
-			if (geom->getSkin() != nullptr)
-			{
-				loadWeight(geom->getSkin(), mesh.get(), skeleton.get(), vertexCount);
-			}
 
 			std::string name = fbxMesh->name;
 

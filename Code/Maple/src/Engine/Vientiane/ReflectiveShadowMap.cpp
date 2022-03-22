@@ -252,7 +252,6 @@ namespace maple
 		{
 			auto [shadowData, rendererData,renderGraph,rsm] = entity;
 
-
 			shadowData.descriptorSet[0]->update();
 
 			PipelineInfo pipelineInfo;
@@ -275,7 +274,7 @@ namespace maple
 				{
 					Mesh* mesh = command.mesh;
 					shadowData.currentDescriptorSets[0] = shadowData.descriptorSet[0];
-					auto  trans = command.transform;
+					const auto& trans = command.transform;
 					auto& pushConstants = shadowData.shader->getPushConstants()[0];
 
 					pushConstants.setValue("transform", (void*)&trans);
@@ -286,6 +285,7 @@ namespace maple
 					Renderer::bindDescriptorSets(pipeline.get(), rendererData.commandBuffer, 0, shadowData.descriptorSet);
 					Renderer::drawMesh(rendererData.commandBuffer, pipeline.get(), mesh);
 				}
+
 				pipeline->end(rendererData.commandBuffer);
 			}
 

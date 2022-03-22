@@ -223,7 +223,7 @@ namespace maple
 			pipelineInfo.swapChainTarget = false;
 
 
-			auto forEachMesh = [&](const glm::mat4 & worldTransform, std::shared_ptr<Mesh> mesh, bool hasStencil,Skeleton * skeleton)
+			auto forEachMesh = [&](const glm::mat4 & worldTransform, std::shared_ptr<Mesh> mesh, bool hasStencil, component::SkinnedMeshRenderer * skinnedMesh)
 			{
 				//culling
 				auto bb = mesh->getBoundingBox()->transform(worldTransform);
@@ -235,7 +235,8 @@ namespace maple
 					auto& cmd = data.commandQueue.emplace_back();
 					cmd.mesh = mesh.get();
 					cmd.transform = worldTransform;
-					cmd.skeleton = skeleton;
+					cmd.boneTransform = skinnedMesh->buildTransform();
+
 					if (mesh->getSubMeshCount() <= 1)
 					{
 						cmd.material = !mesh->getMaterial().empty() ? mesh->getMaterial()[0].get() : data.defaultMaterial.get();
@@ -248,7 +249,7 @@ namespace maple
 
 					auto depthTest = data.depthTest;
 
-					pipelineInfo.shader = cmd.skeleton != nullptr ? data.deferredColorAnimShader : data.deferredColorShader;
+					pipelineInfo.shader = skinnedMesh != nullptr ? data.deferredColorAnimShader : data.deferredColorShader;
 
 					pipelineInfo.colorTargets[0] = renderData.gbuffer->getBuffer(GBufferTextures::COLOR);
 					pipelineInfo.colorTargets[1] = renderData.gbuffer->getBuffer(GBufferTextures::POSITION);
@@ -290,7 +291,7 @@ namespace maple
 						cmd.stencilPipelineInfo.colorTargets[2] = nullptr;
 						cmd.stencilPipelineInfo.colorTargets[3] = nullptr;
 
-						pipelineInfo.shader = cmd.skeleton != nullptr ? data.deferredColorAnimShader : data.deferredColorShader;
+						pipelineInfo.shader = skinnedMesh != nullptr ? data.deferredColorAnimShader : data.deferredColorShader;
 						pipelineInfo.stencilMask = 0xFF;
 						pipelineInfo.stencilFunc = StencilType::Always;
 						pipelineInfo.stencilFail = StencilType::Keep;
@@ -316,7 +317,7 @@ namespace maple
 				auto [mesh, trans] = skinnedMeshQuery.convert(entityHandle);
 				{
 					const auto& worldTransform = trans.getWorldMatrix();
-					forEachMesh(worldTransform, mesh.getMesh(), skinnedMeshQuery.hasComponent<component::StencilComponent>(entityHandle), mesh.getSkeleton().get());
+					forEachMesh(worldTransform, mesh.getMesh(), skinnedMeshQuery.hasComponent<component::StencilComponent>(entityHandle), &mesh);
 				}
 			}
 		}
@@ -349,19 +350,20 @@ namespace maple
 				else
 					pipeline->bind(renderData.commandBuffer);
 
+				auto shader = command.boneTransform != nullptr ?
+					data.deferredColorAnimShader : data.deferredColorShader;
 
-				auto& pushConstants = command.skeleton != nullptr ?
-					data.deferredColorAnimShader->getPushConstants()[0] : 
-					data.deferredColorShader->getPushConstants()[0];
+				auto& pushConstants = shader->getPushConstants()[0];
+
+				if (command.boneTransform != nullptr)
+				{
+					data.descriptorAnim->setUniform("UniformBufferObjectAnim", "boneTransforms", command.boneTransform);
+					data.descriptorAnim->update();
+				}
 
 				pushConstants.setValue("transform", &command.transform);
-				data.deferredColorShader->bindPushConstants(renderData.commandBuffer, pipeline.get());
-
-				
-				if (command.skeleton != nullptr)
-				{
-					//data.descriptorAnim->setUniform("UniformBufferObjectAnim", "boneUbo", );
-				}
+				shader->bindPushConstants(renderData.commandBuffer, pipeline.get());
+			
 
 				if (command.mesh->getSubMeshCount() > 1)
 				{
@@ -377,7 +379,7 @@ namespace maple
 						auto end = i == indices.size() ? command.mesh->getIndexBuffer()->getCount() : indices[i];
 						data.descriptorColorSet[1] = material->getDescriptorSet();
 						material->bind();
-						if (command.skeleton != nullptr)
+						if (command.boneTransform != nullptr)
 						{
 							Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, { data.descriptorAnim, data.descriptorColorSet[1] });
 						}
@@ -398,7 +400,7 @@ namespace maple
 				{
 					data.descriptorColorSet[1] = command.material->getDescriptorSet();
 
-					if (command.skeleton != nullptr)
+					if (command.boneTransform != nullptr)
 					{
 						Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, { data.descriptorAnim, data.descriptorColorSet[1] });
 					}
