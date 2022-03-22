@@ -127,12 +127,12 @@ namespace maple
 				uniformObject.seed = { Randomizer::random(), Randomizer::random(), Randomizer::random() };
 
 				perlinWorley = Shader::create("shaders/PerlinWorley.shader");
-				perlin3D = Texture3D::create(128, 128, 128);
+				perlin3D = Texture3D::create( 128, 128, 128, {}, {false,false,true} );
 				perlinWorleySet = DescriptorSet::create({ 0, perlinWorley.get() });
 				perlinWorleySet->setTexture("outVolTex", perlin3D);
 
 				worleyShader = Shader::create("shaders/Worley.shader");
-				worley3D = Texture3D::create(32, 32, 32);
+				worley3D = Texture3D::create(32, 32, 32, {}, {false,false,true} );
 				worleySet = DescriptorSet::create({ 0, worleyShader.get() });
 				worleySet->setTexture("outVolTex", worley3D);
 			}
