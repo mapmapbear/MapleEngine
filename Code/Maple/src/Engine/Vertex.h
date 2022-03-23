@@ -62,7 +62,7 @@ namespace maple
 		glm::vec2 texCoord;
 		glm::vec3 normal;
 		glm::vec3 tangent;
-		glm::ivec4 boneIndices;
+		glm::vec4 boneIndices;
 		glm::vec4 boneWeights;
 
 		inline auto operator==(const SkinnedVertex& other) const -> bool

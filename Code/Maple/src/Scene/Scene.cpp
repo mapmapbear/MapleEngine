@@ -41,18 +41,23 @@ namespace maple
 {
 	namespace
 	{
-		inline auto addEntity(Scene * scene, Entity parent, Skeleton* skeleton, std::vector<component::Transform*> & transforms, int32_t idx) -> Entity
+		inline auto addEntity(Scene * scene, Entity parent, Skeleton* skeleton, int32_t idx) -> Entity
 		{
 			auto& bone = skeleton->getBone(idx);
 			auto entity = scene->createEntity(bone.name);
 			auto & transform = entity.addComponent<component::Transform>();
-			transform.setLocalTransform(bone.offsetMatrix);
+			auto& boneComp = entity.addComponent<component::BoneComponent>();
+
+			transform.setOffsetTransform(bone.offsetMatrix);
+			transform.setLocalTransform(bone.localTransform);
+			boneComp.boneIndex = idx;
+			boneComp.skeleton = skeleton;
+
 			entity.setParent(parent);
-			transforms[idx] = &transform;
 
 			for (auto child : bone.children)
 			{
-				addEntity(scene, entity, skeleton, transforms, child);
+				addEntity(scene, entity, skeleton, child);
 			}
 			return entity;
 		}
@@ -240,13 +245,10 @@ namespace maple
 		}
 		else
 		{
-			std::vector<component::Transform*> transforms;
-
 			if (model.skeleton)
 			{
-				transforms.resize(model.skeleton->getBones().size());
 				model.skeleton->buildRoot();
-				auto rootEntity = addEntity(this, modelEntity, model.skeleton.get(), transforms, model.skeleton->getRoot());
+				auto rootEntity = addEntity(this, modelEntity, model.skeleton.get(), model.skeleton->getRoot());
 			}
 
 			for (auto& mesh : model.resource->getMeshes())
@@ -255,7 +257,6 @@ namespace maple
 				if (model.skeleton)
 				{
 					auto & meshRenderer = child.addComponent<component::SkinnedMeshRenderer>(mesh.second);
-					meshRenderer.setBoneTransform(transforms);
 				}
 				else
 				{
@@ -263,7 +264,6 @@ namespace maple
 				}
 				child.setParent(modelEntity);
 			}
-
 		}
 		model.type = component::PrimitiveType::File;
 		return modelEntity;

@@ -18,14 +18,8 @@ namespace maple
 		std::string name;
 		std::vector<int32_t> children;
 
-		glm::vec3 position;
-		glm::vec3 rotation;
-
-		glm::vec3 restPosition;
-		glm::vec3 restRotation;
-
 		glm::mat4 offsetMatrix;
-		glm::mat4 worldTransform;
+		glm::mat4 localTransform;
 	};
 	
 	class MAPLE_EXPORT Skeleton  : public IResource

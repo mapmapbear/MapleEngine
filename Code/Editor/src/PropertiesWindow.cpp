@@ -22,6 +22,8 @@
 #include "Scripts/Mono/MonoScript.h"
 #include "Scripts/Mono/MonoSystem.h"
 
+#include "FileSystem/Skeleton.h"
+
 #include "Loaders/Loader.h"
 
 #include "Engine/Renderer/GridRenderer.h"
@@ -75,6 +77,21 @@ namespace MM
 	using namespace maple;
 
 	template <>
+	inline auto ComponentEditorWidget<component::BoneComponent>(entt::registry& reg, entt::registry::entity_type e) -> void
+	{
+		auto& data = reg.get<component::BoneComponent>(e);
+		
+		auto& bone = data.skeleton->getBone(data.boneIndex);
+
+		ImGui::Columns(2);
+		ImGui::Separator();
+		ImGuiHelper::showProperty("Bone Name", bone.name);
+		ImGuiHelper::showProperty("Bone Index", std::to_string(data.boneIndex));
+		ImGui::Columns(1);
+	}
+
+
+	template <>
 	inline auto ComponentEditorWidget<component::SSAOData>( entt::registry& reg, entt::registry::entity_type e ) -> void
 	{
 		auto& ssao = reg.get<component::SSAOData>( e );
@@ -112,7 +129,7 @@ namespace MM
 		auto& dt = reg.get<component::DeltaTime>(e);
 		ImGui::Columns(2);
 		ImGui::Separator();
-		ImGuiHelper::showProperty("Delta Time", dt.dt);
+		ImGuiHelper::showProperty("Delta Time", std::to_string(dt.dt));
 		ImGui::Columns(1);
 	}
 
@@ -125,7 +142,7 @@ namespace MM
 		ImGui::Separator();
 		ImGuiHelper::property("Indirect Light Attenuation", lpv.indirectLightAttenuation, 0.f, 2.f, maple::ImGuiHelper::PropertyFlag::DragFloat);
 		ImGuiHelper::property("OcclusionAmplifier", lpv.occlusionAmplifier, 0.f, 100.f, maple::ImGuiHelper::PropertyFlag::DragFloat);
-		ImGuiHelper::showProperty("CellSize", lpv.cellSize);
+		ImGuiHelper::showProperty("CellSize", std::to_string(lpv.cellSize));
 		ImGuiHelper::property("DebugAABB", lpv.debugAABB);
 		if(lpv.debugAABB)
 			ImGuiHelper::property("ShowGeometry", lpv.showGeometry);

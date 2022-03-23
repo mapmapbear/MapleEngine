@@ -293,10 +293,10 @@ namespace maple
 					maple::setUniformMat3(location, *reinterpret_cast<const glm::mat3 *>(&data[offset]));
 					break;
 				case ShaderDataType::Mat4:
-					maple::setUniformMat4(location, *reinterpret_cast<const glm::mat4 *>(&data[offset]));
+					maple::setUniformMat4Array(location, &data[offset], size / sizeof(glm::mat4));
 					break;
 				case ShaderDataType::Mat4Array:
-					maple::setUniformMat4Array(location, *reinterpret_cast<const std::vector<glm::mat4>*>(&data[offset]));
+					maple::setUniformMat4Array(location, &data[offset], size / sizeof(glm::mat4));
 					break;
 				default:
 					MAPLE_ASSERT(false, "Unknown type!");

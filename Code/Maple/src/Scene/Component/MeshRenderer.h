@@ -96,22 +96,22 @@ namespace maple
 
 			inline auto getSkeleton() { return skeleton; }
 
-			inline auto setBoneTransform(const std::vector<component::Transform*> & transforms) 
-			{ 
-				boneCompTransforms = transforms;
-			};
-
-			auto buildTransform() ->const std::vector<glm::mat4>*;
-
 		private:
 			std::shared_ptr<Mesh>     mesh;
 			auto                      getMesh(const std::string& name) -> void;
 			std::string               meshName;
 			std::shared_ptr<Skeleton> skeleton;
 			std::vector<glm::mat4> boneTransforms;
-			std::vector<component::Transform*> boneCompTransforms;
 		};
 
+		class MAPLE_EXPORT BoneComponent : public Component
+		{
+		public:
+			constexpr static char* ICON = ICON_MDI_BONE;
+
+			int32_t boneIndex;
+			Skeleton* skeleton;
+		};
 
 		class MAPLE_EXPORT MeshRenderer : public Component
 		{

@@ -39,5 +39,6 @@ namespace maple
 		TRIVIAL_COMPONENT(component::SSAOData, false, "SSAO Data");
 		TRIVIAL_COMPONENT(component::DeltaTime, false, "Delta Time");
 		TRIVIAL_COMPONENT(component::GridRender, false, "Grid Render");
+		TRIVIAL_COMPONENT(component::BoneComponent, false, "Bone");
 	}
 }

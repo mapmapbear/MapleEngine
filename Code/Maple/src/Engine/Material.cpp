@@ -297,7 +297,11 @@ namespace maple
 	auto Material::setShader(const std::shared_ptr<Shader> &shader) -> void
 	{
 		PROFILE_FUNCTION();
-		this->shader = shader;
+		if (this->shader != shader) 
+		{
+			this->shader = shader;
+			createDescriptorSet();
+		}
 	}
 
 	auto Material::getShaderPath() const -> std::string

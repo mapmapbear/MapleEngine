@@ -262,7 +262,7 @@ namespace maple
 					{
 						auto& newBone = skeleton->createBone();
 						newBone.name = child->name;
-						newBone.offsetMatrix = toMatrix(child->getLocalTransform());
+						newBone.localTransform = toMatrix(child->getLocalTransform());
 						boneIndex = newBone.id;
 						newBone.parentIdx = parentId;
 						auto& parent = skeleton->getBones()[parentId];
@@ -475,7 +475,7 @@ namespace maple
 				{
 					auto& newBone = skeleton->createBone();
 					newBone.name = bone->name;
-					newBone.offsetMatrix = toMatrix(bone->getLocalTransform());
+					newBone.localTransform = toMatrix(bone->getLocalTransform());
 					boneIndex = newBone.id;
 					sceneBone.emplace_back(bone);
 				}
@@ -505,6 +505,12 @@ namespace maple
 			const auto colors = geom->getColors();
 			const auto uvs = geom->getUVs();
 			const auto materials = geom->getMaterials();
+
+			for (auto i = 0;i<sceneBone.size();i++)
+			{
+				auto& ske = skeleton->getBone(i);
+				ske.offsetMatrix = glm::inverse(getOffsetMatrix(fbxMesh, sceneBone[i]));
+			}
 
 			std::vector<std::shared_ptr<Material>> pbrMaterials;
 	

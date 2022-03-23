@@ -63,6 +63,8 @@ namespace maple
 			defaultMaterial->createDescriptorSet();
 
 			DescriptorInfo info{};
+
+			descriptorAnimSet.resize(3);
 			descriptorColorSet.resize(3);
 			descriptorLightSet.resize(1);
 
@@ -78,7 +80,8 @@ namespace maple
 			descriptorLightSet[0] = DescriptorSet::create(info);
 			screenQuad            = Mesh::createQuad(true);
 
-			descriptorAnim = DescriptorSet::create({0, deferredColorAnimShader.get()});
+			descriptorAnimSet[0] = DescriptorSet::create({0, deferredColorAnimShader.get()});
+			descriptorAnimSet[2] = DescriptorSet::create({2, deferredColorAnimShader.get()});
 
 			preintegratedFG = Texture2D::create("preintegrated", "textures/ibl_brdf_lut.png", { TextureFormat::RG16F, TextureFilter::Linear, TextureFilter::Linear, TextureWrap::ClampToEdge });
 
@@ -94,7 +97,7 @@ namespace maple
 			::Read<component::CameraView>
 			::Read<component::RendererData>
 			::Read<component::SSAOData>
-			::Read<component::LPVGrid>
+			::ReadIfExist<component::LPVGrid>
 			::To<ecs::Entity>;
 
 		using LightDefine = ecs::Chain
@@ -120,11 +123,16 @@ namespace maple
 			::ReadIfExist<component::StencilComponent>
 			::To<ecs::Query>;
 
+		using BoneMeshQuery = ecs::Chain
+			::Write<component::BoneComponent>
+			::Write<component::Transform>
+			::To<ecs::Query>;
+
 		using LightEntity = LightDefine::To<ecs::Entity>;
 
-		inline auto beginScene(Entity entity, Query lightQuery, EnvQuery env, MeshQuery meshQuery, SkinnedMeshQuery skinnedMeshQuery, ecs::World world)
+		inline auto beginScene(Entity entity, Query lightQuery, EnvQuery env, MeshQuery meshQuery, SkinnedMeshQuery skinnedMeshQuery, BoneMeshQuery boneQuery, ecs::World world)
 		{
-			auto [data, shadowData, cameraView,renderData,ssao,lpvData] = entity;
+			auto [data, shadowData, cameraView,renderData,ssao] = entity;
 			data.commandQueue.clear();
 			auto descriptorSet = data.descriptorColorSet[0];
 
@@ -140,6 +148,15 @@ namespace maple
 			data.descriptorColorSet[2]->setUniform("UBO", "view", &cameraView.view);
 			data.descriptorColorSet[2]->setUniform("UBO", "nearPlane", &cameraView.nearPlane);
 			data.descriptorColorSet[2]->setUniform("UBO", "farPlane", &cameraView.farPlane);
+
+			data.descriptorAnimSet[0]->setUniform("UniformBufferObject", "projView", &cameraView.projView);
+			data.descriptorAnimSet[0]->setUniform("UniformBufferObject", "view", &cameraView.view);
+			data.descriptorAnimSet[0]->setUniform("UniformBufferObject", "projViewOld", &cameraView.projViewOld);
+
+			data.descriptorAnimSet[2]->setUniform("UBO", "view", &cameraView.view);
+			data.descriptorAnimSet[2]->setUniform("UBO", "nearPlane", &cameraView.nearPlane);
+			data.descriptorAnimSet[2]->setUniform("UBO", "farPlane", &cameraView.farPlane);
+
 
 			component::Light *directionaLight = nullptr;
 
@@ -184,7 +201,12 @@ namespace maple
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "lightCount", &numLights);
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "shadowCount", &numShadows);
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "mode", &renderMode);
-			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "indirectLightAttenuation", &lpvData.indirectLightAttenuation);
+
+			if (entity.hasComponent<component::LPVGrid>()) 
+			{
+				auto & lpvData = entity.getComponent< component::LPVGrid>();
+				data.descriptorLightSet[0]->setUniform("UniformBufferLight", "indirectLightAttenuation", &lpvData.indirectLightAttenuation);
+			}
 
 			if (directionaLight != nullptr) 
 			{
@@ -222,8 +244,9 @@ namespace maple
 			pipelineInfo.clearTargets = false;
 			pipelineInfo.swapChainTarget = false;
 
+			std::unordered_map<entt::entity, std::shared_ptr<glm::mat4[]>> boneTransform;
 
-			auto forEachMesh = [&](const glm::mat4 & worldTransform, std::shared_ptr<Mesh> mesh, bool hasStencil, component::SkinnedMeshRenderer * skinnedMesh)
+			auto forEachMesh = [&](const glm::mat4 & worldTransform, std::shared_ptr<Mesh> mesh, bool hasStencil, component::SkinnedMeshRenderer * skinnedMesh, maple::Entity parent)
 			{
 				//culling
 				auto bb = mesh->getBoundingBox()->transform(worldTransform);
@@ -235,11 +258,49 @@ namespace maple
 					auto& cmd = data.commandQueue.emplace_back();
 					cmd.mesh = mesh.get();
 					cmd.transform = worldTransform;
-					cmd.boneTransform = skinnedMesh->buildTransform();
+
+					if (skinnedMesh) 
+					{
+						if (boneTransform[parent.getHandle()] != nullptr)//same parent 
+						{
+							cmd.boneTransforms = boneTransform[parent.getHandle()];
+						}
+						else
+						{
+							auto ptr = std::shared_ptr <glm::mat4[]>(new glm::mat4[100]);
+
+							for (auto boneEntity : boneQuery)
+							{
+								auto ent = boneQuery.convert(boneEntity);
+								auto [bone, trans] = ent;
+								auto mapleEntity = ent.castTo<maple::Entity>();
+								if (mapleEntity.isParent(parent)) 
+								{
+									ptr[bone.boneIndex] = trans.getWorldMatrix() * trans.getOffsetMatrix();
+								}
+							}
+
+							/*for (auto child : parent.getChildren())
+							{
+								if (child.hasComponent<component::BoneComponent>())
+								{
+									auto& bone = child.getComponent<component::BoneComponent>();
+									auto& transform = child.getComponent<component::Transform>();
+									ptr[bone.boneIndex] = transform.getWorldMatrix() * transform.getOffsetMatrix();
+								}
+							}*/
+							cmd.boneTransforms = ptr;
+							boneTransform[parent.getHandle()] = ptr;
+						}
+					}
 
 					if (mesh->getSubMeshCount() <= 1)
 					{
 						cmd.material = !mesh->getMaterial().empty() ? mesh->getMaterial()[0].get() : data.defaultMaterial.get();
+						if (skinnedMesh)
+						{
+							cmd.material->setShader(data.deferredColorAnimShader);
+						}
 						cmd.material->bind();
 					}
 					else
@@ -299,6 +360,7 @@ namespace maple
 						pipelineInfo.stencilDepthPass = StencilType::Replace;
 						pipelineInfo.depthTest = true;
 					}
+
 					cmd.pipelineInfo = pipelineInfo;
 				}
 			};
@@ -308,16 +370,18 @@ namespace maple
 				auto [mesh, trans] = meshQuery.convert(entityHandle);
 				{
 					const auto& worldTransform = trans.getWorldMatrix();
-					forEachMesh(worldTransform, mesh.getMesh(), meshQuery.hasComponent<component::StencilComponent>(entityHandle), nullptr);
+					forEachMesh(worldTransform, mesh.getMesh(), meshQuery.hasComponent<component::StencilComponent>(entityHandle), nullptr, {});
 				}
 			}
 
 			for (auto entityHandle : skinnedMeshQuery)
 			{
-				auto [mesh, trans] = skinnedMeshQuery.convert(entityHandle);
+				auto entity = skinnedMeshQuery.convert(entityHandle);
+				auto [mesh, trans] = entity;
+				auto mapleEntity = entity.castTo<maple::Entity>();
 				{
 					const auto& worldTransform = trans.getWorldMatrix();
-					forEachMesh(worldTransform, mesh.getMesh(), skinnedMeshQuery.hasComponent<component::StencilComponent>(entityHandle), &mesh);
+					forEachMesh(worldTransform, mesh.getMesh(), skinnedMeshQuery.hasComponent<component::StencilComponent>(entityHandle), &mesh, mapleEntity.getParent());
 				}
 			}
 		}
@@ -337,6 +401,10 @@ namespace maple
 
 			data.descriptorColorSet[0]->update();
 			data.descriptorColorSet[2]->update();
+
+			data.descriptorAnimSet[0]->update();
+			data.descriptorAnimSet[2]->update();
+
 			data.stencilDescriptorSet->update();
 
 			std::shared_ptr<Pipeline> pipeline;
@@ -350,15 +418,15 @@ namespace maple
 				else
 					pipeline->bind(renderData.commandBuffer);
 
-				auto shader = command.boneTransform != nullptr ?
+				auto shader = command.boneTransforms != nullptr ?
 					data.deferredColorAnimShader : data.deferredColorShader;
 
 				auto& pushConstants = shader->getPushConstants()[0];
 
-				if (command.boneTransform != nullptr)
+				if (command.boneTransforms != nullptr)
 				{
-					data.descriptorAnim->setUniform("UniformBufferObjectAnim", "boneTransforms", command.boneTransform);
-					data.descriptorAnim->update();
+					data.descriptorAnimSet[0]->setUniform("UniformBufferObject", "boneTransforms", command.boneTransforms.get());
+					data.descriptorAnimSet[0]->update();
 				}
 
 				pushConstants.setValue("transform", &command.transform);
@@ -377,17 +445,21 @@ namespace maple
 					{
 						auto& material = materials[i];
 						auto end = i == indices.size() ? command.mesh->getIndexBuffer()->getCount() : indices[i];
-						data.descriptorColorSet[1] = material->getDescriptorSet();
 						material->bind();
-						if (command.boneTransform != nullptr)
+
+						if (command.boneTransforms != nullptr)
 						{
-							Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, { data.descriptorAnim, data.descriptorColorSet[1] });
+							data.descriptorAnimSet[1] = material->getDescriptorSet();
+							material->bind();
+							Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, data.descriptorAnimSet);
 						}
 						else 
 						{
+							data.descriptorColorSet[1] = material->getDescriptorSet();
+							material->bind();
 							Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, data.descriptorColorSet);
-
 						}
+
 						Renderer::drawIndexed(renderData.commandBuffer, DrawType::Triangle, end - start, start);
 
 						start = end;
@@ -398,21 +470,21 @@ namespace maple
 				}
 				else
 				{
-					data.descriptorColorSet[1] = command.material->getDescriptorSet();
 
-					if (command.boneTransform != nullptr)
+					if (command.boneTransforms != nullptr)
 					{
-						Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, { data.descriptorAnim, data.descriptorColorSet[1] });
+						data.descriptorAnimSet[1] = command.material->getDescriptorSet();
+						Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, data.descriptorAnimSet);
 					}
 					else
 					{
+						data.descriptorColorSet[1] = command.material->getDescriptorSet();
 						Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, data.descriptorColorSet);
-
 					}
+
 					Renderer::drawMesh(renderData.commandBuffer, pipeline.get(), command.mesh);
 				}
-
-				if (command.stencilPipelineInfo.stencilTest)
+				/*if (command.stencilPipelineInfo.stencilTest)
 				{
 					auto stencilPipeline = Pipeline::get(command.stencilPipelineInfo);
 
@@ -432,7 +504,7 @@ namespace maple
 						renderData.commandBuffer->unbindPipeline();
 					else
 						stencilPipeline->end(renderData.commandBuffer);
-				}
+				}*/
 			}
 
 			if (renderData.commandBuffer)

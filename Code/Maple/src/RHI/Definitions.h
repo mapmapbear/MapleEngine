@@ -320,9 +320,10 @@ namespace maple
 
 	struct RenderCommand
 	{
-		Mesh *    mesh     = nullptr;
-		Material *material = nullptr;
-		const std::vector<glm::mat4>* boneTransform = nullptr;
+		Mesh*    mesh      = nullptr;
+		Material* material = nullptr;
+
+		std::shared_ptr<glm::mat4[]> boneTransforms;
 
 		PipelineInfo pipelineInfo;
 		PipelineInfo stencilPipelineInfo;

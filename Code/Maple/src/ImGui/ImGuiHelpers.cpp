@@ -249,24 +249,17 @@ namespace maple
 			return updated;
 		}
 
-		auto showProperty(const std::string& name, float value) -> bool
+		auto showProperty(const std::string& name, const std::string& value) -> void
 		{
-			 bool updated = false;
-
-			 ImGui::TextUnformatted(name.c_str());
-			 ImGui::NextColumn();
-			 ImGui::PushItemWidth(-1);
-
-			 std::string id = "##" + name;
-			 if (ImGui::InputFloat(id.c_str(), &value, 0, 0,"%.3f", ImGuiInputTextFlags_ReadOnly))
-			 {
-				
-			 }
-			 ImGui::PopItemWidth();
-			 ImGui::NextColumn();
-			 return updated;
+			ImGui::TextUnformatted(name.c_str());
+			ImGui::NextColumn();
+			ImGui::PushItemWidth(-1);
+			ImGui::TextUnformatted(value.c_str());
+			ImGui::PopItemWidth();
+			ImGui::NextColumn();
 		}
 
+	
 		auto propertyWithDefault(const std::string& name, float& value, float min /*= -1.0f*/, float max /*= 1.0f*/, float defaultValue /*= 0.f*/, PropertyFlag flags /*= PropertyFlag::None*/, float speed) -> bool
 		{
 			auto ret = property(name, value, min, max, flags, "%.3f", speed);
