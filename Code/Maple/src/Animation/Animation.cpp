@@ -237,6 +237,7 @@ namespace maple
 			states.clear();
 		}
 	}
+
 	auto Animation::updateTime(float dt) -> void
 	{
 		if (seekTo >= 0)

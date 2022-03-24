@@ -325,20 +325,6 @@ namespace maple
 			}
 		}
 
-		inline auto print(Skeleton * skeleton,const Bone& bone,int32_t level) -> void
-		{
-			std::string str;
-			for (auto i = 0;i<level;i++)
-			{
-				str += "--";
-			}
-			LOGW("{0} ,{1}",str,bone.name);
-			for (auto child : bone.children)
-			{
-				print(skeleton, skeleton->getBones()[child], level + 1);
-			}
-		}
-
 		inline auto getCurveData(AnimationCurveProperty& curve, const ofbx::AnimationCurve* node)
 		{
 			if (node != nullptr)
@@ -350,7 +336,6 @@ namespace maple
 				}
 			}
 		}
-
 
 		inline auto loadClip(const ofbx::IScene* scene, int32_t index, float frameRate, const std::vector<const ofbx::Object*>& sceneBones)  -> std::shared_ptr<AnimationClip>
 		{
@@ -413,7 +398,7 @@ namespace maple
 			return clip;
 		}
 
-		inline auto loadAnimation(const std::string& fileName, const ofbx::IScene* scene, const std::vector<const ofbx::Object*> & sceneBones, std::vector<std::shared_ptr<IResource>>& outRes)
+		inline auto loadAnimation(const std::string& fileName, const ofbx::IScene* scene, const std::vector<const ofbx::Object*> & sceneBones, std::vector<std::shared_ptr<IResource>>& outRes, Orientation orientation)
 		{
 			float frameRate = scene->getSceneFrameRate();
 			if (frameRate <= 0)
@@ -433,6 +418,194 @@ namespace maple
 			if (animCount > 0) 
 			{
 				outRes.emplace_back(animation);
+			}
+		}
+
+		inline auto loadSkeleton(const std::string& fileName, const ofbx::IScene* scene, std::vector<const ofbx::Object*>& sceneBone, std::vector<std::shared_ptr<IResource>>& outRes, Orientation orientation)
+		{
+			int32_t i = 0;
+			auto skeleton = std::make_shared<Skeleton>(fileName);
+			while (const ofbx::Object* bone = scene->getRoot()->resolveObjectLink(i++))
+			{
+				if (bone->getType() == ofbx::Object::Type::LIMB_NODE)
+				{
+					auto boneIndex = skeleton->getBoneIndex(bone->name);//create a bone if missing
+					if (boneIndex == -1)
+					{
+						auto& newBone = skeleton->createBone();
+						newBone.name = bone->name;
+						newBone.localTransform = toMatrix(bone->getLocalTransform());
+						boneIndex = newBone.id;
+						sceneBone.emplace_back(bone);
+					}
+					loadBones(bone, skeleton.get(), boneIndex, sceneBone);
+				}
+			}
+
+			if (!skeleton->getBones().empty())
+			{
+				outRes.emplace_back(skeleton);
+			}
+			return skeleton;
+		}
+
+		inline auto loadMesh(const std::string& fileName, const ofbx::IScene* scene, std::vector<const ofbx::Object*> & sceneBone, std::shared_ptr<Skeleton> skeleton, std::vector<std::shared_ptr<IResource>>& outRes, Orientation orientation)
+		{
+			if (scene->getMeshCount() > 0)
+			{
+				auto meshes = std::make_shared<MeshResource>(fileName);
+				outRes.emplace_back(meshes);
+
+				for (int32_t i = 0; i < scene->getMeshCount(); ++i)
+				{
+					const auto fbxMesh = (const ofbx::Mesh*)scene->getMesh(i);
+					const auto geom = fbxMesh->getGeometry();
+					const auto numIndices = geom->getIndexCount();
+					const auto vertexCount = geom->getVertexCount();
+					const auto vertices = geom->getVertices();
+					const auto normals = geom->getNormals();
+					const auto tangents = geom->getTangents();
+					const auto colors = geom->getColors();
+					const auto uvs = geom->getUVs();
+					const auto materials = geom->getMaterials();
+
+					for (auto i = 0; i < sceneBone.size(); i++)
+					{
+						auto& ske = skeleton->getBone(i);
+						ske.offsetMatrix = glm::inverse(getOffsetMatrix(fbxMesh, sceneBone[i]));
+					}
+
+					std::vector<std::shared_ptr<Material>> pbrMaterials;
+
+					std::vector<Vertex> tempVertices;
+					std::vector<SkinnedVertex> skinnedVertices;
+
+					if (skeleton->hasBones())
+					{
+						skinnedVertices.resize(vertexCount);
+					}
+					else
+					{
+						tempVertices.resize(vertexCount);
+					}
+
+					std::vector<uint32_t> indicesArray;
+
+					indicesArray.resize(numIndices);
+
+					auto boundingBox = std::make_shared<BoundingBox>();
+
+					const auto indices = geom->getFaceIndices();
+
+					ofbx::Vec3* generatedTangents = nullptr;
+					if (!tangents && normals && uvs)
+					{
+						generatedTangents = new ofbx::Vec3[vertexCount];
+						computeTangents(generatedTangents, vertexCount, vertices, normals, uvs);
+					}
+
+					auto transform = getTransform(fbxMesh, orientation);
+					bool skin = skeleton->hasBones();
+
+					for (int32_t i = 0; i < vertexCount; ++i)
+					{
+						const ofbx::Vec3& cp = vertices[i];
+
+#define GEN_VERTEX(Vertices) { \
+					auto& vertex = Vertices[i]; \
+					vertex.pos = transform.getWorldMatrix() * glm::vec4(float(cp.x), float(cp.y), float(cp.z), 1.0); \
+					fixOrientation(vertex.pos, orientation); \
+					boundingBox->merge(vertex.pos); \
+					if (normals) \
+					{ \
+						glm::mat3 matrix(transform.getWorldMatrix()); \
+						vertex.normal = glm::transpose(glm::inverse(matrix)) * glm::normalize(glm::vec3{ float(normals[i].x), float(normals[i].y), float(normals[i].z) }); \
+					}\
+					if (uvs)\
+						vertex.texCoord = { float(uvs[i].x), 1.0f - float(uvs[i].y) };\
+					if (colors)\
+						vertex.color = { float(colors[i].x), float(colors[i].y), float(colors[i].z), float(colors[i].w) };\
+					else\
+						vertex.color = { 1,1,1,1 };\
+					if (tangents)\
+						vertex.tangent = transform.getWorldMatrix() * glm::vec4(float(tangents[i].x), float(tangents[i].y), float(tangents[i].z), 1.0);\
+					fixOrientation(vertex.normal, orientation);\
+					fixOrientation(vertex.tangent, orientation);\
+				}
+
+						if (skin)
+						{
+							GEN_VERTEX(skinnedVertices);
+						}
+						else
+						{
+							GEN_VERTEX(tempVertices);
+						}
+					}
+
+					for (int32_t i = 0; i < numIndices; i++)
+					{
+						int32_t index = (i % 3 == 2) ? (-indices[i] - 1) : indices[i];
+						indicesArray[i] = index;
+					}
+
+					if (geom->getSkin() != nullptr && skeleton->hasBones())
+					{
+						loadWeight(geom->getSkin(), skeleton.get(), skinnedVertices);
+					}
+
+					std::shared_ptr<Mesh> mesh;
+					if (skin)
+					{
+						mesh = std::make_shared<Mesh>(indicesArray, skinnedVertices);
+					}
+					else
+					{
+						mesh = std::make_shared<Mesh>(indicesArray, tempVertices);
+					}
+
+					for (auto i = 0; i < fbxMesh->getMaterialCount(); i++)
+					{
+						const ofbx::Material* material = fbxMesh->getMaterial(i);
+						pbrMaterials.emplace_back(loadMaterial(material, false));
+					}
+
+					mesh->setMaterial(pbrMaterials);
+
+					const auto trianglesCount = vertexCount / 3;
+
+					std::vector<uint32_t> subMeshIdx;
+
+					if (fbxMesh->getMaterialCount() > 1)
+					{
+						int32_t rangeStart = 0;
+						int32_t rangeStartVal = materials[rangeStart];
+						for (int32_t triangleIndex = 1; triangleIndex < trianglesCount; triangleIndex++)
+						{
+							if (rangeStartVal != materials[triangleIndex])
+							{
+								rangeStartVal = materials[triangleIndex];
+								subMeshIdx.emplace_back(materials[triangleIndex] * 3);
+							}
+						}
+
+						mesh->setSubMeshIndex(subMeshIdx);
+						mesh->setSubMeshCount(subMeshIdx.size());
+
+						MAPLE_ASSERT(subMeshIdx.size() == pbrMaterials.size(), "size is not same");
+					}
+
+
+					std::string name = fbxMesh->name;
+
+					MAPLE_ASSERT(name != "", "name should not be null");
+
+					mesh->setName(name);
+					meshes->addMesh(name, mesh);
+
+					if (generatedTangents)
+						delete[] generatedTangents;
+				}
 			}
 		}
 	}
@@ -462,186 +635,10 @@ namespace maple
 			orientation = Orientation::Z_UP;
 			break;
 		}
-
-		int32_t i = 0;
 		std::vector<const ofbx::Object*> sceneBone;
-		auto skeleton = std::make_shared<Skeleton>(fileName);
-		while (const ofbx::Object* bone = scene->getRoot()->resolveObjectLink(i++))
-		{
-			if (bone->getType() == ofbx::Object::Type::LIMB_NODE)
-			{
-				auto boneIndex = skeleton->getBoneIndex(bone->name);//create a bone if missing
-				if (boneIndex == -1)
-				{
-					auto& newBone = skeleton->createBone();
-					newBone.name = bone->name;
-					newBone.localTransform = toMatrix(bone->getLocalTransform());
-					boneIndex = newBone.id;
-					sceneBone.emplace_back(bone);
-				}
-				loadBones(bone, skeleton.get(), boneIndex, sceneBone);
-			}
-		}
 
-		loadAnimation(fileName,scene, sceneBone, outRes);
-
-		if (!skeleton->getBones().empty())
-		{
-			outRes.emplace_back(skeleton);
-		}
-
-		auto meshes = std::make_shared<MeshResource>(fileName);
-		outRes.emplace_back(meshes);
-
-		for (int32_t i = 0; i < scene->getMeshCount(); ++i)
-		{
-			const auto fbxMesh = (const ofbx::Mesh*)scene->getMesh(i);
-			const auto geom = fbxMesh->getGeometry();
-			const auto numIndices = geom->getIndexCount();
-			const auto vertexCount = geom->getVertexCount();
-			const auto vertices = geom->getVertices();
-			const auto normals = geom->getNormals();
-			const auto tangents = geom->getTangents();
-			const auto colors = geom->getColors();
-			const auto uvs = geom->getUVs();
-			const auto materials = geom->getMaterials();
-
-			for (auto i = 0;i<sceneBone.size();i++)
-			{
-				auto& ske = skeleton->getBone(i);
-				ske.offsetMatrix = glm::inverse(getOffsetMatrix(fbxMesh, sceneBone[i]));
-			}
-
-			std::vector<std::shared_ptr<Material>> pbrMaterials;
-	
-			std::vector<Vertex> tempVertices;
-			std::vector<SkinnedVertex> skinnedVertices;
-
-			if ( skeleton->hasBones() )
-			{
-				skinnedVertices.resize(vertexCount);
-			}
-			else 
-			{
-				tempVertices.resize(vertexCount);
-			}
-
-			std::vector<uint32_t> indicesArray;
-
-			indicesArray.resize(numIndices);
-
-			auto boundingBox = std::make_shared<BoundingBox>();
-
-			const auto indices = geom->getFaceIndices();
-
-			ofbx::Vec3* generatedTangents = nullptr;
-			if (!tangents && normals && uvs)
-			{
-				generatedTangents = new ofbx::Vec3[vertexCount];
-				computeTangents(generatedTangents, vertexCount, vertices, normals, uvs);
-			}
-
-			auto transform = getTransform(fbxMesh,orientation);
-			bool skin = skeleton->hasBones();
-
-			for (int32_t i = 0; i < vertexCount; ++i)
-			{
-				const ofbx::Vec3& cp = vertices[i];
-
-#define GEN_VERTEX(Vertices) { \
-					auto& vertex = Vertices[i]; \
-					vertex.pos = transform.getWorldMatrix() * glm::vec4(float(cp.x), float(cp.y), float(cp.z), 1.0); \
-					fixOrientation(vertex.pos, orientation); \
-					boundingBox->merge(vertex.pos); \
-					if (normals) \
-					{ \
-						glm::mat3 matrix(transform.getWorldMatrix()); \
-						vertex.normal = glm::transpose(glm::inverse(matrix)) * glm::normalize(glm::vec3{ float(normals[i].x), float(normals[i].y), float(normals[i].z) }); \
-					}\
-					if (uvs)\
-						vertex.texCoord = { float(uvs[i].x), 1.0f - float(uvs[i].y) };\
-					if (colors)\
-						vertex.color = { float(colors[i].x), float(colors[i].y), float(colors[i].z), float(colors[i].w) };\
-					else\
-						vertex.color = { 1,1,1,1 };\
-					if (tangents)\
-						vertex.tangent = transform.getWorldMatrix() * glm::vec4(float(tangents[i].x), float(tangents[i].y), float(tangents[i].z), 1.0);\
-					fixOrientation(vertex.normal, orientation);\
-					fixOrientation(vertex.tangent, orientation);\
-				}
-
-				if (skin) 
-				{
-					GEN_VERTEX(skinnedVertices);
-				}
-				else
-				{
-					GEN_VERTEX(tempVertices);
-				}
-			}
-
-			for (int32_t i = 0; i < numIndices; i++)
-			{
-				int32_t index = (i % 3 == 2) ? (-indices[i] - 1) : indices[i];
-				indicesArray[i] = index;
-			}
-			
-			if (geom->getSkin() != nullptr && skeleton->hasBones())
-			{
-				loadWeight(geom->getSkin(), skeleton.get(), skinnedVertices);
-			}
-
-			std::shared_ptr<Mesh> mesh;
-			if (skin) 
-			{
-				mesh = std::make_shared<Mesh>(indicesArray, skinnedVertices);
-			}
-			else
-			{
-				mesh = std::make_shared<Mesh>(indicesArray, tempVertices);
-			}
-
-			for (auto i = 0;i< fbxMesh->getMaterialCount();i++)
-			{
-				const ofbx::Material* material = fbxMesh->getMaterial(i);
-				pbrMaterials.emplace_back(loadMaterial(material, false));
-			}
-
-			mesh->setMaterial(pbrMaterials);
-		
-			const auto trianglesCount = vertexCount / 3;
-
-			std::vector<uint32_t> subMeshIdx;
-
-			if (fbxMesh->getMaterialCount() > 1) 
-			{
-				int32_t rangeStart = 0;
-				int32_t rangeStartVal = materials[rangeStart];
-				for (int32_t triangleIndex = 1; triangleIndex < trianglesCount; triangleIndex++)
-				{
-					if (rangeStartVal != materials[triangleIndex])
-					{
-						rangeStartVal = materials[triangleIndex];
-						subMeshIdx.emplace_back(materials[triangleIndex] * 3);
-					}
-				}
-
-				mesh->setSubMeshIndex(subMeshIdx);
-				mesh->setSubMeshCount(subMeshIdx.size());
-
-				MAPLE_ASSERT(subMeshIdx.size() == pbrMaterials.size(), "size is not same");
-			}
-			
-
-			std::string name = fbxMesh->name;
-
-			MAPLE_ASSERT(name != "", "name should not be null");
-
-			mesh->setName(name);
-			meshes->addMesh(name, mesh);
-
-			if (generatedTangents)
-				delete[] generatedTangents;
-		}
+		auto skeleton = loadSkeleton(fileName, scene, sceneBone, outRes, orientation);
+		loadAnimation(fileName, scene, sceneBone, outRes, orientation);
+		loadMesh(fileName, scene, sceneBone, skeleton, outRes, orientation);
 	}
 };            // namespace maple

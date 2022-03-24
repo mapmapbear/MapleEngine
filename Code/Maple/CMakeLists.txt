@@ -84,6 +84,7 @@ file(GLOB VK_APP_SRC
 	src/RHI/Vulkan/*.h
 	src/RHI/Vulkan/*.cpp
 	src/RHI/OpenGL/*.h
+	src/RHI/OpenGL/*.inl
 	src/RHI/OpenGL/*.cpp
 	src/RHI/ImGui/*.h
 	src/RHI/ImGui/*.cpp
@@ -103,6 +104,7 @@ file(GLOB VK_APP_SRC
 	src/Terrain/*.h
 	src/Scene/*.cpp
 	src/Scene/*.h
+	src/Scene/*.inl
 	src/Scripts/*.cpp
 	src/Scripts/*.h
 	src/Scripts/Mono/*.cpp

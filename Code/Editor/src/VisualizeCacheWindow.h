@@ -10,11 +10,11 @@
 
 namespace maple
 {
-	class RenderCapture : public EditorWindow
+	class VisualizeCacheWindow : public EditorWindow
 	{
 	  public:
-		static constexpr char *STATIC_NAME = ICON_MDI_MESSAGE_SETTINGS "Render Capture";
-		RenderCapture();
+		static constexpr char *STATIC_NAME = ICON_MDI_MESSAGE_SETTINGS "Visualize Cache";
+		VisualizeCacheWindow();
 		virtual auto onImGui() -> void;
 	  private:
 	};

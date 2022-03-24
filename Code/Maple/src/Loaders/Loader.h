@@ -29,10 +29,10 @@ namespace maple
 	private:
 	};
 
-	class MAPLE_EXPORT ModelLoaderFactory
+	class MAPLE_EXPORT AssetsLoaderFactory
 	{
 	public:
-		ModelLoaderFactory();
+		AssetsLoaderFactory();
 
 		template <typename T>
 		typename std::enable_if<std::is_base_of<AssetsLoader, T>::value, void>::type addModelLoader()
@@ -54,6 +54,8 @@ namespace maple
 		template <typename T, typename ...Args>
 		auto emplace(const std::string& obj, Args&&...args)->std::shared_ptr<T>;
 
+		inline auto &getCache() const { return cache; }
+
 	private:
 		std::unordered_map<std::string, std::shared_ptr<AssetsLoader>> loaders;
 		std::unordered_set<std::string> supportExtensions;
@@ -61,7 +63,7 @@ namespace maple
 	};
 
 	template <typename T, typename ...Args>
-	auto ModelLoaderFactory::emplace(const std::string& obj, Args&&...args)->std::shared_ptr<T>
+	auto AssetsLoaderFactory::emplace(const std::string& obj, Args&&...args)->std::shared_ptr<T>
 	{
 		auto iter = cache.find(obj);
 		if (iter == cache.end())

@@ -27,6 +27,9 @@
 
 #include "RHI/Texture.h"
 
+
+#include "Scene/SystemBuilder.inl"
+
 #include <imgui.h>
 
 //maple::Application* app;
@@ -47,7 +50,7 @@ namespace maple
 		monoVm        = std::make_shared<MonoVirtualMachine>();
 		renderGraph   = std::make_shared<RenderGraph>();
 		systemManager = std::make_unique<SystemManager>();
-		loaderFactory = std::make_shared<ModelLoaderFactory>();
+		loaderFactory = std::make_shared<AssetsLoaderFactory>();
 	}
 
 	auto Application::init() -> void
@@ -57,7 +60,6 @@ namespace maple
 
 		Input::create();
 		window->init();
-
 		graphicsContext->init();
 		renderDevice->init();
 
@@ -73,6 +75,8 @@ namespace maple
 		imGuiManager->onInit();
 
 		appDelegate->onInit();
+
+		registerSystem(executePoint);
 	}
 
 	auto Application::start() -> int32_t

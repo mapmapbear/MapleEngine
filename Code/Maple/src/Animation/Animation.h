@@ -130,9 +130,9 @@ namespace maple
 		auto pause() -> void;
 		auto onUpdate(float dt) -> void;
 
-
 		inline auto getResourceType() const->FileType override { return FileType::Animation; };
 		inline auto getPath() const->std::string { return filePath; }
+		inline auto copy()->Animation {	return *this; }
 
 	private:
 		auto updateTime(float dt) -> void;

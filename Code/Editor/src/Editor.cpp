@@ -16,7 +16,7 @@
 #include "HierarchyWindow.h"
 #include "PreviewWindow.h"
 #include "PropertiesWindow.h"
-#include "RenderCapture.h"
+#include "VisualizeCacheWindow.h"
 #include "RenderGraphWindow.h"
 #include "SceneWindow.h"
 
@@ -73,7 +73,7 @@ namespace maple
 		addWindow(HierarchyWindow);
 		addWindow(PropertiesWindow);
 		addWindow(AssetsWindow);
-		addWindow(RenderCapture);
+		addWindow(VisualizeCacheWindow);
 		addWindow(PreviewWindow);
 		addWindow(RenderGraphWindow);
 
@@ -505,7 +505,7 @@ namespace maple
 			ImGui::DockBuilderDockWindow("Display", DockMiddle);
 
 			ImGui::DockBuilderDockWindow(PropertiesWindow::STATIC_NAME, DockRight);
-			ImGui::DockBuilderDockWindow(RenderCapture::STATIC_NAME, DockRight);
+			ImGui::DockBuilderDockWindow(VisualizeCacheWindow::STATIC_NAME, DockRight);
 			ImGui::DockBuilderDockWindow("Console", DockingBottomLeftChild);
 			ImGui::DockBuilderDockWindow(AssetsWindow::STATIC_NAME, DockingBottomRightChild);
 			ImGui::DockBuilderDockWindow(HierarchyWindow::STATIC_NAME, DockLeft);

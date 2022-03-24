@@ -37,6 +37,43 @@ namespace maple
 		Length
 	};
 
+
+	inline auto fileTypeToStr(FileType type) -> const char*
+	{
+		switch (type)
+		{
+#define STR(r)   \
+	case FileType::r: \
+		return #r
+			STR(Normal);
+			STR(Folder);
+			STR(Texture);
+			STR(Model);
+			STR(FBX);
+			STR(OBJ);
+			STR(Text);
+			STR(Script);
+			STR(Dll);
+			STR(Scene);
+			STR(MP3);
+			STR(OGG);
+			STR(AAC);
+			STR(WAV);
+			STR(TTF);
+			STR(C_SHARP);
+			STR(Shader);
+			STR(Material);
+			STR(Animation);
+			STR(Skeleton);
+			STR(Lighting);
+			STR(Camera);
+			STR(Length);
+#undef STR
+		default:
+			return "UNKNOWN_ERROR";
+		}
+	}
+
 	const std::array<std::string, static_cast<int32_t>(FileType::Length)> EditorInBuildIcon =
 	{
 		"editor-icons/icons8-file-100.png",
@@ -95,6 +132,5 @@ namespace maple
 	  public:
 		virtual auto getResourceType() const -> FileType = 0;
 		virtual auto getPath() const -> std::string      = 0;
-
 	};
 };        // namespace maple

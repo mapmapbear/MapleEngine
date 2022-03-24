@@ -28,7 +28,7 @@ namespace maple
 {
 	class MonoVirtualMachine;
 	class ExecutePoint;
-	class ModelLoaderFactory;
+	class AssetsLoaderFactory;
 
 	enum class EditorState
 	{
@@ -162,7 +162,7 @@ namespace maple
 			return get()->executePoint;
 		}
 
-		inline static auto getModelLoaderFactory()
+		inline static auto getAssetsLoaderFactory()
 		{
 			return get()->loaderFactory;
 		}
@@ -184,7 +184,7 @@ namespace maple
 		std::shared_ptr<GraphicsContext>    graphicsContext;
 		std::shared_ptr<RenderGraph>        renderGraph;
 		std::shared_ptr<ExecutePoint>       executePoint;
-		std::shared_ptr<ModelLoaderFactory> loaderFactory;
+		std::shared_ptr<AssetsLoaderFactory> loaderFactory;
 
 
 		EventDispatcher                                                  dispatcher;

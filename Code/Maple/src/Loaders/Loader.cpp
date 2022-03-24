@@ -12,14 +12,14 @@
 
 namespace maple
 {
-	ModelLoaderFactory::ModelLoaderFactory()
+	AssetsLoaderFactory::AssetsLoaderFactory()
 	{
 		addModelLoader<GLTFLoader>();
 		addModelLoader<OBJLoader>();
 		addModelLoader<FBXLoader>();
 	}
 
-	auto ModelLoaderFactory::load(const std::string& obj, std::vector<std::shared_ptr<IResource>>& out) -> void
+	auto AssetsLoaderFactory::load(const std::string& obj, std::vector<std::shared_ptr<IResource>>& out) -> void
 	{
 		auto extension = StringUtils::getExtension(obj);
 		auto loader = loaders.find(extension);
@@ -36,13 +36,13 @@ namespace maple
 			else 
 			{
 				loader->second ->load(obj, extension, out);
-				cache[extension] = { out.begin(),out.end() };
+				cache[obj] = { out.begin(),out.end() };
 			}
 		}
 	}
 
 	auto Loader::load(const std::string& obj, std::vector<std::shared_ptr<IResource>>& out) -> void
 	{
-		Application::getModelLoaderFactory()->load(obj, out);
+		Application::getAssetsLoaderFactory()->load(obj, out);
 	}
 };            // namespace maple
