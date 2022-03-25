@@ -128,7 +128,7 @@ namespace maple
 					if (gltfTexture.sampler != -1)
 						params = TextureParameters(getFilter(imageAndSampler.sampler->minFilter), getFilter(imageAndSampler.sampler->magFilter), getWrapMode(imageAndSampler.sampler->wrapS), getWrapMode(imageAndSampler.sampler->wrapT));
 
-					auto texture2D = Texture2D::create(imageAndSampler.image->width, imageAndSampler.image->height, imageAndSampler.image->image.data(), params);
+					auto texture2D = Texture2D::create(imageAndSampler.image->width, imageAndSampler.image->height, imageAndSampler.image->image.data(), params, {false,true,true});
 					loadedTextures[gltfTexture.source] = texture2D;
 				}
 			}

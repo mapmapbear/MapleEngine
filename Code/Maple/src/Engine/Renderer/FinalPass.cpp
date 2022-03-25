@@ -37,10 +37,10 @@ namespace maple
 		{
 			auto [finalData, renderData,graph] = entity;
 			float gamma = 2.2;
-			int32_t toneMapIndex = 1;
 
 			finalData.finalDescriptorSet->setUniform("UniformBuffer", "gamma", &gamma);
-			finalData.finalDescriptorSet->setUniform("UniformBuffer", "toneMapIndex", &toneMapIndex);
+			finalData.finalDescriptorSet->setUniform("UniformBuffer", "toneMapIndex", &finalData.toneMapIndex);
+			finalData.finalDescriptorSet->setUniform("UniformBuffer", "exposure", &finalData.exposure);
 			auto ssaoEnable = 0;
 			auto reflectEnable = 0;
 			auto cloudEnable = false;// envData->cloud ? 1 : 0;

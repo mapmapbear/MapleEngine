@@ -147,7 +147,7 @@ namespace maple
 
 						if (ImGui::Button("Play"))
 						{
-							auto animation = std::static_pointer_cast<Animation>(r);
+							//auto animation = std::static_pointer_cast<Animation>(r);
 						}
 
 						ImGui::PopID();

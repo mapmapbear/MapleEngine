@@ -2,8 +2,10 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
+#include "Animation/Animator.h"
 #include "Engine/Vientiane/ReflectiveShadowMap.h"
 #include "Engine/Vientiane/LightPropagationVolume.h"
+#include "Engine/Renderer/FinalPass.h"
 #include "Engine/Renderer/PostProcessRenderer.h"
 #include "Scene/Component/BoundingBox.h"
 
@@ -20,6 +22,7 @@ namespace maple
 
 	inline auto registerInspector(MM::EntityEditor<entt::entity> & enttEditor)
 	{
+
 		TRIVIAL_COMPONENT(Camera, true, "Camera");
 		TRIVIAL_COMPONENT(component::Transform, true, "Transform");
 		TRIVIAL_COMPONENT(component::Light, true, "Light");
@@ -40,5 +43,7 @@ namespace maple
 		TRIVIAL_COMPONENT(component::DeltaTime, false, "Delta Time");
 		TRIVIAL_COMPONENT(component::GridRender, false, "Grid Render");
 		TRIVIAL_COMPONENT(component::BoneComponent, false, "Bone");
+		TRIVIAL_COMPONENT(component::Animator, true, "Animator");
+		TRIVIAL_COMPONENT(component::FinalPass, false, "FinalPass");
 	}
 }

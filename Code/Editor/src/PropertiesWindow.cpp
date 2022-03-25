@@ -76,6 +76,20 @@ namespace MM
 
 	using namespace maple;
 
+
+	template <>
+	inline auto ComponentEditorWidget<component::FinalPass>(entt::registry& reg, entt::registry::entity_type e) -> void
+	{
+		auto& data = reg.get<component::FinalPass>(e);
+
+		ImGui::Columns(2);
+		ImGui::Separator();
+		ImGuiHelper::property("exposure", data.exposure, 1, 10);
+		ImGuiHelper::property("toneMapIndex", data.toneMapIndex, 1, 8);
+		ImGui::Columns(1);
+	}
+
+
 	template <>
 	inline auto ComponentEditorWidget<component::BoneComponent>(entt::registry& reg, entt::registry::entity_type e) -> void
 	{
