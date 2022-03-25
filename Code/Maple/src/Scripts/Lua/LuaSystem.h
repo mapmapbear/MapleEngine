@@ -3,16 +3,12 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #pragma once
-#include "Scene/System/ISystem.h"
+#include "Scene/System/ExecutePoint.h"
 
-namespace maple 
+namespace maple
 {
-	class Scene;
-	class MAPLE_EXPORT LuaSystem final : public ISystem
+	namespace lua
 	{
-	public:
-		auto onInit() -> void override;
-		auto onUpdate(float dt, Scene* scene) -> void override;
-		auto onImGui() -> void override;
-	};
+		auto registerLuaSystem(std::shared_ptr<ExecutePoint> executePoint) -> void;
+	}
 };

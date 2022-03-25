@@ -5,14 +5,18 @@
 
 #include "Renderer.h"
 #include "Scene/System/ExecutePoint.h"
+#include "Engine/Core.h"
+#include <IconsMaterialDesignIcons.h>
 namespace maple
 {
 	class PrefilterRenderer;
 
 	namespace component
 	{
-		struct SkyboxData
+		struct MAPLE_EXPORT SkyboxData
 		{
+			static constexpr char* ICON = ICON_MDI_HEART_CIRCLE;
+
 			struct UniformBufferObject
 			{
 				glm::mat4 invProj;

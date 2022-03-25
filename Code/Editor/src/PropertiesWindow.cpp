@@ -18,6 +18,9 @@
 #include "Scene/Scene.h"
 #include "Scene/SceneManager.h"
 
+#include "Animation/AnimationSystem.h"
+#include "Animation/Animation.h"
+
 #include "Scripts/Mono/MonoComponent.h"
 #include "Scripts/Mono/MonoScript.h"
 #include "Scripts/Mono/MonoSystem.h"
@@ -28,6 +31,8 @@
 
 #include "Engine/Renderer/GridRenderer.h"
 #include "Engine/Renderer/PostProcessRenderer.h"
+#include "Engine/Renderer/SkyboxRenderer.h"
+
 #include "Engine/Camera.h"
 #include "Engine/Material.h"
 #include "Engine/Mesh.h"
@@ -78,6 +83,98 @@ namespace MM
 
 
 	template <>
+	inline auto ComponentEditorWidget<component::SkyboxData>(entt::registry& reg, entt::registry::entity_type e) -> void
+	{
+		auto& skyData = reg.get<component::SkyboxData>(e);
+
+		ImGui::Columns(2);
+		ImGui::Separator();
+		ImGuiHelper::property("CubeMap Level", skyData.cubeMapLevel, 0, 4);
+		ImGui::Columns(1);
+	}
+
+	template <>
+	inline auto ComponentEditorWidget<component::Animator>(entt::registry& reg, entt::registry::entity_type e) -> void
+	{
+		auto& animator = reg.get<component::Animator>(e);
+
+		ImGui::Columns(2);
+		ImGui::Separator();
+		
+		std::string label = animator.animation ? animator.animation->getPath() : "";
+
+		ImGuiHelper::property("File", label, true);
+		ImGuiHelper::acceptFile([&](const std::string & file) {
+			if (StringUtils::isFBXFile(file))
+			{
+				std::vector<std::shared_ptr<IResource>> outRes;
+				Loader::load(file, outRes);
+				for (auto res : outRes)
+				{
+					if (res->getResourceType() == FileType::Animation) 
+					{
+						animator.animation = std::static_pointer_cast<Animation>(res);
+					}
+				}
+			}
+		});
+		ImGui::Separator();
+		ImGuiHelper::property("RootMotion", animator.rootMotion);
+
+		ImGui::Separator();
+		if (animator.animation != nullptr)
+		{
+			if (ImGui::Button(animation::isPlaying(animator)? "Stop" : "Play"))
+			{
+				if (animation::isPlaying(animator))
+				{
+					animation::stop(animator);
+				}
+				else 
+				{
+					animation::play(animator,0,0.3f);
+				}
+			}
+			
+			
+			ImGui::NextColumn();
+
+			bool disableBtn = !animation::isPlaying(animator);
+
+			if (disableBtn)
+			{
+				ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+				ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+			}
+
+			if (ImGui::Button("Pause"))
+			{
+				animation::pause(animator);
+			}
+
+			if (disableBtn)
+			{
+				ImGui::PopItemFlag();
+				ImGui::PopStyleVar();
+			}
+
+			ImGui::NextColumn();
+
+			ImGui::Separator();
+		}
+
+		ImGui::Columns(1);
+		if (auto clip = animation::getPlayingClip(animator); clip >= 0)
+		{
+			float time = animation::getPlayingTime(animator);
+			float timeLength = animator.animation->getClipLength(clip);
+			ImGui::ProgressBar(time / timeLength);
+		}
+		ImGui::Separator();
+
+	}
+
+	template <>
 	inline auto ComponentEditorWidget<component::FinalPass>(entt::registry& reg, entt::registry::entity_type e) -> void
 	{
 		auto& data = reg.get<component::FinalPass>(e);
@@ -88,7 +185,6 @@ namespace MM
 		ImGuiHelper::property("toneMapIndex", data.toneMapIndex, 1, 8);
 		ImGui::Columns(1);
 	}
-
 
 	template <>
 	inline auto ComponentEditorWidget<component::BoneComponent>(entt::registry& reg, entt::registry::entity_type e) -> void
@@ -103,7 +199,6 @@ namespace MM
 		ImGuiHelper::showProperty("Bone Index", std::to_string(data.boneIndex));
 		ImGui::Columns(1);
 	}
-
 
 	template <>
 	inline auto ComponentEditorWidget<component::SSAOData>( entt::registry& reg, entt::registry::entity_type e ) -> void
@@ -136,7 +231,6 @@ namespace MM
 		ImGui::Columns(1);
 	}
 
-
 	template <>
 	inline auto ComponentEditorWidget<component::DeltaTime>(entt::registry& reg, entt::registry::entity_type e) -> void
 	{
@@ -146,7 +240,6 @@ namespace MM
 		ImGuiHelper::showProperty("Delta Time", std::to_string(dt.dt));
 		ImGui::Columns(1);
 	}
-
 
 	template <>
 	inline auto ComponentEditorWidget<component::LPVGrid>(entt::registry& reg, entt::registry::entity_type e) -> void
@@ -164,7 +257,7 @@ namespace MM
 	}
 	
 	template <>
-	auto ComponentEditorWidget<component::Transform>(entt::registry &reg, entt::registry::entity_type e) -> void
+	inline auto ComponentEditorWidget<component::Transform>(entt::registry &reg, entt::registry::entity_type e) -> void
 	{
 		auto &transform = reg.get<component::Transform>(e);
 
@@ -557,7 +650,6 @@ namespace MM
 		}
 	}
 
-
 	template <>
 	inline auto ComponentEditorWidget<component::MeshRenderer>(entt::registry &reg, entt::registry::entity_type e) -> void
 	{
@@ -743,19 +835,13 @@ namespace MM
 			auto label = env.getFilePath();
 
 			auto updated = ImGuiHelper::property("File", label, true);
-			if (ImGui::BeginDragDropTarget())
-			{
-				auto data = ImGui::AcceptDragDropPayload("AssetFile", ImGuiDragDropFlags_None);
-				if (data)
+			ImGuiHelper::acceptFile([&](const std::string & file) {
+				if (StringUtils::isTextureFile(file))
 				{
-					std::string file = (char *) data->Data;
-					if (StringUtils::isTextureFile(file))
-					{
-						env.init(file);
-					}
+					env.init(file);
 				}
-				ImGui::EndDragDropTarget();
-			}
+			});
+
 			if (updated)
 			{
 				ImGui::Columns(1);
@@ -1034,12 +1120,18 @@ namespace maple
 			}
 		};
 		enttEditor.registerComponent<component::MonoComponent>(info);
+		
 		enttEditor.acceptFile = [&](const std::string &fileName, entt::registry &registry, entt::entity &ent) {
 			if (StringUtils::isCSharpFile(fileName))
 			{
 				auto &mono = registry.get_or_emplace<component::MonoComponent>(ent);
 				mono.setEntity(ent);
 				mono.addScript(fileName, Application::get()->getSystemManager()->getSystem<MonoSystem>());
+			}
+			else if (StringUtils::isLuaFile(fileName)) 
+			{
+				auto& lua = registry.get_or_emplace<component::LuaComponent>(ent);
+				lua.setEntity(ent);//TODO
 			}
 		};
 	}

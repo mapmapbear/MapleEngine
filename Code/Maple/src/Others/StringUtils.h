@@ -51,6 +51,7 @@ namespace maple
 		static auto isModelFile(const std::string& filePath) -> bool;
 		static auto isTextureFile(const std::string& filePath) -> bool;
 		static auto isCSharpFile(const std::string& filePath) -> bool;
+		static auto isFBXFile(const std::string& filePath) -> bool;
 		static auto UTF16ToUTF8(const std::u16string& utf16)->std::string;
 		static auto UTF8ToUTF16(const std::string& utf8)->std::u16string;
 		static auto codeConvert(const char* fromCharset, const char* toCharset, const char * inBuf, size_t inlen, char* outBuf, size_t outlen)->int32_t;

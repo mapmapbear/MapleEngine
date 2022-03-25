@@ -3,32 +3,42 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include "LuaSystem.h"
-#include "Scene/Scene.h"
 #include "LuaComponent.h"
 #include "Application.h"
+#include <ecs/ecs.h>
 
 namespace maple
 {
-	auto LuaSystem::onInit() -> void
+	namespace update 
 	{
-		
-	}
+		using Entity = ecs::Chain
+			::Read<component::LuaComponent>
+			::To<ecs::Entity>;
 
-	auto LuaSystem::onUpdate(float dt, Scene* scene)-> void
-	{
-		if (Application::get()->getEditorState() == EditorState::Play) 
+		inline auto system(Entity entity,ecs::World world) 
 		{
-			auto view = scene->getRegistry().view<component::LuaComponent>();
-			for (auto v : view)
+			auto [luaComp] = entity;
+			auto dt = world.getComponent<component::DeltaTime>().dt;
+			
+			if (luaComp.onUpdateFunc && luaComp.onUpdateFunc->isFunction())
 			{
-				auto& lua = scene->getRegistry().get<component::LuaComponent>(v);
-				lua.onUpdate(dt);
+				try
+				{
+					(*luaComp.onUpdateFunc)(*luaComp.table, dt);
+				}
+				catch (const std::exception& e)
+				{
+					LOGE("{0}", e.what());
+				}
 			}
 		}
 	}
 
-	auto LuaSystem::onImGui() -> void
+	namespace lua
 	{
-
+		auto registerLuaSystem(std::shared_ptr<ExecutePoint> executePoint) -> void 
+		{
+			executePoint->registerSystem<update::system>();
+		}
 	}
 };

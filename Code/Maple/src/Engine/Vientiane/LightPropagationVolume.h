@@ -15,7 +15,7 @@ namespace maple
 	{
 		struct LPVGrid
 		{
-			constexpr static char* ICON = ICON_MDI_TRACK_LIGHT;
+			constexpr static char* ICON = ICON_MDI_GRID_LARGE;
 
 			std::shared_ptr<Texture3D> lpvGridR;
 			std::shared_ptr<Texture3D> lpvGridG;
@@ -33,7 +33,11 @@ namespace maple
 			std::vector<std::shared_ptr<Texture3D>> lpvGs;
 			std::vector<std::shared_ptr<Texture3D>> lpvBs;
 
+			float gridSize = 32;
 			int32_t propagateCount = 8;
+
+			glm::vec3 gridDimension = {};
+
 			float cellSize = 1.f;
 			float occlusionAmplifier = 1.0f;
 			float indirectLightAttenuation = 1.f;

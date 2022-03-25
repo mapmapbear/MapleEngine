@@ -7,8 +7,9 @@
 #include "Engine/Vientiane/LightPropagationVolume.h"
 #include "Engine/Renderer/FinalPass.h"
 #include "Engine/Renderer/PostProcessRenderer.h"
+#include "Engine/Renderer/SkyboxRenderer.h"
 #include "Scene/Component/BoundingBox.h"
-
+#include "Scripts/Lua/LuaComponent.h"
 
 namespace maple
 {
@@ -22,7 +23,6 @@ namespace maple
 
 	inline auto registerInspector(MM::EntityEditor<entt::entity> & enttEditor)
 	{
-
 		TRIVIAL_COMPONENT(Camera, true, "Camera");
 		TRIVIAL_COMPONENT(component::Transform, true, "Transform");
 		TRIVIAL_COMPONENT(component::Light, true, "Light");
@@ -45,5 +45,6 @@ namespace maple
 		TRIVIAL_COMPONENT(component::BoneComponent, false, "Bone");
 		TRIVIAL_COMPONENT(component::Animator, true, "Animator");
 		TRIVIAL_COMPONENT(component::FinalPass, false, "FinalPass");
+		TRIVIAL_COMPONENT(component::SkyboxData, false, "Skybox");
 	}
 }

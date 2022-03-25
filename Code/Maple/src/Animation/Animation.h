@@ -6,13 +6,10 @@
 #include <vector>
 #include <memory>
 #include "FileSystem/IResource.h"
-#include "Scene/Entity/Entity.h"
 #include "AnimationCurve.h"
 
 namespace maple
 {
-	class Entity;
-
 	namespace component 
 	{
 		class Transform;
@@ -72,15 +69,22 @@ namespace maple
 		Out,
 	};
 
-
-	class Animation : public IResource
+	class MAPLE_EXPORT Animation : public IResource
 	{
 	public:
-		Animation(const std::string & filePath);
-		virtual ~Animation();
+		Animation(const std::string& filePath) :
+			filePath(filePath){}
 
-		auto setClips(const std::vector<std::shared_ptr<AnimationClip>>& clips) -> void;
-		auto addClip(const std::shared_ptr<AnimationClip>& clips) -> void;
+		virtual ~Animation() = default;
+
+		inline auto setClips(const std::vector<std::shared_ptr<AnimationClip>>& clips) -> void
+		{
+			this->clips = clips;
+		}
+		inline auto addClip(const std::shared_ptr<AnimationClip>& clip) -> void
+		{
+			clips.emplace_back(clip);
+		}
 
 		inline auto getClipName(int32_t index) const { return clips[index]->name; }
 		inline auto getClipLength(int32_t index) const { return clips[index]->length; }

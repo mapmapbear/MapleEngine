@@ -3,8 +3,13 @@
 //////////////////////////////////////////////////////////////////////////////
 #include "AnimationSystem.h"
 #include "Animator.h"
+#include "Animation.h"
+
+#include "Scene/Entity/Entity.h"
 #include "Scene/Component/Transform.h"
 #include "Math/MathUtils.h"
+
+#include <algorithm>
 #include <ecs/ecs.h>
 
 namespace maple
@@ -17,8 +22,8 @@ namespace maple
 
 		inline auto sample(Entity entity, 
 			component::Animator & animator, 
-			component::Animator::AnimationState & state,
-			float time, float weight, bool firstState, bool lastState) -> void
+			component::AnimationState & state,
+			float time, float weight, bool firstState, bool lastState, bool rootMotion) -> void
 		{
 			const auto& clip = *animator.animation->getClips()[state.clipIndex];
 			if (state.targets.size() == 0)
@@ -87,7 +92,7 @@ namespace maple
 						break;
 					}
 
-					if (setPos)
+					if (setPos && !rootMotion)
 					{
 						glm::vec3 pos;
 						if (firstState)
@@ -100,6 +105,8 @@ namespace maple
 						}
 						target->setLocalPosition(pos);
 					}
+
+
 					if (setRot)
 					{
 						glm::vec3 rot;
@@ -233,7 +240,7 @@ namespace maple
 					lastState = true;
 				}
 
-				sample(entity, animator, state, state.playingTime, state.weight, firstState, lastState);
+				sample(entity, animator, state, state.playingTime, state.weight, firstState, lastState, animator.rootMotion);
 
 				firstState = false;
 
@@ -251,6 +258,7 @@ namespace maple
 					++i;
 				}
 			}
+
 			if (animator.stopped)
 			{
 				animator.states.clear();
@@ -260,6 +268,87 @@ namespace maple
 		auto registerAnimationSystem(std::shared_ptr<ExecutePoint> executePoint) -> void
 		{
 			executePoint->registerSystem<animation::system>();
+		}
+
+
+		auto setPlayingTime(component::Animator& animator, float t) -> void
+		{
+			auto playingClip = getPlayingClip(animator);
+			if (playingClip >= 0)
+			{
+				t = std::clamp(t, 0.0f, animator.animation->getClipLength(playingClip));
+				float offset = t - getPlayingTime(animator);
+				animator.seekTo = animator.time + offset;
+			}
+		}
+
+		auto play(component::Animator& animator, int32_t index, float fadeLength) -> void
+		{
+			animator.started = true;
+			if (animator.paused)
+			{
+				animator.paused = false;
+				if (index == getPlayingClip(animator))
+				{
+					return;
+				}
+			}
+
+			if (animator.states.empty())
+			{
+				fadeLength = 0;
+			}
+
+			if (fadeLength > 0.0f)
+			{
+				for (auto& state : animator.states)
+				{
+					state.fadeState = FadeState::Out;
+					state.fadeStartTime = getTime(animator);
+					state.fadeLength = fadeLength;
+					state.startWeight = state.weight;
+				}
+			}
+			else
+			{
+				animator.states.clear();
+			}
+
+			component::AnimationState state;
+			state.clipIndex = index;
+			state.playStartTime = getTime(animator);
+			state.fadeStartTime = getTime(animator);
+			state.fadeLength = fadeLength;
+			if (fadeLength > 0.0f)
+			{
+				state.fadeState = FadeState::In;
+				state.startWeight = 0.0f;
+				state.weight = 0.0f;
+			}
+			else
+			{
+				state.fadeState = FadeState::Normal;
+				state.startWeight = 1.0f;
+				state.weight = 1.0f;
+			}
+			state.playingTime = 0.0f;
+			animator.states.emplace_back(state);
+			animator.paused = false;
+			animator.stopped = false;
+		}
+
+		auto stop(component::Animator& animator) -> void
+		{
+			animator.paused = false;
+			animator.stopped = true;
+		}
+
+		auto pause(component::Animator& animator) -> void
+		{
+			if (!animator.stopped)
+			{
+				animator.paused = true;
+			}
 		}
 	}
 };

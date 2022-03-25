@@ -211,7 +211,7 @@ namespace maple
 	{
 		std::string extension = getExtension(filePath);
 		trim(extension);
-		std::transform(extension.begin(), extension.end(), extension.begin(), [](unsigned char c) -> unsigned char { return std::tolower(c); });
+		toLower(extension);
 		if (extension == "txt" || extension == "glsl" || extension == "shader" || extension == "vert"
 			|| extension == "frag" || extension == "lua")
 			return true;
@@ -223,7 +223,7 @@ namespace maple
 	{
 		std::string extension = getExtension(filePath);
 		trim(extension);
-		std::transform(extension.begin(), extension.end(), extension.begin(), [](unsigned char c) -> unsigned char { return std::tolower(c); });
+		toLower(extension);
 		return extension == "lua";
 	}
 
@@ -231,7 +231,7 @@ namespace maple
 	{
 		std::string extension = getExtension(filePath);
 		trim(extension);
-		std::transform(extension.begin(), extension.end(), extension.begin(), [](unsigned char c) -> unsigned char { return std::tolower(c); });
+		toLower(extension);
 		return extension == "ogg" || extension == "mp3" || extension == "wav" || extension == "aac";
 	}
 
@@ -239,7 +239,7 @@ namespace maple
 	{
 		std::string extension = getExtension(filePath);
 		trim(extension);
-		std::transform(extension.begin(), extension.end(), extension.begin(), [](unsigned char c) -> unsigned char { return std::tolower(c); });
+		toLower(extension);
 		return extension == "scene";
 
 	}
@@ -248,7 +248,7 @@ namespace maple
 	{
 		std::string extension = getExtension(filePath);
 		trim(extension);
-		std::transform(extension.begin(), extension.end(), extension.begin(), [](unsigned char c) -> unsigned char { return std::tolower(c); });
+		toLower(extension);
 		return extension == "controller";
 	}
 
@@ -256,7 +256,7 @@ namespace maple
 	{
 		std::string extension = getExtension(filePath);
 		trim(extension);
-		std::transform(extension.begin(), extension.end(), extension.begin(), [](unsigned char c) -> unsigned char { return std::tolower(c); });
+		toLower(extension);
 		return extension == "obj" || extension == "gltf" || extension == "glb" || extension == "fbx" || extension == "FBX";
 	}
 
@@ -264,7 +264,7 @@ namespace maple
 	{
 		std::string extension = getExtension(filePath);
 		trim(extension);
-		std::transform(extension.begin(), extension.end(), extension.begin(), [](unsigned char c) -> unsigned char { return std::tolower(c); });
+		toLower(extension);
 		return extension == "png" || extension == "tga" || extension == "jpg" || extension == "hdr";
 	}
 
@@ -273,8 +273,16 @@ namespace maple
 	{
 		std::string extension = getExtension(filePath);
 		trim(extension);
-		std::transform(extension.begin(), extension.end(), extension.begin(), [](unsigned char c) -> unsigned char { return std::tolower(c); });
+		toLower(extension);
 		return extension == "cs";
+	}
+
+	auto StringUtils::isFBXFile(const std::string& filePath) -> bool
+	{
+		std::string extension = getExtension(filePath);
+		trim(extension);
+		toLower(extension);
+		return extension == "fbx";
 	}
 
 	auto StringUtils::UTF16ToUTF8(const std::u16string& utf16) ->std::string

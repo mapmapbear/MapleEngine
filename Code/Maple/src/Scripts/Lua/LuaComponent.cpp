@@ -109,21 +109,6 @@ return #name
 			}
 		}
 
-		auto LuaComponent::onUpdate(float dt) -> void
-		{
-			if (onUpdateFunc && onUpdateFunc->isFunction())
-			{
-				try
-				{
-					(*onUpdateFunc)(*table, dt);
-				}
-				catch (const std::exception& e)
-				{
-					LOGE("{0}", e.what());
-				}
-			}
-		}
-
 		auto LuaComponent::reload()  -> void
 		{
 			loadScript();

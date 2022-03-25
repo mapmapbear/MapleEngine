@@ -16,20 +16,23 @@ extern "C" {
 #include "MetaFile.h"
 #include "Scene/Component/Component.h"
 
+
+//TODO Need to be re factored 
 namespace maple
 {
 	class Scene;
 	namespace component
 	{
-		class LuaComponent : public Component
+		class MAPLE_EXPORT LuaComponent : public Component
 		{
 		public:
+			constexpr static char* ICON = ICON_MDI_LANGUAGE_LUA;
+
 			friend class MetaFile;
 			LuaComponent(const std::string& file, Scene* scene);
 			LuaComponent();
 			~LuaComponent();
 			auto onInit() -> void;
-			auto onUpdate(float dt) -> void;
 			auto reload() -> void;
 			auto loadScript() -> void;
 			auto onImGui() -> void;
@@ -59,8 +62,6 @@ namespace maple
 
 			inline auto& getFileName() const { return file; }
 			inline auto setScene(Scene* val) { scene = val; }
-
-		private:
 
 			auto saveNewFile(const std::string& fileName) -> void;
 			auto init()-> void;

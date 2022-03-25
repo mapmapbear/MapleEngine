@@ -68,7 +68,6 @@ namespace maple
 		monoVm->init();
 		renderGraph->init(window->getWidth(), window->getHeight());
 
-		systemManager->addSystem<LuaSystem>()->onInit();
 		systemManager->addSystem<MonoSystem>()->onInit();
 
 		imGuiManager = systemManager->addSystem<ImGuiSystem>(false);

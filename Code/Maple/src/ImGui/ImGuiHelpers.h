@@ -7,6 +7,7 @@
 #include <glm/glm.hpp>
 #include <imgui.h>
 #include <string>
+#include <functional>
 
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui_internal.h>
@@ -46,5 +47,7 @@ namespace maple
 		MAPLE_EXPORT auto inputFloat(const std::string &name, float &value, float min = -1.0f, float max = 1.0f) -> bool;
 		MAPLE_EXPORT auto image(const Texture *texture, const glm::vec2 &size) -> void;
 		MAPLE_EXPORT auto imageButton(const Quad2D * texture,const glm::vec2 & scale) -> bool;
+
+		MAPLE_EXPORT auto acceptFile(const std::function<void(const std::string& )>& callback) -> void;
 	};        // namespace ImGuiHelper
 };            // namespace maple

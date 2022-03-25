@@ -336,5 +336,19 @@ namespace maple
 			                          ImVec2(uv[1].x, uv[3].y), -1);
 		}
 
+		auto acceptFile(const std::function<void(const std::string&)>& callback) -> void
+		{
+			if (ImGui::BeginDragDropTarget())
+			{
+				auto data = ImGui::AcceptDragDropPayload("AssetFile", ImGuiDragDropFlags_None);
+				if (data)
+				{
+					std::string file = (char*)data->Data;
+					callback(file);
+				}
+				ImGui::EndDragDropTarget();
+			}
+		}
+
 	};        // namespace ImGuiHelper
 };            // namespace maple

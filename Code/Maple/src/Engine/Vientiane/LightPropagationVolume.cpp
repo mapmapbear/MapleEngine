@@ -27,25 +27,21 @@ namespace maple
 	{
 		inline auto updateGrid(component::LPVGrid& grid, maple::BoundingBox * box) 
 		{
-			auto dimension = glm::vec3(32, 32, 32);//box->size();
-
-			//dimension = glm::min(glm::vec3(32,32,32), dimension);
-
 			TextureParameters paramemters(TextureFormat::R32UI, TextureFilter::Nearest, TextureWrap::ClampToEdge);
 			if (grid.lpvGridB == nullptr) 
 			{
 
-				grid.lpvGridR = Texture3D::create(dimension.x * 4, dimension.y, dimension.z, paramemters);
-				grid.lpvGridB = Texture3D::create(dimension.x * 4, dimension.y, dimension.z, paramemters);
-				grid.lpvGridG = Texture3D::create(dimension.x * 4, dimension.y, dimension.z, paramemters);
+				grid.lpvGridR = Texture3D::create(grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z, paramemters);
+				grid.lpvGridB = Texture3D::create(grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z, paramemters);
+				grid.lpvGridG = Texture3D::create(grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z, paramemters);
 				
-				grid.lpvGeometryVolumeR = Texture3D::create(dimension.x * 4, dimension.y, dimension.z, paramemters);
-				grid.lpvGeometryVolumeG = Texture3D::create(dimension.x * 4, dimension.y, dimension.z, paramemters);
-				grid.lpvGeometryVolumeB = Texture3D::create(dimension.x * 4, dimension.y, dimension.z, paramemters);
+				grid.lpvGeometryVolumeR = Texture3D::create(grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z, paramemters);
+				grid.lpvGeometryVolumeG = Texture3D::create(grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z, paramemters);
+				grid.lpvGeometryVolumeB = Texture3D::create(grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z, paramemters);
 
-				grid.lpvAccumulatorB = Texture3D::create(dimension.x * 4, dimension.y, dimension.z, paramemters);
-				grid.lpvAccumulatorG = Texture3D::create(dimension.x * 4, dimension.y, dimension.z, paramemters);
-				grid.lpvAccumulatorR = Texture3D::create(dimension.x * 4, dimension.y, dimension.z, paramemters);
+				grid.lpvAccumulatorB = Texture3D::create(grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z, paramemters);
+				grid.lpvAccumulatorG = Texture3D::create(grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z, paramemters);
+				grid.lpvAccumulatorR = Texture3D::create(grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z, paramemters);
 
 
 				grid.lpvRs.emplace_back(grid.lpvGridR);
@@ -54,30 +50,30 @@ namespace maple
 
 				for (auto i = 0;i< grid.propagateCount;i++)
 				{
-					grid.lpvBs.emplace_back(Texture3D::create(dimension.x * 4, dimension.y, dimension.z, paramemters));
-					grid.lpvRs.emplace_back(Texture3D::create(dimension.x * 4, dimension.y, dimension.z, paramemters));
-					grid.lpvGs.emplace_back(Texture3D::create(dimension.x * 4, dimension.y, dimension.z, paramemters));
+					grid.lpvBs.emplace_back(Texture3D::create(grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z, paramemters));
+					grid.lpvRs.emplace_back(Texture3D::create(grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z, paramemters));
+					grid.lpvGs.emplace_back(Texture3D::create(grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z, paramemters));
 				}
 			}
 			else 
 			{
-				grid.lpvGridR->buildTexture3D(TextureFormat::R32UI,dimension.x * 4, dimension.y, dimension.z);
-				grid.lpvGridB->buildTexture3D(TextureFormat::R32UI,dimension.x * 4, dimension.y, dimension.z);
-				grid.lpvGridG->buildTexture3D(TextureFormat::R32UI,dimension.x * 4, dimension.y, dimension.z);
+				grid.lpvGridR->buildTexture3D(TextureFormat::R32UI,grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z);
+				grid.lpvGridB->buildTexture3D(TextureFormat::R32UI,grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z);
+				grid.lpvGridG->buildTexture3D(TextureFormat::R32UI,grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z);
 
-				grid.lpvGeometryVolumeR->buildTexture3D(TextureFormat::R32UI, dimension.x * 4, dimension.y, dimension.z);
-				grid.lpvGeometryVolumeG->buildTexture3D(TextureFormat::R32UI, dimension.x * 4, dimension.y, dimension.z);
-				grid.lpvGeometryVolumeB->buildTexture3D(TextureFormat::R32UI, dimension.x * 4, dimension.y, dimension.z);
+				grid.lpvGeometryVolumeR->buildTexture3D(TextureFormat::R32UI, grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z);
+				grid.lpvGeometryVolumeG->buildTexture3D(TextureFormat::R32UI, grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z);
+				grid.lpvGeometryVolumeB->buildTexture3D(TextureFormat::R32UI, grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z);
 
-				grid.lpvAccumulatorB->buildTexture3D(TextureFormat::R32UI, dimension.x * 4, dimension.y, dimension.z);
-				grid.lpvAccumulatorG->buildTexture3D(TextureFormat::R32UI, dimension.x * 4, dimension.y, dimension.z);
-				grid.lpvAccumulatorR->buildTexture3D(TextureFormat::R32UI, dimension.x * 4, dimension.y, dimension.z);
+				grid.lpvAccumulatorB->buildTexture3D(TextureFormat::R32UI, grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z);
+				grid.lpvAccumulatorG->buildTexture3D(TextureFormat::R32UI, grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z);
+				grid.lpvAccumulatorR->buildTexture3D(TextureFormat::R32UI, grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z);
 
 				for (auto i = 1; i <= grid.propagateCount; i++)
 				{
-					grid.lpvBs[i]->buildTexture3D(TextureFormat::R32UI, dimension.x * 4, dimension.y, dimension.z);
-					grid.lpvRs[i]->buildTexture3D(TextureFormat::R32UI, dimension.x * 4, dimension.y, dimension.z);
-					grid.lpvGs[i]->buildTexture3D(TextureFormat::R32UI, dimension.x * 4, dimension.y, dimension.z);
+					grid.lpvBs[i]->buildTexture3D(TextureFormat::R32UI, grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z);
+					grid.lpvRs[i]->buildTexture3D(TextureFormat::R32UI, grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z);
+					grid.lpvGs[i]->buildTexture3D(TextureFormat::R32UI, grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z);
 				}
 			}	
 		}
@@ -156,17 +152,20 @@ namespace maple
 
 				if (injectLight.boundingBox != *aabb.box) 
 				{
+					auto size = aabb.box->size();
+					auto maxValue = std::max(size.x, std::max(size.y, size.z));
+					lpv.cellSize = maxValue / lpv.gridSize;
+					lpv.gridDimension = size / lpv.cellSize;
+					glm::ceil(lpv.gridDimension);
+					lpv.gridDimension = glm::min(lpv.gridDimension, {32,32,32});
+
 					updateGrid(lpv, aabb.box);
+
 					injectLight.boundingBox.min = aabb.box->min;
 					injectLight.boundingBox.max = aabb.box->max;
-					auto size = aabb.box->size();
-					auto gridSize = 32.f;
-					injectLight.descriptors[0]->setUniform("UniformBufferObject", "gridSize", &gridSize);
+
+					injectLight.descriptors[0]->setUniform("UniformBufferObject", "gridSize", &lpv.gridSize);
 					injectLight.descriptors[0]->setUniform("UniformBufferObject", "minAABB", glm::value_ptr(injectLight.boundingBox.min));
-
-					auto maxValue = std::max(size.x, std::max(size.y, size.z));
-					lpv.cellSize = maxValue / 32.f;
-
 					injectLight.descriptors[0]->setUniform("UniformBufferObject", "cellSize", &lpv.cellSize);
 				}
 			}
@@ -439,6 +438,5 @@ namespace maple
 			executePoint->registerWithinQueue<aabb_debug::beginScene>(begin);
 			executePoint->registerWithinQueue<aabb_debug::render>(renderer);
 		}
-
 	};
 };        // namespace maple
