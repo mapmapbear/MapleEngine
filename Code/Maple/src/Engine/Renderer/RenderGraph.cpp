@@ -53,7 +53,6 @@
 
 namespace maple
 {
-
 	namespace on_begin_renderer 
 	{
 		using Entity = ecs::Chain
@@ -82,50 +81,6 @@ namespace maple
 		}
 	}
 
-	namespace
-	{
-		inline auto renderOutputMode(int32_t mode) -> const std::string
-		{
-			switch (mode)
-			{
-				case 0:
-					return "Lighting";
-				case 1:
-					return "Color";
-				case 2:
-					return "Metallic";
-				case 3:
-					return "Roughness";
-				case 4:
-					return "AO";
-				case 5:
-					return "SSAO-Blur";
-				case 6:
-					return "Normal";
-				case 7:
-					return "Shadow Cascades";
-				case 8:
-					return "Depth";
-				case 9:
-					return "Position";
-				case 10:
-					return "PBR Sampler";
-				case 11:
-					return "SSAO ";
-				case 12:
-					return "Position - ViewSpace";
-				case 13:
-					return "Normal - ViewSpace";
-				case 14:
-					return "PseudoSky";
-				case 15:
-					return "FluxSampler";
-				default:
-					return "Lighting";
-			}
-		}
-	}        // namespace
-
 	auto RenderGraph::init(uint32_t width, uint32_t height) -> void
 	{
 		gBuffer = std::make_shared<GBuffer>(width, height);
@@ -143,14 +98,6 @@ namespace maple
 
 		static ExecuteQueue beginQ;
 		static ExecuteQueue renderQ;
-
-		beginQ.preCall = []( ecs::World world) {
-			DescriptorSet::toggleUpdate(false);
-		};
-
-		beginQ.postCall = [](ecs::World world) {
-			DescriptorSet::toggleUpdate(true);
-		};
 
 		executePoint->registerQueue(beginQ);
 		executePoint->registerQueue(renderQ);
@@ -353,123 +300,6 @@ namespace maple
 	auto RenderGraph::onImGui() -> void
 	{
 		PROFILE_FUNCTION();
-/*
-
-		ImGui::TextUnformatted("Shadow Renderer");
-
-		/ *	ImGui::DragFloat("Initial Bias", &shadowData->initialBias, 0.00005f, 0.0f, 1.0f, "%.6f");
-		ImGui::DragFloat("Light Size", &shadowData->lightSize, 0.00005f, 0.0f, 10.0f);
-		ImGui::DragFloat("Max Shadow Distance", &shadowData->maxShadowDistance, 0.05f, 0.0f, 10000.0f);
-		ImGui::DragFloat("Shadow Fade", &shadowData->shadowFade, 0.0005f, 0.0f, 500.0f);
-		ImGui::DragFloat("Cascade Transition Fade", &shadowData->cascadeTransitionFade, 0.0005f, 0.0f, 5.0f);
-		ImGui::DragFloat("Cascade Split Lambda", &shadowData->cascadeSplitLambda, 0.005f, 0.0f, 3.0f);* /
-
-		ImGui::Separator();
-
-		ImGui::TextUnformatted("Deferred Renderer");
-
-		ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(2, 2));
-		ImGui::Columns(2);
-		ImGui::Separator();
-
-		ImGui::AlignTextToFramePadding();
-		ImGui::TextUnformatted("Deferred Queue Size");
-		ImGui::NextColumn();
-		ImGui::PushItemWidth(-1);
-		//ImGui::Text("%5.2lu", deferredData->commandQueue.size());
-		ImGui::PopItemWidth();
-		ImGui::NextColumn();
-
-		ImGui::AlignTextToFramePadding();
-		ImGui::TextUnformatted("Render Mode");
-		ImGui::NextColumn();
-		ImGui::PushItemWidth(-1);
-/ *
-		if (ImGui::BeginMenu(renderOutputMode(forwardData->renderMode).c_str()))
-		{
-			constexpr int32_t numRenderModes = 16;
-
-			for (int32_t i = 0; i < numRenderModes; i++)
-			{
-				if (ImGui::MenuItem(renderOutputMode(i).c_str(), "", forwardData->renderMode == i, true))
-				{
-					forwardData->renderMode = i;
-					/ *auto descriptorSet      = deferredData->descriptorLightSet[0];
-					switch (i)
-					{
-						case 11:
-							descriptorSet->setTexture("uOutputSampler", gBuffer->getBuffer(GBufferTextures::SSAO_SCREEN));
-							break;
-						case 12:
-							descriptorSet->setTexture("uOutputSampler", gBuffer->getBuffer(GBufferTextures::VIEW_POSITION));
-							break;
-						case 13:
-							descriptorSet->setTexture("uOutputSampler", gBuffer->getBuffer(GBufferTextures::VIEW_NORMALS));
-							break;
-						case 14:
-							descriptorSet->setTexture("uOutputSampler", gBuffer->getBuffer(GBufferTextures::PSEUDO_SKY));
-							break;
-					}* /
-				}
-			}
-			ImGui::EndMenu();
-		}* /
-		ImGui::PopItemWidth();
-		ImGui::NextColumn();
-
-		ImGui::Columns(1);
-
-		ImGui::Separator();
-		ImGui::TextUnformatted("SSAO Options");
-		ImGui::Separator();
-
-		ImGui::Columns(2);
-	/ *	ImGuiHelper::property("SSAO Enabled", ssaoData->enable);
-		ImGuiHelper::property("SSAO Depth Bias", ssaoData->bias, 0.0f, 1.0f, ImGuiHelper::PropertyFlag::None);* /
-		ImGui::Columns(1);
-
-		ImGui::Separator();
-		ImGui::TextUnformatted("SSR Options");
-		ImGui::Separator();
-
-		ImGui::Columns(2);
-	/ *	ImGuiHelper::property("SSR Enabled", ssrData->enable);* /
-		ImGui::Columns(1);
-
-		ImGui::Separator();
-
-		ImGui::Columns(2);
-
-		for (auto shader : Application::getCache()->getCache())
-		{
-			if (shader.second->getResourceType() == FileType::Shader)
-			{
-				ImGui::PushID(shader.second.get());
-				if (ImGui::Button("Reload"))
-				{
-					std::static_pointer_cast<Shader>(shader.second)->reload();
-				}
-				ImGui::PopID();
-				ImGui::NextColumn();
-				ImGui::TextUnformatted(shader.second->getPath().c_str());
-				ImGui::NextColumn();
-			}
-		}
-
-		ImGui::Columns(1);
-		ImGui::Separator();
-
-		ImGui::TextUnformatted("Final Pass");
-
-		ImGui::Columns(2);
-		ImGuiHelper::property("ToneMap Index", toneMapIndex, 0, 8);
-		ImGuiHelper::property("Gamma", gamma, 1.0, 10.0);
-		ImGui::Columns(1);
-
-		ImGui::Separator();
-		ImGui::PopStyleVar();*/
-
-	
 	}
 
 	auto RenderGraph::setRenderTarget(Scene* scene, const std::shared_ptr<Texture> &texture, bool rebuildFramebuffer) -> void

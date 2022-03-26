@@ -31,7 +31,7 @@
 #include "ImGui/ImGuiHelpers.h"
 #include "Scene/Component/Component.h"
 #include "Scene/Component/Light.h"
-#include "Scene/Component/Sprite.h"
+#include "2d/Sprite.h"
 #include "Scene/Component/Transform.h"
 #include "Scene/Entity/Entity.h"
 #include "Scene/Entity/EntityManager.h"

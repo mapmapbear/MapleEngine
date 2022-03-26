@@ -22,13 +22,19 @@ namespace maple
 	class MAPLE_EXPORT MonoScript final
 	{
 	public:
-		MonoScript(const std::string & name, component::MonoComponent * component, MonoSystem* system);
+		MonoScript(const std::string & name, component::MonoComponent * component);
 		~MonoScript();
-		auto onStart(MonoSystem* system) -> void;
-		auto onUpdate(float dt,MonoSystem * system) -> void;
+		auto onStart() -> void;
+		auto onUpdate(float dt) -> void;
 		inline auto getClassName() const { return className; }
 		inline auto getClassNameInEditor() const { return classNameInEditor; }
 		auto loadFunction() -> void;
+
+		inline auto getUpdateFunc() { return updateFunc; }
+		inline auto getStartFunc() { return startFunc; }
+		inline auto getDestoryFunc() { return destoryFunc; }
+		inline auto getScriptObject() { return scriptObject; }
+
 	private:
 
 		component::MonoComponent* component = nullptr;

@@ -37,8 +37,7 @@ namespace maple
 		MouseReleased,
 		MouseMove,
 		MouseScrolled,
-		DeferredType,
-		RecompileScripts
+		DeferredType
 	};
 
 	class Event 
@@ -46,13 +45,6 @@ namespace maple
 	public:
 		virtual auto getType() const -> EventType = 0;
 		virtual auto getName() const -> const char * = 0;
-	};
-
-	class RecompileScriptsEvent : public Event
-	{
-	public:
-		Scene* scene = nullptr;
-		GENERATE_EVENT_CLASS_TYPE(RecompileScripts);
 	};
 
 	class MouseMoveEvent : public Event

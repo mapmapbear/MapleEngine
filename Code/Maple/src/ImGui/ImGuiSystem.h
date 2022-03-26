@@ -4,7 +4,6 @@
 #pragma once
 #include "Engine/Timestep.h"
 #include "Event/EventHandler.h"
-#include "Scene/System/ISystem.h"
 #include <memory>
 
 namespace maple
@@ -12,26 +11,24 @@ namespace maple
 	class ImGuiRenderer;
 	class Scene;
 
-	class ImGuiSystem : public ISystem
+	class ImGuiSystem
 	{
 	public:
 		ImGuiSystem(bool clearScreen = false);
 		~ImGuiSystem();
 
 		auto newFrame(const Timestep& step) -> void;
-		auto onInit() -> void override;
-		auto onUpdate(float dt, Scene* scene) -> void override;
-		auto onImGui() -> void override {};
+		auto onInit() -> void ;
 
 		auto onRender(Scene* scene) -> void;
 		auto addIcon() -> void;
 		auto onResize(uint32_t w, uint32_t h) -> void;
 		auto setTheme() -> void;
+		auto update() -> void;
 	private:
 
 		bool clearScreen = false;
 		std::shared_ptr<ImGuiRenderer> imguiRender;
 		EventHandler handler;
 	};
-
 }

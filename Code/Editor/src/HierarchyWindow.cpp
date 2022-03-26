@@ -12,7 +12,9 @@
 #include "Scene/Component/Component.h"
 #include "Scene/Component/Light.h"
 #include "Scene/Component/MeshRenderer.h"
-#include "Scene/Component/Sprite.h"
+
+#include "2d/Sprite.h"
+
 #include "Scene/Component/LightProbe.h"
 
 #include "Scene/Entity/Entity.h"

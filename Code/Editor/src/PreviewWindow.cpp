@@ -66,8 +66,11 @@ namespace maple
 			}
 
 			auto sceneViewSize = ImGui::GetWindowContentRegionMax() - ImGui::GetWindowContentRegionMin();
-			resize(static_cast<uint32_t>(sceneViewSize.x), static_cast<uint32_t>(sceneViewSize.y));
-			ImGuiHelper::image(renderTexture.get(), {static_cast<uint32_t>(sceneViewSize.x), static_cast<uint32_t>(sceneViewSize.y)});
+			if (sceneViewSize.y > 0 && sceneViewSize.x)
+			{
+				resize(static_cast<uint32_t>(sceneViewSize.x), static_cast<uint32_t>(sceneViewSize.y));
+				ImGuiHelper::image(renderTexture.get(), { static_cast<uint32_t>(sceneViewSize.x), static_cast<uint32_t>(sceneViewSize.y) });
+			}
 
 			auto  camera            = scene->getCamera();
 			float viewManipulateTop = minBound.y;

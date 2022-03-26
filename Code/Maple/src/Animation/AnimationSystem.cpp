@@ -265,7 +265,7 @@ namespace maple
 			}
 		}
 
-		auto registerAnimationSystem(std::shared_ptr<ExecutePoint> executePoint) -> void
+		auto registerAnimationModule(std::shared_ptr<ExecutePoint> executePoint) -> void
 		{
 			executePoint->registerSystem<animation::system>();
 		}

@@ -7,19 +7,16 @@
 #include <memory>
 
 #include "Engine/Core.h"
-
-#include "RHI/RenderDevice.h"
-
 #include "Engine/Renderer/RenderGraph.h"
 #include "Engine/TexturePool.h"
 #include "Engine/Timestep.h"
 #include "Event/EventDispatcher.h"
 #include "ImGui/ImGuiSystem.h"
 #include "Others/Timer.h"
+#include "RHI/RenderDevice.h"
 #include "RHI/GraphicsContext.h"
 #include "RHI/RenderDevice.h"
 #include "Scene/SceneManager.h"
-#include "Scene/System/SystemManager.h"
 #include "Scripts/Lua/LuaVirtualMachine.h"
 #include "Thread/ThreadPool.h"
 #include "Window/NativeWindow.h"
@@ -123,10 +120,7 @@ namespace maple
 		{
 			return get()->luaVm;
 		}
-		inline static auto &getSystemManager()
-		{
-			return get()->systemManager;
-		}
+
 		inline static auto &getMonoVm()
 		{
 			return get()->monoVm;
@@ -175,7 +169,6 @@ namespace maple
 		std::unique_ptr<ThreadPool>        threadPool;
 		std::unique_ptr<TexturePool>       texturePool;
 		std::unique_ptr<LuaVirtualMachine> luaVm;
-		std::unique_ptr<SystemManager>     systemManager;
 
 		std::shared_ptr<MonoVirtualMachine> monoVm;
 		std::shared_ptr<ImGuiSystem>        imGuiManager;

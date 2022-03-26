@@ -4,41 +4,43 @@
 
 #pragma once
 #include "Engine/Core.h"
-#include "Scene/System/ISystem.h"
-#include "Event/EventHandler.h"
+#include "Scene/System/ExecutePoint.h"
+#include "MonoComponent.h"
+
 #include <unordered_map>
 #include <memory>
+#include <ecs/ecs.h>
 
 namespace maple 
 {
-	class Scene;
-	class MonoComponent;
 	struct MonoScriptInstance;
+	static constexpr uint32_t SCRIPT_NOT_LOADED = 0;
 
-
-	static const uint32_t SCRIPT_NOT_LOADED = 0;
-
-	class MAPLE_EXPORT MonoSystem final : public ISystem
+	namespace component 
 	{
-	public:
-		~MonoSystem();
-		auto onInit() -> void override;
-		auto onUpdate(float dt, Scene* scene) -> void override;
-		auto onImGui() -> void override;
+		struct MonoEnvironment 
+		{
+			std::unordered_map<uint32_t, std::shared_ptr<MonoScriptInstance>> scripts;
+			uint32_t scriptId = SCRIPT_NOT_LOADED;
+			bool assemblyCompiled = false;
+		};
 
-		auto onStart(Scene* scene) -> void;
-		auto getScript(const uint32_t id) ->MonoScriptInstance*;
-		auto callScriptStart(const MonoScriptInstance* script) -> bool;
-		auto callScriptUpdate(const MonoScriptInstance* script,float dt) -> bool;
-		auto load(const std::string& name, MonoComponent* component)->uint32_t;
+		struct RecompileEvent
+		{
+		
+		};
+	}
 
-	private:
-		auto compileSystemAssembly() -> bool;
+	namespace mono
+	{
+		using MonoQuery = ecs::Chain
+			::Write<component::MonoComponent>
+			::To<ecs::Query>;
 
-		std::unordered_map<uint32_t, std::shared_ptr<MonoScriptInstance>> scripts;
-		uint32_t scriptId = SCRIPT_NOT_LOADED;
-		bool assemblyCompiled = false;
+		auto callMonoStart(MonoQuery query) -> void;
 
-		EventHandler handler;
+		auto recompile(MonoQuery query) -> void;
+
+		auto registerMonoModule(std::shared_ptr<ExecutePoint> executePoint) -> void;
 	};
 };

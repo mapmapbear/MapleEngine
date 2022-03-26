@@ -18,33 +18,35 @@
 namespace maple
 {
 
-	MonoScript::MonoScript(const std::string& name, component::MonoComponent* component, MonoSystem* system):
+	MonoScript::MonoScript(const std::string& name, component::MonoComponent* component):
 		component(component), name(name)
 	{
 		className = StringUtils::getFileNameWithoutExtension(name);
 		classNameInEditor = "\t" + className;
 		classNameInEditor = ICON_MDI_LANGUAGE_CSHARP + classNameInEditor;
-
 		loadFunction();
 	}
 
-	auto MonoScript::onStart( MonoSystem* system) -> void
+	auto MonoScript::onStart() -> void
 	{
-		if (startFunc) {
+		if (startFunc)
+		{
 			startFunc->invokeVirtual(scriptObject->getRawPtr());
 		}
 	}
 
-	auto MonoScript::onUpdate(float dt, MonoSystem* system) -> void
+	auto MonoScript::onUpdate(float dt) -> void
 	{
-		if (updateFunc) {
+		if (updateFunc) 
+		{
 			updateFunc->invokeVirtual(scriptObject->getRawPtr(), dt);
 		}
 	}
 
 	MonoScript::~MonoScript()
 	{
-		if (destoryFunc) {
+		if (destoryFunc)
+		{
 			destoryFunc->invokeVirtual(scriptObject->getRawPtr());
 		}
 	}
@@ -52,7 +54,8 @@ namespace maple
 	auto MonoScript::loadFunction() -> void
 	{
 		auto clazz = MonoVirtualMachine::get()->findClass("", className);
-		if (clazz != nullptr) {
+		if (clazz != nullptr) 
+		{
 			scriptObject = clazz->createInstance(false);
 			clazz->getAllMethods();
 			startFunc = clazz->getMethodExact("OnStart", "");
@@ -64,5 +67,4 @@ namespace maple
 			scriptObject->construct();
 		}
 	}
-
 };

@@ -10,11 +10,15 @@
 #include "MapleMonoAssembly.h"
 #include "MonoScriptInstance.h"
 
+#include "MonoSystem.h"
+
 #include "Others/StringUtils.h"
 #include "Others/Console.h"
 
 #include "FileSystem/File.h"
 #include "Application.h"
+
+#include <ecs/ecs.h>
 
 namespace maple
 {
@@ -261,22 +265,23 @@ namespace maple
 		assemblies["corlib"] = corlibAssembly;
 	}
 
+	using Query = ecs::Chain
+		::Write<component::MonoComponent>
+		::To<ecs::Query>;
+
 	auto MonoVirtualMachine::compileAssembly(const std::function<void(void*)>& callback) -> void
 	{
 		LOGV("compileAssembly...");
 		unloadScriptDomain();
+
 		Application::get()->getThreadPool()->addTask([=]() -> void*{
 			std::vector<std::string> out;
 			File::list(out, [](const std::string& str) -> bool {
 				return StringUtils::endWith(str, ".cs");
 			});
 			MonoHelper::compileScript(out, "MapleLibrary.dll");
-			auto event = std::make_unique<RecompileScriptsEvent>();
-			event->scene = Application::get()->getSceneManager()->getCurrentScene();
-			Application::get()->getEventDispatcher().postEvent(std::move(event));
+
 			return nullptr;
 		}, callback);
 	}
-		
-
 };

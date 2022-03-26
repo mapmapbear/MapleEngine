@@ -127,6 +127,8 @@ file(GLOB VK_APP_SRC
 	src/Animation/*.h
 	src/Loaders/*.cpp
 	src/Loaders/*.h
+	src/2d/*.cpp
+	src/2d/*.h
 )
 
 

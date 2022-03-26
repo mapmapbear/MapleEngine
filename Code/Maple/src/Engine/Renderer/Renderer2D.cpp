@@ -19,7 +19,7 @@
 #include "Engine/Vertex.h"
 #include "Engine/Camera.h"
 #include "Engine/Profiler.h"
-#include "Scene/Component/Sprite.h"
+#include "2d/Sprite.h"
 #include "Scene/Component/Transform.h"
 
 #include "RendererData.h"

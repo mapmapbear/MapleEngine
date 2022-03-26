@@ -4,12 +4,12 @@
 
 #pragma once
 #include "Scene/Component/Component.h"
+#include <memory>
 #include <unordered_map>
 
 namespace maple
 {
 	class MonoScript;
-	class MonoSystem;
 	namespace component 
 	{
 		class MAPLE_EXPORT MonoComponent : public Component
@@ -17,15 +17,15 @@ namespace maple
 		public:
 			constexpr static char* ICON = ICON_MDI_LANGUAGE_CSHARP;
 
-			auto        addScript(const std::string& name, MonoSystem* system) -> void;
-			inline auto getScripts() const
+			auto addScript(const std::string& name) -> void;
+			auto remove(const std::string& script) -> void;
+
+			inline auto& getScripts()
 			{
 				return scripts;
 			}
-			auto remove(const std::string& script) -> void;
-
 		private:
-			std::unordered_map<std::string, std::shared_ptr<MonoScript>> scripts;
+			std::unordered_map<std::string, std::shared_ptr<maple::MonoScript>> scripts;
 		};
 	}
 };        // namespace maple

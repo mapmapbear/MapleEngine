@@ -49,7 +49,6 @@ namespace maple
 		luaVm         = std::make_unique<LuaVirtualMachine>();
 		monoVm        = std::make_shared<MonoVirtualMachine>();
 		renderGraph   = std::make_shared<RenderGraph>();
-		systemManager = std::make_unique<SystemManager>();
 		loaderFactory = std::make_shared<AssetsLoaderFactory>();
 	}
 
@@ -68,9 +67,7 @@ namespace maple
 		monoVm->init();
 		renderGraph->init(window->getWidth(), window->getHeight());
 
-		systemManager->addSystem<MonoSystem>()->onInit();
-
-		imGuiManager = systemManager->addSystem<ImGuiSystem>(false);
+		imGuiManager = std::make_shared<ImGuiSystem>(false);
 		imGuiManager->onInit();
 
 		appDelegate->onInit();
@@ -93,12 +90,7 @@ namespace maple
 				sceneManager->apply();
 				executeAll();
 				onUpdate(timestep);
-
-				renderDevice->begin();
 				onRender();
-				imGuiManager->onRender(sceneManager->getCurrentScene());
-				renderDevice->present();        //present all data
-				window->swapBuffers();
 				frames++;
 			}
 			graphicsContext->clearUnused();
@@ -122,15 +114,12 @@ namespace maple
 		auto scene = sceneManager->getCurrentScene();
 		scene->onUpdate(delta);
 
-		systemManager->onImGui();
 		onImGui();
 		ImNotification::onImGui();
-
-		systemManager->onUpdate(delta, scene);
-
 		executePoint->setGlobalEntity(scene->getGlobalEntity());
 		executePoint->onUpdate(delta, scene->getRegistry());
 
+		imGuiManager->update();
 		window->onUpdate();
 		dispatcher.dispatchEvents();
 		renderGraph->onUpdate(delta, scene);
@@ -139,12 +128,16 @@ namespace maple
 	auto Application::onRender() -> void
 	{
 		PROFILE_FUNCTION();
+		renderDevice->begin();
 	/*	renderGraph->beginPreviewScene(sceneManager->getSceneByName("PreviewScene"));
 		renderGraph->onRenderPreview();*/
 
 		renderGraph->beginScene(sceneManager->getCurrentScene());
 		executePoint->execute(sceneManager->getCurrentScene()->getRegistry());
 		onRenderDebug();
+		imGuiManager->onRender(sceneManager->getCurrentScene());
+		renderDevice->present();        //present all data
+		window->swapBuffers();
 	}
 
 	auto Application::beginScene() -> void

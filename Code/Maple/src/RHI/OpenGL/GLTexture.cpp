@@ -585,7 +585,7 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 		GLCall(glGenTextures(1, &handle));
-		format = TextureFormat::DEPTH;
+		format = stencil ? TextureFormat::DEPTH_STENCIL : TextureFormat::DEPTH;
 		init();
 	}
 

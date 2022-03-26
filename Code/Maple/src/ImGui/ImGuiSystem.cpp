@@ -64,12 +64,6 @@ namespace maple
 		setTheme();
 	}
 
-	auto ImGuiSystem::onUpdate(float dt, Scene *scene) -> void
-	{
-		PROFILE_FUNCTION();
-		ImGui::Render();
-	}
-
 	auto ImGuiSystem::onRender(Scene *scene) -> void
 	{
 		PROFILE_FUNCTION();
@@ -136,12 +130,9 @@ namespace maple
 	{
 	}
 
-
-	namespace on_imgui 
+	auto ImGuiSystem::update() -> void
 	{
-		auto registerImGui(std::shared_ptr<ExecutePoint> executePoint) -> void
-		{
-		}
+		ImGui::Render();
 	}
 
 };        // namespace maple

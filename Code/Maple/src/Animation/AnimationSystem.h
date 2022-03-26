@@ -37,6 +37,6 @@ namespace maple
 			return animator.states.back().playingTime;
 		}
 
-		auto registerAnimationSystem(std::shared_ptr<ExecutePoint> executePoint) -> void;
+		auto registerAnimationModule(std::shared_ptr<ExecutePoint> executePoint) -> void;
 	}
 };

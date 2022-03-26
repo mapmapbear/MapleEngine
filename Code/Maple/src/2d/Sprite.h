@@ -3,7 +3,7 @@
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-#include "Component.h"
+#include "Scene/Component/Component.h"
 #include "Engine/Quad2D.h"
 #include <cereal/cereal.hpp>
 #include <glm/glm.hpp>
@@ -142,9 +142,8 @@ namespace maple
 				return frame ? frame->height : 0;
 			}
 
-		private:
-			uint32_t                    currentFrame = 0;
 			float                       frameTimer = 0.0f;
+			uint32_t                    currentFrame = 0;
 			bool                        loop = true;
 			std::vector<AnimationFrame> animationFrames;
 		};

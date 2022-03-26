@@ -113,10 +113,6 @@ namespace maple
 					if (eventHandler->charInputHandler)
 						handled = eventHandler->charInputHandler(static_cast<CharInputEvent*>(event.get()));
 					break;
-				case	EventType::RecompileScripts:
-					if (eventHandler->compileHandler)
-						handled = eventHandler->compileHandler(static_cast<RecompileScriptsEvent*>(event.get()));
-					break;
 				}
 			}
 			if (handled)//if this event handled,this even will not dispatch in the low priority handler.

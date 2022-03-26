@@ -9,6 +9,7 @@
 
 #include <ecs/SystemBuilder.h>
 #include <ecs/World.h>
+#include <ecs/TypeList.h>
 
 namespace maple
 {
@@ -29,13 +30,19 @@ namespace maple
 		}
 
 		template <typename Component>
-		inline auto registerGlobalComponent(const std::function<void(Component &)> & onInit = nullptr) -> void
+		inline auto registerGlobalComponent(const std::function<void(Component&) > & onInit = nullptr) -> void
 		{
 			factoryQueue.jobs.emplace_back([=](entt::registry& reg) {
 				auto & comp = reg.get_or_emplace<Component>(globalEntity);
 				if (onInit != nullptr)
 					onInit(comp);
 			});
+		}
+
+		template <auto System>
+		inline auto registerFactorySystem() -> void
+		{
+			expand(ecs::FunctionConstant<System>{}, factoryQueue);
 		}
 
 		template <auto System>

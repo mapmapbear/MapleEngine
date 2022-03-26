@@ -115,6 +115,7 @@ namespace maple
 	{
 		//GPUProfile("ImGui Pass");
 		PROFILE_FUNCTION();
+
 		g_WindowData.FrameIndex = VulkanContext::get()->getSwapChain()->getCurrentBufferIndex();
 
 		auto  vkCommnadBuffer    = (VulkanCommandBuffer *) commandBuffer;

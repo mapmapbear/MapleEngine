@@ -8,6 +8,9 @@
 #include "MonoScript.h"
 #include "MonoVirtualMachine.h"
 
+#include "MapleMonoMethod.h"
+#include "MapleMonoObject.h"
+
 #include "Scene/Scene.h"
 #include "Others/StringUtils.h"
 #include "MonoComponent.h"
@@ -17,70 +20,67 @@
 #include "Scene/Entity/Entity.h"
 #include "Application.h"
 
+#include <ecs/ecs.h>
 
 namespace maple
 {
-	auto MonoSystem::onInit() -> void
+	namespace update 
 	{
-		MonoVirtualMachine::get()->loadAssembly("./", "MapleLibrary.dll");
-		//MonoVirtualMachine::get()->loadAssembly("./", "MapleAssembly.dll");
-		handler.compileHandler = [&](RecompileScriptsEvent * event) {
-			auto view = event->scene->getRegistry().view<component::MonoComponent>();
-			for (auto v : view)
+		using Entity = ecs::Chain
+			::Write<component::MonoComponent>
+			::To<ecs::Entity>;
+
+		inline auto system(Entity entity, ecs::World world)
+		{
+			auto [mono] = entity;
+			auto dt = world.getComponent<component::DeltaTime>().dt;
+
+			if (Application::get()->getEditorState() == EditorState::Play)
 			{
-				auto& mono = event->scene->getRegistry().get<component::MonoComponent>(v);
+				for (auto& script : mono.getScripts())
+				{
+					if (script.second->getUpdateFunc())
+					{
+						script.second->getUpdateFunc()->invokeVirtual(script.second->getScriptObject()->getRawPtr(), dt);
+					}
+				}
+			}
+		}
+	};
+
+	namespace mono
+	{
+		auto callMonoStart(MonoQuery query) -> void
+		{
+			for (auto entity : query)
+			{
+				auto [mono] = query.convert(entity);
+				for (auto& script : mono.getScripts())
+				{
+					script.second->onStart();
+				}
+			}
+		}
+
+		auto recompile(MonoQuery query) -> void
+		{
+			for (auto entity : query)
+			{
+				auto [mono] = query.convert(entity);
 				for (auto& script : mono.getScripts())
 				{
 					script.second->loadFunction();
 				}
 			}
-			return true;
-		};
-		Application::get()->getEventDispatcher().addEventHandler(&handler);
-	}
+		}
 
-	auto MonoSystem::onStart(Scene* scene) -> void
-	{
-		if (Application::get()->getEditorState() == EditorState::Play)
+		auto registerMonoModule(std::shared_ptr<ExecutePoint> executePoint) -> void
 		{
-			auto view = scene->getRegistry().view<component::MonoComponent>();
-			for (auto v : view)
-			{
-				auto& mono = scene->getRegistry().get<component::MonoComponent>(v);
-				for (auto& script : mono.getScripts())
-				{
-					script.second->onStart(this);
-				}
-			}
+			executePoint->registerGlobalComponent<component::MonoEnvironment>([](component::MonoEnvironment&) {
+				MonoVirtualMachine::get()->loadAssembly("./", "MapleLibrary.dll");
+				//MonoVirtualMachine::get()->loadAssembly("./", "MapleAssembly.dll");
+			});
+			executePoint->registerSystem<update::system>();
 		}
 	}
-
-
-	auto MonoSystem::onUpdate(float dt, Scene* scene)-> void
-	{
-		if (Application::get()->getEditorState() == EditorState::Play) 
-		{
-			auto view = scene->getRegistry().view<component::MonoComponent>();
-			for (auto v : view)
-			{
-				auto& mono = scene->getRegistry().get<component::MonoComponent>(v);
-				for (auto & script : mono.getScripts())
-				{
-					script.second->onUpdate(dt,this);
-				}
-			}
-		}
-	}
-
-	auto MonoSystem::onImGui() -> void
-	{
-
-	}
-
-
-	MonoSystem::~MonoSystem()
-	{
-		
-	}
-
 };

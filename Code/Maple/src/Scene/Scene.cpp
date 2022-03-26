@@ -8,11 +8,14 @@
 #include "Scene/Component/CameraControllerComponent.h"
 #include "Scene/Component/Light.h"
 #include "Scene/Component/MeshRenderer.h"
-#include "Scene/Component/Sprite.h"
+#include "2d/Sprite.h"
 #include "Scene/Component/Transform.h"
 #include "Scene/Component/VolumetricCloud.h"
 #include "Scene/Component/BoundingBox.h"
 #include "Scene/Component/LightProbe.h"
+
+#include "Scripts/Mono/MonoSystem.h"
+#include "Scripts/Mono/MonoComponent.h"
 
 #include "FileSystem/Skeleton.h"
 
@@ -183,14 +186,20 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 
-		auto camsEttView = getRegistry().group<Camera>(entt::get<component::Transform>);   //entityManager->getEntitiesWithTypes<Camera, Transform>();
+		using CameraQuery = ecs::Chain
+			::Write<Camera>
+			::Write<component::Transform>
+			::To<ecs::Query>;
 
-		if (!camsEttView.empty() && useSceneCamera)
+		CameraQuery query{ getRegistry(),globalEntity };
+
+		if (useSceneCamera)
 		{
-			Entity     entity(camsEttView.front(), getRegistry());
-			Camera &   sceneCam   = entity.getComponent<Camera>();
-			component::Transform &sceneCamTr = entity.getComponent<component::Transform>();
-			return {&sceneCam, &sceneCamTr};
+			for (auto entity : query)
+			{
+				auto & [sceneCam, sceneCamTr] = query.convert(entity);
+				return { &sceneCam, &sceneCamTr };
+			}
 		}
 		return {overrideCamera, overrideTransform};
 	}
@@ -277,29 +286,41 @@ namespace maple
 	auto Scene::onInit() -> void
 	{
 		PROFILE_FUNCTION();
-
 		if (initCallback != nullptr)
 		{
 			initCallback(this);
 		}
-		Application::get()->getSystemManager()->getSystem<MonoSystem>()->onStart(this);
+		using MonoQuery = ecs::Chain
+			::Write<component::MonoComponent>
+			::To<ecs::Query>;
+
+		MonoQuery query{getRegistry(),globalEntity};
+		mono::recompile(query);
+		mono::callMonoStart(query);
 	}
 
 	auto Scene::onClean() -> void
 	{
 	}
+	
+	using ControllerQuery = ecs::Chain
+		::Write<component::CameraControllerComponent>
+		::Write<component::Transform>
+		::To<ecs::Query>;
 
 	auto Scene::updateCameraController(float dt) -> void
 	{
 		PROFILE_FUNCTION();
-		auto controller = entityManager->getRegistry().group<component::CameraControllerComponent>(entt::get<component::Transform>);
-		for (auto entity : controller)
+
+		ControllerQuery query(entityManager->getRegistry(), globalEntity);
+
+		for (auto entity : query)
 		{
+			auto [con, trans] = query.convert(entity);
 			const auto mousePos = Input::getInput()->getMousePosition();
-			auto &[con, trans]  = controller.get<component::CameraControllerComponent, component::Transform>(entity);
 			if (Application::get()->isSceneActive() &&
-			    Application::get()->getEditorState() == EditorState::Play &&
-			    con.getController())
+				Application::get()->getEditorState() == EditorState::Play &&
+				con.getController())
 			{
 				con.getController()->handleMouse(trans, dt, mousePos.x, mousePos.y);
 				con.getController()->handleKeyboard(trans, dt);
@@ -315,11 +336,5 @@ namespace maple
 		updateCameraController(dt);
 		getBoundingBox();
 		sceneGraph->update(entityManager->getRegistry());
-		auto view = entityManager->getRegistry().view<component::AnimatedSprite, component::Transform>();
-		for (auto entity : view)
-		{
-			const auto &[anim, trans] = view.get<component::AnimatedSprite, component::Transform>(entity);
-			anim.onUpdate(dt);
-		}
 	}
 };        // namespace maple

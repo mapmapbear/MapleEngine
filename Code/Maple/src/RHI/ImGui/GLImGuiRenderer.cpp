@@ -35,7 +35,6 @@ namespace maple
 
 	auto GLImGuiRenderer::render(CommandBuffer *commandBuffer) -> void
 	{
-		ImGui::Render();
 		if (clearScreen)
 		{
 			GLCall(glClear(GL_COLOR_BUFFER_BIT));

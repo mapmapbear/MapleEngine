@@ -9,7 +9,7 @@
 #include "Scene/Component/Component.h"
 #include "Scene/Component/Light.h"
 #include "Scene/Component/MeshRenderer.h"
-#include "Scene/Component/Sprite.h"
+#include "2d/Sprite.h"
 #include "Scene/Component/Transform.h"
 #include "Scene/Component/VolumetricCloud.h"
 #include "Scene/Component/LightProbe.h"
@@ -792,7 +792,7 @@ namespace MM
 				{
 					if (ImGui::Selectable(entry.path().string().c_str()))
 					{
-						mono.addScript(entry.path().string(), Application::get()->getSystemManager()->getSystem<MonoSystem>());
+						mono.addScript(entry.path().string());
 					}
 				}
 			}
@@ -1126,7 +1126,7 @@ namespace maple
 			{
 				auto &mono = registry.get_or_emplace<component::MonoComponent>(ent);
 				mono.setEntity(ent);
-				mono.addScript(fileName, Application::get()->getSystemManager()->getSystem<MonoSystem>());
+				mono.addScript(fileName);
 			}
 			else if (StringUtils::isLuaFile(fileName)) 
 			{
