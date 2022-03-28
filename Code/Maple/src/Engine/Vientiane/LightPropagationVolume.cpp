@@ -157,7 +157,7 @@ namespace maple
 					lpv.cellSize = maxValue / lpv.gridSize;
 					lpv.gridDimension = size / lpv.cellSize;
 					glm::ceil(lpv.gridDimension);
-					lpv.gridDimension = glm::min(lpv.gridDimension, {32,32,32});
+					lpv.gridDimension = glm::min(lpv.gridDimension, {  lpv.gridSize ,lpv.gridSize ,lpv.gridSize });
 
 					updateGrid(lpv, aabb.box);
 
@@ -299,9 +299,9 @@ namespace maple
 
 				PipelineInfo pipelineInfo;
 				pipelineInfo.shader = data.shader;
-				pipelineInfo.groupCountX = 32 / data.shader->getLocalSizeX();
-				pipelineInfo.groupCountY = 32 / data.shader->getLocalSizeY();
-				pipelineInfo.groupCountZ = 32 / data.shader->getLocalSizeZ();
+				pipelineInfo.groupCountX = lpv.gridSize / data.shader->getLocalSizeX();
+				pipelineInfo.groupCountY = lpv.gridSize / data.shader->getLocalSizeY();
+				pipelineInfo.groupCountZ = lpv.gridSize / data.shader->getLocalSizeZ();
 				auto pipeline = Pipeline::get(pipelineInfo);
 				pipeline->bind(rendererData.commandBuffer);
 				for (auto i = 1; i <= lpv.propagateCount; i++)

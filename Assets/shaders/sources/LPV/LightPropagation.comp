@@ -132,6 +132,7 @@ void main()
 				vec4 greenOccCoeffs2 = texelFetch2(uGeometryVolumeG, neighbourCellIndex);
 				vec4 blueOccCoeffs2 = texelFetch2(uGeometryVolumeB, neighbourCellIndex);
 
+				//vec3 occCoord = (vec3( neighbourGScellIndex.xyz ) + 0.5 * mainDirection) / v_gridDim; 
 				vec4 redOccCoeffs = (redOccCoeffs1 + redOccCoeffs2) / 2.0;
 				vec4 greenOccCoeffs = (greenOccCoeffs1 + greenOccCoeffs2) / 2.0;
 				vec4 blueOccCoeffs  = (blueOccCoeffs1 + blueOccCoeffs2) / 2.0;

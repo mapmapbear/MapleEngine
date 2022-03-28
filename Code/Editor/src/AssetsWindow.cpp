@@ -46,6 +46,9 @@ namespace maple
 	auto AssetsWindow::onImGui() -> void
 	{
 		auto &editor = static_cast<Editor &>(*Application::get());
+
+		//ImGui::PushStyleColor(ImGuiCol_ChildBg, ImVec4(1.0f, 0.4f, 0.4f, 1.0f));
+
 		ImGui::Begin(STATIC_NAME);
 		{
 			ImGui::Columns(2, "AB", true);
@@ -191,6 +194,8 @@ namespace maple
 
 			ImGui::End();
 		}
+
+		//ImGui::PopStyleColor();
 	}
 
 	auto AssetsWindow::drawFile(FileInfo *file, bool folder, int32_t shownIndex, bool gridView, bool &clickAny, bool &isClickDir) -> bool

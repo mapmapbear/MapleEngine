@@ -95,41 +95,17 @@ namespace maple
 				return nullptr;
 			};
 
-			inline auto getCurrentId() const
-			{
-				return currentFrame;
-			};
-
 			inline auto getDelay() const
 			{
 				auto frame = getCurrentFrame();
 				return frame ? frame->delay : 0;
 			};
 
-			inline auto getTimer() const
-			{
-				return frameTimer;
-			};
-
-			inline auto setCurrentFrame(uint32_t frame)
-			{
-				currentFrame = frame;
-			}
-
 			inline auto getFrames() const -> int32_t
 			{
 				return animationFrames.size();
 			};
-
-			inline auto setLoop(bool val)
-			{
-				loop = val;
-			}
-			inline auto isLoop() const
-			{
-				return loop;
-			}
-
+		
 			inline auto getWidth() const
 			{
 				auto frame = getCurrentFrame();

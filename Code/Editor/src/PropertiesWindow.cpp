@@ -227,7 +227,7 @@ namespace MM
 		auto& shadowMap = reg.get<component::ShadowMapData>(e);
 		ImGui::Columns(2);
 		ImGui::Separator();
-		ImGuiHelper::property("Cascade Split Lambda", shadowMap.cascadeSplitLambda);
+		ImGuiHelper::property("Cascade Split Lambda", shadowMap.cascadeSplitLambda,0,1,ImGuiHelper::PropertyFlag::DragFloat,"%.4f",0.001);
 		ImGui::Columns(1);
 	}
 
@@ -249,6 +249,7 @@ namespace MM
 		ImGui::Separator();
 		ImGuiHelper::property("Indirect Light Attenuation", lpv.indirectLightAttenuation, 0.f, 2.f, maple::ImGuiHelper::PropertyFlag::DragFloat);
 		ImGuiHelper::property("OcclusionAmplifier", lpv.occlusionAmplifier, 0.f, 100.f, maple::ImGuiHelper::PropertyFlag::DragFloat);
+		ImGuiHelper::property("Propagate Count", lpv.propagateCount,1, 16);
 		ImGuiHelper::showProperty("CellSize", std::to_string(lpv.cellSize));
 		ImGuiHelper::property("DebugAABB", lpv.debugAABB);
 		if(lpv.debugAABB)
@@ -524,22 +525,19 @@ namespace MM
 
 		ImGui::Columns(2);
 
-		auto frame = sprite.getCurrentId();
-		if (ImGuiHelper::property("Frame", frame, 0, sprite.getFrames() - 1))
+		if (ImGuiHelper::property("Frame", sprite.currentFrame, 0, sprite.getFrames() - 1))
 		{
-			sprite.setCurrentFrame(frame);
+		
 		}
-		bool loop = sprite.isLoop();
-		if (ImGuiHelper::property("Loop", loop))
+		if (ImGuiHelper::property("Loop", sprite.loop))
 		{
-			sprite.setLoop(loop);
 		}
 
 		auto delay = sprite.getDelay();
 		if (ImGuiHelper::inputFloat("Delay", delay))
 		{}
 
-		auto timer = sprite.getTimer();
+		auto timer = sprite.frameTimer;
 		if (ImGuiHelper::inputFloat("Timer", timer))
 		{}
 

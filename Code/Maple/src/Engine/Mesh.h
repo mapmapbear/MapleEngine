@@ -126,8 +126,10 @@ namespace maple
 		static auto createSphere(uint32_t xSegments = 64, uint32_t ySegments = 64) -> std::shared_ptr<Mesh>;
 		static auto createPlane(float w, float h, const glm::vec3 &normal) -> std::shared_ptr<Mesh>;
 
-		static auto generateNormals(std::vector<Vertex> &vertices, const std::vector<uint32_t> &indices) -> void;
-		static auto generateTangents(std::vector<Vertex> &vertices, const std::vector<uint32_t> &indices) -> void;
+		template<typename T>
+		static auto generateNormals(std::vector<T>& vertices, const std::vector<uint32_t>& indices) -> void;
+		template<typename T>
+		static auto generateTangents(std::vector<T> &vertices, const std::vector<uint32_t> &indices) -> void;
 
 		inline auto& getBlendIndices(int32_t index)
 		{
@@ -167,4 +169,80 @@ namespace maple
 		/// Skinned mesh index buffer (max 4 per bone)
 		std::vector<glm::vec4> blendWeights;
 	};
+
+	template<typename T>
+	auto Mesh::generateTangents(std::vector<T>& vertices, const std::vector<uint32_t>& indices) -> void
+	{
+		std::vector<glm::vec3> tangents(vertices.size());
+
+		if (!indices.empty())
+		{
+			for (uint32_t i = 0; i < indices.size(); i += 3)
+			{
+				int a = indices[i];
+				int b = indices[i + 1];
+				int c = indices[i + 2];
+
+				const auto tangent =
+					generateTangent(vertices[a].pos, vertices[b].pos, vertices[c].pos, vertices[a].texCoord, vertices[b].texCoord, vertices[c].texCoord);
+
+				tangents[a] += tangent;
+				tangents[b] += tangent;
+				tangents[c] += tangent;
+			}
+		}
+		else
+		{
+			for (uint32_t i = 0; i < vertices.size(); i += 3)
+			{
+				const auto tangent =
+					generateTangent(vertices[i].pos, vertices[i + 1].pos, vertices[i + 2].pos, vertices[i].texCoord, vertices[i + 1].texCoord, vertices[i + 2].texCoord);
+
+				tangents[i] += tangent;
+				tangents[i + 1] += tangent;
+				tangents[i + 2] += tangent;
+			}
+		}
+		for (uint32_t i = 0; i < vertices.size(); ++i)
+		{
+			vertices[i].tangent = glm::normalize(tangents[i]);
+		}
+	}
+
+	template<typename T>
+	auto Mesh::generateNormals(std::vector<T>& vertices, const std::vector<uint32_t>& indices) -> void
+	{
+		std::vector<glm::vec3> normals(vertices.size());
+
+		if (!indices.empty())
+		{
+			for (uint32_t i = 0; i < indices.size(); i += 3)
+			{
+				const auto a = indices[i];
+				const auto b = indices[i + 1];
+				const auto c = indices[i + 2];
+				const auto normal = glm::cross((vertices[b].pos - vertices[a].pos), (vertices[c].pos - vertices[a].pos));
+				normals[a] += normal;
+				normals[b] += normal;
+				normals[c] += normal;
+			}
+		}
+		else
+		{
+			for (uint32_t i = 0; i < vertices.size(); i += 3)
+			{
+				auto& a = vertices[i];
+				auto& b = vertices[i + 1];
+				auto& c = vertices[i + 2];
+				const auto normal = glm::cross(b.pos - a.pos, c.pos - a.pos);
+				normals[i] = normal;
+				normals[i + 1] = normal;
+				normals[i + 2] = normal;
+			}
+		}
+		for (uint32_t i = 0; i < normals.size(); ++i)
+		{
+			vertices[i].normal = glm::normalize(normals[i]);
+		}
+	}
 };        // namespace maple

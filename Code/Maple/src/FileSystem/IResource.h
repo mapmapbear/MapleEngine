@@ -31,6 +31,7 @@ namespace maple
 		Material,
 		Animation,
 		Skeleton,
+		AnimCtrl,
 		//for gizmo
 		Lighting,
 		Camera,
@@ -67,6 +68,7 @@ namespace maple
 			STR(Skeleton);
 			STR(Lighting);
 			STR(Camera);
+			STR(AnimCtrl);
 			STR(Length);
 #undef STR
 		default:
@@ -98,6 +100,7 @@ namespace maple
 
 		"editor-icons/icons8-animation-85.png",          //Animation
 		"editor-icons/icons8-skeleton-64.png",        //Skeleton
+		"editor-icons/icon8-animation-controller.png",        //AnimCtrl
 
 		"editor-icons/light.png",
 		"editor-icons/camera.png",
@@ -124,6 +127,7 @@ namespace maple
 	    {"glb", FileType::Model},
 	    {"gltf", FileType::Model},
 	    {"dll", FileType::Dll},
+		{"controller",FileType::AnimCtrl},
 	    {"material", FileType::Material},
 	    {"so", FileType::Dll}};
 

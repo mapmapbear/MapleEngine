@@ -9,17 +9,17 @@ namespace maple
 {
 	auto Renderer::bindDescriptorSets(Pipeline *pipeline, CommandBuffer *cmdBuffer, uint32_t dynamicOffset, const std::vector<std::shared_ptr<DescriptorSet>> &descriptorSets) -> void
 	{
-		Application::getRenderDevice()->bindDescriptorSets(pipeline, cmdBuffer, dynamicOffset, descriptorSets);
+		RenderDevice::bindDescriptorSets(pipeline, cmdBuffer, dynamicOffset, descriptorSets);
 	}
 
 	auto Renderer::drawIndexed(CommandBuffer *commandBuffer, DrawType type, uint32_t count, uint32_t start) -> void
 	{
-		Application::getRenderDevice()->drawIndexed(commandBuffer, type, count, start);
+		RenderDevice::drawIndexed(commandBuffer, type, count, start);
 	}
 
 	auto Renderer::drawArrays(CommandBuffer* commandBuffer, DrawType type, uint32_t count, uint32_t start /*= 0*/) -> void
 	{
-		Application::getRenderDevice()->drawArrays(commandBuffer, type, count, start);
+		RenderDevice::drawArrays(commandBuffer, type, count, start);
 	}
 
 	auto Renderer::dispatch(CommandBuffer* commandBuffer, uint32_t x, uint32_t y, uint32_t z) -> void
@@ -36,7 +36,7 @@ namespace maple
 	{
 		mesh->getVertexBuffer()->bind(cmdBuffer, pipeline);
 		mesh->getIndexBuffer()->bind(cmdBuffer);
-		Application::getRenderDevice()->drawIndexed(cmdBuffer, DrawType::Triangle, mesh->getIndexBuffer()->getCount());
+		RenderDevice::drawIndexed(cmdBuffer, DrawType::Triangle, mesh->getIndexBuffer()->getCount());
 		mesh->getVertexBuffer()->unbind();
 		mesh->getIndexBuffer()->unbind();
 	}

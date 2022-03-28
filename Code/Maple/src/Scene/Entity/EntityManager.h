@@ -32,10 +32,10 @@ namespace maple
 
 		auto getEntityByName(const std::string &name) -> Entity;
 
-		template <typename R, typename T>
+		template <typename R, typename ...T>
 		inline auto addDependency() -> void
 		{
-			registry.on_construct<R>().connect<&entt::registry::get_or_emplace<T>>();
+			(registry.on_construct<R>().connect<&entt::registry::get_or_emplace<T>>(), ...);
 		}
 
 		inline auto &getRegistry()

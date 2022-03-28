@@ -18,7 +18,7 @@ namespace maple
 		{
 			constexpr static char* ICON = ICON_MDI_BOX_SHADOW;
 
-			constexpr static int32_t SHADOW_SIZE = 512;
+			constexpr static int32_t SHADOW_SIZE = 256;
 
 			bool                                        enable = false;
 			std::shared_ptr<Shader>                     shader;

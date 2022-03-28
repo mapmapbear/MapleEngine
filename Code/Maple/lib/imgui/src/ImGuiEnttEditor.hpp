@@ -217,7 +217,7 @@ namespace MM {
 
 				if (!has_not.empty()) {
 					ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 5);
-					if (ImGui::Button("+ Add Component")) {
+					if (ImGui::Button("+ Add Component ")) {
 						ImGui::OpenPopup("Add Component");
 					}
 
@@ -228,7 +228,6 @@ namespace MM {
 						}
 						ImGui::EndDragDropTarget();
 					}
-
 
 					ImGui::PopStyleVar();
 
