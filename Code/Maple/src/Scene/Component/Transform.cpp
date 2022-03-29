@@ -148,7 +148,14 @@ namespace maple
 			return localScale;
 		}
 
-		auto Transform::setOffsetTransform(const glm::mat4 & localMat) -> void
+		auto Transform::createMatrix(const glm::vec3& pos, const glm::quat& rotation) ->glm::mat4
+		{
+			auto localMatrix = glm::translate(glm::mat4(1), pos);
+			localMatrix *= glm::toMat4(rotation);
+			return localMatrix;
+		}
+
+		auto Transform::setOffsetTransform(const glm::mat4& localMat) -> void
 		{
 			offsetMatrix = localMat;
 		}

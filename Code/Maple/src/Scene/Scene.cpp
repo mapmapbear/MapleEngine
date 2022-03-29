@@ -248,7 +248,7 @@ namespace maple
 		auto  name = StringUtils::getFileNameWithoutExtension(file);
 		auto  modelEntity = createEntity(name);
 		auto& model = modelEntity.addComponent<component::Model>(file);
-		if (model.resource->getMeshes().size() == 1)
+		if (model.resource->getMeshes().size() == 1 && model.skeleton == nullptr)
 		{
 			modelEntity.addComponent<component::MeshRenderer>(model.resource->getMeshes().begin()->second);
 		}

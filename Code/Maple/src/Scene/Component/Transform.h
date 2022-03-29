@@ -123,6 +123,8 @@ namespace maple
 				initLocalOrientation = localOrientation;
 			}
 
+			static auto createMatrix(const glm::vec3& pos, const glm::quat& rotation)->glm::mat4;
+
 		  protected:
 			glm::mat4 localMatrix = glm::mat4(1);
 			glm::mat4 worldMatrix = glm::mat4(1);

@@ -15,7 +15,7 @@
 	{                                                    \
 		if (!(condition))                                \
 		{                                                \
-			LOGE("Assertion Failed : {0}", __VA_ARGS__); \
+			LOGE("Assertion Failed : {0} . {1} : {2}", __VA_ARGS__, __FUNCTION__,__LINE__); \
 			__debugbreak();                              \
 		}                                                \
 	}

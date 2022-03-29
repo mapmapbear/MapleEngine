@@ -4,6 +4,8 @@
 
 #include "Skeleton.h"
 #include "Others/HashCode.h"
+#include "Others/Console.h"
+#include "Engine/Core.h"
 
 #include <algorithm>
 
@@ -26,6 +28,7 @@ namespace maple
 
 	auto Skeleton::getBoneIndex(const std::string& name) -> int32_t
 	{
+		MAPLE_ASSERT(name != "", "name should be null");
 		for (auto & bone : bones)
 		{
 			if (bone.name == name)
