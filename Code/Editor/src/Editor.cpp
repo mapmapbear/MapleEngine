@@ -33,6 +33,8 @@
 #include "Scene/Component/Light.h"
 #include "2d/Sprite.h"
 #include "Scene/Component/Transform.h"
+#include "Scene/Component/BoundingBox.h"
+
 #include "Scene/Entity/Entity.h"
 #include "Scene/Entity/EntityManager.h"
 #include "Scene/Scene.h"
@@ -284,22 +286,24 @@ namespace maple
 			ImGuizmo::SetOrthographic(camera->isOrthographic());
 
 			auto &registry  = sceneManager->getCurrentScene()->getRegistry();
-			auto  transform = registry.try_get < component::Transform > (selectedNode);
+			auto  transform = registry.try_get < component::Transform >(selectedNode);
 			if (transform != nullptr)
 			{
 				auto model = transform->getWorldMatrix();
 
 				float delta[16];
+				float box[6] = {};
 
 				ImGuizmo::Manipulate(
-				    glm::value_ptr(view),
-				    glm::value_ptr(proj),
-				    static_cast<ImGuizmo::OPERATION>(imGuizmoOperation),
-				    ImGuizmo::LOCAL,
-				    glm::value_ptr(model),
-				    delta,
-				    nullptr);
-
+					glm::value_ptr(view),
+					glm::value_ptr(proj),
+					static_cast<ImGuizmo::OPERATION>(imGuizmoOperation),
+					ImGuizmo::WORLD,
+					glm::value_ptr(model),
+					delta,
+					nullptr
+				);
+			
 				if (ImGuizmo::IsUsing())
 				{
 					if (static_cast<ImGuizmo::OPERATION>(imGuizmoOperation) == ImGuizmo::OPERATION::SCALE)

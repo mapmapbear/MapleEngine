@@ -41,12 +41,14 @@ namespace maple
 		inline auto getPath() const->std::string { return filePath; }
 		inline auto getHashCode()->size_t { if (hashCode == -1) buildHash(); return hashCode; }
 		inline auto hasBones() const { return !bones.empty(); }
-
+		inline auto isBuildOffset() const { return buildOffset; }
+		inline auto setBuildOffset(bool b) { buildOffset = b; }
 	private:
 		std::vector<Bone> bones;
 		int32_t root = -1;
 		std::string filePath;
 		size_t hashCode = -1;
+		bool buildOffset = false;
 	};
 
 }

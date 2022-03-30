@@ -44,7 +44,7 @@ namespace maple
 {
 	namespace
 	{
-		inline auto addEntity(Scene * scene, Entity parent, Skeleton* skeleton, int32_t idx) -> Entity
+		inline auto addEntity(Scene* scene, Entity parent, Skeleton* skeleton, int32_t idx, std::vector<Entity> & outEntities) -> Entity
 		{
 			auto& bone = skeleton->getBone(idx);
 			auto entity = scene->createEntity(bone.name);
@@ -60,8 +60,9 @@ namespace maple
 
 			for (auto child : bone.children)
 			{
-				addEntity(scene, entity, skeleton, child);
+				addEntity(scene, entity, skeleton, child,outEntities);
 			}
+			outEntities.emplace_back(entity);
 			return entity;
 		}
 	}
@@ -256,8 +257,19 @@ namespace maple
 		{
 			if (model.skeleton)
 			{
+				std::vector<Entity> outEntities;
 				model.skeleton->buildRoot();
-				auto rootEntity = addEntity(this, modelEntity, model.skeleton.get(), model.skeleton->getRoot());
+				auto rootEntity = addEntity(this, modelEntity, model.skeleton.get(), model.skeleton->getRoot(), outEntities);
+
+				if (model.skeleton->isBuildOffset())
+				{
+					sceneGraph->updateTransform(modelEntity, getRegistry());
+					for (auto entity : outEntities)
+					{
+						auto& transform = entity.getComponent<component::Transform>();
+						transform.setOffsetTransform(transform.getWorldMatrixInverse());
+					}
+				}
 			}
 
 			for (auto& mesh : model.resource->getMeshes())

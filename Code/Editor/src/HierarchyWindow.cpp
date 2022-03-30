@@ -9,6 +9,8 @@
 
 #include "Engine/Camera.h"
 #include "Engine/Mesh.h"
+
+#include "Scene/Component/BoundingBox.h"
 #include "Scene/Component/Component.h"
 #include "Scene/Component/Light.h"
 #include "Scene/Component/MeshRenderer.h"
@@ -101,7 +103,7 @@ namespace maple
 						{
 							auto entity                       = scene->createEntity(name);
 							entity.addComponent<component::Model>().type = component::PrimitiveType::Cube;
-							auto &meshRender                  = entity.addComponent<component::MeshRenderer>(Mesh::createCube());
+							auto& meshRender = entity.addComponent<component::MeshRenderer>(Mesh::createCube());
 						}
 
 						if (strcmp("Sphere", name) == 0)
