@@ -85,6 +85,9 @@ namespace maple
 		class MAPLE_EXPORT Hierarchy : public Component
 		{
 		public:
+			constexpr static char* ICON = ICON_MDI_TREE;
+
+
 			Hierarchy(entt::entity p);
 			Hierarchy();
 

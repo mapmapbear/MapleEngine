@@ -16,7 +16,7 @@
 #include "Math/MathUtils.h"
 
 #include <vector>
-#include <mio.hpp>
+#include <mio/mmap.hpp>
 #include <ofbx.h>
 
 namespace maple
@@ -610,7 +610,7 @@ namespace maple
 		}
 	}
 
-	auto FBXLoader::load(const std::string& fileName, const std::string& extension, std::vector<std::shared_ptr<IResource>>& outRes) -> void
+	auto FBXLoader::load(const std::string& fileName, const std::string& extension, std::vector<std::shared_ptr<IResource>>& outRes) const -> void
 	{
 		mio::mmap_source mmap(fileName);
 		MAPLE_ASSERT(mmap.is_open(), "open fbx file failed");

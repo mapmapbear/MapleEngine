@@ -10,6 +10,6 @@ namespace maple
 	{
 	public:
 		static constexpr char* EXTENSIONS[] = {"gltf","glb"};
-		auto load(const std::string& fileName, const std::string& extension, std::vector<std::shared_ptr<IResource>>& out) -> void override;
+		auto load(const std::string& fileName, const std::string& extension, std::vector<std::shared_ptr<IResource>>& out)const -> void override;
 	};
 };

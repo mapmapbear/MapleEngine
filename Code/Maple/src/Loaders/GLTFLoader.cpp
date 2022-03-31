@@ -497,7 +497,7 @@ namespace maple
 	}
 	
 
-	auto GLTFLoader::load(const std::string& obj, const std::string& extension, std::vector<std::shared_ptr<IResource>>& out)-> void
+	auto GLTFLoader::load(const std::string& obj, const std::string& extension, std::vector<std::shared_ptr<IResource>>& out) const -> void
 	{
 		PROFILE_FUNCTION();
 		auto name = StringUtils::getFileNameWithoutExtension(obj);

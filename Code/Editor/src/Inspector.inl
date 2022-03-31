@@ -46,5 +46,6 @@ namespace maple
 		TRIVIAL_COMPONENT(component::Animator, true, "Animator");
 		TRIVIAL_COMPONENT(component::FinalPass, false, "FinalPass");
 		TRIVIAL_COMPONENT(component::SkyboxData, false, "Skybox");
+		TRIVIAL_COMPONENT(component::Hierarchy, false, "Hierarchy");
 	}
 }

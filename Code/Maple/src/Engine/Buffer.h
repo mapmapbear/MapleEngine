@@ -109,12 +109,13 @@ namespace maple
 	};
 
 
-	struct BinaryReader
+	class BinaryReader
 	{
+	private:
 		const uint8_t* data;
 		uint32_t size;
 		uint32_t offset;
-
+	public:
 		BinaryReader(const uint8_t* data, uint32_t size) :
 			data(data), size(size), offset(0)
 		{
@@ -123,6 +124,8 @@ namespace maple
 		template <typename T>
 		inline auto& read()
 		{
+			MAPLE_ASSERT(offset + sizeof(T) <= this->size, "Index out of bounds");
+
 			T & t = *(T*)((uint8_t*)data + offset);
 			offset += sizeof(T);
 			return t;
@@ -130,6 +133,8 @@ namespace maple
 
 		inline auto readVec2() -> glm::vec2
 		{
+			MAPLE_ASSERT(offset + sizeof(glm::vec2) <= this->size, "Index out of bounds");
+
 			glm::vec2 vec = {};
 			vec.x = read<float>();
 			vec.y = read<float>();
@@ -138,6 +143,7 @@ namespace maple
 
 		inline auto readVec3() -> glm::vec3
 		{
+			MAPLE_ASSERT(offset + sizeof(glm::vec3) <= this->size, "Index out of bounds");
 			glm::vec3 vec = {};
 			vec.x = read<float>();
 			vec.y = read<float>();
@@ -147,6 +153,7 @@ namespace maple
 
 		inline auto readVec4() -> glm::vec4
 		{
+			MAPLE_ASSERT(offset + sizeof(glm::vec4) <= this->size, "Index out of bounds");
 			glm::vec4 vec = {};
 			vec.x = read<float>();
 			vec.y = read<float>();
@@ -170,5 +177,4 @@ namespace maple
 			offset += size;
 		}
 	};
-
 }        // namespace maple

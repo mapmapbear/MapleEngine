@@ -93,6 +93,30 @@ namespace MM
 		ImGui::Columns(1);
 	}
 
+
+	template <>
+	inline auto ComponentEditorWidget<component::Hierarchy>(entt::registry& reg, entt::registry::entity_type e) -> void
+	{
+		auto& data = reg.get<component::Hierarchy>(e);
+
+		auto getName = [&](entt::entity entity) -> std::string
+		{
+			if (entity == entt::null)
+			{
+				return "Null";
+			}
+			return reg.get<component::NameComponent>(entity).name + "( " + std::to_string((uint32_t)entity) + " )";
+		};
+
+		ImGui::Columns(2);
+		ImGui::Separator();
+		ImGuiHelper::showProperty("Prev", getName(data.getPrev()));
+		ImGuiHelper::showProperty("Next", getName(data.getNext()));
+		ImGuiHelper::showProperty("Frist", getName(data.getFirst()));
+		ImGuiHelper::showProperty("Parent", getName(data.getParent()));
+		ImGui::Columns(1);
+	}
+
 	template <>
 	inline auto ComponentEditorWidget<component::Animator>(entt::registry& reg, entt::registry::entity_type e) -> void
 	{

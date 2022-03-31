@@ -108,6 +108,26 @@ namespace maple
 		auto getChildInChildren(const std::string &name) -> Entity;
 		auto getParent() -> Entity;
 		auto getChildren() -> std::vector<Entity>;
+
+		template <typename T>
+		inline auto getChildrenByComponent()->std::vector<Entity>
+		{
+			std::vector<Entity> children;
+			auto                hierarchyComponent = tryGetComponent<component::Hierarchy>();
+			if (hierarchyComponent)
+			{
+				entt::entity child = hierarchyComponent->getFirst();
+				while (child != entt::null && registry->valid(child) && registry->template has<T>(child))
+				{
+					children.emplace_back(child, *registry);
+					hierarchyComponent = registry->try_get<component::Hierarchy>(child);
+					if (hierarchyComponent)
+						child = hierarchyComponent->getNext();
+				}
+			}
+			return children;
+		}
+
 		auto removeAllChildren() -> void;
 
 		auto isParent(const Entity &potentialParent) const -> bool;

@@ -40,6 +40,7 @@ namespace maple
 	struct AnimationCurveWrapper
 	{
 		std::string path;
+		int32_t boneIndex = -1;
 		std::vector<AnimationCurveProperty> properties;
 	};
 

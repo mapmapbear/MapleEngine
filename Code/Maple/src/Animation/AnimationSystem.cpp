@@ -7,6 +7,8 @@
 
 #include "Scene/Entity/Entity.h"
 #include "Scene/Component/Transform.h"
+#include "Scene/Component/MeshRenderer.h"
+
 #include "Math/MathUtils.h"
 
 #include <algorithm>
@@ -16,9 +18,18 @@ namespace maple
 {
 	namespace animation 
 	{
+
+
 		using Entity = ecs::Chain
 			::Write<component::Animator>
 			::To<ecs::Entity>;
+
+		inline auto findByBoneIndex(Entity entity, int32_t bone)
+		{
+			auto currentEntity = entity.castTo<maple::Entity>();
+			auto entites = currentEntity.getChildrenByComponent<component::BoneComponent>();
+		
+		}
 
 		inline auto sample(Entity entity, 
 			component::Animator & animator, 
@@ -39,7 +50,17 @@ namespace maple
 				auto target = state.targets[i];
 				if (target == nullptr)
 				{
-					auto find = currentEntity.findByPath(curve.path);
+					maple::Entity find;
+
+					if (curve.boneIndex == -1)
+					{
+						find = currentEntity.findByPath(curve.path);
+					}
+					else 
+					{
+						
+					}
+
 					if (find.valid())
 					{
 						target = find.tryGetComponent<component::Transform>();

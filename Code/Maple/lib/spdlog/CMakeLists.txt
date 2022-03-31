@@ -5,9 +5,9 @@
 
 cmake_minimum_required(VERSION 3.1)
 project(spdlog VERSION 1.3.0 LANGUAGES CXX)
-include(CTest)
-include(CMakeDependentOption)
-include(GNUInstallDirs)
+#include(CTest)
+#include(CMakeDependentOption)
+#include(GNUInstallDirs)
 
 #---------------------------------------------------------------------------------------
 # set default build to release
@@ -51,13 +51,13 @@ if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
   set(SPDLOG_MASTER_PROJECT ON)
 endif()
 
-option(SPDLOG_BUILD_EXAMPLES "Build examples" ${SPDLOG_MASTER_PROJECT})
-option(SPDLOG_BUILD_BENCH "Build benchmarks" ${SPDLOG_MASTER_PROJECT})
+#option(SPDLOG_BUILD_EXAMPLES "Build examples" ${SPDLOG_MASTER_PROJECT})
+#option(SPDLOG_BUILD_BENCH "Build benchmarks" ${SPDLOG_MASTER_PROJECT})
 
-cmake_dependent_option(SPDLOG_BUILD_TESTING
-    "Build spdlog tests" ${SPDLOG_MASTER_PROJECT}
-    "BUILD_TESTING" OFF
-)
+#cmake_dependent_option(SPDLOG_BUILD_TESTING
+#    "Build spdlog tests" ${SPDLOG_MASTER_PROJECT}
+#    "BUILD_TESTING" OFF
+#)
 
 target_include_directories(
     spdlog
@@ -94,10 +94,10 @@ set(targets_export_name "${PROJECT_NAME}Targets")
 set(namespace "${PROJECT_NAME}::")
 
 # generate package version file
-include(CMakePackageConfigHelpers)
-write_basic_package_version_file(
-    "${version_config}" COMPATIBILITY SameMajorVersion
-)
+#include(CMakePackageConfigHelpers)
+#write_basic_package_version_file(
+#    "${version_config}" COMPATIBILITY SameMajorVersion
+#)
 
 # configure pkg config file
 configure_file("cmake/spdlog.pc.in" "${pkg_config}" @ONLY)

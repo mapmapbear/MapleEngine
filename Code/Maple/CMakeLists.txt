@@ -36,6 +36,7 @@ add_subdirectory(lib/nativefiledialog)
 add_subdirectory(lib/imgui-node-editor)
 add_subdirectory(lib/libiconv)
 add_subdirectory(lib/OpenFBX)
+add_subdirectory(lib/mio)
 
 file(GLOB_RECURSE SHADERS_GLSL 
 	${ASSET_SHADER_DIR}/*.vert 
@@ -149,6 +150,7 @@ endif()
 if (${Target} MATCHES "Windows")
 
 	add_compile_options("/std:c++17")
+	add_compile_options("/MP")
 	add_definitions(
 		-D_CRT_SECURE_NO_WARNINGS 
 		-D_CRT_RAND_S 
@@ -171,8 +173,7 @@ else()
 	add_library(MapleEngine STATIC ${VK_APP_SRC} ${KTX_SOURCES} ${SHADERS_GLSL} ${IMGUI_SRC})
 endif()
 
-	SET_TARGET_PROPERTIES(MapleEngine PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${ASSET_DIR})
-	#set(LIBRARY_OUTPUT_PATH ${ASSET_DIR})
+	set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 
 	target_include_directories(MapleEngine PUBLIC
 		src
@@ -227,6 +228,7 @@ endif()
 		imgui-node-editor
 		iconv
 		OpenFBX
+		mio
 	)
 
 find_package(OpenMP)

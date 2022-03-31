@@ -25,7 +25,7 @@ namespace maple
 	class MAPLE_EXPORT AssetsLoader
 	{
 	public:
-		virtual auto load(const std::string& fileName, const std::string & extension, std::vector<std::shared_ptr<IResource>>& out) -> void {};
+		virtual auto load(const std::string& fileName, const std::string & extension, std::vector<std::shared_ptr<IResource>>& out) const -> void {};
 	private:
 	};
 

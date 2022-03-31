@@ -34,7 +34,7 @@ namespace maple
 	}
 
 
-	auto OBJLoader::load(const std::string& fileName, const std::string& extension, std::vector<std::shared_ptr<IResource>>& out) -> void
+	auto OBJLoader::load(const std::string& fileName, const std::string& extension, std::vector<std::shared_ptr<IResource>>& out) const -> void
 	{
 		PROFILE_FUNCTION();
 		std::string resolvedPath = fileName;

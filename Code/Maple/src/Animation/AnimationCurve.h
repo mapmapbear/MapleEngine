@@ -5,10 +5,11 @@
 #pragma once
 
 #include <vector>
+#include "Engine/Core.h"
 
 namespace maple
 {
-	class AnimationCurve
+	class MAPLE_EXPORT AnimationCurve
 	{
 	private:
 		struct Key
