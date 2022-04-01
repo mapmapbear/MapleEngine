@@ -298,19 +298,30 @@ namespace maple
 				recentDroppedEntity = entt::null;
 			}
 
-			std::string icon    = ICON_MDI_CUBE_OUTLINE;
-			auto &      iconMap = editor->getComponentIconMap();
+
+			std::string icon = ICON_MDI_CUBE;
 
 			if (registry.has<component::Light>(node))
 			{
-				if (iconMap.find(typeid(component::Light).hash_code()) != iconMap.end())
-					icon = iconMap[typeid(component::Light).hash_code()];
+				icon = component::Light::ICON;
 			}
 			else if (registry.has<Camera>(node))
 			{
-				if (iconMap.find(typeid(Camera).hash_code()) != iconMap.end())
-					icon = iconMap[typeid(Camera).hash_code()];
+				icon = Camera::ICON;
 			}
+			else if (registry.has<component::SkinnedMeshRenderer>(node)) 
+			{
+				icon = component::SkinnedMeshRenderer::ICON;
+			}
+			else if (registry.has<component::MeshRenderer>(node))
+			{
+				icon = component::MeshRenderer::ICON;
+			}
+			else if (registry.has<component::BoneComponent>(node))
+			{
+				icon = component::BoneComponent::ICON;
+			}
+
 
 			bool nodeOpen = ImGui::TreeNodeEx((void *) (intptr_t) entt::to_integral(node), nodeFlags, (icon + " %s").c_str(), doubleClicked ? "" : (name).c_str());
 

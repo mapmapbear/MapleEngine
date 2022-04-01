@@ -18,17 +18,23 @@ namespace maple
 {
 	namespace animation 
 	{
-
-
 		using Entity = ecs::Chain
 			::Write<component::Animator>
 			::To<ecs::Entity>;
 
-		inline auto findByBoneIndex(Entity entity, int32_t bone)
+		inline auto findByBoneIndex(maple::Entity entity, int32_t boneIdx) -> maple::Entity
 		{
-			auto currentEntity = entity.castTo<maple::Entity>();
-			auto entites = currentEntity.getChildrenByComponent<component::BoneComponent>();
-		
+			std::vector<maple::Entity> entites;
+			entity.flatChildren<component::BoneComponent>(entites);
+			for (auto ent : entites)
+			{
+				auto & bone = ent.getComponent<component::BoneComponent>();
+				if (bone.boneIndex == boneIdx)
+				{
+					return ent;
+				}
+			}
+			return {};
 		}
 
 		inline auto sample(Entity entity, 
@@ -58,7 +64,7 @@ namespace maple
 					}
 					else 
 					{
-						
+						find = findByBoneIndex(currentEntity, curve.boneIndex);
 					}
 
 					if (find.valid())

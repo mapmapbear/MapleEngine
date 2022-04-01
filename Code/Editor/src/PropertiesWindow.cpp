@@ -97,23 +97,38 @@ namespace MM
 	template <>
 	inline auto ComponentEditorWidget<component::Hierarchy>(entt::registry& reg, entt::registry::entity_type e) -> void
 	{
+		auto editor = static_cast<maple::Editor*>(Application::get());
+
 		auto& data = reg.get<component::Hierarchy>(e);
 
 		auto getName = [&](entt::entity entity) -> std::string
 		{
 			if (entity == entt::null)
 			{
-				return "Null";
+				return "";
 			}
-			return reg.get<component::NameComponent>(entity).name + "( " + std::to_string((uint32_t)entity) + " )";
+			return reg.get<component::NameComponent>(entity).name;
 		};
 
 		ImGui::Columns(2);
 		ImGui::Separator();
-		ImGuiHelper::showProperty("Prev", getName(data.getPrev()));
-		ImGuiHelper::showProperty("Next", getName(data.getNext()));
-		ImGuiHelper::showProperty("Frist", getName(data.getFirst()));
-		ImGuiHelper::showProperty("Parent", getName(data.getParent()));
+
+		ImGuiHelper::hyperLink("Prev", getName(data.getPrev()), " Entity id:" + std::to_string((uint32_t)data.getPrev()), [&]() {
+			editor->setSelected(data.getPrev());
+		});
+
+		ImGuiHelper::hyperLink("Next", getName(data.getNext()), " Entity id:" + std::to_string((uint32_t)data.getNext()), [&]() {
+			editor->setSelected(data.getNext());
+		});
+
+		ImGuiHelper::hyperLink("First", getName(data.getFirst()), " Entity id:" + std::to_string((uint32_t)data.getFirst()), [&]() {
+			editor->setSelected(data.getFirst());
+		});
+
+		ImGuiHelper::hyperLink("Parent", getName(data.getParent()), " Entity id:" + std::to_string((uint32_t)data.getParent()), [&]() {
+			editor->setSelected(data.getParent());
+		});
+
 		ImGui::Columns(1);
 	}
 
@@ -129,7 +144,8 @@ namespace MM
 
 		ImGuiHelper::property("File", label, true);
 		ImGuiHelper::acceptFile([&](const std::string & file) {
-			if (StringUtils::isFBXFile(file))
+			auto ext = StringUtils::getExtension(file);
+			if (Application::getAssetsLoaderFactory()->getSupportExtensions().count(ext) >= 1)
 			{
 				std::vector<std::shared_ptr<IResource>> outRes;
 				Loader::load(file, outRes);

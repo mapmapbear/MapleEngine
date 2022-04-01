@@ -30,6 +30,9 @@ namespace maple
 		MAPLE_EXPORT auto property(const std::string& name, bool& value) -> bool;
 		MAPLE_EXPORT auto showProperty(const std::string& name, const std::string& value) -> void;
 		MAPLE_EXPORT auto property(const std::string &name, std::string &value, bool disable = false) -> bool;
+		MAPLE_EXPORT auto hyperLink(const std::string& name, const std::string& value, const std::string & hint, const std::function<void()> & callback) -> void;
+
+
 
 		MAPLE_EXPORT auto property(const std::string &name, float &value, float min = -1.0f, float max = 1.0f, PropertyFlag flags = PropertyFlag::None, const char *format = "%.3f", float speed = 1.f) -> bool;
 		MAPLE_EXPORT auto propertyWithDefault(const std::string &name, float &value, float min = -1.0f, float max = 1.0f, float defaultValue = 0.f, PropertyFlag flags = PropertyFlag::None, float speed = 1.f) -> bool;

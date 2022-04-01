@@ -110,22 +110,22 @@ namespace maple
 		auto getChildren() -> std::vector<Entity>;
 
 		template <typename T>
-		inline auto getChildrenByComponent()->std::vector<Entity>
+		inline auto flatChildren(std::vector<Entity> & children) -> void
 		{
-			std::vector<Entity> children;
-			auto                hierarchyComponent = tryGetComponent<component::Hierarchy>();
+			auto hierarchyComponent = tryGetComponent<component::Hierarchy>();
 			if (hierarchyComponent)
 			{
 				entt::entity child = hierarchyComponent->getFirst();
 				while (child != entt::null && registry->valid(child) && registry->template has<T>(child))
 				{
 					children.emplace_back(child, *registry);
+					Entity childEntity = { child, *registry };
+					childEntity.flatChildren<T>(children);
 					hierarchyComponent = registry->try_get<component::Hierarchy>(child);
 					if (hierarchyComponent)
 						child = hierarchyComponent->getNext();
 				}
 			}
-			return children;
 		}
 
 		auto removeAllChildren() -> void;
@@ -172,6 +172,7 @@ namespace maple
 		entt::entity    entityHandle = entt::null;
 		entt::registry *registry     = nullptr;
 		friend class EntityManager;
+
 	};
 
 };        // namespace maple

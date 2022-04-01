@@ -14,6 +14,15 @@ namespace maple
 {
 	namespace ImGuiHelper
 	{
+
+		inline void addUnderLine(ImColor col)
+		{
+			ImVec2 min = ImGui::GetItemRectMin();
+			ImVec2 max = ImGui::GetItemRectMax();
+			min.y = max.y;
+			ImGui::GetWindowDrawList()->AddLine(min, max, col, 1.0f);
+		}
+
 		auto tooltip(const char *str) -> void
 		{
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(5, 5));
@@ -249,6 +258,37 @@ namespace maple
 			return updated;
 		}
 
+		auto hyperLink(const std::string& name, const std::string& value, const std::string& hint, const std::function<void()>& callback) -> void
+		{
+			ImGui::TextUnformatted(name.c_str());
+			ImGui::NextColumn();
+			ImGui::PushItemWidth(-1);
+			
+			ImGui::Text(value.c_str());
+
+			if (value != "") 
+			{
+				if (ImGui::IsItemHovered())
+				{
+					if (ImGui::IsMouseClicked(0))
+					{
+						if (callback != nullptr) 
+						{
+							callback();
+						}
+					}
+					addUnderLine(ImColor{ 238,83,23,255 });
+					ImGui::SetTooltip(ICON_MDI_LINK "%s", hint.c_str());
+				}
+				else
+				{
+					addUnderLine(ImColor{ 197,210,233,255 });
+				}
+			}
+			ImGui::PopItemWidth();
+			ImGui::NextColumn();
+		}
+
 		auto showProperty(const std::string& name, const std::string& value) -> void
 		{
 			ImGui::TextUnformatted(name.c_str());
@@ -258,7 +298,6 @@ namespace maple
 			ImGui::PopItemWidth();
 			ImGui::NextColumn();
 		}
-
 	
 		auto propertyWithDefault(const std::string& name, float& value, float min /*= -1.0f*/, float max /*= 1.0f*/, float defaultValue /*= 0.f*/, PropertyFlag flags /*= PropertyFlag::None*/, float speed) -> bool
 		{
