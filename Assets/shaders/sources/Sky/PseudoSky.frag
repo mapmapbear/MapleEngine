@@ -83,7 +83,6 @@ void main()
 	raySphereintersectionSkyMap(worldDir, 0.5, cubeMapEndPos);
 
 	vec4 bg = colorCubeMap(cubeMapEndPos, worldDir);
-	vec2 red = vec2(1.0);
 
 	outColor = vec4(bg.rgb,1.0);
 }

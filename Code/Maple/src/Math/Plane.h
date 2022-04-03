@@ -7,7 +7,7 @@
 #include <glm/glm.hpp>
 namespace maple
 {
-	class MAPLE_EXPORT Plane final
+	class Plane final
 	{
 	  public:
 		inline constexpr Plane() :
