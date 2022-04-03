@@ -65,7 +65,6 @@ namespace maple
 		class MAPLE_EXPORT SkinnedMeshRenderer : public Component 
 		{
 		public:
-			constexpr static char* ICON = ICON_MDI_HUMAN;
 			SkinnedMeshRenderer(const std::shared_ptr<Mesh>& mesh);
 			SkinnedMeshRenderer() = default;
 
@@ -107,7 +106,6 @@ namespace maple
 		class MAPLE_EXPORT BoneComponent : public Component
 		{
 		public:
-			constexpr static char* ICON = ICON_MDI_BONE;
 
 			int32_t boneIndex;
 			Skeleton* skeleton;
@@ -116,7 +114,6 @@ namespace maple
 		class MAPLE_EXPORT MeshRenderer : public Component
 		{
 		public:
-			constexpr static char* ICON = ICON_MDI_SHAPE;
 
 			MeshRenderer() = default;
 			MeshRenderer(const std::shared_ptr<Mesh>& mesh);

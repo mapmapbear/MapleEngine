@@ -16,7 +16,6 @@ namespace maple
 		class MAPLE_EXPORT Sprite : public Component
 		{
 		public:
-			constexpr static char* ICON = ICON_MDI_IMAGE;
 
 			Sprite();
 			Sprite(const std::string& uniqueName, const std::vector<uint8_t>& data, uint32_t width, uint32_t height);
@@ -67,7 +66,6 @@ namespace maple
 		class MAPLE_EXPORT AnimatedSprite : public Sprite
 		{
 		public:
-			constexpr static char* ICON = ICON_MDI_IMAGE_AREA;
 
 			struct AnimationFrame
 			{

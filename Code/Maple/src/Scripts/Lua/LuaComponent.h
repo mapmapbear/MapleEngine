@@ -26,7 +26,6 @@ namespace maple
 		class MAPLE_EXPORT LuaComponent : public Component
 		{
 		public:
-			constexpr static char* ICON = ICON_MDI_LANGUAGE_LUA;
 
 			friend class MetaFile;
 			LuaComponent(const std::string& file, Scene* scene);

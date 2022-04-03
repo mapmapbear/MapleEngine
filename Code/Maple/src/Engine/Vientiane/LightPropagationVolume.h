@@ -7,7 +7,6 @@
 #include "Scene/System/ExecutePoint.h"
 #include "RHI/Texture.h"
 #include <vector>
-#include <IconsMaterialDesignIcons.h>
 
 namespace maple
 {
@@ -15,8 +14,6 @@ namespace maple
 	{
 		struct LPVGrid
 		{
-			constexpr static char* ICON = ICON_MDI_GRID_LARGE;
-
 			std::shared_ptr<Texture3D> lpvGridR;
 			std::shared_ptr<Texture3D> lpvGridG;
 			std::shared_ptr<Texture3D> lpvGridB;

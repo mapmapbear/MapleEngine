@@ -47,33 +47,6 @@ namespace maple
 		}
 	}
 
-	component::SSRData::SSRData()
-	{
-		ssrShader = Shader::create("shaders/SSR.shader");
-		ssrDescriptorSet = DescriptorSet::create({ 0, ssrShader.get() });
-	}
-
-	component::SSAOData::SSAOData()
-	{
-		ssaoShader = Shader::create("shaders/SSAO.shader");
-		ssaoBlurShader = Shader::create("shaders/SSAOBlur.shader");
-
-		DescriptorInfo info{};
-		ssaoSet.resize(1);
-		ssaoBlurSet.resize(1);
-
-		info.shader = ssaoShader.get();
-		info.layoutIndex = 0;
-		ssaoSet[0] = DescriptorSet::create(info);
-
-		info.shader = ssaoBlurShader.get();
-		info.layoutIndex = 0;
-		ssaoBlurSet[0] = DescriptorSet::create(info);
-
-		auto ssao = ssaoKernel();
-		ssaoSet[0]->setUniformBufferData("UBOSSAOKernel", ssao.data());
-	}
-
 	namespace ssao_pass
 	{
 		using Entity = ecs::Chain
@@ -223,14 +196,35 @@ namespace maple
 	{
 		auto registerSSAOPass(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void
 		{
-			executePoint->registerGlobalComponent<component::SSAOData>();
+			executePoint->registerGlobalComponent<component::SSAOData>([](auto & ssao){
+				ssao.ssaoShader = Shader::create("shaders/SSAO.shader");
+				ssao.ssaoBlurShader = Shader::create("shaders/SSAOBlur.shader");
+
+				DescriptorInfo info{};
+				ssao.ssaoSet.resize(1);
+				ssao.ssaoBlurSet.resize(1);
+
+				info.shader = ssao.ssaoShader.get();
+				info.layoutIndex = 0;
+				ssao.ssaoSet[0] = DescriptorSet::create(info);
+
+				info.shader = ssao.ssaoBlurShader.get();
+				info.layoutIndex = 0;
+				ssao.ssaoBlurSet[0] = DescriptorSet::create(info);
+
+				auto ssaoKernel2 = ssaoKernel();
+				ssao.ssaoSet[0]->setUniformBufferData("UBOSSAOKernel", ssaoKernel2.data());
+			});
 			executePoint->registerWithinQueue<ssao_pass::system>(renderer);
 			executePoint->registerWithinQueue<ssao_blur_pass::system>(renderer);
 		}
 
 		auto registerSSR(ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void
 		{
-			executePoint->registerGlobalComponent<component::SSRData>();
+			executePoint->registerGlobalComponent<component::SSRData>([](auto & ssr) {
+				ssr.ssrShader = Shader::create("shaders/SSR.shader");
+				ssr.ssrDescriptorSet = DescriptorSet::create({ 0, ssr.ssrShader.get() });
+			});
 			executePoint->registerWithinQueue<ssr_pass::system>(renderer);
 		}
 	};

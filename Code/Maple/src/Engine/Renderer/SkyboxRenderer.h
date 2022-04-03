@@ -13,10 +13,8 @@ namespace maple
 
 	namespace component
 	{
-		struct MAPLE_EXPORT SkyboxData
+		struct SkyboxData
 		{
-			static constexpr char* ICON = ICON_MDI_HEART_CIRCLE;
-
 			struct UniformBufferObject
 			{
 				glm::mat4 invProj;
@@ -50,8 +48,6 @@ namespace maple
 
 			int32_t cubeMapMode = 0;
 			float   cubeMapLevel = 0;
-
-			SkyboxData();
 		};
 	}
 	

@@ -3,7 +3,6 @@
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "Engine/Core.h"
-#include <IconsMaterialDesignIcons.h>
 #include <entt/entt.hpp>
 #include <glm/vec3.hpp>
 #include <string>
@@ -21,8 +20,6 @@ namespace maple
 
 		struct DeltaTime 
 		{
-			constexpr static char* ICON = ICON_MDI_TIMELAPSE;
-
 			float dt;
 		};
 
@@ -85,8 +82,6 @@ namespace maple
 		class MAPLE_EXPORT Hierarchy : public Component
 		{
 		public:
-			constexpr static char* ICON = ICON_MDI_TREE;
-
 
 			Hierarchy(entt::entity p);
 			Hierarchy();
@@ -138,7 +133,6 @@ namespace maple
 		class MAPLE_EXPORT Environment : public Component
 		{
 		public:
-			constexpr static char* ICON = ICON_MDI_EARTH;
 
 			static constexpr int32_t IrradianceMapSize = 32;
 			static constexpr int32_t PrefilterMapSize = 128;

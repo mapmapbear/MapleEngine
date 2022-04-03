@@ -80,18 +80,14 @@ namespace maple
 	{
 		auto registerFinalPass(ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void
 		{
-			executePoint->registerGlobalComponent<component::FinalPass>();
+			executePoint->registerGlobalComponent<component::FinalPass>([](component::FinalPass & data) {
+				data.finalShader = Shader::create("shaders/ScreenPass.shader");
+				DescriptorInfo descriptorInfo{};
+				descriptorInfo.layoutIndex = 0;
+				descriptorInfo.shader = data.finalShader.get();
+				data.finalDescriptorSet = DescriptorSet::create(descriptorInfo);
+			});
 			executePoint->registerWithinQueue<final_screen_pass::system>(renderer);
 		}
 	};
-
-	component::FinalPass::FinalPass()
-	{
-		finalShader = Shader::create("shaders/ScreenPass.shader");
-		DescriptorInfo descriptorInfo{};
-		descriptorInfo.layoutIndex = 0;
-		descriptorInfo.shader = finalShader.get();
-		finalDescriptorSet = DescriptorSet::create(descriptorInfo);
-	}
-
 };        // namespace maple

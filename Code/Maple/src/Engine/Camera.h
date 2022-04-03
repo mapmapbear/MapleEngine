@@ -14,7 +14,6 @@ namespace maple
 	class MAPLE_EXPORT Camera : public component::Component
 	{
 	  public:
-		constexpr static char *ICON = ICON_MDI_CAMERA;
 		Camera()                    = default;
 		Camera(float fov, float near, float far, float aspect);
 		Camera(float aspectRatio, float scale);

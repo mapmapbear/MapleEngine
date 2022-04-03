@@ -15,7 +15,6 @@ namespace maple
 		class MAPLE_EXPORT CameraControllerComponent : public Component
 		{
 		public:
-			constexpr static char* ICON = ICON_MDI_CONTROLLER_CLASSIC;
 
 			enum class ControllerType : int32_t
 			{

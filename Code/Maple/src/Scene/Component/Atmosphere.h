@@ -17,8 +17,6 @@ namespace maple
 			constexpr static glm::vec3 RAYLEIGH_SCATTERING = glm::vec3(58e-7f, 135e-7f, 331e-7f);
 			constexpr static glm::vec3 MIE_SCATTERING = glm::vec3(2.2e-5f);
 
-			constexpr static char* ICON = ICON_MDI_WEATHER_SUNNY;
-
 			Atmosphere() = default;
 
 			struct AtmosphereData

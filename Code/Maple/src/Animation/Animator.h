@@ -26,7 +26,6 @@ namespace maple
 		class Animator : public Component
 		{
 		public:
-			constexpr static char* ICON = ICON_MDI_ANIMATION;
 			float time = 0;
 			float seekTo = -1;
 			bool paused = false;

@@ -4,7 +4,6 @@
 #pragma once
 #include <memory>
 #include "Scene/System/ExecutePoint.h"
-#include <IconsMaterialDesignIcons.h>
 
 namespace maple
 {
@@ -13,9 +12,8 @@ namespace maple
 
 	namespace component
 	{
-		struct MAPLE_EXPORT SSAOData
+		struct SSAOData
 		{
-			constexpr static char* ICON = ICON_MDI_BOX_SHADOW;
 			std::shared_ptr<Shader>                     ssaoShader;
 			std::shared_ptr<Shader>                     ssaoBlurShader;
 			std::vector<std::shared_ptr<DescriptorSet>> ssaoSet;
@@ -23,19 +21,15 @@ namespace maple
 			bool  enable = false;
 			float bias = 0.025;
 			float ssaoRadius = 0.25f;
-			SSAOData();
 		};
 
-		struct MAPLE_EXPORT SSRData
+		struct SSRData
 		{
 			bool                           enable = false;
 			std::shared_ptr<DescriptorSet> ssrDescriptorSet;
 			std::shared_ptr<Shader>        ssrShader;
-			SSRData();
 		};
 	};
-
-
 
 	namespace post_process
 	{

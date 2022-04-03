@@ -203,6 +203,7 @@ endif()
 		${ENGINE_LIB_SRC_DIR}/imgui-node-editor
 		${ENGINE_LIB_SRC_DIR}/tinygltf
 		${ENGINE_LIB_SRC_DIR}/mio
+		${ENGINE_LIB_SRC_DIR}/IconFontCppHeaders
 	)
 
 	target_link_libraries(MapleEngine 

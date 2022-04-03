@@ -14,7 +14,6 @@ namespace maple
 		class VolumetricCloud : public Component
 		{
 		public:
-			constexpr static char* ICON = ICON_MDI_WEATHER_CLOUDY;
 
 			float cloudSpeed = 450.0;
 			float coverage = 0.45;

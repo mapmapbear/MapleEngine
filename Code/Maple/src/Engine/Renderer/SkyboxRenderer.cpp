@@ -49,61 +49,7 @@ namespace maple
 			}
 			return "";
 		}
-
-		SkyboxData::SkyboxData()
-		{
-			pseudoSkyshader = Shader::create("shaders/PseudoSky.shader");
-			pseudoSkydescriptorSet = DescriptorSet::create({ 0, pseudoSkyshader.get() });
-			screenMesh = Mesh::createQuad(true);
-			skyboxShader = Shader::create("shaders/Skybox.shader");
-			descriptorSet = DescriptorSet::create({ 0, skyboxShader.get() });
-			skyboxMesh = Mesh::createCube();
-
-			irradianceMap = TextureCube::create(1);
-			environmentMap = irradianceMap;
-
-			irradianceMap->setName("uIrradianceSampler");
-			irradianceMap->setName("uEnvironmentSampler");
-
-			prefilterRenderer = std::make_shared<PrefilterRenderer>();
-			prefilterRenderer->init();
-			memset(&skyUniformObject, 0, sizeof(UniformBufferObject));
-		}
 	}        // namespace
-/*
-	auto SkyboxRenderer::onImGui() -> void
-	{
-		ImGui::Separator();
-		ImGui::TextUnformatted("SkyboxRenderer");
-		ImGui::Separator();
-		ImGui::Columns(2);
-
-		ImGui::TextUnformatted("CubeMap LodLevel");
-		ImGui::NextColumn();
-		ImGui::PushItemWidth(-1);
-
-		ImGui::DragFloat("##CubeMap LodLevel", &skyboxData.cubeMapLevel, 0.5f, 0.0f, 4.0f);
-
-		ImGui::PopItemWidth();
-		ImGui::NextColumn();
-
-		ImGui::Columns(1);
-
-		if (ImGui::BeginMenu(cubeMapModeToString(skyboxData.cubeMapMode).c_str()))
-		{
-			constexpr int32_t numModes = 3;
-
-			for (int32_t i = 0; i < numModes; i++)
-			{
-				if (ImGui::MenuItem(cubeMapModeToString(i).c_str(), "", skyboxData.cubeMapMode == i, true))
-				{
-					skyboxData.cubeMapMode = i;
-				}
-			}
-			ImGui::EndMenu();
-		}
-	}
-	*/
 
 	namespace skybox_pass
 	{
@@ -255,7 +201,24 @@ namespace maple
 	{
 		auto registerSkyboxRenderer(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void
 		{
-			executePoint->registerGlobalComponent<component::SkyboxData>();
+			executePoint->registerGlobalComponent<component::SkyboxData>([](auto & skybox) {
+				skybox.pseudoSkyshader = Shader::create("shaders/PseudoSky.shader");
+				skybox.pseudoSkydescriptorSet = DescriptorSet::create({ 0,skybox.pseudoSkyshader.get() });
+				skybox.screenMesh = Mesh::createQuad(true);
+				skybox.skyboxShader = Shader::create("shaders/Skybox.shader");
+				skybox.descriptorSet = DescriptorSet::create({ 0, skybox.skyboxShader.get() });
+				skybox.skyboxMesh = Mesh::createCube();
+
+				skybox.irradianceMap = TextureCube::create(1);
+				skybox.environmentMap = skybox.irradianceMap;
+
+				skybox.irradianceMap->setName("uIrradianceSampler");
+				skybox.irradianceMap->setName("uEnvironmentSampler");
+
+				skybox.prefilterRenderer = std::make_shared<PrefilterRenderer>();
+				skybox.prefilterRenderer->init();
+				memset(&skybox.skyUniformObject, 0, sizeof(component::SkyboxData::UniformBufferObject));
+			});
 			executePoint->registerWithinQueue<skybox_pass::beginScene>(begin);
 			executePoint->registerWithinQueue<skybox_pass::onRender>(renderer);
 		}

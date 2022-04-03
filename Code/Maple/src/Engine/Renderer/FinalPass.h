@@ -3,7 +3,6 @@
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include <memory>
-#include <IconsMaterialDesignIcons.h>
 #include "Scene/System/ExecutePoint.h"
 
 namespace maple
@@ -14,16 +13,13 @@ namespace maple
 
 	namespace component
 	{
-		struct MAPLE_EXPORT FinalPass
+		struct FinalPass
 		{
-			constexpr static char* ICON = ICON_MDI_SCREEN_ROTATION;
-
 			std::shared_ptr<Shader>        finalShader;
 			std::shared_ptr<DescriptorSet> finalDescriptorSet;
 			std::shared_ptr<Texture> renderTarget;
 			float exposure = 1.0;
 			int32_t toneMapIndex = 1;
-			FinalPass();
 		};
 	}
 

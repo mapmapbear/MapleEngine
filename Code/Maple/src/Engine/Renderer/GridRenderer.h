@@ -13,8 +13,6 @@ namespace maple
 	{
 		struct GridRender
 		{
-			constexpr static char* ICON = ICON_MDI_GRID;
-
 			bool enable = true;
 		};
 	}

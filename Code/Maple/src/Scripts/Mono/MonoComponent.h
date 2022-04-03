@@ -15,7 +15,6 @@ namespace maple
 		class MAPLE_EXPORT MonoComponent : public Component
 		{
 		public:
-			constexpr static char* ICON = ICON_MDI_LANGUAGE_CSHARP;
 
 			auto addScript(const std::string& name) -> void;
 			auto remove(const std::string& script) -> void;

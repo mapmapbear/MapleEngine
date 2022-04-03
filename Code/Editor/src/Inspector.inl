@@ -2,20 +2,15 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "Animation/Animator.h"
-#include "Engine/Vientiane/ReflectiveShadowMap.h"
-#include "Engine/Vientiane/LightPropagationVolume.h"
-#include "Engine/Renderer/FinalPass.h"
-#include "Engine/Renderer/PostProcessRenderer.h"
-#include "Engine/Renderer/SkyboxRenderer.h"
-#include "Scene/Component/BoundingBox.h"
-#include "Scripts/Lua/LuaComponent.h"
+
+#include "Engine/IconsDefine.inl"
+
 
 namespace maple
 {
 #define TRIVIAL_COMPONENT(ComponentType, show, showName)         \
 	{                                                            \
-		std::string name = ComponentType::ICON;                  \
+		std::string name = ICON<ComponentType>;                  \
 		name += "\t";                                            \
 		name += showName;;                                       \
 		enttEditor.registerComponent<ComponentType>(name, show); \

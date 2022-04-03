@@ -8,16 +8,13 @@
 #include "RHI/Shader.h"
 #include "Scene/System/ExecutePoint.h"
 
-#include <IconsMaterialDesignIcons.h>
 
 namespace maple
 {
 	namespace component
 	{
-		struct MAPLE_EXPORT ReflectiveShadowData
+		struct ReflectiveShadowData
 		{
-			constexpr static char* ICON = ICON_MDI_BOX_SHADOW;
-
 			constexpr static int32_t SHADOW_SIZE = 256;
 
 			bool                                        enable = false;
@@ -32,13 +29,10 @@ namespace maple
 			glm::mat4									projView;
 			glm::mat4									lightMatrix;
 			float										lightArea = 1.0f;
-			ReflectiveShadowData();
 		};
 
-		struct MAPLE_EXPORT ShadowMapData
+		struct ShadowMapData
 		{
-			constexpr static char* ICON = ICON_MDI_TEXT_SHADOW;
-
 			float cascadeSplitLambda    = 0.995f;
 			float sceneRadiusMultiplier = 1.4f;
 			float lightSize             = 1.5f;
@@ -63,8 +57,6 @@ namespace maple
 			std::vector<RenderCommand>         cascadeCommandQueue[SHADOWMAP_MAX];
 			std::shared_ptr<Shader>            shader;
 			std::shared_ptr<TextureDepthArray> shadowTexture;
-
-			ShadowMapData();
 		};
 	}        // namespace component
 

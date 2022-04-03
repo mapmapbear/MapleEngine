@@ -28,6 +28,9 @@
 
 #include "Others/Console.h"
 #include "imgui_internal.h"
+
+#include "Engine/IconsDefine.inl"
+
 constexpr size_t INPUT_BUFFER = 256;
 
 namespace maple
@@ -303,25 +306,24 @@ namespace maple
 
 			if (registry.has<component::Light>(node))
 			{
-				icon = component::Light::ICON;
+				icon = ICON<component::Light>;
 			}
 			else if (registry.has<Camera>(node))
 			{
-				icon = Camera::ICON;
+				icon = ICON<Camera>;
 			}
 			else if (registry.has<component::SkinnedMeshRenderer>(node)) 
 			{
-				icon = component::SkinnedMeshRenderer::ICON;
+				icon = ICON<component::SkinnedMeshRenderer>;
 			}
 			else if (registry.has<component::MeshRenderer>(node))
 			{
-				icon = component::MeshRenderer::ICON;
+				icon = ICON<component::MeshRenderer>;
 			}
 			else if (registry.has<component::BoneComponent>(node))
 			{
-				icon = component::BoneComponent::ICON;
+				icon = ICON<component::BoneComponent>;
 			}
-
 
 			bool nodeOpen = ImGui::TreeNodeEx((void *) (intptr_t) entt::to_integral(node), nodeFlags, (icon + " %s").c_str(), doubleClicked ? "" : (name).c_str());
 
@@ -341,6 +343,8 @@ namespace maple
 				ImGui::PopStyleColor();
 
 			bool deleteEntity = false;
+			ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 10.f);
+
 			if (ImGui::BeginPopupContextItem(name.c_str()))
 			{
 				if (ImGui::Selectable("Copy"))
@@ -396,6 +400,8 @@ namespace maple
 				ImGui::EndPopup();
 			}
 
+			ImGui::PopStyleVar();
+
 			draging = false;
 			if (!doubleClicked && ImGui::BeginDragDropSource(ImGuiDragDropFlags_None))
 			{
@@ -449,12 +455,6 @@ namespace maple
 			if (ImGui::IsMouseDoubleClicked(0) && ImGui::IsItemHovered(ImGuiHoveredFlags_None))
 			{
 				doubleClickedEntity = node;
-				/*if (Application::Get().GetEditorState() == EditorState::Preview)
-				{
-					auto transform = registry.try_get<Maths::Transform>(node);
-					if (transform)
-						editor.FocusCamera(transform->GetWorldPosition(), 2.0f, 2.0f);
-				}*/
 			}
 
 			if (deleteEntity)
