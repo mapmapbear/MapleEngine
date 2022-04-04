@@ -97,6 +97,13 @@ namespace maple
 			[](unsigned char c) { return std::tolower(c); });
 	}
 
+	auto StringUtils::toLower2(std::string data) -> std::string
+	{
+		std::transform(data.begin(), data.end(), data.begin(),
+			[](unsigned char c) { return std::tolower(c); });
+		return data;
+	}
+
 	auto StringUtils::replaceExtension(const std::string& path, const std::string& extension) ->std::string
 	{
 		return removeExtension(path) + extension;
@@ -131,8 +138,16 @@ namespace maple
 		return ret;
 	}
 
-	auto StringUtils::startWith(const std::string& str, const std::string& start) -> bool
+	auto StringUtils::startWith(const std::string& str, const std::string& start, bool ignoreCase) -> bool
 	{
+		if (ignoreCase)
+		{
+			auto input = str;
+			toLower(input);
+			return input.compare(0, start.size(), toLower2(start)) == 0;
+		}
+		if (start.length() > str.length())
+			return false;
 		return str.compare(0, start.size(), start) == 0;
 	}
 
@@ -141,8 +156,16 @@ namespace maple
 		return str.find(start) != std::string::npos;
 	}
 
-	auto StringUtils::endWith(const std::string& str, const std::string& start) -> bool
+	auto StringUtils::endWith(const std::string& str, const std::string& start, bool ignoreCase ) -> bool
 	{
+		if (ignoreCase) 
+		{
+			auto input = str;
+			toLower(input);
+			return input.compare(str.length() - start.length(), start.size(), toLower2(start)) == 0;
+		}
+		if (start.length() > str.length()) 
+			return false;
 		return str.compare(str.length() - start.length(), start.size(), start) == 0;
 	}
 

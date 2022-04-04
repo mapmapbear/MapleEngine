@@ -28,13 +28,15 @@ namespace maple
 		static auto split(std::string input, const std::string& delimiter)->std::vector<std::string>;
 		static auto split(std::u16string input, const std::u16string& delimiter, std::vector<std::u16string>& outs) -> void;
 		static auto split(std::string input, const std::string& delimiter, std::vector<std::string>& outs) -> void;
-		static auto startWith(const std::string& str, const std::string& start) -> bool;
+		static auto startWith(const std::string& str, const std::string& start,bool ignoreCase = false) -> bool;
 		static auto contains(const std::string& str, const std::string& start) -> bool;
-		static auto endWith(const std::string& str, const std::string& start) -> bool;
+		static auto endWith(const std::string& str, const std::string& start, bool ignoreCase = false) -> bool;
 		static auto trim(std::string& str,const std::string & trimStr = " ") -> void;
 		static auto trim(std::u16string& str) -> void;
 		static auto replace(std::string& str, const std::string& old, const std::string& newStr) -> void;
 		static auto toLower(std::string& data) -> void;
+		static auto toLower2(std::string data) -> std::string;
+
 		static auto replaceExtension(const std::string & path, const std::string & extension)->std::string;
 		static auto isEmptyOrWhitespace(const std::string& str) -> bool;
 		static auto getExtension(const std::string& fileName) -> std::string;
