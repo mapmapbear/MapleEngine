@@ -25,6 +25,16 @@
 
 namespace maple
 {
+
+	namespace component 
+	{
+		struct ComputeBloom 
+		{
+			std::shared_ptr<DescriptorSet> bloomDescriptorSet;
+			std::shared_ptr<Shader>        bloomShader;
+		};
+	}
+
 	namespace
 	{
 		inline auto ssaoKernel() -> const std::vector<glm::vec4>
@@ -192,6 +202,110 @@ namespace maple
 		}
 	}
 
+
+	namespace bloom_pass
+	{
+		using Entity2 = ecs::Chain
+			::Write<component::ComputeBloom>
+			::Read<component::RendererData>
+			::Write<capture_graph::component::RenderGraph>
+			::Read<component::WindowSize>
+			::To<ecs::Entity>;
+
+		inline auto computeBloom(Entity2 entity, ecs::World world)
+		{
+			auto [bloomData, render, graph,winSize] = entity;
+
+			bloomData.bloomDescriptorSet->setTexture("uScreenSampler", render.gbuffer->getBuffer(GBufferTextures::SCREEN));
+			bloomData.bloomDescriptorSet->update();
+
+			auto commandBuffer = render.commandBuffer;
+
+			PipelineInfo pipeInfo;
+			pipeInfo.shader = bloomData.bloomShader;
+			pipeInfo.polygonMode = PolygonMode::Fill;
+			pipeInfo.cullMode = CullMode::None;
+			pipeInfo.transparencyEnabled = false;
+			pipeInfo.depthBiasEnabled = false;
+			pipeInfo.clearTargets = true;
+			pipeInfo.depthTest = false;
+			pipeInfo.colorTargets[0] = render.gbuffer->getBuffer( GBufferTextures::BLOOM_SCREEN);
+
+			auto pipeline = Pipeline::get(pipeInfo, { bloomData.bloomDescriptorSet }, graph);
+
+			if (commandBuffer)
+				commandBuffer->bindPipeline(pipeline.get());
+			else
+				pipeline->bind(commandBuffer);
+
+			Renderer::bindDescriptorSets(pipeline.get(), commandBuffer, 0, { bloomData.bloomDescriptorSet });
+			Renderer::drawMesh(commandBuffer, pipeline.get(), render.screenQuad.get());
+
+			if (commandBuffer)
+				commandBuffer->unbindPipeline();
+			else
+				pipeline->end(commandBuffer);
+		}
+
+		using Entity = ecs::Chain
+			::Write<component::BloomData>
+			::Read<component::RendererData>
+			::Write<capture_graph::component::RenderGraph>
+			::Read<component::WindowSize>
+			::To<ecs::Entity>;
+
+		inline auto gaussBlur(Entity entity, ecs::World world)
+		{
+			auto [bloomData, render, graph,winSize] = entity;
+			if (!bloomData.enable)
+				return;
+		
+			for (auto i = 0;i<2 ;i++)
+			{
+				//v -> h
+				bloomData.bloomDescriptorSet->setTexture("samplerColor", 
+					i == 0 ? 
+					render.gbuffer->getBuffer(GBufferTextures::BLOOM_SCREEN) : 
+					render.gbuffer->getBuffer(GBufferTextures::BLOOM_BLUR)
+				);
+
+				int32_t dir = 1 - i;
+
+				bloomData.bloomDescriptorSet->setUniform("UBO", "dir", &dir);
+				bloomData.bloomDescriptorSet->setUniform("UBO", "blurScale", &bloomData.blurScale);
+				bloomData.bloomDescriptorSet->setUniform("UBO", "blurStrength", &bloomData.blurStrength);
+				bloomData.bloomDescriptorSet->update();
+
+				auto commandBuffer = render.commandBuffer;
+
+				PipelineInfo pipeInfo;
+				pipeInfo.shader = bloomData.bloomShader;
+				pipeInfo.polygonMode = PolygonMode::Fill;
+				pipeInfo.cullMode = CullMode::None;
+				pipeInfo.transparencyEnabled = false;
+				pipeInfo.depthBiasEnabled = false;
+				pipeInfo.clearTargets = false;
+				pipeInfo.depthTest = false;
+				pipeInfo.colorTargets[0] = render.gbuffer->getBuffer(i == 0 ?  GBufferTextures::BLOOM_BLUR : GBufferTextures::BLOOM_SCREEN) ;
+
+				auto pipeline = Pipeline::get(pipeInfo, { bloomData.bloomDescriptorSet }, graph);
+
+				if (commandBuffer)
+					commandBuffer->bindPipeline(pipeline.get());
+				else
+					pipeline->bind(commandBuffer);
+
+				Renderer::bindDescriptorSets(pipeline.get(), commandBuffer, 0, { bloomData.bloomDescriptorSet });
+				Renderer::drawMesh(commandBuffer, pipeline.get(), render.screenQuad.get());
+
+				if (commandBuffer)
+					commandBuffer->unbindPipeline();
+				else
+					pipeline->end(commandBuffer);
+			}
+		}
+	}
+
 	namespace post_process
 	{
 		auto registerSSAOPass(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void
@@ -226,6 +340,22 @@ namespace maple
 				ssr.ssrDescriptorSet = DescriptorSet::create({ 0, ssr.ssrShader.get() });
 			});
 			executePoint->registerWithinQueue<ssr_pass::system>(renderer);
+		}
+
+		auto registerBloom(ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void
+		{
+			executePoint->registerGlobalComponent<component::BloomData>([](auto& bloom) {
+				bloom.bloomShader = Shader::create("shaders/GaussBlur.shader");
+				bloom.bloomDescriptorSet = DescriptorSet::create({ 0, bloom.bloomShader.get() });
+			});
+
+			executePoint->registerGlobalComponent<component::ComputeBloom>([](auto& bloom) {
+				bloom.bloomShader = Shader::create("shaders/ComputeBloom.shader");
+				bloom.bloomDescriptorSet = DescriptorSet::create({ 0, bloom.bloomShader.get() });
+			});
+
+			executePoint->registerWithinQueue<bloom_pass::computeBloom>(renderer);
+			executePoint->registerWithinQueue<bloom_pass::gaussBlur>(renderer);
 		}
 	};
 };        // namespace maple

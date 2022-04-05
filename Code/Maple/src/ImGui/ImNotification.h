@@ -7,9 +7,8 @@
 
 namespace maple
 {
-	class MAPLE_EXPORT ImNotification
+	namespace ImNotification
 	{
-	  public:
 		enum class Type
 		{
 			None,
@@ -19,7 +18,7 @@ namespace maple
 			Info
 		};
 
-		static auto onImGui() -> void;
-		static auto makeNotification(const std::string &title, const std::string &str, const Type type) -> void;
+		auto MAPLE_EXPORT onImGui() -> void;
+		auto MAPLE_EXPORT makeNotification(const std::string& title, const std::string& str, const Type type) -> void;
 	};
 };        // namespace maple

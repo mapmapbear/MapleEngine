@@ -61,6 +61,7 @@ COMP_ICON(component::Sprite,					ICON_MDI_IMAGE);
 COMP_ICON(component::AnimatedSprite,			ICON_MDI_IMAGE_AREA);
 COMP_ICON(component::LuaComponent,				ICON_MDI_LANGUAGE_LUA);
 COMP_ICON(component::MonoComponent,				ICON_MDI_LANGUAGE_CSHARP);
+COMP_ICON(component::BloomData,					ICON_MDI_BRIGHTNESS_AUTO);
 
 
 

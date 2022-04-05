@@ -11,17 +11,19 @@ namespace maple
 	    width(width), height(height)
 	{
 		formats[PREV_DISPLAY]     = TextureFormat::RGBA8;
-		formats[SCREEN]           = TextureFormat::RGBA8;
+		formats[SCREEN]           = TextureFormat::RGBA32;
+		formats[BLOOM_SCREEN]     = TextureFormat::RGBA32;
+		formats[BLOOM_BLUR]		  = TextureFormat::RGBA32;
 		formats[SSAO_SCREEN]      = TextureFormat::RGB8;
 		formats[SSAO_BLUR]        = TextureFormat::RGB8;
-		formats[SSR_SCREEN]       = TextureFormat::RGBA8;
-		formats[COLOR]            = TextureFormat::RGBA8;
+		formats[SSR_SCREEN]       = TextureFormat::RGBA32;
+		formats[COLOR]            = TextureFormat::RGBA32;
 		formats[POSITION]         = TextureFormat::RGBA32;
 		formats[NORMALS]          = TextureFormat::RGBA32;
 		formats[VIEW_POSITION]    = TextureFormat::RGBA32;
 		formats[VIEW_NORMALS]     = TextureFormat::RGBA32;
 		formats[VELOCITY]         = TextureFormat::RGBA8;
-		formats[PBR]              = TextureFormat::RGBA16;
+		formats[PBR]              = TextureFormat::RGBA32;
 		formats[VOLUMETRIC_LIGHT] = TextureFormat::RGB8;
 		formats[PSEUDO_SKY]       = TextureFormat::RGBA8;
 		formats[INDIRECT_LIGHTING] = TextureFormat::RGBA32;
@@ -85,6 +87,7 @@ namespace maple
 			STR(POSITION);
 			STR(NORMALS);
 			STR(PBR);
+			STR(BLOOM_SCREEN);
 			STR(SSAO_SCREEN);
 			STR(SSAO_BLUR);
 			STR(SSR_SCREEN);
@@ -93,6 +96,8 @@ namespace maple
 			STR(VIEW_NORMALS);
 			STR(VELOCITY);
 			STR(INDIRECT_LIGHTING);
+			STR(PSEUDO_SKY);
+			STR(BLOOM_BLUR);
 #undef STR
 			default:
 				return "UNKNOWN_ERROR";

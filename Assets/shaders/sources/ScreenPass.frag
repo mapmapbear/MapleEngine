@@ -8,18 +8,18 @@ layout(location = 0) in vec2 inUV;
 layout(set = 0, binding = 0) uniform UniformBuffer
 {
 	float gamma;
+	float exposure;
 	int toneMapIndex;
 	int ssaoEnable;
 	int reflectEnable;
-
 	int cloudEnable;
-	int padding;
 	int padding1;
 	int padding2;
 } ubo;
 
 layout(set = 0, binding = 0)  uniform sampler2D uScreenSampler;
 layout(set = 0, binding = 1)  uniform sampler2D uReflectionSampler;
+layout(set = 0, binding = 2)  uniform sampler2D uBloomSampler;
 //layout(set = 0, binding = 2)  uniform sampler2D uDepthSampler;
 //layout(set = 0, binding = 2)  uniform sampler2D uCloudSampler;
 
@@ -108,6 +108,7 @@ vec3 Uncharted2ToneMapping(vec3 color)
 
 vec3 finalGamma(vec3 color)
 {
+	color = vec3(1.0) - exp(-color * ubo.exposure);
 	return pow(color, vec3(1.0 / ubo.gamma));
 }
 
@@ -115,7 +116,8 @@ vec3 finalGamma(vec3 color)
 void main()
 {
 	vec4 albedo = texture(uScreenSampler, inUV);
-	vec3 color = albedo.rgb;
+	vec4 bloom = texture(uBloomSampler, inUV);
+	vec3 color = albedo.rgb + bloom.rgb;
 	
 	if( ubo.ssaoEnable == 1 && albedo.a >= 0.1)
 	{
@@ -138,8 +140,6 @@ void main()
 		//color = mix(color.xyz, cloud, mixVal);
 	}
 	//hdr
-    color = color / (color + vec3(1.0));
-
 	//col *= ubo.exposure;
 
 	int i = ubo.toneMapIndex;

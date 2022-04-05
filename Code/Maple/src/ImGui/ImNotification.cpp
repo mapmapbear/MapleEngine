@@ -25,5 +25,4 @@ namespace maple
 		toast.set_content(str.c_str());
 		ImGui::InsertNotification(toast);
 	}
-
 };        // namespace maple

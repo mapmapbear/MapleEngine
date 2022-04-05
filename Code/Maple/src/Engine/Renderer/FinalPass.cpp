@@ -51,6 +51,7 @@ namespace maple
 
 			finalData.finalDescriptorSet->setTexture("uScreenSampler", renderData.gbuffer->getBuffer(GBufferTextures::SCREEN));
 			finalData.finalDescriptorSet->setTexture("uReflectionSampler", renderData.gbuffer->getBuffer(GBufferTextures::SSR_SCREEN));
+			finalData.finalDescriptorSet->setTexture("uBloomSampler", renderData.gbuffer->getBuffer(GBufferTextures::BLOOM_SCREEN));
 
 			finalData.finalDescriptorSet->update();
 

@@ -4,6 +4,7 @@ layout(location = 0) out vec4 outColor;
 
 layout(location = 0) in vec2 inUV;
 
+#define GAMMA 2.2
 
 layout(set = 0,binding = 0) uniform UniformBufferObject
 {
@@ -62,8 +63,6 @@ vec3 computeClipSpaceCoord(ivec2 fragCoord,vec2 resolution){
 
 void main()
 {    
-    //vec3 worldPos = texture(uPositionSampler,inUV).xyz;
-    //vec3 worldDir = normalize(worldPos - ubo.viewPos);
    	vec2 textureResolution = textureSize(uPositionSampler,0);
 	ivec2 fragCoord = ivec2(gl_FragCoord.xy);
 
@@ -75,14 +74,12 @@ void main()
 	vec3 worldDir = (ubo.invView * ray_view).xyz;
 	worldDir = normalize(worldDir);
 
-	vec3 startPos, endPos;
-	vec4 v = vec4(0.0);
-
 	vec3 cubeMapEndPos;
 
 	raySphereintersectionSkyMap(worldDir, 0.5, cubeMapEndPos);
 
 	vec4 bg = colorCubeMap(cubeMapEndPos, worldDir);
+	vec2 red = vec2(1.0);
 
 	outColor = vec4(bg.rgb,1.0);
 }

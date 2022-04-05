@@ -29,11 +29,21 @@ namespace maple
 			std::shared_ptr<DescriptorSet> ssrDescriptorSet;
 			std::shared_ptr<Shader>        ssrShader;
 		};
+
+		struct BloomData
+		{
+			bool                           enable = true;
+			std::shared_ptr<DescriptorSet> bloomDescriptorSet;
+			std::shared_ptr<Shader>        bloomShader;
+			float blurScale = 0.003f;
+			float blurStrength = 1.5f;
+		};
 	};
 
 	namespace post_process
 	{
 		auto registerSSAOPass(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void;
 		auto registerSSR(ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void;
+		auto registerBloom(ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void;
 	};
 }        // namespace maple

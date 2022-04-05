@@ -101,9 +101,11 @@ void main()
 			vec4 greenOccCoeffs = (greenOccCoeffs1 + greenOccCoeffs2) / 2.0;
 			vec4 blueOccCoeffs  = (blueOccCoeffs1 + blueOccCoeffs2) / 2.0;
 
-            redOcclusionValue = 1.0 - clamp(ubo.occlusionAmplifier * dot(redOccCoeffs, dirToSH(-mainDirection)), 0.0, 1.0);
-            greenOcclusionValue = 1.0 - clamp(ubo.occlusionAmplifier * dot(greenOccCoeffs, dirToSH(-mainDirection)), 0.0, 1.0);
-            blueOcclusionValue = 1.0 - clamp(ubo.occlusionAmplifier * dot(blueOccCoeffs, dirToSH(-mainDirection)), 0.0, 1.0);
+			vec4 sh = dirToSH(-mainDirection);
+
+            redOcclusionValue = 1.0 - clamp(ubo.occlusionAmplifier * dot(redOccCoeffs, sh), 0.0, 1.0);
+            greenOcclusionValue = 1.0 - clamp(ubo.occlusionAmplifier * dot(greenOccCoeffs, sh), 0.0, 1.0);
+            blueOcclusionValue = 1.0 - clamp(ubo.occlusionAmplifier * dot(blueOccCoeffs,sh), 0.0, 1.0);
 		}
 
 		float rOccludedDirectFaceContribution = redOcclusionValue * directFaceSubtendedSolidAngle;
@@ -132,14 +134,15 @@ void main()
 				vec4 greenOccCoeffs2 = texelFetch2(uGeometryVolumeG, neighbourCellIndex);
 				vec4 blueOccCoeffs2 = texelFetch2(uGeometryVolumeB, neighbourCellIndex);
 
-				//vec3 occCoord = (vec3( neighbourGScellIndex.xyz ) + 0.5 * mainDirection) / v_gridDim; 
 				vec4 redOccCoeffs = (redOccCoeffs1 + redOccCoeffs2) / 2.0;
 				vec4 greenOccCoeffs = (greenOccCoeffs1 + greenOccCoeffs2) / 2.0;
 				vec4 blueOccCoeffs  = (blueOccCoeffs1 + blueOccCoeffs2) / 2.0;
 
-				redOcclusionValue = 1.0 - clamp(ubo.occlusionAmplifier * dot(redOccCoeffs, dirToSH(-mainDirection)), 0.0, 1.0);
-				greenOcclusionValue = 1.0 - clamp(ubo.occlusionAmplifier * dot(greenOccCoeffs, dirToSH(-mainDirection)), 0.0, 1.0);
-				blueOcclusionValue = 1.0 - clamp(ubo.occlusionAmplifier * dot(blueOccCoeffs, dirToSH(-mainDirection)), 0.0, 1.0);
+				vec4 sh = dirToSH(-mainDirection);
+
+				redOcclusionValue = 1.0 - clamp(ubo.occlusionAmplifier * dot(redOccCoeffs, sh), 0.0, 1.0);
+				greenOcclusionValue = 1.0 - clamp(ubo.occlusionAmplifier * dot(greenOccCoeffs, sh), 0.0, 1.0);
+				blueOcclusionValue = 1.0 - clamp(ubo.occlusionAmplifier * dot(blueOccCoeffs,sh), 0.0, 1.0);
 			}
 
 			rOccludedDirectFaceContribution = redOcclusionValue * sideFaceSubtendedSolidAngle;

@@ -56,6 +56,8 @@
 #include "Math/Ray.h"
 #include "Scripts/Mono/MonoComponent.h"
 
+#include "ImGui/ImNotification.h"
+
 #include <ecs/ecs.h>
 
 namespace maple
@@ -96,10 +98,14 @@ namespace maple
 
 		processIcons();
 
+
+		ImNotification::makeNotification("tips", "Compiling C# Assembly...", ImNotification::Type::Info);
+
 		MonoVirtualMachine::get()->compileAssembly([&](void *) {
 			MonoVirtualMachine::get()->loadAssembly("./", "MapleLibrary.dll");
 			MonoVirtualMachine::get()->loadAssembly("./", "MapleAssembly.dll");
 			addWindow(PluginWindow);
+			ImNotification::makeNotification("tips", "Compiling success", ImNotification::Type::Info);
 		});
 	}
 
@@ -248,7 +254,17 @@ namespace maple
 			GeometryRenderer::drawLight(light, transform.getWorldOrientation(), glm::vec4(glm::vec3(light->lightData.color), 0.2f));
 		}
 
+		if (auto render = registry.try_get<component::MeshRenderer>(selectedNode))
+		{
+			auto& transform = registry.get<component::Transform>(selectedNode);
+			auto  pos = transform.getWorldPosition();
 
+			if (auto mesh = render->getMesh()) 
+			{
+				auto bb = mesh->getBoundingBox()->transform(transform.getWorldMatrix());
+				GeometryRenderer::drawBox(bb, {1,1,1,1});
+			}
+		}
 		//drawGrid();
 	}
 
@@ -784,7 +800,7 @@ namespace maple
 					if (frustum.isInside(bbCopy)) 
 					{
 						float dist = ray.hit(bbCopy);
-						if (dist < INFINITY && dist < closestDist)
+						if (dist < INFINITY && dist < closestDist && dist != 0.0f)
 						{
 							closestDist = dist;
 							closestEntity = entity;

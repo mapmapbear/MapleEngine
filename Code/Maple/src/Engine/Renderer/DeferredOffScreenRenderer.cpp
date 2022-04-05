@@ -567,6 +567,7 @@ namespace maple
 			}
 			descriptorSet->update();
 
+
 			PipelineInfo pipeInfo;
 			pipeInfo.shader = data.deferredLightShader;
 			pipeInfo.polygonMode = PolygonMode::Fill;
@@ -575,6 +576,7 @@ namespace maple
 			pipeInfo.depthBiasEnabled = false;
 			pipeInfo.clearTargets = false;
 			pipeInfo.colorTargets[0] = rendererData.gbuffer->getBuffer(GBufferTextures::SCREEN);
+
 			auto deferredLightPipeline = Pipeline::get(pipeInfo,data.descriptorLightSet, graph);
 			deferredLightPipeline->bind(rendererData.commandBuffer);
 

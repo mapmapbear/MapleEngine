@@ -117,6 +117,7 @@ namespace maple
 		post_process::registerSSR(renderQ, executePoint);
 		grid_renderer::registerGridRenderer(beginQ, renderQ, executePoint);
 		geometry_renderer::registerGeometryRenderer(beginQ, renderQ, executePoint);
+		post_process::registerBloom(renderQ, executePoint);
 		final_screen_pass::registerFinalPass(renderQ, executePoint);
 	}
 

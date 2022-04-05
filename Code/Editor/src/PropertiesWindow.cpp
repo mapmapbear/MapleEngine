@@ -80,6 +80,19 @@ namespace MM
 	}        // namespace
 
 	using namespace maple;
+	
+
+	template <>
+	inline auto ComponentEditorWidget<component::BloomData>(entt::registry& reg, entt::registry::entity_type e) -> void
+	{
+		auto& bloom = reg.get<component::BloomData>(e);
+
+		ImGui::Columns(2);
+		ImGui::Separator();
+		ImGuiHelper::property("blurScale", bloom.blurScale, 0, 1.f,maple::ImGuiHelper::PropertyFlag::DragFloat, "%.4f",0.001);
+		ImGuiHelper::property("blurStrength", bloom.blurStrength, 1, 5);
+		ImGui::Columns(1);
+	}
 
 
 	template <>
@@ -161,6 +174,15 @@ namespace MM
 		ImGui::Separator();
 		ImGuiHelper::property("RootMotion", animator.rootMotion);
 
+		static int32_t clip = 0;
+		if (animator.animation != nullptr)
+		{
+			if (ImGuiHelper::property("Clip", clip, 0, animator.animation->getClipCount() - 1)) 
+			{
+				animation::play(animator, clip, 0);
+			}
+		}
+
 		ImGui::Separator();
 		if (animator.animation != nullptr)
 		{
@@ -172,7 +194,7 @@ namespace MM
 				}
 				else 
 				{
-					animation::play(animator,0,0.3f);
+					animation::play(animator, clip,0);
 				}
 			}
 			
@@ -204,6 +226,9 @@ namespace MM
 		}
 
 		ImGui::Columns(1);
+
+
+
 		if (auto clip = animation::getPlayingClip(animator); clip >= 0)
 		{
 			float time = animation::getPlayingTime(animator);
