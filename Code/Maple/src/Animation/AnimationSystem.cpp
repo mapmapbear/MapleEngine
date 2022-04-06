@@ -206,7 +206,12 @@ namespace maple
 						time = clip.length;
 						break;
 					}
-
+					
+					for (auto target : state.targets)
+					{
+						target->getRotationRecord().clear();
+						target->getPositionRecord().clear();
+					}
 				}
 				state.playingTime = time;
 

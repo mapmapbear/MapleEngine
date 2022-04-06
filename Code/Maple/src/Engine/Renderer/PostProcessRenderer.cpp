@@ -206,6 +206,7 @@ namespace maple
 	namespace bloom_pass
 	{
 		using Entity2 = ecs::Chain
+			::Read<component::BloomData>
 			::Write<component::ComputeBloom>
 			::Read<component::RendererData>
 			::Write<capture_graph::component::RenderGraph>
@@ -214,7 +215,9 @@ namespace maple
 
 		inline auto computeBloom(Entity2 entity, ecs::World world)
 		{
-			auto [bloomData, render, graph,winSize] = entity;
+			auto [bloom,bloomData, render, graph,winSize] = entity;
+			if (!bloom.enable)
+				return;
 
 			bloomData.bloomDescriptorSet->setTexture("uScreenSampler", render.gbuffer->getBuffer(GBufferTextures::SCREEN));
 			bloomData.bloomDescriptorSet->update();

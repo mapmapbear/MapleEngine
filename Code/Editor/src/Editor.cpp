@@ -19,6 +19,7 @@
 #include "VisualizeCacheWindow.h"
 #include "RenderGraphWindow.h"
 #include "SceneWindow.h"
+#include "CurveWindow.h"
 
 #include "Devices/Input.h"
 #include "Engine/Camera.h"
@@ -80,6 +81,7 @@ namespace maple
 		addWindow(VisualizeCacheWindow);
 		addWindow(PreviewWindow);
 		addWindow(RenderGraphWindow);
+		addWindow(CurveWindow);
 
 		ImGuizmo::SetGizmoSizeClipSpace(0.25f);
 		auto winSize = window->getWidth() / (float) window->getHeight();
@@ -451,6 +453,22 @@ namespace maple
 				}
 				ImGui::EndMenu();
 			}
+
+			if (ImGui::BeginMenu("Window"))
+			{
+#define OPEN_WINDOW(T,WindowName)					\
+				if (ImGui::MenuItem(WindowName))	\
+				{									\
+					getEditorWindow<T>()->setActive(true); \
+				}
+
+				OPEN_WINDOW(CurveWindow, "Curve Editor");
+
+				OPEN_WINDOW(RenderGraphWindow, "Render Graph");
+
+				ImGui::EndMenu();
+			}
+
 			ImGui::EndMainMenuBar();
 		}
 	}

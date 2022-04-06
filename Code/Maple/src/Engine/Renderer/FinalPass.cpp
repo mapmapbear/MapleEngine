@@ -3,9 +3,11 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include "FinalPass.h"
-#include "Engine/Renderer/Renderer.h"
 
 #include "Engine/CaptureGraph.h"
+
+#include "Engine/Renderer/Renderer.h"
+#include "Engine/Renderer/PostProcessRenderer.h"
 
 #include "RHI/Shader.h"
 #include "RHI/DescriptorSet.h"
@@ -28,6 +30,7 @@ namespace maple
 	namespace final_screen_pass
 	{
 		using Entity = ecs::Chain
+			::ReadIfExist<component::BloomData>
 			::Read<component::FinalPass>
 			::Read<component::RendererData>
 			::Write<capture_graph::component::RenderGraph>
@@ -45,13 +48,29 @@ namespace maple
 			auto reflectEnable = 0;
 			auto cloudEnable = false;// envData->cloud ? 1 : 0;
 
+			int32_t bloomEnable = 0;
+
+			if (entity.hasComponent<component::BloomData>()) 
+			{
+				bloomEnable = entity.getComponent<component::BloomData>().enable;
+			}
+
+			finalData.finalDescriptorSet->setUniform("UniformBuffer", "bloomEnable", &bloomEnable);
 			finalData.finalDescriptorSet->setUniform("UniformBuffer", "ssaoEnable", &ssaoEnable);
 			finalData.finalDescriptorSet->setUniform("UniformBuffer", "reflectEnable", &reflectEnable);
 			finalData.finalDescriptorSet->setUniform("UniformBuffer", "cloudEnable", &cloudEnable);
 
 			finalData.finalDescriptorSet->setTexture("uScreenSampler", renderData.gbuffer->getBuffer(GBufferTextures::SCREEN));
-			finalData.finalDescriptorSet->setTexture("uReflectionSampler", renderData.gbuffer->getBuffer(GBufferTextures::SSR_SCREEN));
-			finalData.finalDescriptorSet->setTexture("uBloomSampler", renderData.gbuffer->getBuffer(GBufferTextures::BLOOM_SCREEN));
+			
+			if (reflectEnable) 
+			{
+				finalData.finalDescriptorSet->setTexture("uReflectionSampler", renderData.gbuffer->getBuffer(GBufferTextures::SSR_SCREEN));
+			}
+
+			if (bloomEnable) 
+			{
+				finalData.finalDescriptorSet->setTexture("uBloomSampler", renderData.gbuffer->getBuffer(GBufferTextures::BLOOM_SCREEN));
+			}
 
 			finalData.finalDescriptorSet->update();
 

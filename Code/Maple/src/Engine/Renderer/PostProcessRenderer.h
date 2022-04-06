@@ -32,7 +32,7 @@ namespace maple
 
 		struct BloomData
 		{
-			bool                           enable = true;
+			bool                           enable = false;
 			std::shared_ptr<DescriptorSet> bloomDescriptorSet;
 			std::shared_ptr<Shader>        bloomShader;
 			float blurScale = 0.003f;

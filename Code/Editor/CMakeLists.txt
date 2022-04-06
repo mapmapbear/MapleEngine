@@ -23,6 +23,7 @@ add_definitions(-DEDITOR_STATIC -DMAPLE_DYNAMIC -DPLATFORM_WINDOWS)
 
 add_library(EditorStatic 
 	${EDITOR_STATIC_SRC}
+	${EDITOR_LIB_SRC_DIR}/imgui/src/implot_demo.cpp
 )
 
 target_include_directories(EditorStatic PUBLIC

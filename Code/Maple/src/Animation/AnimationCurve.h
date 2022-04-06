@@ -24,7 +24,7 @@ namespace maple
 		static auto linear(float timeStart, float valueStart, float timeEnd, float valueEnd) ->AnimationCurve;
 		auto addKey(float time, float value, float inTangent, float outTangent) -> void;
 		auto evaluate(float time) const -> float;
-
+		inline auto& getKeys() const { return keys; }
 	private:
 		static auto evaluate(float time, const Key& k0, const Key& k1) -> float;
 

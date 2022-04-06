@@ -122,23 +122,26 @@ namespace maple
 
 	auto RenderGraphWindow::onImGui() -> void
 	{
-		gatherData();
-		ed::SetCurrentEditor(context);
-		int32_t linkId = 0;
-
-		if (ImGui::Begin(STATIC_NAME, &active))
+		if (active) 
 		{
-			static float leftPaneWidth = 400.0f;
-			static float rightPaneWidth = 800.0f;
-			splitter(true, 4.0f, &leftPaneWidth, &rightPaneWidth, 30.0f, 70.0f);
+			gatherData();
+			ed::SetCurrentEditor(context);
+			int32_t linkId = 0;
 
-			leftPanel(leftPaneWidth - 4.f);
+			if (ImGui::Begin(STATIC_NAME, &active))
+			{
+				static float leftPaneWidth = 400.0f;
+				static float rightPaneWidth = 800.0f;
+				splitter(true, 4.0f, &leftPaneWidth, &rightPaneWidth, 30.0f, 70.0f);
 
-			ImGui::SameLine(0.0f, 12.0f);
+				leftPanel(leftPaneWidth - 4.f);
 
-			rightPanel();
+				ImGui::SameLine(0.0f, 12.0f);
+
+				rightPanel();
+			}
+			ImGui::End();
 		}
-		ImGui::End();
 	}
 
 	auto RenderGraphWindow::gatherData() -> void

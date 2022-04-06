@@ -4,45 +4,45 @@
 #include "PropertiesWindow.h"
 #include "Editor.h"
 #include "Engine/GBuffer.h"
+#include "Engine/Renderer/GridRenderer.h"
+#include "Engine/Renderer/PostProcessRenderer.h"
+#include "Engine/Renderer/SkyboxRenderer.h"
+#include "Engine/Camera.h"
+#include "Engine/Material.h"
+#include "Engine/Mesh.h"
+
 #include "Scene/Component/Atmosphere.h"
 #include "Scene/Component/CameraControllerComponent.h"
 #include "Scene/Component/Component.h"
 #include "Scene/Component/Light.h"
 #include "Scene/Component/MeshRenderer.h"
-#include "2d/Sprite.h"
 #include "Scene/Component/Transform.h"
 #include "Scene/Component/VolumetricCloud.h"
 #include "Scene/Component/LightProbe.h"
-
 #include "Scene/Entity/Entity.h"
 #include "Scene/Scene.h"
 #include "Scene/SceneManager.h"
 
 #include "Animation/AnimationSystem.h"
 #include "Animation/Animation.h"
+#include "2d/Sprite.h"
 
 #include "Scripts/Mono/MonoComponent.h"
 #include "Scripts/Mono/MonoScript.h"
 #include "Scripts/Mono/MonoSystem.h"
 
 #include "FileSystem/Skeleton.h"
-
 #include "Loaders/Loader.h"
 
-#include "Engine/Renderer/GridRenderer.h"
-#include "Engine/Renderer/PostProcessRenderer.h"
-#include "Engine/Renderer/SkyboxRenderer.h"
-
-#include "Engine/Camera.h"
-#include "Engine/Material.h"
-#include "Engine/Mesh.h"
 #include "ImGui/ImGuiHelpers.h"
+#include "ImGui/ImNotification.h"
+
 #include "Others/Serialization.h"
 #include "Others/StringUtils.h"
 
-#include "ImGui/ImNotification.h"
-
 #include "Inspector.inl"
+
+#include "CurveWindow.h"
 
 #include <glm/gtc/type_ptr.hpp>
 
@@ -89,8 +89,9 @@ namespace MM
 
 		ImGui::Columns(2);
 		ImGui::Separator();
-		ImGuiHelper::property("blurScale", bloom.blurScale, 0, 1.f,maple::ImGuiHelper::PropertyFlag::DragFloat, "%.4f",0.001);
-		ImGuiHelper::property("blurStrength", bloom.blurStrength, 1, 5);
+		ImGuiHelper::property("Enable", bloom.enable);
+		ImGuiHelper::property("Blur Scale", bloom.blurScale, 0, 1.f, maple::ImGuiHelper::PropertyFlag::DragFloat, "%.4f", 0.001);
+		ImGuiHelper::property("Blur Strength", bloom.blurStrength, 1, 5);
 		ImGui::Columns(1);
 	}
 
@@ -228,14 +229,21 @@ namespace MM
 		ImGui::Columns(1);
 
 
-
 		if (auto clip = animation::getPlayingClip(animator); clip >= 0)
 		{
 			float time = animation::getPlayingTime(animator);
 			float timeLength = animator.animation->getClipLength(clip);
-			ImGui::ProgressBar(time / timeLength);
+		//	ImGui::ProgressBar(time / timeLength);
+			if (ImGui::SliderFloat("PlayingTime", &time, 0, timeLength)) 
+			{
+				animation::setPlayingTime(animator, time);
+			}
 		}
+
+
 		ImGui::Separator();
+
+	
 
 	}
 
@@ -371,11 +379,12 @@ namespace MM
 		ImGui::NextColumn();
 
 		ImGui::Columns(1);
+
 		ImGui::Separator();
 		ImGui::PopStyleVar();
 	}
 
-	auto textureWidget(const char *label, Material *material, std::shared_ptr<Texture2D> tex, float &usingMapProperty, glm::vec4 &colorProperty, const std::function<void(const std::string &)> &callback, bool &update) -> void
+	inline auto textureWidget(const char *label, Material *material, std::shared_ptr<Texture2D> tex, float &usingMapProperty, glm::vec4 &colorProperty, const std::function<void(const std::string &)> &callback, bool &update) -> void
 	{
 		if (ImGui::TreeNodeEx(label, ImGuiTreeNodeFlags_DefaultOpen))
 		{

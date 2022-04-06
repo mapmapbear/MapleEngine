@@ -30,6 +30,30 @@ namespace maple
 		BlendShape
 	};
 
+	inline auto getCurveTypeName(AnimationCurvePropertyType type)
+	{
+		switch (type)
+		{
+#define STR(r) \
+	case r:    \
+		return #r
+			STR(AnimationCurvePropertyType::Unknown);
+			STR(AnimationCurvePropertyType::LocalPositionX);
+			STR(AnimationCurvePropertyType::LocalPositionY);
+			STR(AnimationCurvePropertyType::LocalPositionZ);
+			STR(AnimationCurvePropertyType::LocalRotationX);
+			STR(AnimationCurvePropertyType::LocalRotationY);
+			STR(AnimationCurvePropertyType::LocalRotationZ);
+			STR(AnimationCurvePropertyType::LocalScaleX);
+			STR(AnimationCurvePropertyType::LocalScaleY);
+			STR(AnimationCurvePropertyType::LocalScaleZ);
+#undef STR
+		default:
+			return "UNKNOWN_ERROR";
+		}
+	}
+
+
 	struct AnimationCurveProperty
 	{
 		AnimationCurvePropertyType type;

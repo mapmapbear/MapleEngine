@@ -15,6 +15,7 @@
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_notify.h>
+#include <implot.h>
 #include <tahoma.h>
 
 namespace maple
@@ -25,6 +26,8 @@ namespace maple
 	}
 	ImGuiSystem::~ImGuiSystem()
 	{
+		ImPlot::DestroyContext();
+		ImGui::DestroyContext();
 	}
 
 	auto ImGuiSystem::newFrame(const Timestep &step) -> void
@@ -38,6 +41,7 @@ namespace maple
 		Application::get()->getEventDispatcher().addEventHandler(&handler);
 
 		ImGui::CreateContext();
+		ImPlot::CreateContext();
 		ImGui::StyleColorsDark();
 
 		ImGuiIO &io = ImGui::GetIO();

@@ -47,6 +47,7 @@ COMP_ICON(component::Atmosphere,				ICON_MDI_WEATHER_SUNNY);
 COMP_ICON(component::BoneComponent,				ICON_MDI_BONE);
 COMP_ICON(component::BoundingBoxComponent,		ICON_MDI_SHAPE);
 COMP_ICON(component::SkinnedMeshRenderer,		ICON_MDI_HUMAN);
+COMP_ICON(component::MeshRenderer,				ICON_MDI_CUBE);
 COMP_ICON(component::VolumetricCloud,			ICON_MDI_WEATHER_CLOUDY);
 COMP_ICON(component::ReflectiveShadowData,		ICON_MDI_BOX_SHADOW);
 COMP_ICON(component::LPVGrid,					ICON_MDI_GRID_LARGE);
