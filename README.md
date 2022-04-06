@@ -55,10 +55,12 @@ Precomputed Light Field Probes 	| 0%		  	| High priority
 Screen space global illumination 	| 0%		  	| High priority
 Animation and State Machine       	| 30%			| Apply Animation successfully
 Precomputed Atmospheric Scattering 	| -          	| Low priority
-Subsurface Scattering 			 	| -          	| Low priority
+Subsurface Scattering 			| -          	| Low priority
 Ray traced shadows				 	| -          	| -
-Ray traced reflections			 	| -          	| -
+Ray traced reflections			| -          	| -
+GPU Driven Rendering			 	| -          	| High priority
+Culling System      			 	| -          	| High priority
 Linux support			 	        | -          	| -
-Android support			 	        | -          	| -
+Android support			 	      | -          	| -
 Mac support 			 	        | -          	| -
 iOS support 			 	        | -          	| -
