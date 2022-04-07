@@ -60,7 +60,7 @@ layout(binding = 9) uniform UniformBufferObject
 #define CLOUDS_TRANSMITTANCE_THRESHOLD 1.0 - CLOUDS_MIN_TRANSMITTANCE
 
 
-#define SUN_DIR ubo.lightDirection.xyz
+#define SUN_DIR -ubo.lightDirection.xyz
 #define SUN_COLOR ubo.lightColor.rgb *vec3(1.1,1.1,0.95)
 
 #define CLOUD_TOP_OFFSET 750.0

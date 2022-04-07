@@ -24,6 +24,10 @@ namespace maple
 		LocalRotationX,
 		LocalRotationY,
 		LocalRotationZ,
+		LocalQuaternionX,
+		LocalQuaternionY,
+		LocalQuaternionZ,
+		LocalQuaternionW,
 		LocalScaleX,
 		LocalScaleY,
 		LocalScaleZ,
@@ -44,6 +48,10 @@ namespace maple
 			STR(AnimationCurvePropertyType::LocalRotationX);
 			STR(AnimationCurvePropertyType::LocalRotationY);
 			STR(AnimationCurvePropertyType::LocalRotationZ);
+			STR(AnimationCurvePropertyType::LocalQuaternionX);
+			STR(AnimationCurvePropertyType::LocalQuaternionY);
+			STR(AnimationCurvePropertyType::LocalQuaternionZ);
+			STR(AnimationCurvePropertyType::LocalQuaternionW);
 			STR(AnimationCurvePropertyType::LocalScaleX);
 			STR(AnimationCurvePropertyType::LocalScaleY);
 			STR(AnimationCurvePropertyType::LocalScaleZ);

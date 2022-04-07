@@ -95,12 +95,22 @@ namespace maple
 
 			inline auto getSkeleton() { return skeleton; }
 
+			inline auto setBoneTransform(std::shared_ptr<glm::mat4[]> transforms) 
+			{
+				boneTransforms = transforms;
+			}
+
+			inline auto getBoneTransforms() 
+			{
+				return boneTransforms;
+			}
+
 		private:
 			std::shared_ptr<Mesh>     mesh;
 			auto                      getMesh(const std::string& name) -> void;
 			std::string               meshName;
 			std::shared_ptr<Skeleton> skeleton;
-			std::vector<glm::mat4> boneTransforms;
+			std::shared_ptr<glm::mat4[]> boneTransforms;
 		};
 
 		class MAPLE_EXPORT BoneComponent : public Component

@@ -40,6 +40,8 @@ namespace maple
 				return data;
 			}
 
+			bool renderToScreen = true;
+
 		private:
 			AtmosphereData data;
 		};

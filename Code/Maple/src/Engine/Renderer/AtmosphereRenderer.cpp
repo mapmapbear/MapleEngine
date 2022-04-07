@@ -46,8 +46,6 @@ namespace maple
 			}uniformObject;
 			std::shared_ptr<Pipeline>      pipeline;
 
-			bool renderScreen = true;
-
 			AtmosphereData()
 			{
 				atmosphereShader = Shader::create("shaders/Atmosphere.shader");
@@ -87,17 +85,17 @@ namespace maple
 
 					PipelineInfo info;
 					info.shader = data.atmosphereShader;
-					if (data.renderScreen)
+					if (atmosphere.renderToScreen)
 					{
 						info.depthTarget = render.gbuffer->getDepthBuffer();
 					}
-					info.colorTargets[0] = render.gbuffer->getBuffer(data.renderScreen ? GBufferTextures::SCREEN : GBufferTextures::PSEUDO_SKY);
+					info.colorTargets[0] = render.gbuffer->getBuffer(atmosphere.renderToScreen ? GBufferTextures::SCREEN : GBufferTextures::PSEUDO_SKY);
 					info.polygonMode = PolygonMode::Fill;
-					info.clearTargets = false;
+					info.clearTargets = !atmosphere.renderToScreen;
 					info.transparencyEnabled = false;
 
 					data.uniformObject.projView = glm::inverse(camera.proj * inverseCamerm);
-					data.uniformObject.sunDirection = { glm::vec3(light.lightData.direction), light.lightData.intensity };
+					data.uniformObject.sunDirection = { glm::vec3(-light.lightData.direction), light.lightData.intensity };
 					data.uniformObject.rayleighScattering = { atmosphere.getData().rayleighScattering, atmosphere.getData().surfaceRadius * 1000.f };
 					data.uniformObject.mieScattering = { atmosphere.getData().mieScattering, atmosphere.getData().atmosphereRadius * 1000.f };
 					data.uniformObject.centerPoint = { atmosphere.getData().centerPoint.x * 1000.f, atmosphere.getData().centerPoint.y * 1000.f, atmosphere.getData().centerPoint.z * 1000.f, atmosphere.getData().g };

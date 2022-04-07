@@ -132,7 +132,17 @@ namespace maple
 			::Write<component::Transform>
 			::To<ecs::Entity>;
 
-		auto beginScene(Entity entity, LightQuery lightQuery, MeshQuery meshQuery, ecs::World world)
+		using BoneMeshQuery = ecs::Chain
+			::Write<component::BoneComponent>
+			::Write<component::Transform>
+			::To<ecs::Query>;
+
+		using SkinnedMeshQuery = ecs::Chain
+			::Write<component::SkinnedMeshRenderer>
+			::Write<component::Transform>
+			::To<ecs::Query>;
+
+		auto beginScene(Entity entity, LightQuery lightQuery, MeshQuery meshQuery, SkinnedMeshQuery skinnedQuery, BoneMeshQuery boneQuery, ecs::World world)
 		{
 			auto [shadowData,cameraView,rsm] = entity;
 
@@ -140,6 +150,8 @@ namespace maple
 			{
 				shadowData.cascadeCommandQueue[i].clear();
 			}
+
+			shadowData.animationQueue.clear();
 
 			if (!lightQuery.empty())
 			{
@@ -173,7 +185,7 @@ namespace maple
 						{
 							meshQuery.forEach([&, i](MeshEntity meshEntity) {
 								auto [mesh, trans] = meshEntity;
-								if (mesh.castShadow) 
+								if (mesh.castShadow && mesh.isActive())
 								{
 									auto bb = mesh.getMesh()->getBoundingBox()->transform(trans.getWorldMatrix());
 									auto inside = shadowData.cascadeFrustums[i].isInside(bb);
@@ -191,7 +203,26 @@ namespace maple
 								}});
 						}
 
+						for (auto skinEntity : skinnedQuery)
+						{
+							auto [mesh, trans] = skinnedQuery.convert(skinEntity);
+
+							if (mesh.castShadow && mesh.isActive())
+							{
+								auto bb = mesh.getMesh()->getBoundingBox()->transform(trans.getWorldMatrix());
+								auto inside = shadowData.cascadeFrustums[0].isInside(bb);
+								if (inside)
+								{
+									auto& cmd = shadowData.animationQueue.emplace_back();
+									cmd.mesh = mesh.getMesh().get();
+									cmd.transform = trans.getWorldMatrix();
+									cmd.boneTransforms = mesh.getBoneTransforms();
+								}
+							}
+						}
+
 					shadowData.descriptorSet[0]->setUniform("UniformBufferObject", "projView", shadowData.shadowProjView);
+					shadowData.animDescriptorSet[0]->setUniform("UniformBufferObject", "projView", shadowData.shadowProjView);
 				}
 			}
 		}
@@ -243,7 +274,49 @@ namespace maple
 
 				pipeline->end(rendererData.commandBuffer);
 			}
+		}
 
+		inline auto onRenderAnim(RenderEntity entity, ecs::World world)
+		{
+			auto [shadowData, rendererData, renderGraph, rsm] = entity;
+
+			shadowData.animDescriptorSet[0]->update();
+
+			PipelineInfo pipelineInfo;
+			pipelineInfo.shader = shadowData.animShader;
+
+			pipelineInfo.cullMode = CullMode::Back;
+			pipelineInfo.transparencyEnabled = false;
+			pipelineInfo.depthBiasEnabled = false;
+			pipelineInfo.depthArrayTarget = shadowData.shadowTexture;
+			pipelineInfo.clearTargets = false;
+
+			auto pipeline = Pipeline::get(pipelineInfo, shadowData.animDescriptorSet, renderGraph);
+
+			
+			pipeline->bind(rendererData.commandBuffer);
+
+			for (auto & command : shadowData.animationQueue)
+			{
+				Mesh* mesh = command.mesh;
+
+				if (command.boneTransforms != nullptr)
+				{
+					shadowData.animDescriptorSet[0]->setUniform("UniformBufferObject", "boneTransforms", command.boneTransforms.get());
+					shadowData.animDescriptorSet[0]->update();
+
+					const auto& trans = command.transform;
+					auto& pushConstants = shadowData.animShader->getPushConstants()[0];
+
+					pushConstants.setValue("transform", (void*)&trans);
+
+					shadowData.animShader->bindPushConstants(rendererData.commandBuffer, pipeline.get());
+
+					Renderer::bindDescriptorSets(pipeline.get(), rendererData.commandBuffer, 0, shadowData.animDescriptorSet);
+					Renderer::drawMesh(rendererData.commandBuffer, pipeline.get(), mesh);
+				}
+			}
+			pipeline->end(rendererData.commandBuffer);
 		}
 	}
 
@@ -322,17 +395,19 @@ namespace maple
 						{
 							auto [mesh, trans] = meshQuery.convert(meshEntity);
 
-							auto inside = rsm.frustum.isInside(mesh.getMesh()->getBoundingBox()->transform(trans.getWorldMatrix()));
-
-							if (inside)
+							if (mesh.isActive()) 
 							{
-								auto& cmd = rsm.commandQueue.emplace_back();
-								cmd.mesh = mesh.getMesh().get();
-								cmd.transform = trans.getWorldMatrix();
-
-								if (mesh.getMesh()->getSubMeshCount() <= 1) // at least two subMeshes.
+								auto inside = rsm.frustum.isInside(mesh.getMesh()->getBoundingBox()->transform(trans.getWorldMatrix()));
+								if (inside)
 								{
-									cmd.material = !mesh.getMesh()->getMaterial().empty() ? mesh.getMesh()->getMaterial()[0].get() : nullptr;
+									auto& cmd = rsm.commandQueue.emplace_back();
+									cmd.mesh = mesh.getMesh().get();
+									cmd.transform = trans.getWorldMatrix();
+
+									if (mesh.getMesh()->getSubMeshCount() <= 1) // at least two subMeshes.
+									{
+										cmd.material = !mesh.getMesh()->getMaterial().empty() ? mesh.getMesh()->getMaterial()[0].get() : nullptr;
+									}
 								}
 							}
 						}
@@ -441,14 +516,18 @@ namespace maple
 			executePoint->registerGlobalComponent<component::ShadowMapData>([](component::ShadowMapData & data) {
 				data.shadowTexture = TextureDepthArray::create(SHADOWMAP_SiZE_MAX, SHADOWMAP_SiZE_MAX, data.shadowMapNum);
 				data.shader = Shader::create("shaders/Shadow.shader");
-
-				DescriptorInfo createInfo{};
-				createInfo.layoutIndex = 0;
-				createInfo.shader = data.shader.get();
+				data.animShader = Shader::create("shaders/ShadowAnim.shader");
 
 				data.descriptorSet.resize(1);
-				data.descriptorSet[0] = DescriptorSet::create(createInfo);
+				data.animDescriptorSet.resize(1);
+
+				data.descriptorSet[0] = DescriptorSet::create({ 0,data.shader.get() });
+				data.animDescriptorSet[0] = DescriptorSet::create({0,data.animShader.get()});
+
 				data.currentDescriptorSets.resize(1);
+
+				data.animationQueue.reserve(50);
+
 				data.cascadeCommandQueue[0].reserve(500);
 				data.cascadeCommandQueue[1].reserve(500);
 				data.cascadeCommandQueue[2].reserve(500);
@@ -483,6 +562,7 @@ namespace maple
 
 			executePoint->registerWithinQueue<shadow_map_pass::beginScene>(begin);
 			executePoint->registerWithinQueue<shadow_map_pass::onRender>(renderer);
+			executePoint->registerWithinQueue<shadow_map_pass::onRenderAnim>(renderer);
 
 			executePoint->registerWithinQueue<reflective_shadow_map_pass::begin_scene::system>(begin);
 			executePoint->registerWithinQueue<reflective_shadow_map_pass::onRender>(renderer);

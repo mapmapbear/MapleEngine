@@ -84,6 +84,7 @@ namespace maple
 		sceneGraph = std::make_shared<SceneGraph>();
 		sceneGraph->init(entityManager->getRegistry());
 		entityManager->getRegistry().on_construct<component::MeshRenderer>().connect<&Scene::onMeshRenderCreated>(this);
+		entityManager->getRegistry().on_destroy<component::MeshRenderer>().connect<&Scene::onMeshRenderCreated>(this);
 
 		globalEntity = createEntity("Global");
 
@@ -230,7 +231,8 @@ namespace maple
 			auto [meshRender] = query.convert(entity);
 			if (auto mesh = meshRender.getMesh())
 			{
-				sceneBox.merge(mesh->getBoundingBox());
+				if (mesh->isActive())
+					sceneBox.merge(mesh->getBoundingBox());
 			}
 		}
 		auto & aabb = getGlobalComponent<component::BoundingBoxComponent>();

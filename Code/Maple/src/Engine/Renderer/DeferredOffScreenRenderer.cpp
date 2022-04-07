@@ -248,6 +248,8 @@ namespace maple
 
 			auto forEachMesh = [&](const glm::mat4 & worldTransform, std::shared_ptr<Mesh> mesh, bool hasStencil, component::SkinnedMeshRenderer * skinnedMesh, maple::Entity parent)
 			{
+				if (!mesh->isActive())
+					return;
 				//culling
 				auto bb = mesh->getBoundingBox()->transform(worldTransform);
 
@@ -280,18 +282,10 @@ namespace maple
 								}
 							}
 
-							/*for (auto child : parent.getChildren())
-							{
-								if (child.hasComponent<component::BoneComponent>())
-								{
-									auto& bone = child.getComponent<component::BoneComponent>();
-									auto& transform = child.getComponent<component::Transform>();
-									ptr[bone.boneIndex] = transform.getWorldMatrix() * transform.getOffsetMatrix();
-								}
-							}*/
 							cmd.boneTransforms = ptr;
 							boneTransform[parent.getHandle()] = ptr;
 						}
+						skinnedMesh->setBoneTransform(cmd.boneTransforms);
 					}
 
 					if (mesh->getSubMeshCount() <= 1)

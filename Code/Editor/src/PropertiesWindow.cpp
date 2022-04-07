@@ -11,6 +11,7 @@
 #include "Engine/Material.h"
 #include "Engine/Mesh.h"
 
+#include "Scene/Component/BoundingBox.h"
 #include "Scene/Component/Atmosphere.h"
 #include "Scene/Component/CameraControllerComponent.h"
 #include "Scene/Component/Component.h"
@@ -80,7 +81,26 @@ namespace MM
 	}        // namespace
 
 	using namespace maple;
-	
+
+	template<>
+	inline auto ComponentEditorWidget<component::BoundingBoxComponent>(entt::registry& reg, entt::registry::entity_type e) -> void
+	{
+		auto& bbbox = reg.get<component::BoundingBoxComponent>(e);
+		if (auto box = bbbox.box; box != nullptr)
+		{
+			ImGui::Separator();
+			ImGui::Columns(1);
+			ImGui::TextUnformatted("Bounds");
+			ImGui::Columns(2);
+
+			auto size = box->size();
+			auto center = box->center();
+
+			ImGuiHelper::property("Center", center, 0, 0, ImGuiHelper::PropertyFlag::DragFloat);
+			ImGuiHelper::property("Extend", size, 0, 0, ImGuiHelper::PropertyFlag::DragFloat);
+			ImGui::Separator();
+		}
+	}
 
 	template <>
 	inline auto ComponentEditorWidget<component::BloomData>(entt::registry& reg, entt::registry::entity_type e) -> void
@@ -1018,6 +1038,10 @@ namespace MM
 	{
 		auto &atmosphere = reg.get<component::Atmosphere>(e);
 		auto &data       = atmosphere.getData();
+
+		ImGui::Columns(2);
+
+		ImGuiHelper::property("Render To Screen", atmosphere.renderToScreen);
 
 		ImGui::Columns(3);
 		ImGui::Separator();

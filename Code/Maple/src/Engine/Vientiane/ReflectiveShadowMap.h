@@ -54,8 +54,13 @@ namespace maple
 			std::vector<std::shared_ptr<DescriptorSet>> descriptorSet;
 			std::vector<std::shared_ptr<DescriptorSet>> currentDescriptorSets;
 
+			std::vector<std::shared_ptr<DescriptorSet>> animDescriptorSet;
+
+
 			std::vector<RenderCommand>         cascadeCommandQueue[SHADOWMAP_MAX];
+			std::vector<RenderCommand>		   animationQueue;
 			std::shared_ptr<Shader>            shader;
+			std::shared_ptr<Shader>            animShader;
 			std::shared_ptr<TextureDepthArray> shadowTexture;
 		};
 	}        // namespace component

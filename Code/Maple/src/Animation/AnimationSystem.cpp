@@ -10,6 +10,7 @@
 #include "Scene/Component/MeshRenderer.h"
 
 #include "Math/MathUtils.h"
+#include "Others/Randomizer.h"
 
 #include <algorithm>
 #include <ecs/ecs.h>
@@ -50,7 +51,7 @@ namespace maple
 
 			auto currentEntity = entity.castTo<maple::Entity>();
 
-			for (int i = 0; i < clip.curves.size(); ++i)
+			for (int32_t i = 0; i < clip.curves.size(); ++i)
 			{
 				const auto& curve = clip.curves[i];
 				auto target = state.targets[i];
@@ -81,11 +82,14 @@ namespace maple
 				glm::vec3 localPos(0);
 				glm::vec3 localRot(0);
 				glm::vec3 localscale(0);
+				glm::quat localQuat = glm::identity<glm::quat>();
+
 				bool setPos = false;
 				bool setRot = false;
+				bool setRotQuat = false;
 				bool setScale = false;
 
-				for (int j = 0; j < curve.properties.size(); ++j)
+				for (int32_t j = 0; j < curve.properties.size(); ++j)
 				{
 					auto type = curve.properties[j].type;
 					float value = curve.properties[j].curve.evaluate(time);
@@ -117,6 +121,23 @@ namespace maple
 						localRot.z = value;
 						setRot = true;
 						break;
+
+					case AnimationCurvePropertyType::LocalQuaternionW:
+						localQuat.w = value;
+						setRotQuat = true;
+						break;
+					case AnimationCurvePropertyType::LocalQuaternionX:
+						localQuat.x = value;
+						setRotQuat = true;
+						break;
+					case AnimationCurvePropertyType::LocalQuaternionY:
+						localQuat.y = value;
+						setRotQuat = true;
+						break;
+					case AnimationCurvePropertyType::LocalQuaternionZ:
+						localQuat.z = value;
+						setRotQuat = true;
+						break;
 					}
 
 					if (setPos && !rootMotion)
@@ -133,7 +154,6 @@ namespace maple
 						target->setLocalPosition(pos);
 					}
 
-
 					if (setRot)
 					{
 						glm::vec3 rot;
@@ -144,6 +164,20 @@ namespace maple
 						else
 						{
 							rot = target->getLocalOrientation() + glm::radians(localRot * weight);
+						}
+						target->setLocalOrientation(rot);
+					}
+
+					if (setRotQuat) 
+					{
+						glm::vec3 rot;
+						if (firstState)
+						{
+							rot = glm::eulerAngles(localQuat) * weight;
+						}
+						else
+						{
+							rot = target->getLocalOrientation() + glm::eulerAngles(localQuat) * weight;
 						}
 						target->setLocalOrientation(rot);
 					}

@@ -55,7 +55,7 @@ namespace maple
 					grid.lpvGs.emplace_back(Texture3D::create(grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z, paramemters));
 				}
 			}
-			else 
+			/*else 
 			{
 				grid.lpvGridR->buildTexture3D(TextureFormat::R32UI,grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z);
 				grid.lpvGridB->buildTexture3D(TextureFormat::R32UI,grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z);
@@ -75,7 +75,7 @@ namespace maple
 					grid.lpvRs[i]->buildTexture3D(TextureFormat::R32UI, grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z);
 					grid.lpvGs[i]->buildTexture3D(TextureFormat::R32UI, grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z);
 				}
-			}	
+			}	*/
 		}
 	}
 
