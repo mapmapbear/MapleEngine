@@ -21,6 +21,7 @@ get_filename_component(ASSET_SHADER_DIR
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 
+FILE (STRINGS "lib/bullet3/VERSION" BULLET_VERSION)#Bullet3
 
 add_subdirectory(lib/spdlog)
 add_subdirectory(lib/stb_image)
@@ -37,6 +38,11 @@ add_subdirectory(lib/imgui-node-editor)
 add_subdirectory(lib/libiconv)
 add_subdirectory(lib/OpenFBX)
 add_subdirectory(lib/mio)
+add_subdirectory(lib/bullet3/src/Bullet3Collision)
+add_subdirectory(lib/bullet3/src/Bullet3Common)
+add_subdirectory(lib/bullet3/src/Bullet3Dynamics)
+add_subdirectory(lib/bullet3/src/Bullet3Geometry)
+
 
 file(GLOB_RECURSE SHADERS_GLSL 
 	${ASSET_SHADER_DIR}/*.vert 
@@ -232,6 +238,10 @@ endif()
 		iconv
 		OpenFBX
 		mio
+		Bullet3Common
+		Bullet3Collision
+		Bullet3Dynamics
+		Bullet3Geometry
 	)
 
 find_package(OpenMP)
@@ -239,7 +249,7 @@ if(OpenMP_CXX_FOUND)
     target_link_libraries(MapleEngine OpenMP::OpenMP_CXX)
 endif()
 
-	set_target_properties(OpenFBX lua zlib tinyobjloader tellenc spirvCross ktx spdlog_headers_for_ide stb_image glad TracyClient filedlg imgui-node-editor iconv PROPERTIES FOLDER Library)
+	set_target_properties(OpenFBX lua zlib tinyobjloader tellenc spirvCross ktx spdlog_headers_for_ide stb_image glad TracyClient filedlg imgui-node-editor iconv Bullet3Common Bullet3Collision Bullet3Dynamics Bullet3Geometry PROPERTIES FOLDER Library)
 	
 
 endif()
