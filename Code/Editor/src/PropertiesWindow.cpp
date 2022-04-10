@@ -82,6 +82,13 @@ namespace MM
 
 	using namespace maple;
 
+
+	template<>
+	inline auto ComponentEditorWidget<component::RigidRody>(entt::registry& reg, entt::registry::entity_type e) -> void
+	{
+
+	}
+
 	template<>
 	inline auto ComponentEditorWidget<component::BoundingBoxComponent>(entt::registry& reg, entt::registry::entity_type e) -> void
 	{
@@ -1117,7 +1124,7 @@ namespace maple
 	auto PropertiesWindow::onImGui() -> void
 	{
 		auto &editor           = static_cast<Editor &>(*Application::get());
-		auto &registry         = editor.getSceneManager()->getCurrentScene()->getRegistry();
+		auto &registry         = Application::getExecutePoint()->getRegistry();
 		auto  selected         = editor.getSelected();
 		auto  selectedResource = editor.getEditingResource();
 		if (selectedResource == "")

@@ -9,6 +9,16 @@
 #include "Engine/Terrain.h"
 #include "Engine/Timestep.h"
 
+#include "Scene/Component/CameraControllerComponent.h"
+#include "Scene/Component/Light.h"
+#include "Scene/Component/MeshRenderer.h"
+#include "Scene/SystemBuilder.inl"
+#include "Scene/Component/Transform.h"
+#include "Scene/Component/VolumetricCloud.h"
+#include "Scene/Component/BoundingBox.h"
+#include "Scene/Component/LightProbe.h"
+#include "2d/Sprite.h"
+
 #include "Others/Console.h"
 #include "Window/WindowWin.h"
 
@@ -22,12 +32,11 @@
 #include "Scene/SceneManager.h"
 #include "Scene/System/ExecutePoint.h"
 #include "Scripts/Mono/MonoVirtualMachine.h"
+#include "Physics/PhysicsWorld.h"
 
 #include "Loaders/Loader.h"
 
 #include "RHI/Texture.h"
-
-
 #include "Scene/SystemBuilder.inl"
 
 #include <imgui.h>
@@ -56,6 +65,15 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 		executePoint = std::make_shared<ExecutePoint>();
+		executePoint->addDependency<Camera, component::Transform>();
+		executePoint->addDependency<component::Light, component::Transform>();
+		executePoint->addDependency<component::MeshRenderer, component::Transform>();
+		executePoint->addDependency<component::SkinnedMeshRenderer, component::Transform>();
+		executePoint->addDependency<component::Model, component::Transform>();
+		executePoint->addDependency<component::Sprite, component::Transform>();
+		executePoint->addDependency<component::AnimatedSprite, component::Transform>();
+		executePoint->addDependency<component::VolumetricCloud, component::Light>();
+		executePoint->addDependency<component::LightProbe, component::Transform>();
 
 		Input::create();
 		window->init();
@@ -113,11 +131,10 @@ namespace maple
 		PROFILE_FUNCTION();
 		auto scene = sceneManager->getCurrentScene();
 		scene->onUpdate(delta);
-
 		onImGui();
 		ImNotification::onImGui();
-		executePoint->setGlobalEntity(scene->getGlobalEntity());
-		executePoint->onUpdate(delta, scene->getRegistry());
+
+		executePoint->onUpdate(delta);
 
 		imGuiManager->update();
 		window->onUpdate();
@@ -131,9 +148,8 @@ namespace maple
 		renderDevice->begin();
 	/*	renderGraph->beginPreviewScene(sceneManager->getSceneByName("PreviewScene"));
 		renderGraph->onRenderPreview();*/
-
 		renderGraph->beginScene(sceneManager->getCurrentScene());
-		executePoint->execute(sceneManager->getCurrentScene()->getRegistry());
+		executePoint->execute();
 		onRenderDebug();
 		imGuiManager->onRender(sceneManager->getCurrentScene());
 		renderDevice->present();        //present all data
@@ -146,7 +162,7 @@ namespace maple
 
 	auto Application::onImGui() -> void
 	{
-		executePoint->executeImGui(sceneManager->getCurrentScene()->getRegistry());
+		executePoint->executeImGui();
 		PROFILE_FUNCTION();
 	}
 

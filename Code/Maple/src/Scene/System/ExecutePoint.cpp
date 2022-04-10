@@ -1,24 +1,14 @@
 //////////////////////////////////////////////////////////////////////////////
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
-#include "EntityManager.h"
-#include "Scene/Scene.h"
+
+#include "ExecutePoint.h"
+#include "Scene/Entity/Entity.h"
+#include "Scene/Component/Component.h"
 
 namespace maple
 {
-	auto EntityManager::create() -> Entity
-	{
-		return Entity(registry.create(), scene->getRegistry());
-	}
-
-	auto EntityManager::create(const std::string &name) -> Entity
-	{
-		auto e = registry.create();
-		registry.emplace<component::NameComponent>(e, name);
-		return Entity(e, scene->getRegistry());
-	}
-
-	auto EntityManager::clear() -> void
+	auto ExecutePoint::clear() -> void
 	{
 		registry.each([&](auto entity) {
 			registry.destroy(entity);
@@ -26,7 +16,7 @@ namespace maple
 		registry.clear();
 	}
 
-	auto EntityManager::removeAllChildren(entt::entity entity, bool root) -> void
+	auto ExecutePoint::removeAllChildren(entt::entity entity, bool root ) -> void
 	{
 		auto hierarchyComponent = registry.try_get<component::Hierarchy>(entity);
 		if (hierarchyComponent)
@@ -35,7 +25,7 @@ namespace maple
 			while (child != entt::null)
 			{
 				auto hierarchyComponent = registry.try_get<component::Hierarchy>(child);
-				auto next               = hierarchyComponent ? hierarchyComponent->getNext() : entt::null;
+				auto next = hierarchyComponent ? hierarchyComponent->getNext() : entt::null;
 				removeAllChildren(child, false);
 				child = next;
 			}
@@ -44,7 +34,7 @@ namespace maple
 			registry.destroy(entity);
 	}
 
-	auto EntityManager::removeEntity(entt::entity entity) -> void
+	auto ExecutePoint::removeEntity(entt::entity entity) -> void
 	{
 		auto hierarchyComponent = registry.try_get<component::Hierarchy>(entity);
 		if (hierarchyComponent)
@@ -53,7 +43,7 @@ namespace maple
 			while (child != entt::null)
 			{
 				auto hierarchyComponent = registry.try_get<component::Hierarchy>(child);
-				auto next               = hierarchyComponent ? hierarchyComponent->getNext() : entt::null;
+				auto next = hierarchyComponent ? hierarchyComponent->getNext() : entt::null;
 				removeEntity(child);
 				child = next;
 			}
@@ -61,18 +51,29 @@ namespace maple
 		registry.destroy(entity);
 	}
 
-	auto EntityManager::getEntityByName(const std::string &name) -> Entity
+	auto ExecutePoint::create() -> Entity
+	{
+		return Entity(registry.create(), getRegistry());
+	}
+
+	auto ExecutePoint::create(const std::string& name) -> Entity
+	{
+		auto e = registry.create();
+		registry.emplace<component::NameComponent>(e, name);
+		return Entity(e, getRegistry());
+	}
+
+	auto ExecutePoint::getEntityByName(const std::string& name) -> Entity
 	{
 		auto views = registry.view<component::NameComponent>();
-		for (auto &view : views)
+		for (auto& view : views)
 		{
-			auto &comp = registry.get<component::NameComponent>(view);
+			auto& comp = registry.get<component::NameComponent>(view);
 			if (comp.name == name)
 			{
-				return {view, scene->getRegistry()};
+				return { view, getRegistry() };
 			}
 		}
 		return {};
 	}
-
 };        // namespace maple

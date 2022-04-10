@@ -12,10 +12,11 @@
 
 namespace maple
 {
-	class EntityManager;
 	class Entity;
 	class SceneGraph;
 	class Camera;
+	class ExecutePoint;
+
 	namespace component 
 	{
 		class Transform;
@@ -33,6 +34,7 @@ namespace maple
 		virtual auto saveTo(const std::string &filePath = "", bool binary = false) -> void;
 		virtual auto loadFrom() -> void;
 
+
 		inline auto setOverrideCamera(Camera *overrideCamera)
 		{
 			this->overrideCamera = overrideCamera;
@@ -46,10 +48,6 @@ namespace maple
 			this->useSceneCamera = useSceneCamera;
 		}
 
-		inline auto &getEntityManager()
-		{
-			return entityManager;
-		}
 		inline auto &getName() const
 		{
 			return name;
@@ -78,7 +76,6 @@ namespace maple
 		}
 
 		auto setSize(uint32_t w, uint32_t h) -> void;
-		auto getRegistry() -> entt::registry &;
 
 		auto createEntity() -> Entity;
 		auto createEntity(const std::string &name) -> Entity;
@@ -102,40 +99,22 @@ namespace maple
 			archive(version, name);
 		}
 
-		template <typename... Components>
-		inline auto addGlobalComponent()
-		{
-			(getRegistry().emplace<Components>(globalEntity.getHandle());...);
-		}
-
-		template <typename Component, typename... Args>
-		inline auto& getGlobalComponent(Args &&...args)
-		{
-			return globalEntity.template getOrAddComponent<Component>(std::forward<Args>(args)...);
-		}
-
-		inline auto getGlobalEntity() const 
-		{
-			return globalEntity;
-		}
-
 		inline auto& getBoundingBox() { if (boxDirty) calculateBoundingBox();  return sceneBox; }
 
 		auto calculateBoundingBox() -> void;
 		auto onMeshRenderCreated() -> void;
 		
 		auto addMesh(const std::string& file) -> Entity;
+		auto create()->Entity;
+		auto create(const std::string& name)->Entity;
 
 	  protected:
 		auto updateCameraController(float dt) -> void;
 		auto copyComponents(const Entity &from, const Entity &to) -> void;
 
 		std::shared_ptr<SceneGraph>    sceneGraph;
-		std::shared_ptr<EntityManager> entityManager;
 		std::string                    name;
 		std::string                    filePath;
-
-		Entity globalEntity;
 
 		uint32_t width  = 0;
 		uint32_t height = 0;
@@ -154,5 +133,7 @@ namespace maple
 
 		BoundingBox sceneBox;
 		bool boxDirty = false;
+
+		std::shared_ptr<ExecutePoint> executePoint;
 	};
 };        // namespace maple

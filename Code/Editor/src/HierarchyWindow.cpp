@@ -20,7 +20,6 @@
 #include "Scene/Component/LightProbe.h"
 
 #include "Scene/Entity/Entity.h"
-#include "Scene/Entity/EntityManager.h"
 #include "Scene/Scene.h"
 #include "Scene/SceneManager.h"
 
@@ -61,7 +60,7 @@ namespace maple
 	auto HierarchyWindow::drawName() -> void
 	{
 		auto  scene    = Application::get()->getSceneManager()->getCurrentScene();
-		auto &registry = scene->getRegistry();
+		auto& registry = Application::getExecutePoint()->getRegistry();
 
 		const auto &sceneName = scene->getName();
 
@@ -77,7 +76,7 @@ namespace maple
 	auto HierarchyWindow::popupWindow() -> void
 	{
 		auto  scene    = Application::get()->getSceneManager()->getCurrentScene();
-		auto &registry = scene->getRegistry();
+		auto &registry = Application::getExecutePoint()->getRegistry();;
 		ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 10.f);
 		if (ImGui::BeginPopupContextWindow("HierarchyWindow::PopupWindow"))
 		{
@@ -170,7 +169,7 @@ namespace maple
 	auto HierarchyWindow::dragEntity() -> void
 	{
 		auto  scene    = Application::get()->getSceneManager()->getCurrentScene();
-		auto &registry = scene->getRegistry();
+		auto &registry = Application::getExecutePoint()->getRegistry();
 
 		if (ImGui::BeginDragDropTarget())
 		{
@@ -233,7 +232,7 @@ namespace maple
 					if (hierarchyComponent)
 					{
 						component::Hierarchy::reparent(entity, entt::null, registry, *hierarchyComponent);
-						Entity e(entity, scene->getRegistry());
+						Entity e(entity, Application::getExecutePoint()->getRegistry());
 						e.removeComponent<component::Hierarchy>();
 					}
 				}
@@ -357,14 +356,14 @@ namespace maple
 				{
 					if (ImGui::Selectable("Paste"))
 					{
-						Entity copiedEntity = {editor->getCopiedEntity(), scene->getRegistry()};
+						Entity copiedEntity = {editor->getCopiedEntity(), Application::getExecutePoint()->getRegistry()};
 						if (!copiedEntity.valid())
 						{
 							editor->setCopiedEntity(entt::null);
 						}
 						else
 						{
-							scene->duplicateEntity(copiedEntity, {node, scene->getRegistry()});
+							scene->duplicateEntity(copiedEntity, {node, Application::getExecutePoint()->getRegistry()});
 
 							if (editor->isCutCopyEntity())
 								deleteEntity = true;
@@ -380,7 +379,7 @@ namespace maple
 
 				if (ImGui::Selectable("Duplicate"))
 				{
-					scene->duplicateEntity({node, scene->getRegistry()});
+					scene->duplicateEntity({node,Application::getExecutePoint()->getRegistry()});
 				}
 				if (ImGui::Selectable("Delete"))
 					deleteEntity = true;
@@ -393,9 +392,9 @@ namespace maple
 
 				if (ImGui::Selectable("Add Child"))
 				{
-					auto child = scene->getEntityManager()->create();
+					auto child =  Application::getExecutePoint()->create();
 
-					child.setParent({node, scene->getRegistry()});
+					child.setParent({node, Application::getExecutePoint()->getRegistry()});
 				}
 				ImGui::EndPopup();
 			}
@@ -459,7 +458,7 @@ namespace maple
 
 			if (deleteEntity)
 			{
-				scene->getEntityManager()->removeEntity(node);
+				Application::getExecutePoint()->removeEntity(node);
 
 				if (nodeOpen)
 					ImGui::TreePop();

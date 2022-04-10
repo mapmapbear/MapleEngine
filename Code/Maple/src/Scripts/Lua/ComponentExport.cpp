@@ -20,7 +20,6 @@ extern "C" {
 #include "LuaComponent.h"
 
 #include "Scene/Entity/Entity.h"
-#include "Scene/Entity/EntityManager.h"
 
 
 namespace maple
@@ -64,11 +63,12 @@ namespace maple
 				.EXPORT_COMPONENTS(component::LuaComponent)
 
 				.endClass()
+/*
 
 				.beginClass<EntityManager>("EntityManager")
 				.addFunction("Create", static_cast<Entity(EntityManager::*)()> (&EntityManager::create))
 				.addFunction("getRegistry", &EntityManager::getRegistry)
-				.endClass()
+				.endClass()*/
 
 				.beginClass<component::NameComponent>("NameComponent")
 				.addProperty("name", &component::NameComponent::name)

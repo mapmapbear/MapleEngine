@@ -124,7 +124,6 @@ namespace maple
 	auto RenderGraph::beginScene(Scene *scene) -> void
 	{
 		PROFILE_FUNCTION();
-		auto &registry = scene->getRegistry();
 
 		auto camera = scene->getCamera();
 		if (camera.first == nullptr || camera.second == nullptr)
@@ -132,7 +131,7 @@ namespace maple
 			return;
 		}
 
-		auto& cameraView = scene->getGlobalComponent<component::CameraView>();
+		auto& cameraView = Application::getExecutePoint()->getGlobalComponent<component::CameraView>();
 		cameraView.proj = camera.first->getProjectionMatrix();
 		cameraView.view = camera.second->getWorldMatrixInverse();
 		cameraView.projView = cameraView.proj * cameraView.view;
@@ -284,8 +283,8 @@ namespace maple
 	auto RenderGraph::onUpdate(const Timestep &step, Scene *scene) -> void
 	{
 		PROFILE_FUNCTION();
-		auto& renderData = scene->getGlobalComponent<component::RendererData>();
-		auto& winSize = scene->getGlobalComponent<component::WindowSize>();
+		auto& renderData =	Application::getExecutePoint()->getGlobalComponent<component::RendererData>();
+		auto& winSize =		Application::getExecutePoint()->getGlobalComponent<component::WindowSize>();
 		winSize.height = screenBufferHeight;
 		winSize.width = screenBufferWidth;
 		renderData.commandBuffer = Application::getGraphicsContext()->getSwapChain()->getCurrentCommandBuffer();
@@ -306,6 +305,6 @@ namespace maple
 	auto RenderGraph::setRenderTarget(Scene* scene, const std::shared_ptr<Texture> &texture, bool rebuildFramebuffer) -> void
 	{
 		PROFILE_FUNCTION();
-		scene->getGlobalComponent<component::FinalPass>().renderTarget = texture;
+		Application::getExecutePoint()->getGlobalComponent<component::FinalPass>().renderTarget = texture;
 	}
 };        // namespace maple

@@ -4,16 +4,17 @@
 
 #include "Scene.h"
 #include "Entity/Entity.h"
-#include "Entity/EntityManager.h"
 #include "Scene/Component/CameraControllerComponent.h"
 #include "Scene/Component/Light.h"
 #include "Scene/Component/MeshRenderer.h"
-#include "2d/Sprite.h"
+#include "Scene/SystemBuilder.inl"
 #include "Scene/Component/Transform.h"
 #include "Scene/Component/VolumetricCloud.h"
 #include "Scene/Component/BoundingBox.h"
 #include "Scene/Component/LightProbe.h"
+#include "Scene/System/ExecutePoint.h"
 
+#include "2d/Sprite.h"
 #include "Scripts/Mono/MonoSystem.h"
 #include "Scripts/Mono/MonoComponent.h"
 
@@ -70,31 +71,14 @@ namespace maple
 	Scene::Scene(const std::string &initName) :
 	    name(initName)
 	{
-		entityManager = std::make_shared<EntityManager>(this);
-		entityManager->addDependency<Camera, component::Transform>();
-		entityManager->addDependency<component::Light, component::Transform>();
-		entityManager->addDependency<component::MeshRenderer, component::Transform>();
-		entityManager->addDependency<component::SkinnedMeshRenderer, component::Transform>();
-		entityManager->addDependency<component::Model, component::Transform>();
-		entityManager->addDependency<component::Sprite, component::Transform>();
-		entityManager->addDependency<component::AnimatedSprite, component::Transform>();
-		entityManager->addDependency<component::VolumetricCloud, component::Light>();
-		entityManager->addDependency<component::LightProbe, component::Transform>();
-
 		sceneGraph = std::make_shared<SceneGraph>();
-		sceneGraph->init(entityManager->getRegistry());
-		entityManager->getRegistry().on_construct<component::MeshRenderer>().connect<&Scene::onMeshRenderCreated>(this);
-		entityManager->getRegistry().on_destroy<component::MeshRenderer>().connect<&Scene::onMeshRenderCreated>(this);
+		sceneGraph->init(Application::getExecutePoint()->getRegistry());
+		Application::getExecutePoint()->getRegistry().on_construct<component::MeshRenderer>().connect<&Scene::onMeshRenderCreated>(this);
+		Application::getExecutePoint()->getRegistry().on_destroy<component::MeshRenderer>().connect<&Scene::onMeshRenderCreated>(this);
 
-		globalEntity = createEntity("Global");
 
-		getGlobalComponent<component::BoundingBoxComponent>();
-		getGlobalComponent<component::DeltaTime>();
-	}
-
-	auto Scene::getRegistry() -> entt::registry &
-	{
-		return entityManager->getRegistry();
+		Application::getExecutePoint()->getGlobalComponent<component::BoundingBoxComponent>();
+		Application::getExecutePoint()->getGlobalComponent<component::DeltaTime>();
 	}
 
 	auto Scene::setSize(uint32_t w, uint32_t h) -> void
@@ -127,10 +111,10 @@ namespace maple
 		PROFILE_FUNCTION();
 		if (filePath != "")
 		{
-			entityManager->clear();
-			sceneGraph->disconnectOnConstruct(true, getRegistry());
+			Application::getExecutePoint()->clear();
+			sceneGraph->disconnectOnConstruct(true, Application::getExecutePoint()->getRegistry());
 			Serialization::loadScene(this, filePath);
-			sceneGraph->disconnectOnConstruct(false, getRegistry());
+			sceneGraph->disconnectOnConstruct(false, Application::getExecutePoint()->getRegistry());
 		}
 	}
 
@@ -138,7 +122,7 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 		dirty       = true;
-		auto entity = entityManager->create();
+		auto entity = Application::getExecutePoint()->create();
 		if (onEntityAdd)
 			onEntityAdd(entity);
 		return entity;
@@ -149,13 +133,13 @@ namespace maple
 		PROFILE_FUNCTION();
 		dirty          = true;
 		int32_t i      = 0;
-		auto    entity = entityManager->getEntityByName(name);
+		auto    entity = Application::getExecutePoint()->getEntityByName(name);
 		while (entity.valid())
 		{
-			entity = entityManager->getEntityByName(name + "(" + std::to_string(i + 1) + ")");
+			entity = Application::getExecutePoint()->getEntityByName(name + "(" + std::to_string(i + 1) + ")");
 			i++;
 		}
-		auto newEntity = entityManager->create(i == 0 ? name : name + "(" + std::to_string(i) + ")");
+		auto newEntity = Application::getExecutePoint()->create(i == 0 ? name : name + "(" + std::to_string(i) + ")");
 		if (onEntityAdd)
 			onEntityAdd(newEntity);
 		return newEntity;
@@ -166,7 +150,7 @@ namespace maple
 		PROFILE_FUNCTION();
 		dirty = true;
 
-		Entity newEntity = entityManager->create();
+		Entity newEntity = Application::getExecutePoint()->create();
 
 		if (parent)
 			newEntity.setParent(parent);
@@ -179,7 +163,7 @@ namespace maple
 		PROFILE_FUNCTION();
 
 		dirty            = true;
-		Entity newEntity = entityManager->create();
+		Entity newEntity = Application::getExecutePoint()->create();
 		//COPY
 		copyComponents(entity, newEntity);
 	}
@@ -193,7 +177,10 @@ namespace maple
 			::Write<component::Transform>
 			::To<ecs::Query>;
 
-		CameraQuery query{ getRegistry(),globalEntity };
+		CameraQuery query{ 
+			Application::getExecutePoint()->getRegistry(), 
+			Application::getExecutePoint()->getGlobalEntity()
+		};
 
 		if (useSceneCamera)
 		{
@@ -209,8 +196,7 @@ namespace maple
 	auto Scene::removeAllChildren(entt::entity entity) -> void
 	{
 		PROFILE_FUNCTION();
-
-		entityManager->removeAllChildren(entity);
+		Application::getExecutePoint()->removeAllChildren(entity);
 	}
 
 	auto Scene::calculateBoundingBox() -> void
@@ -224,7 +210,7 @@ namespace maple
 			::Write<component::MeshRenderer>
 			::To<ecs::Query>;
 
-		Query query(entityManager->getRegistry(),globalEntity);
+		Query query(Application::getExecutePoint()->getRegistry(), Application::getExecutePoint()->getGlobalEntity());
 
 		for (auto entity : query)
 		{
@@ -235,7 +221,7 @@ namespace maple
 					sceneBox.merge(mesh->getBoundingBox());
 			}
 		}
-		auto & aabb = getGlobalComponent<component::BoundingBoxComponent>();
+		auto & aabb = Application::getExecutePoint()->getGlobalComponent<component::BoundingBoxComponent>();
 		aabb.box = &sceneBox;
 	}
 
@@ -267,7 +253,7 @@ namespace maple
 
 				if (model.skeleton->isBuildOffset())
 				{
-					sceneGraph->updateTransform(modelEntity, getRegistry());
+					sceneGraph->updateTransform(modelEntity, Application::getExecutePoint()->getRegistry());
 					for (auto entity : outEntities)
 					{
 						auto& transform = entity.getComponent<component::Transform>();
@@ -310,9 +296,10 @@ namespace maple
 			::Write<component::MonoComponent>
 			::To<ecs::Query>;
 
-		MonoQuery query{getRegistry(),globalEntity};
+		MonoQuery query{ Application::getExecutePoint()->getRegistry() ,Application::getExecutePoint()->getGlobalEntity() };
 		mono::recompile(query);
 		mono::callMonoStart(query);
+
 	}
 
 	auto Scene::onClean() -> void
@@ -328,7 +315,7 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 
-		ControllerQuery query(entityManager->getRegistry(), globalEntity);
+		ControllerQuery query(Application::getExecutePoint()->getRegistry(), Application::getExecutePoint()->getGlobalEntity());
 
 		for (auto entity : query)
 		{
@@ -347,10 +334,25 @@ namespace maple
 	auto Scene::onUpdate(float dt) -> void
 	{
 		PROFILE_FUNCTION();
-		auto& deltaTime = getGlobalComponent<component::DeltaTime>();
+		auto& deltaTime = Application::getExecutePoint()->getGlobalComponent<component::DeltaTime>();
 		deltaTime.dt = dt;
 		updateCameraController(dt);
 		getBoundingBox();
-		sceneGraph->update(entityManager->getRegistry());
+		sceneGraph->update(Application::getExecutePoint()->getRegistry());
+	}
+
+	auto Scene::create() -> Entity
+	{
+		auto& registry = Application::getExecutePoint()->getRegistry();
+
+		return Entity(registry.create(), registry);
+	}
+
+	auto Scene::create(const std::string& name) -> Entity
+	{
+		auto& registry = Application::getExecutePoint()->getRegistry();
+		auto e = registry.create();
+		registry.emplace<component::NameComponent>(e, name);
+		return Entity(e, registry);
 	}
 };        // namespace maple

@@ -171,7 +171,6 @@ namespace maple
 	  protected:
 		entt::entity    entityHandle = entt::null;
 		entt::registry *registry     = nullptr;
-		friend class EntityManager;
 
 	};
 

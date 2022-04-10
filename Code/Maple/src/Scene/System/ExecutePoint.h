@@ -10,6 +10,7 @@
 #include <ecs/SystemBuilder.h>
 #include <ecs/World.h>
 #include <ecs/TypeList.h>
+#include <Scene/Entity/Entity.h>
 
 namespace maple
 {
@@ -21,9 +22,15 @@ namespace maple
 		std::function<void(ecs::World)> postCall = [](ecs::World) {};
 	};
 
-	class ExecutePoint
+	class MAPLE_EXPORT ExecutePoint
 	{
 	  public:
+
+		inline ExecutePoint()
+		{
+			globalEntity = create("global");
+		};
+
 		inline auto registerQueue(ExecuteQueue &queue)
 		{
 			graph.emplace_back(&queue);
@@ -63,51 +70,80 @@ namespace maple
 			expand(ecs::FunctionConstant<System>{}, queue);
 		}
 
+		template <typename R, typename ...T>
+		inline auto addDependency() -> void
+		{
+			(registry.on_construct<R>().connect<&entt::registry::get_or_emplace<T>>(), ...);
+		}
+
+		auto clear() -> void;
+		auto removeAllChildren(entt::entity entity, bool root = true) -> void;
+		auto removeEntity(entt::entity entity) -> void;
+
+		auto create()->Entity;
+		auto create(const std::string& name)->Entity;
+		auto getEntityByName(const std::string& name)->Entity;
+
+		inline auto getGlobalEntity() const { return globalEntity; }
+
+		inline auto& getRegistry()
+		{
+			return registry;
+		}
+
+		template <typename... Components>
+		inline auto addGlobalComponent()
+		{
+			(registry.emplace<Components>(globalEntity.getHandle()); ...);
+		}
+
+		template <typename Component, typename... Args>
+		inline auto& getGlobalComponent(Args &&...args)
+		{
+			return registry.template get_or_emplace<Component>(globalEntity,std::forward<Args>(args)...);
+		}
+
 	  private:
 		  friend class Application;
 
-		  inline auto setGlobalEntity(entt::entity global)
-		  {
-			  globalEntity = global;
-		  }
-
-		  inline auto onUpdate(float dt, entt::registry& reg)
+		  inline auto onUpdate(float dt)
 		  {
 			  for (auto& job : updateQueue.jobs)
 			  {
-				  job(reg);
+				  job(registry);
 			  }
 		  }
 
-		  inline auto executeImGui(entt::registry& reg)
+		  inline auto executeImGui()
 		  {
 			  for (auto& job : imGuiQueue.jobs)
 			  {
-				  job(reg);
+				  job(registry);
 			  }
 		  }
 
-		  inline auto execute(entt::registry& reg)
+		  inline auto execute()
 		  {
 			  if (!factoryQueue.jobs.empty())
 			  {
 				  for (auto& job : factoryQueue.jobs)
 				  {
-					  job(reg);
+					  job(registry);
 				  }
 				  factoryQueue.jobs.clear();
 			  }
 
 			  for (auto g : graph)
 			  {
-				  g->preCall(ecs::World{ reg,globalEntity });
+				  g->preCall(ecs::World{ registry,globalEntity });
 				  for (auto& func : g->jobs)
 				  {
-					  func(reg);
+					  func(registry);
 				  }
-				  g->postCall(ecs::World{ reg,globalEntity });
+				  g->postCall(ecs::World{ registry,globalEntity });
 			  }
 		  }
+
 
 		template <auto System>
 		inline auto expand(ecs::FunctionConstant<System> system, ExecuteQueue &queue) -> void
@@ -135,5 +171,7 @@ namespace maple
 		std::vector<ExecuteQueue *> graph;
 
 		entt::entity globalEntity = entt::null;
+
+		entt::registry registry;
 	};
 };        // namespace maple

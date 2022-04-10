@@ -29,7 +29,7 @@ namespace maple
 		TRIVIAL_COMPONENT(component::SkinnedMeshRenderer, false, "Skinned Mesh");
 		TRIVIAL_COMPONENT(component::Atmosphere, true, "Atmosphere");
 		TRIVIAL_COMPONENT(component::VolumetricCloud, true, "Volumetric Cloud");
-		TRIVIAL_COMPONENT(component::LightProbe, true, "Light Probe");
+		//TRIVIAL_COMPONENT(component::LightProbe, true, "Light Probe");
 		TRIVIAL_COMPONENT(component::LPVGrid, false, "LPV Grid");
 		TRIVIAL_COMPONENT(component::ReflectiveShadowData, false, "Reflective Shadow Map");
 		TRIVIAL_COMPONENT(component::ShadowMapData, false, "Shadow Map");
@@ -43,5 +43,7 @@ namespace maple
 		TRIVIAL_COMPONENT(component::SkyboxData, false, "Skybox");
 		TRIVIAL_COMPONENT(component::Hierarchy, false, "Hierarchy");
 		TRIVIAL_COMPONENT(component::BloomData, false, "Bloom");
+		TRIVIAL_COMPONENT(component::RigidRody, true, "RigidRody");
+		TRIVIAL_COMPONENT(component::Collider, true, "Collider");
 	}
 }

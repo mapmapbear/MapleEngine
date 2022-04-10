@@ -150,8 +150,7 @@ namespace maple
 
 	auto GeometryRenderer::drawLine(const glm::vec3 &start, const glm::vec3 &end, const glm::vec4 &color) -> void
 	{
-		auto scene = Application::getSceneManager()->getCurrentScene();
-		auto& renderData = scene->getGlobalComponent<component::GeometryRenderData>();
+		auto& renderData = Application::getExecutePoint()->getGlobalComponent<component::GeometryRenderData>();
 		renderData.lines.push_back({start, end, color});
 	}
 
@@ -214,8 +213,7 @@ namespace maple
 
 	auto GeometryRenderer::drawTriangle(const glm::vec3 &v0, const glm::vec3 &v1, const glm::vec3 &v2, const glm::vec4 &color) -> void
 	{
-		auto scene = Application::getSceneManager()->getCurrentScene();
-		auto& renderData = scene->getGlobalComponent<component::GeometryRenderData>();
+		auto& renderData = Application::getExecutePoint()->getGlobalComponent<component::GeometryRenderData>();
 		renderData.triangles.push_back({v0, v1, v2, color});
 	}
 

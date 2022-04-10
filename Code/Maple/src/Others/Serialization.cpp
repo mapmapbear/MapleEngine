@@ -20,6 +20,9 @@
 #include <filesystem>
 #include <sstream>
 
+#include "Application.h"
+#include "Scene/System/ExecutePoint.h"
+
 #define ALL_COMPONENTS component::Transform,				\
 	                   component::NameComponent,			\
 	                   component::ActiveComponent,			\
@@ -43,9 +46,9 @@ namespace maple
 			cereal::JSONOutputArchive output{storage};
 			output(*scene);
 			entt::snapshot{
-			    scene->getRegistry()}
-			    .entities(output)
-			    .component<ALL_COMPONENTS>(output);
+				Application::getExecutePoint()->getRegistry() 
+			}.entities(output)
+		     .component<ALL_COMPONENTS>(output);
 		}
 
 		File file(outPath, true);
@@ -60,7 +63,9 @@ namespace maple
 		istr.str((const char *) buffer.get());
 		cereal::JSONInputArchive input(istr);
 		input(*scene);
-		entt::snapshot_loader{scene->getRegistry()}.entities(input).component<ALL_COMPONENTS>(input);
+		entt::snapshot_loader{
+			Application::getExecutePoint()->getRegistry()
+		}.entities(input).component<ALL_COMPONENTS>(input);
 	}
 
 	auto Serialization::loadMaterial(Material *material, const std::string &file) -> void

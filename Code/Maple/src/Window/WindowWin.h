@@ -26,7 +26,7 @@ namespace maple
 		auto setTitle(const std::string &title) -> void override;
 		auto init() -> void override;
 		auto swapBuffers() -> void override;
-
+		auto isClose() const -> bool;
 
 		inline auto isVSync() const -> bool override
 		{

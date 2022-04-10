@@ -21,6 +21,9 @@
 #include "imgui_internal.h"
 #include <ImGuizmo.h>
 #include <glm/gtc/type_ptr.hpp>
+#include "Application.h"
+#include "Scene/System/ExecutePoint.h"
+#include <ecs/ecs.h>
 
 namespace maple
 {
@@ -42,11 +45,25 @@ namespace maple
 		if (ImGui::Begin("Display", &active, flags))
 		{
 			Camera *camera     = nullptr;
-			auto &  registry   = currentScene->getRegistry();
-			auto    cameraView = registry.view<Camera>();
-			if (!cameraView.empty())
+
+			using CameraQuery = ecs::Chain
+				::Write<Camera>
+				::To<ecs::Query>;
+
+			CameraQuery query{
+				Application::getExecutePoint()->getRegistry(),
+				Application::getExecutePoint()->getGlobalEntity()
+			};
+
+
+			if (!query.empty())
 			{
-				camera = &registry.get<Camera>(cameraView.front());
+				for (auto ent : query)
+				{
+					auto [cam] = query.convert(ent);
+					camera = &cam;
+					break;
+				}
 			}
 
 			if (camera != nullptr)

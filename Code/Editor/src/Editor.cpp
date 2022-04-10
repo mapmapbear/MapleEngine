@@ -37,7 +37,6 @@
 #include "Scene/Component/BoundingBox.h"
 
 #include "Scene/Entity/Entity.h"
-#include "Scene/Entity/EntityManager.h"
 #include "Scene/Scene.h"
 #include "Scene/SceneManager.h"
 
@@ -136,7 +135,6 @@ namespace maple
 		auto currentScene = sceneManager->getCurrentScene();
 		if (getEditorState() == EditorState::Preview)
 		{
-			auto &registry = currentScene->getRegistry();
 
 			/*	if (isSceneActive())
 			{
@@ -220,7 +218,7 @@ namespace maple
 			return;
 		}
 
-		auto &registry = getSceneManager()->getCurrentScene()->getRegistry();
+		auto &registry = getExecutePoint()->getRegistry();
 		if (cameraSelected || camera->isOrthographic())
 		{
 			auto view = registry.view<Camera, component::Transform>();
@@ -276,7 +274,8 @@ namespace maple
 		checkStencil(selectedNode, false);
 		checkStencil(node, true);
 		selectedNode   = node;
-		cameraSelected = node != entt::null && getSceneManager()->getCurrentScene()->getRegistry().try_get<Camera>(selectedNode) != nullptr;
+
+		cameraSelected = node != entt::null && getExecutePoint()->getRegistry().try_get<Camera>(selectedNode) != nullptr;
 	}
 
 	auto Editor::setSelected(const std::string &selectResource) -> void
@@ -303,7 +302,7 @@ namespace maple
 			ImGuizmo::SetDrawlist();
 			ImGuizmo::SetOrthographic(camera->isOrthographic());
 
-			auto &registry  = sceneManager->getCurrentScene()->getRegistry();
+			auto & registry = getExecutePoint()->getRegistry();
 			auto  transform = registry.try_get < component::Transform >(selectedNode);
 			if (transform != nullptr)
 			{
@@ -575,7 +574,7 @@ namespace maple
 
 	auto Editor::checkStencil(const entt::entity &selectedNode, bool enable) -> void
 	{
-		auto &registry = getSceneManager()->getCurrentScene()->getRegistry();
+		auto& registry = getExecutePoint()->getRegistry();
 
 		if (selectedNode == entt::null)
 		{
@@ -641,7 +640,7 @@ namespace maple
 		auto scene = sceneManager->getSceneByName("PreviewScene");
 		if (scene && filePath != "")
 		{
-			auto meshRoot = scene->getEntityManager()->getEntityByName("MeshRoot");
+			auto meshRoot = getExecutePoint()->getEntityByName("MeshRoot");
 			LOGI("Open File in Preview Window {0}", filePath);
 			meshRoot.removeAllChildren();
 
@@ -800,7 +799,7 @@ namespace maple
 
 	auto Editor::clickObject(const Ray& ray) -> void
 	{
-		auto& registry = getSceneManager()->getCurrentScene()->getRegistry();
+		auto& registry = getExecutePoint()->getRegistry();
 
 		float        closestDist = INFINITY;
 		entt::entity closestEntity = entt::null;

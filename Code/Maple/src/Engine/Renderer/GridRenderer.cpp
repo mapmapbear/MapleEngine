@@ -72,12 +72,15 @@ namespace maple
 		inline auto system(Entity entity,ecs::World world)
 		{
 			auto [render, grid, camera] = entity;
-			grid.descriptorSet->setUniform("UniformBufferObject", "proj", glm::value_ptr(camera.proj));
-			grid.descriptorSet->setUniform("UniformBufferObject", "view", glm::value_ptr(camera.view));
-			grid.systemBuffer.cameraPos = glm::vec4(camera.cameraTransform->getWorldPosition(), 1.f);
-			grid.systemBuffer.near_ = camera.nearPlane;
-			grid.systemBuffer.far_ = camera.farPlane;
-			grid.descriptorSet->setUniformBufferData("UniformBuffer", &grid.systemBuffer);
+			if (camera.cameraTransform != nullptr) 
+			{
+				grid.descriptorSet->setUniform("UniformBufferObject", "proj", glm::value_ptr(camera.proj));
+				grid.descriptorSet->setUniform("UniformBufferObject", "view", glm::value_ptr(camera.view));
+				grid.systemBuffer.cameraPos = glm::vec4(camera.cameraTransform->getWorldPosition(), 1.f);
+				grid.systemBuffer.near_ = camera.nearPlane;
+				grid.systemBuffer.far_ = camera.farPlane;
+				grid.descriptorSet->setUniformBufferData("UniformBuffer", &grid.systemBuffer);
+			}
 		}
 	}
 

@@ -12,13 +12,13 @@
 #include "Scene/Component/MeshRenderer.h"
 #include "Scene/Component/Transform.h"
 #include "Scene/Entity/Entity.h"
-#include "Scene/Entity/EntityManager.h"
 #include "Scene/Scene.h"
 
 #include "Application.h"
 #include <imGuIZMOquat.h>
 
 #include <ecs/ComponentChain.h>
+#include "Scene/System/ExecutePoint.h"
 
 namespace maple
 {
@@ -29,7 +29,6 @@ namespace maple
 
 		auto entity = scene->createEntity("Light");
 		entity.addComponent<component::Light>();
-
 
 		auto &transform = entity.getComponent<component::Transform>();
 		transform.setLocalOrientation(glm::radians(glm::vec3(45.0, 15.0, 45.0)));
@@ -75,7 +74,7 @@ namespace maple
 			auto  camera            = scene->getCamera();
 			float viewManipulateTop = minBound.y;
 			ImGui::SetCursorPos({sceneViewSize.x - 96, 32});
-			auto entity = scene->getEntityManager()->getEntityByName("MeshRoot");
+			auto entity = Application::getExecutePoint()->getEntityByName("MeshRoot");
 			if (entity)
 			{
 				auto &transform = entity.getComponent<component::Transform>();
@@ -113,7 +112,7 @@ namespace maple
 
 	auto PreviewWindow::handleInput(float dt) -> void
 	{
-		auto       group    = scene->getRegistry().view<component::EditorCameraController>();
+		auto       group    = Application::getExecutePoint()->getRegistry().view<component::EditorCameraController>();
 		const auto mousePos = Input::getInput()->getMousePosition();
 		if (previousCurserPos == glm::vec2{0, 0})
 		{
@@ -133,7 +132,7 @@ namespace maple
 
 	auto PreviewWindow::handleRotation(float dt, const glm::vec2 &pos) -> void
 	{
-		auto entity = scene->getEntityManager()->getEntityByName("MeshRoot");
+		auto entity = Application::getExecutePoint()->getEntityByName("MeshRoot");
 		if (Input::getInput()->isMouseHeld(KeyCode::MouseKey::ButtonLeft) && entity)
 		{
 			auto &transform        = entity.getComponent<component::Transform>();

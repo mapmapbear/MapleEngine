@@ -118,7 +118,12 @@ namespace maple
 #endif        // MAPLE_OPENGL
 	}
 
-	auto WindowWin::registerNativeEvent(const WindowInitData &data) -> void
+	auto WindowWin::isClose() const -> bool
+	{
+		return glfwWindowShouldClose(nativeInterface) == 1;
+	}
+
+	auto WindowWin::registerNativeEvent(const WindowInitData& data) -> void
 	{
 		glfwSetWindowSizeCallback(nativeInterface, [](GLFWwindow *win, int32_t w, int32_t h) {
 			Application::getEventDispatcher().postEvent(std::make_unique<WindowResizeEvent>(w, h));

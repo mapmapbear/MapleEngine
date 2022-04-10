@@ -1,6 +1,8 @@
 #pragma once
 
 #include <IconsMaterialDesignIcons.h>
+#include <font_awesome_5.h>
+
 #include "Engine/Camera.h"
 #include "Scene/Component/Light.h"
 #include "Scene/Component/Transform.h"
@@ -21,6 +23,8 @@
 #include "Scripts/Mono/MonoComponent.h"
 #include "Animation/Animator.h"
 #include "2d/Sprite.h"
+#include "Physics/RigidBody.h"
+#include "Physics/Collider.h"
 
 namespace maple
 {
@@ -63,6 +67,8 @@ COMP_ICON(component::AnimatedSprite,			ICON_MDI_IMAGE_AREA);
 COMP_ICON(component::LuaComponent,				ICON_MDI_LANGUAGE_LUA);
 COMP_ICON(component::MonoComponent,				ICON_MDI_LANGUAGE_CSHARP);
 COMP_ICON(component::BloomData,					ICON_MDI_BRIGHTNESS_AUTO);
+COMP_ICON(component::RigidRody,					ICON_MDI_NATURE_PEOPLE);
+COMP_ICON(component::Collider,					ICON_MDI_BOOMBOX);
 
 
 

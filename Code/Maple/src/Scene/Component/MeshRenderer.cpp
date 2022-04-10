@@ -6,7 +6,6 @@
 #include "Engine/Mesh.h"
 #include "ImGui/ImGuiHelpers.h"
 #include "Scene/Component/Transform.h"
-#include "Scene/Entity/EntityManager.h"
 #include "Scene/Scene.h"
 #include "Scene/SceneManager.h"
 #include "Loaders/Loader.h"
@@ -14,6 +13,7 @@
 #include "FileSystem/Skeleton.h"
 
 #include "Application.h"
+#include "Scene/System/ExecutePoint.h"
 
 namespace maple
 {
@@ -27,7 +27,7 @@ namespace maple
 		auto MeshRenderer::getMesh(const std::string& name) -> void
 		{
 			auto currentScene = Application::get()->getSceneManager()->getCurrentScene();
-			Entity ent{ entity, currentScene->getRegistry() };
+			Entity ent{ entity, Application::getExecutePoint()->getRegistry() };
 			auto   model = ent.tryGetComponent<Model>();
 			if (model != nullptr)
 			{
@@ -98,7 +98,7 @@ namespace maple
 		auto SkinnedMeshRenderer::getMesh(const std::string& name) -> void
 		{
 			auto currentScene = Application::get()->getSceneManager()->getCurrentScene();
-			Entity ent{ entity, currentScene->getRegistry() };
+			Entity ent{ entity, Application::getExecutePoint()->getRegistry() };
 			auto model = ent.tryGetComponentFromParent<Model>();
 			mesh = model->resource->find(name);
 			skeleton = model->skeleton;

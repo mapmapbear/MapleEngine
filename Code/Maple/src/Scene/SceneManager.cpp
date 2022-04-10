@@ -8,7 +8,6 @@
 #include "Engine/Core.h"
 #include "Engine/Profiler.h"
 #include "Entity/Entity.h"
-#include "Entity/EntityManager.h"
 #include "Others/StringUtils.h"
 #include "Scene/Scene.h"
 #include "Scripts/Mono/MonoSystem.h"
@@ -89,8 +88,17 @@ namespace maple
 	auto SceneManager::addScene(const std::string &name, Scene *scene) -> void
 	{
 		allScenes[name] = std::shared_ptr<Scene>(scene);
-		auto cameras    = scene->getEntityManager()->getEntitiesWithTypes<Camera>();
-		if (cameras.empty())
+	
+		using CameraQuery = ecs::Chain
+			::Write<Camera>
+			::To<ecs::Query>;
+
+		CameraQuery query{ 
+			Application::getExecutePoint()->getRegistry(), 
+			Application::getExecutePoint()->getGlobalEntity() 
+		};
+
+		if (query.empty())
 		{
 			auto  entity = scene->createEntity("Main Camera");
 			auto &camera = entity.addComponent<Camera>();

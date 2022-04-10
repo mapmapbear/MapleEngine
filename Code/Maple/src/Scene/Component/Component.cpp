@@ -9,6 +9,7 @@
 #include "Scene/Scene.h"
 
 #include "Application.h"
+#include "Scene/System/ExecutePoint.h"
 
 namespace maple
 {
@@ -180,7 +181,7 @@ namespace maple
 
 		auto Component::getEntity() -> maple::Entity
 		{
-			return { entity, Application::get()->getSceneManager()->getCurrentScene()->getRegistry() };
+			return { entity, Application::getExecutePoint()->getRegistry() };
 		}
 
 		auto Component::setEntity(entt::entity entity) -> void

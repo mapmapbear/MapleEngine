@@ -19,6 +19,8 @@ get_filename_component(ASSET_SHADER_DIR
 					   ${CMAKE_CURRENT_LIST_DIR}/../../Assets/shaders
 					   ABSOLUTE)		
 
+set(BULLET_PHYSICS_SOURCE_DIR "${ENGINE_LIB_SRC_DIR}/bullet3/")
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 
 FILE (STRINGS "lib/bullet3/VERSION" BULLET_VERSION)#Bullet3
@@ -38,10 +40,7 @@ add_subdirectory(lib/imgui-node-editor)
 add_subdirectory(lib/libiconv)
 add_subdirectory(lib/OpenFBX)
 add_subdirectory(lib/mio)
-add_subdirectory(lib/bullet3/src/Bullet3Collision)
-add_subdirectory(lib/bullet3/src/Bullet3Common)
-add_subdirectory(lib/bullet3/src/Bullet3Dynamics)
-add_subdirectory(lib/bullet3/src/Bullet3Geometry)
+add_subdirectory(lib/bullet3/src)
 
 
 file(GLOB_RECURSE SHADERS_GLSL 
@@ -138,6 +137,8 @@ file(GLOB VK_APP_SRC
 	src/Loaders/*.h
 	src/2d/*.cpp
 	src/2d/*.h
+	src/Physics/*.cpp
+	src/Physics/*.h
 )
 
 
@@ -212,6 +213,7 @@ endif()
 		${ENGINE_LIB_SRC_DIR}/tinygltf
 		${ENGINE_LIB_SRC_DIR}/mio
 		${ENGINE_LIB_SRC_DIR}/IconFontCppHeaders
+		${ENGINE_LIB_SRC_DIR}/bullet3/src
 	)
 
 	target_link_libraries(MapleEngine 
@@ -239,9 +241,9 @@ endif()
 		OpenFBX
 		mio
 		Bullet3Common
-		Bullet3Collision
-		Bullet3Dynamics
-		Bullet3Geometry
+		BulletDynamics
+		BulletCollision
+		LinearMath
 	)
 
 find_package(OpenMP)
@@ -249,9 +251,8 @@ if(OpenMP_CXX_FOUND)
     target_link_libraries(MapleEngine OpenMP::OpenMP_CXX)
 endif()
 
-	set_target_properties(OpenFBX lua zlib tinyobjloader tellenc spirvCross ktx spdlog_headers_for_ide stb_image glad TracyClient filedlg imgui-node-editor iconv Bullet3Common Bullet3Collision Bullet3Dynamics Bullet3Geometry PROPERTIES FOLDER Library)
+	set_target_properties(OpenFBX lua zlib tinyobjloader tellenc spirvCross ktx spdlog_headers_for_ide stb_image glad TracyClient filedlg imgui-node-editor iconv Bullet3Common BulletDynamics BulletCollision LinearMath BulletInverseDynamics BulletSoftBody PROPERTIES FOLDER Library)
 	
-
 endif()
 
 

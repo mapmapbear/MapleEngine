@@ -24,6 +24,8 @@
 #include <ImGuizmo.h>
 #include <glm/gtc/type_ptr.hpp>
 #include <imGuIZMOquat.h>
+#include "Application.h"
+#include "Scene/System/ExecutePoint.h"
 
 namespace maple
 {
@@ -99,7 +101,7 @@ namespace maple
 				currentScene->setOverrideCamera(nullptr);
 				currentScene->setOverrideTransform(nullptr);
 
-				auto &registry   = currentScene->getRegistry();
+				auto &registry   = Application::getExecutePoint()->getRegistry();
 				auto  cameraView = registry.view<Camera, component::Transform>();
 				if (!cameraView.empty())
 				{
@@ -231,7 +233,7 @@ namespace maple
 		auto &editor    = *static_cast<Editor *>(Application::get());
 		auto &camera    = editor.getCamera();
 		auto &transform = editor.getEditorCameraTransform();
-		auto &registry  = scene->getRegistry();
+		auto &registry  = Application::getExecutePoint()->getRegistry();
 
 		const auto &view = transform.getWorldMatrixInverse();
 		const auto &proj = camera->getProjectionMatrix();

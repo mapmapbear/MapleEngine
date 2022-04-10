@@ -33,6 +33,7 @@ namespace maple
 		virtual auto isVSync() const -> bool        = 0;
 		virtual auto getNativeInterface() -> void * = 0;
 		virtual auto init() -> void                 = 0;
+		virtual auto isClose() const -> bool		= 0;
 
 		virtual auto setTitle(const std::string &title) -> void;
 

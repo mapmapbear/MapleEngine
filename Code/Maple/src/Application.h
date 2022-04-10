@@ -27,6 +27,7 @@ namespace maple
 	class ExecutePoint;
 	class AssetsLoaderFactory;
 
+
 	enum class EditorState
 	{
 		Paused,
@@ -178,7 +179,6 @@ namespace maple
 		std::shared_ptr<RenderGraph>        renderGraph;
 		std::shared_ptr<ExecutePoint>       executePoint;
 		std::shared_ptr<AssetsLoaderFactory> loaderFactory;
-
 
 		EventDispatcher                                                  dispatcher;
 		Timer                                                            timer;
