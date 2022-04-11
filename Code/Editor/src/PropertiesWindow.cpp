@@ -34,6 +34,8 @@
 
 #include "Physics/Collider.h"
 #include "Physics/RigidBody.h"
+#include "Physics/PhysicsSystem.h"
+#include "Physics/PhysicsWorld.h"
 
 #include "FileSystem/Skeleton.h"
 #include "Loaders/Loader.h"
@@ -85,21 +87,46 @@ namespace MM
 
 	using namespace maple;
 
-
 	template<>
 	inline auto ComponentEditorWidget<physics::component::Collider>(entt::registry& reg, entt::registry::entity_type e) -> void
 	{
 		auto& collider = reg.get<physics::component::Collider>(e);
+		auto rigidBody = reg.try_get<physics::component::RigidBody>(e);
+
 		ImGui::Columns(1);
 		ImGui::TextUnformatted(physics::getNameByType(collider.type));
 		if (collider.type == physics::ColliderType::BoxCollider) 
 		{
 			ImGui::Columns(2);
 			ImGui::Separator();
-			auto size = collider.box.size();
-			auto center = collider.box.center();
-			ImGuiHelper::property("Center", center, 0, 0, ImGuiHelper::PropertyFlag::DragFloat);
-			ImGuiHelper::property("Extend", size, 0, 0, ImGuiHelper::PropertyFlag::DragFloat);
+
+			auto oldSize = collider.box.size();
+			auto size = oldSize;
+
+			auto oldCenter = collider.box.center();
+			auto center = oldCenter;
+
+			if (ImGuiHelper::property("Center", center, 0, 0, ImGuiHelper::PropertyFlag::DragFloat)) 
+			{
+				auto delta = center - oldCenter;
+				collider.box.min += delta;
+				collider.box.max += delta;
+			}
+
+			if (ImGuiHelper::property("Extend", size, 0, 0, ImGuiHelper::PropertyFlag::DragFloat)) 
+			{
+				auto deltaSize = (size - oldSize) / 2.f;
+				collider.box.min -= deltaSize;
+				collider.box.max += deltaSize;
+			}
+
+			ImGui::Separator();
+		}
+		else if (collider.type == physics::ColliderType::SphereCollider)
+		{
+			ImGui::Columns(2);
+			ImGui::Separator();
+			ImGuiHelper::property("Radius", collider.radius, 0, 0, ImGuiHelper::PropertyFlag::DragFloat);
 			ImGui::Separator();
 		}
 		ImGui::Columns(1);
@@ -109,13 +136,35 @@ namespace MM
 	template<>
 	inline auto ComponentEditorWidget<physics::component::RigidBody>(entt::registry& reg, entt::registry::entity_type e) -> void
 	{
+		auto& transform = reg.get<component::Transform>(e);
 		auto& rigidRody = reg.get<physics::component::RigidBody>(e);
+		auto collider = reg.try_get<physics::component::Collider>(e);
 		ImGui::Columns(2);
 		ImGui::Separator();
-		ImGuiHelper::property("Dynamic", rigidRody.dynamic);
+
 		ImGuiHelper::property("Kinematic", rigidRody.kinematic);
-		ImGuiHelper::property("Mass", rigidRody.mass);
+
+		if (ImGuiHelper::property("Dynamic", rigidRody.dynamic)) 
+		{
+		}
+
+		if (ImGuiHelper::property("Mass", rigidRody.mass)) 
+		{
+		}
+
 		ImGui::Separator();
+		ImGui::Columns(1);
+
+		if (ImGui::TreeNode("RigidBody-Info")) 
+		{
+			ImGui::Columns(2);
+			ImGuiHelper::showProperty("Local Inertia", rigidRody.localInertia);
+			ImGuiHelper::showProperty("World Center Mass", rigidRody.worldCenterPositionMass);
+			ImGuiHelper::showProperty("Velocity", rigidRody.velocity);
+			ImGuiHelper::showProperty("Angular Velocity", rigidRody.angularVelocity);
+			ImGui::TreePop();
+		}
+
 		ImGui::Columns(1);
 	}
 
@@ -296,12 +345,7 @@ namespace MM
 				animation::setPlayingTime(animator, time);
 			}
 		}
-
-
 		ImGui::Separator();
-
-	
-
 	}
 
 	template <>
@@ -400,43 +444,24 @@ namespace MM
 		ImGui::Columns(2);
 		ImGui::Separator();
 
-		ImGui::TextUnformatted("Position");
-		ImGui::NextColumn();
-		ImGui::PushItemWidth(-1);
-
-		if (ImGui::DragFloat3("##Position", glm::value_ptr(position), 0.05))
+//##################################################
+		if (ImGuiHelper::property("Position", position, 0, 0, ImGuiHelper::PropertyFlag::DragFloat, 0.05)) 
 		{
 			transform.setLocalPosition(position);
 		}
-
-		ImGui::PopItemWidth();
-		ImGui::NextColumn();
-
-		ImGui::TextUnformatted("Rotation");
-		ImGui::NextColumn();
-		ImGui::PushItemWidth(-1);
-
-		if (ImGui::DragFloat3("##Rotation", glm::value_ptr(rotation), 0.1))
+//##################################################
+		if (ImGuiHelper::property("Rotation", rotation, 0, 0, ImGuiHelper::PropertyFlag::DragFloat, 0.5))
 		{
 			transform.setLocalOrientation(glm::radians(rotation));
 		}
-
-		ImGui::PopItemWidth();
-		ImGui::NextColumn();
-
-		ImGui::TextUnformatted("Scale");
-		ImGui::NextColumn();
-		ImGui::PushItemWidth(-1);
-		if (ImGui::DragFloat3("##Scale", glm::value_ptr(scale), 0.05))
+//##################################################
+		if (ImGuiHelper::property("Scale", scale, 0, 0, ImGuiHelper::PropertyFlag::DragFloat, 0.05))
 		{
 			transform.setLocalScale(scale);
 		}
-
-		ImGui::PopItemWidth();
-		ImGui::NextColumn();
+//##################################################
 
 		ImGui::Columns(1);
-
 		ImGui::Separator();
 		ImGui::PopStyleVar();
 	}

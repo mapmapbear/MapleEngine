@@ -48,6 +48,7 @@ target_include_directories(EditorStatic PUBLIC
 	${EDITOR_LIB_SRC_DIR}/lua/include
 	${EDITOR_LIB_SRC_DIR}/LuaBridge
 	${EDITOR_LIB_SRC_DIR}/imgui-notify
+	${EDITOR_LIB_SRC_DIR}/bullet3/src
 )
 
 source_group(TREE ${CMAKE_CURRENT_LIST_DIR} FILES ${EDITOR_STATIC_SRC})

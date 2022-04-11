@@ -17,7 +17,6 @@ namespace maple
 
 	namespace component 
 	{
-
 		struct DeltaTime 
 		{
 			float dt;

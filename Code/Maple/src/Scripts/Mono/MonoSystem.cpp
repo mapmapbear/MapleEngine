@@ -16,9 +16,9 @@
 #include "MonoComponent.h"
 #include "MonoScriptInstance.h"
 
+#include "Scene/Component/AppState.h"
 #include "Scene/Component/Transform.h"
 #include "Scene/Entity/Entity.h"
-#include "Application.h"
 
 #include <ecs/ecs.h>
 
@@ -35,7 +35,7 @@ namespace maple
 			auto [mono] = entity;
 			auto dt = world.getComponent<component::DeltaTime>().dt;
 
-			if (Application::get()->getEditorState() == EditorState::Play)
+			if (world.getComponent<component::AppState>().state == EditorState::Play)
 			{
 				for (auto& script : mono.getScripts())
 				{

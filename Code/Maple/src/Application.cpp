@@ -77,6 +77,8 @@ namespace maple
 
 		executePoint->getGlobalComponent<component::BoundingBoxComponent>();
 		executePoint->getGlobalComponent<component::DeltaTime>();
+		executePoint->getGlobalComponent<component::AppState>();
+
 		executePoint->getGlobalComponent<physics::component::PhysicsWorld>();
 
 		Input::create();
@@ -129,6 +131,21 @@ namespace maple
 		physics::exitPhysics(executePoint->getGlobalComponent<physics::component::PhysicsWorld>());
 		appDelegate->onDestory();
 		return 0;
+	}
+
+	auto Application::setEditorState(EditorState state) -> void
+	{
+		this->state = state;
+		executePoint->getGlobalComponent<component::AppState>().state = state;
+
+		if(state == EditorState::Play)
+		{
+			executePoint->onGameStart();
+		}
+		else 
+		{
+			executePoint->onGameEnded();
+		}
 	}
 
 	//update all things

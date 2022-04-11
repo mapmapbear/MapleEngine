@@ -20,21 +20,13 @@
 #include "Scripts/Lua/LuaVirtualMachine.h"
 #include "Thread/ThreadPool.h"
 #include "Window/NativeWindow.h"
+#include "Scene/Component/AppState.h"
 
 namespace maple
 {
 	class MonoVirtualMachine;
 	class ExecutePoint;
 	class AssetsLoaderFactory;
-
-
-	enum class EditorState
-	{
-		Paused,
-		Play,
-		Next,
-		Preview
-	};
 
 	class MAPLE_EXPORT AppDelegate
 	{
@@ -93,10 +85,6 @@ namespace maple
 		{
 			return state;
 		}
-		inline auto setEditorState(EditorState state)
-		{
-			this->state = state;
-		}
 
 		inline static auto &getRenderGraph()
 		{
@@ -107,6 +95,7 @@ namespace maple
 		{
 			return get()->threadPool;
 		}
+
 		template <class T>
 		inline auto getAppDelegate()
 		{
@@ -161,6 +150,8 @@ namespace maple
 		{
 			return get()->loaderFactory;
 		}
+
+		auto setEditorState(EditorState state) -> void;
 
 		static Application *app;
 

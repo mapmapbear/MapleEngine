@@ -69,7 +69,7 @@ namespace maple
 				max.z = box->max.z;
 		}
 
-		inline auto transform(const glm::mat4 & transform) ->BoundingBox;
+		auto transform(const glm::mat4 & transform) ->BoundingBox;
 
 		inline auto clear() -> void
 		{

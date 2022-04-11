@@ -299,6 +299,21 @@ namespace maple
 			ImGui::NextColumn();
 		}
 	
+		auto showProperty(const std::string& name, const glm::vec3& value) -> void
+		{
+			auto v = value;
+
+			ImGui::TextUnformatted(name.c_str());
+			ImGui::NextColumn();
+			ImGui::PushItemWidth(-1);
+
+			std::string id = "##" + name;
+			ImGui::InputFloat3(id.c_str(), &v.r, "%.3f", ImGuiInputTextFlags_ReadOnly);
+
+			ImGui::PopItemWidth();
+			ImGui::NextColumn();
+		}
+
 		auto propertyWithDefault(const std::string& name, float& value, float min /*= -1.0f*/, float max /*= 1.0f*/, float defaultValue /*= 0.f*/, PropertyFlag flags /*= PropertyFlag::None*/, float speed) -> bool
 		{
 			auto ret = property(name, value, min, max, flags, "%.3f", speed);

@@ -20,33 +20,35 @@
 #include "RenderGraphWindow.h"
 #include "SceneWindow.h"
 #include "CurveWindow.h"
-
 #include "Devices/Input.h"
+
 #include "Engine/Camera.h"
-
 #include "Engine/Renderer/GeometryRenderer.h"
-
 #include "Engine/TextureAtlas.h"
+
 
 #include "IconsMaterialDesignIcons.h"
 #include "ImGui/ImGuiHelpers.h"
+#include "2d/Sprite.h"
+
 #include "Scene/Component/Component.h"
 #include "Scene/Component/Light.h"
-#include "2d/Sprite.h"
 #include "Scene/Component/Transform.h"
 #include "Scene/Component/BoundingBox.h"
-
 #include "Scene/Entity/Entity.h"
 #include "Scene/Scene.h"
 #include "Scene/SceneManager.h"
+#include "Scene/Component/MeshRenderer.h"
+
+#include "Physics/RigidBody.h"
+#include "Physics/Collider.h"
+#include "Physics/PhysicsSystem.h"
+#include "Physics/PhysicsWorld.h"
 
 #include "FileSystem/File.h"
 #include "Loaders/Loader.h"
 
 #include "Others/StringUtils.h"
-#include "Scene/Component/MeshRenderer.h"
-
-#include "Scripts/Mono/MonoVirtualMachine.h"
 
 #include "EditorPlugin.h"
 #include "Plugin/PluginWindow.h"
@@ -54,10 +56,10 @@
 #include "Math/BoundingBox.h"
 #include "Math/MathUtils.h"
 #include "Math/Ray.h"
+#include "Scripts/Mono/MonoVirtualMachine.h"
 #include "Scripts/Mono/MonoComponent.h"
 
 #include "ImGui/ImNotification.h"
-
 #include <ecs/ecs.h>
 
 namespace maple
@@ -257,7 +259,6 @@ namespace maple
 		if (auto render = registry.try_get<component::MeshRenderer>(selectedNode))
 		{
 			auto& transform = registry.get<component::Transform>(selectedNode);
-			auto  pos = transform.getWorldPosition();
 
 			if (auto mesh = render->getMesh()) 
 			{
@@ -265,7 +266,23 @@ namespace maple
 				GeometryRenderer::drawBox(bb, {1,1,1,1});
 			}
 		}
-		//drawGrid();
+
+		if (auto collider = registry.try_get<physics::component::Collider>(selectedNode))
+		{
+			auto& transform = registry.get<component::Transform>(selectedNode);
+			auto pos = transform.getWorldPosition();
+
+			if (collider->type == physics::ColliderType::BoxCollider) 
+			{
+				GeometryRenderer::drawBox(collider->box, { 0,1,0,1 });
+			}
+
+			else if (collider->type == physics::ColliderType::SphereCollider) 
+			{
+				GeometryRenderer::drawSphere(collider->radius, pos, { 0,1,0,1 });
+			}
+		}
+
 	}
 
 	auto Editor::setSelected(const entt::entity &node) -> void
@@ -303,7 +320,10 @@ namespace maple
 			ImGuizmo::SetOrthographic(camera->isOrthographic());
 
 			auto & registry = getExecutePoint()->getRegistry();
-			auto  transform = registry.try_get < component::Transform >(selectedNode);
+			auto  transform = registry.try_get <component::Transform>(selectedNode);
+			auto  rigidBody = registry.try_get <physics::component::RigidBody>(selectedNode);
+			auto  collider = registry.try_get <physics::component::Collider>(selectedNode);
+
 			if (transform != nullptr)
 			{
 				auto model = transform->getWorldMatrix();
@@ -315,7 +335,7 @@ namespace maple
 					glm::value_ptr(view),
 					glm::value_ptr(proj),
 					static_cast<ImGuizmo::OPERATION>(imGuizmoOperation),
-					ImGuizmo::WORLD,
+					ImGuizmo::LOCAL,
 					glm::value_ptr(model),
 					delta,
 					nullptr
@@ -326,7 +346,6 @@ namespace maple
 					if (static_cast<ImGuizmo::OPERATION>(imGuizmoOperation) == ImGuizmo::OPERATION::SCALE)
 					{
 						auto mat = glm::make_mat4(delta);
-
 						transform->setLocalScale(component::Transform::getScaleFromMatrix(mat));
 					}
 					else
@@ -342,8 +361,6 @@ namespace maple
 
 	auto Editor::drawPlayButtons() -> void
 	{
-		//ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 35.0f);
-		//if (ImGui::Begin("Toolbar-", 0, ImGuiWindowFlags_NoScrollbar | ImGuiDockNodeFlags_AutoHideTabBar | ImGuiWindowFlags_NoDecoration))
 		{
 			ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.1f, 0.2f, 0.7f, 0.0f));
 			ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 100);

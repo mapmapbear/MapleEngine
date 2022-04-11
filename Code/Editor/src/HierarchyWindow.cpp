@@ -106,6 +106,7 @@ namespace maple
 							auto entity                       = scene->createEntity(name);
 							entity.addComponent<component::Model>().type = component::PrimitiveType::Cube;
 							auto& meshRender = entity.addComponent<component::MeshRenderer>(Mesh::createCube());
+							entity.addComponent<physics::component::Collider>(physics::ColliderType::BoxCollider);
 						}
 
 						if (strcmp("Sphere", name) == 0)
@@ -113,6 +114,7 @@ namespace maple
 							auto entity                       = scene->createEntity(name);
 							entity.addComponent<component::Model>().type = component::PrimitiveType::Sphere;
 							auto &meshRender                  = entity.addComponent<component::MeshRenderer>(Mesh::createSphere());
+							entity.addComponent<physics::component::Collider>(physics::ColliderType::SphereCollider);
 						}
 
 						if (strcmp("Pyramid", name) == 0)

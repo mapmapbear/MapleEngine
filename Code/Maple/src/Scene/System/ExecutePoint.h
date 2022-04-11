@@ -59,6 +59,19 @@ namespace maple
 		}
 
 		template <auto System>
+		inline auto registerGameStart() -> void
+		{
+			expand(ecs::FunctionConstant<System>{}, gameStartQueue);
+		}
+
+		template <auto System>
+		inline auto registerGameEnded() -> void
+		{
+			expand(ecs::FunctionConstant<System>{}, gameEndedQueue);
+		}
+
+
+		template <auto System>
 		inline auto registerOnImGui() -> void
 		{
 			expand(ecs::FunctionConstant<System>{}, imGuiQueue);
@@ -129,6 +142,24 @@ namespace maple
 			registry.template on_destroy<TComponent>().connect<&destoryComponent<TComponent, Candidate>>(globalEntity);
 		}
 
+
+		//these two will be refactored in the future because of the ExecutePoint could belong to scene ?
+		inline auto onGameStart() 
+		{
+			for (auto& job : gameStartQueue.jobs)
+			{
+				job(registry);
+			}
+		}
+
+		inline auto onGameEnded()
+		{
+			for (auto& job : gameEndedQueue.jobs)
+			{
+				job(registry);
+			}
+		}
+
 	  private:
 		  friend class Application;
 
@@ -187,6 +218,10 @@ namespace maple
 				call(TSystem{}, reg, globalEntity);
 			});
 		}
+
+		ExecuteQueue gameStartQueue;
+
+		ExecuteQueue gameEndedQueue;
 
 		ExecuteQueue updateQueue;
 

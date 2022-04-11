@@ -7,9 +7,10 @@
 #include "Collider.h"
 #include "RigidBody.h"
 
+#include "Others/Serialization.h"
 #include "Scene/Component/Component.h"
 #include "Scene/Component/Transform.h"
-
+#include "Scene/Component/AppState.h"
 #include "Scene/System/ExecutePoint.h"
 #include <ecs/ecs.h>
 
@@ -29,88 +30,185 @@ namespace maple
 			{
 				auto [phyWorld, dt] = entity;
 
-				if (phyWorld.dynamicsWorld)
+				if (world.getComponent<maple::component::AppState>().state == EditorState::Play)
 				{
-					phyWorld.dynamicsWorld->stepSimulation(dt.dt);
+					if (phyWorld.dynamicsWorld)
+					{
+						phyWorld.dynamicsWorld->stepSimulation(dt.dt);
+					}
 				}
 			}
 
 			using RigidBodyEntity = ecs::Chain
 				::Write<component::RigidBody>
+				::Write<component::Collider>
 				::Write<maple::component::Transform>
 				::To<ecs::Entity>;
 
 			inline auto updateRigidbody(RigidBodyEntity entity, ecs::World world)
 			{
-				auto [rigidBody,transform] = entity;
+				auto [rigidBody, collider, transform] = entity;
 
-				if (rigidBody.dynamic && rigidBody.rigidbody)
+				if (world.getComponent<maple::component::AppState>().state == EditorState::Play)
 				{
-					btTransform trans;
-					if (rigidBody.rigidbody && rigidBody.rigidbody->getMotionState())
+					if (rigidBody.dynamic && rigidBody.rigidbody)
 					{
-						rigidBody.rigidbody->getMotionState()->getWorldTransform(trans);
+						btTransform trans;
+						if (rigidBody.rigidbody && rigidBody.rigidbody->getMotionState())
+						{
+							rigidBody.rigidbody->getMotionState()->getWorldTransform(trans);
+						}
+						else
+						{
+							trans = rigidBody.rigidbody->getWorldTransform();
+						}
+
+						transform.setLocalPosition(
+							Serialization::bulletToGlm(trans.getOrigin())
+						);
+
+						transform.setLocalOrientation(
+							Serialization::bulletToGlm(trans.getRotation())
+						);
+
+////////////////////////////////////////////////////////////////Debug//////////////////////////////////////////////////////////////////////
+						rigidBody.localInertia = Serialization::bulletToGlm(rigidBody.rigidbody->getLocalInertia());
+						rigidBody.angularVelocity = Serialization::bulletToGlm(rigidBody.rigidbody->getAngularVelocity());
+						rigidBody.velocity = Serialization::bulletToGlm(rigidBody.rigidbody->getLinearVelocity());
+						btVector3 aabbMin;
+						btVector3 aabbMax;
+						rigidBody.rigidbody->getAabb(aabbMin, aabbMax);
+						collider.box = {
+							Serialization::bulletToGlm(aabbMin),
+							Serialization::bulletToGlm(aabbMax)
+						};
 					}
-					else
-					{
-						trans = rigidBody.rigidbody->getWorldTransform();
-					}
-
-					auto q = trans.getRotation();
-					btScalar x = 0, y = 0, z = 0;
-					q.getEulerZYX(z, y, x);
-
-					const auto& btPos = trans.getOrigin();
-
-					transform.setLocalPosition(glm::vec3{ btPos.x(), btPos.y(), btPos.z() });
-					transform.setLocalOrientation(glm::vec3{ glm::degrees(x), glm::degrees(y), glm::degrees(z) });
 				}
 			}
 		}
+
+		namespace on_game_start 
+		{
+			using RigidBodyEntity = ecs::Chain
+				::Write<component::RigidBody>
+				::Write<component::Collider>
+				::Write<maple::component::Transform>
+				::To<ecs::Entity>;
+
+			inline auto system(RigidBodyEntity entity, ecs::World world)
+			{
+				auto [rigidBody, collider, transform] = entity;
+
+	
+				if (collider.shape == nullptr) 
+				{
+					switch (collider.type)
+					{
+					case ColliderType::BoxCollider: 
+					{
+						collider.shape = new btBoxShape(Serialization::glmToBullet(collider.box.size() / 2.f));
+					}
+						break;
+					case ColliderType::SphereCollider:
+						collider.shape = new btSphereShape(collider.radius);
+						break;
+					}
+
+					if (collider.shape != nullptr)
+					{
+						world.getComponent<component::PhysicsWorld>().collisionShapes.push_back(collider.shape);
+					}
+				}
+
+				if (rigidBody.rigidbody == nullptr)
+				{
+					btVector3 localInertia(0, 0, 0);
+					if (rigidBody.dynamic)
+						collider.shape->calculateLocalInertia(rigidBody.mass, localInertia);
+
+			
+					auto worldMatrix = transform.getWorldMatrix();
+					worldMatrix[0][0] = 1.f;
+					worldMatrix[1][1] = 1.f;
+					worldMatrix[2][2] = 1.f;
+					worldMatrix[3][3] = 1.f;
+
+					btRigidBody::btRigidBodyConstructionInfo cInfo(rigidBody.dynamic ? rigidBody.mass : 0.f,
+						new btDefaultMotionState(Serialization::glmToBullet(worldMatrix)), 
+						collider.shape, localInertia);
+
+					rigidBody.rigidbody = new btRigidBody(cInfo);
+
+					if (rigidBody.kinematic)
+					{
+						rigidBody.rigidbody->setCollisionFlags(btCollisionObject::CF_KINEMATIC_OBJECT | btCollisionObject::CF_STATIC_OBJECT);
+					}
+
+					world.getComponent<component::PhysicsWorld>().dynamicsWorld->addRigidBody(rigidBody.rigidbody);
+				}
+			}
+		}
+
+		namespace on_game_ended 
+		{
+			using RigidBodyEntity = ecs::Chain
+				::Write<component::RigidBody>
+				::Write<component::Collider>
+				::Write<maple::component::Transform>
+				::To<ecs::Entity>;
+
+			inline auto system(RigidBodyEntity entity, ecs::World world)
+			{
+				auto [rigidBody, collider, transform] = entity;
+
+				if (collider.shape != nullptr)
+				{
+					world.getComponent<component::PhysicsWorld>().collisionShapes.remove(collider.shape);
+					delete collider.shape;
+					collider.shape = nullptr;
+				}
+
+				if (rigidBody.rigidbody != nullptr)
+				{
+					world.getComponent<component::PhysicsWorld>().dynamicsWorld->removeRigidBody(rigidBody.rigidbody);
+					auto state = rigidBody.rigidbody->getMotionState();
+					if (state != nullptr) 
+					{
+						delete state;
+					}
+					delete rigidBody.rigidbody;
+					rigidBody.rigidbody = nullptr;
+				}
+			}
+		}
+
 
 		namespace init 
 		{
 			inline auto initCollider(component::Collider & collider, Entity entity, ecs::World world)
 			{
-				switch (collider.type)
+				if (collider.shape == nullptr)
 				{
-				case ColliderType::BoxCollider:
-					collider.shape = new btBoxShape({1,1,1});
-					collider.box = { {-1,-1,-1}, { 1,1,1 } };
-					break;
-				case ColliderType::SphereCollider:
-					collider.shape = new btSphereShape(1.f);
-					break;
-				}
-				
-				if (collider.shape != nullptr) 
-				{
-					world.getComponent<component::PhysicsWorld>().collisionShapes.push_back(collider.shape);
+					switch (collider.type)
+					{
+					case ColliderType::BoxCollider:
+						collider.box = { {-1,-1,-1}, { 1,1,1 } };
+						break;
+					case ColliderType::SphereCollider:
+						collider.radius = 1.f;
+						break;
+					}
 				}
 			}
 
 			inline auto initRigidBody(component::RigidBody& rigidRody, Entity entity, ecs::World world)
 			{
 				//rigidbody is dynamic if and only if mass is non zero, otherwise static
-				rigidRody.dynamic = (rigidRody.mass != 0.f);
-				auto& collider = entity.getComponent<component::Collider>();
 
-				btVector3 localInertia(0, 0, 0);
-				if (rigidRody.dynamic)
-					collider.shape->calculateLocalInertia(rigidRody.mass, localInertia);
-
-				btTransform transform;
-				transform.setIdentity();
-
-				btRigidBody::btRigidBodyConstructionInfo cInfo(rigidRody.mass, new btDefaultMotionState(transform), collider.shape, localInertia);
-
-				rigidRody.rigidbody = new btRigidBody(cInfo);
-				rigidRody.rigidbody->setUserIndex((int32_t)entity.getHandle());
-				world.getComponent<component::PhysicsWorld>().dynamicsWorld->addRigidBody(rigidRody.rigidbody);
 			}
 		}
 
-		namespace destory 
+		namespace destory
 		{
 			inline auto destoryCollider(component::Collider& collider, Entity entity, ecs::World world)
 			{
@@ -119,11 +217,20 @@ namespace maple
 
 			inline auto destoryRigidRody(component::RigidBody& rigidRody, Entity entity, ecs::World world)
 			{
-
+				if (rigidRody.rigidbody) 
+				{
+					world.getComponent<component::PhysicsWorld>().dynamicsWorld->removeRigidBody(rigidRody.rigidbody);
+					btMotionState* ms = rigidRody.rigidbody->getMotionState();
+					delete rigidRody.rigidbody;
+					if (ms)
+					{
+						delete ms;
+					}
+				}
 			}
-		}
+		};
 
-		auto registerPhysicsModule(std::shared_ptr<ExecutePoint> executePoint) -> void 
+		auto registerPhysicsModule(std::shared_ptr<ExecutePoint> executePoint) -> void
 		{
 			executePoint->registerGlobalComponent<component::PhysicsWorld>([](component::PhysicsWorld & world){
 				world.collisionConfiguration = new btDefaultCollisionConfiguration();
@@ -138,6 +245,9 @@ namespace maple
 
 			executePoint->registerSystem<update::updateRigidbody>();
 			executePoint->registerSystem<update::updateWorld>();
+
+			executePoint->registerGameStart<on_game_start::system>();
+			executePoint->registerGameEnded<on_game_ended::system>();
 
 			executePoint->onConstruct<component::Collider, init::initCollider>();
 			executePoint->onDestory<component::Collider, destory::destoryCollider>();
