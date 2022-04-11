@@ -32,6 +32,9 @@
 #include "Scripts/Mono/MonoScript.h"
 #include "Scripts/Mono/MonoSystem.h"
 
+#include "Physics/Collider.h"
+#include "Physics/RigidBody.h"
+
 #include "FileSystem/Skeleton.h"
 #include "Loaders/Loader.h"
 
@@ -84,9 +87,36 @@ namespace MM
 
 
 	template<>
-	inline auto ComponentEditorWidget<component::RigidRody>(entt::registry& reg, entt::registry::entity_type e) -> void
+	inline auto ComponentEditorWidget<physics::component::Collider>(entt::registry& reg, entt::registry::entity_type e) -> void
 	{
+		auto& collider = reg.get<physics::component::Collider>(e);
+		ImGui::Columns(1);
+		ImGui::TextUnformatted(physics::getNameByType(collider.type));
+		if (collider.type == physics::ColliderType::BoxCollider) 
+		{
+			ImGui::Columns(2);
+			ImGui::Separator();
+			auto size = collider.box.size();
+			auto center = collider.box.center();
+			ImGuiHelper::property("Center", center, 0, 0, ImGuiHelper::PropertyFlag::DragFloat);
+			ImGuiHelper::property("Extend", size, 0, 0, ImGuiHelper::PropertyFlag::DragFloat);
+			ImGui::Separator();
+		}
+		ImGui::Columns(1);
+		ImGui::Separator();
+	}
 
+	template<>
+	inline auto ComponentEditorWidget<physics::component::RigidBody>(entt::registry& reg, entt::registry::entity_type e) -> void
+	{
+		auto& rigidRody = reg.get<physics::component::RigidBody>(e);
+		ImGui::Columns(2);
+		ImGui::Separator();
+		ImGuiHelper::property("Dynamic", rigidRody.dynamic);
+		ImGuiHelper::property("Kinematic", rigidRody.kinematic);
+		ImGuiHelper::property("Mass", rigidRody.mass);
+		ImGui::Separator();
+		ImGui::Columns(1);
 	}
 
 	template<>

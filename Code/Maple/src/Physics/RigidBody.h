@@ -3,13 +3,22 @@
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-namespace maple 
+class btRigidBody;
+
+namespace maple
 {
-	namespace component 
+	namespace physics
 	{
-		struct RigidRody
+		namespace component
 		{
-			int32_t i;
-		};
+			struct RigidBody
+			{
+				btRigidBody* rigidbody = nullptr;
+				glm::vec3 initialVel;
+				bool dynamic = false;
+				bool kinematic = false;
+				float mass = 1.0;
+			};
+		}
 	}
 }

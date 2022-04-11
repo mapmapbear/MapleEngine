@@ -25,6 +25,7 @@ namespace maple
 	class Camera;
 	class BoundingBox;
 	class Material;
+	class ExecutePoint;
 
 	class MAPLE_EXPORT Mesh
 	{
@@ -245,4 +246,10 @@ namespace maple
 			vertices[i].normal = glm::normalize(normals[i]);
 		}
 	}
+
+	namespace mesh 
+	{
+		auto registerMeshModule(std::shared_ptr<ExecutePoint> executePoint) -> void;
+	}
+
 };        // namespace maple

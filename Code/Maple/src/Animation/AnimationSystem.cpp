@@ -240,12 +240,6 @@ namespace maple
 						time = clip.length;
 						break;
 					}
-					
-					for (auto target : state.targets)
-					{
-						target->getRotationRecord().clear();
-						target->getPositionRecord().clear();
-					}
 				}
 				state.playingTime = time;
 
@@ -331,12 +325,6 @@ namespace maple
 			}
 		}
 
-		auto registerAnimationModule(std::shared_ptr<ExecutePoint> executePoint) -> void
-		{
-			executePoint->registerSystem<animation::system>();
-		}
-
-
 		auto setPlayingTime(component::Animator& animator, float t) -> void
 		{
 			auto playingClip = getPlayingClip(animator);
@@ -415,6 +403,11 @@ namespace maple
 			{
 				animator.paused = true;
 			}
+		}
+
+		auto registerAnimationModule(std::shared_ptr<ExecutePoint> executePoint) -> void
+		{
+			executePoint->registerSystem<animation::system>();
 		}
 	}
 };

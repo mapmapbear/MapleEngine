@@ -10,7 +10,7 @@ namespace maple
 {
 	namespace physics 
 	{
-		namespace component 
+		namespace component
 		{
 			struct PhysicsWorld
 			{
@@ -21,6 +21,8 @@ namespace maple
 				btConstraintSolver* solver = nullptr;
 				btAlignedObjectArray<btCollisionShape*> collisionShapes;
 			};
-		}
+		};
+		
+		auto exitPhysics(component::PhysicsWorld& world) -> void;
 	}
 }

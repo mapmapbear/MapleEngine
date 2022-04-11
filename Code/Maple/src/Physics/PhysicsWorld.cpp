@@ -7,49 +7,48 @@ namespace maple
 {
 	namespace physics
 	{
-
-		/*auto PhysicsWorld::exitPhysics() -> void
+		auto exitPhysics(component::PhysicsWorld& world) -> void
 		{
-			if (dynamicsWorld)
+			if (world.dynamicsWorld)
 			{
-				for (int32_t i = dynamicsWorld->getNumConstraints() - 1; i >= 0; i--)
+				for (int32_t i = world.dynamicsWorld->getNumConstraints() - 1; i >= 0; i--)
 				{
-					dynamicsWorld->removeConstraint(dynamicsWorld->getConstraint(i));
+					world.dynamicsWorld->removeConstraint(world.dynamicsWorld->getConstraint(i));
 				}
-				for (int32_t i = dynamicsWorld->getNumCollisionObjects() - 1; i >= 0; i--)
+				for (int32_t i = world.dynamicsWorld->getNumCollisionObjects() - 1; i >= 0; i--)
 				{
-					btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[i];
+					btCollisionObject* obj = world.dynamicsWorld->getCollisionObjectArray()[i];
 					btRigidBody* body = btRigidBody::upcast(obj);
 					if (body && body->getMotionState())
 					{
 						delete body->getMotionState();
 					}
-					dynamicsWorld->removeCollisionObject(obj);
+					world.dynamicsWorld->removeCollisionObject(obj);
 					delete obj;
 				}
 			}
 			//delete collision shapes
-			for (int32_t j = 0; j < collisionShapes.size(); j++)
+			for (int32_t j = 0; j < world.collisionShapes.size(); j++)
 			{
-				btCollisionShape* shape = collisionShapes[j];
+				btCollisionShape* shape = world.collisionShapes[j];
 				delete shape;
 			}
-			collisionShapes.clear();
+			world.collisionShapes.clear();
 
-			delete dynamicsWorld;
-			dynamicsWorld = nullptr;
+			delete world.dynamicsWorld;
+			world.dynamicsWorld = nullptr;
 
-			delete solver;
-			solver = nullptr;
+			delete world.solver;
+			world.solver = nullptr;
 
-			delete broadphase;
-			broadphase = nullptr;
+			delete world.broadphase;
+			world.broadphase = nullptr;
 
-			delete dispatcher;
-			dispatcher = nullptr;
+			delete world.dispatcher;
+			world.dispatcher = nullptr;
 
-			delete collisionConfiguration;
-			collisionConfiguration = nullptr;
-		}*/
+			delete world.collisionConfiguration;
+			world.collisionConfiguration = nullptr;
+		}
 	}
 }

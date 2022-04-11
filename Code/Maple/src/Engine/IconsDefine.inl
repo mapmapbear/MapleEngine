@@ -67,8 +67,8 @@ COMP_ICON(component::AnimatedSprite,			ICON_MDI_IMAGE_AREA);
 COMP_ICON(component::LuaComponent,				ICON_MDI_LANGUAGE_LUA);
 COMP_ICON(component::MonoComponent,				ICON_MDI_LANGUAGE_CSHARP);
 COMP_ICON(component::BloomData,					ICON_MDI_BRIGHTNESS_AUTO);
-COMP_ICON(component::RigidRody,					ICON_MDI_NATURE_PEOPLE);
-COMP_ICON(component::Collider,					ICON_MDI_BOOMBOX);
+COMP_ICON(physics::component::RigidBody,		ICON_MDI_NATURE_PEOPLE);
+COMP_ICON(physics::component::Collider,			ICON_MDI_BOOMBOX);
 
 
 

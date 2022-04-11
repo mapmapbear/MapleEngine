@@ -9,7 +9,7 @@
 #include "RHI/Texture.h"
 #include "Scene/Scene.h"
 #include "Engine/CaptureGraph.h"
-
+#include "Scene/System/ExecutePoint.h"
 #include "Editor.h"
 
 #include <imgui.h>
@@ -146,9 +146,7 @@ namespace maple
 
 	auto RenderGraphWindow::gatherData() -> void
 	{
-		auto& editor = *static_cast<Editor*>(Application::get());
-		auto& graph = editor.getCurrentScene()->getGlobalComponent<capture_graph::component::RenderGraph>();
-
+		auto& graph = Application::getExecutePoint()->getGlobalComponent<capture_graph::component::RenderGraph>();
 
 		if (graph.nodes.size() != idMap.size()) 
 		{

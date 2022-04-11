@@ -78,7 +78,7 @@ namespace maple
 		addWindow(PropertiesWindow);
 		addWindow(AssetsWindow);
 		addWindow(VisualizeCacheWindow);
-		addWindow(PreviewWindow);
+		//addWindow(PreviewWindow);
 		addWindow(RenderGraphWindow);
 		addWindow(CurveWindow);
 

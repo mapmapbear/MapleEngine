@@ -103,6 +103,32 @@ namespace maple
 			return registry.template get_or_emplace<Component>(globalEntity,std::forward<Args>(args)...);
 		}
 
+		template<typename TComponent, auto Candidate>
+		static auto initComponent(entt::entity globalEntity, entt::registry& registry, entt::entity entity)
+		{
+			auto & comp = registry.get<TComponent>(entity);
+			std::invoke(Candidate, comp, Entity{ entity,registry }, ecs::World{ registry,globalEntity });
+		}
+
+		template<typename TComponent, auto Candidate>
+		static auto destoryComponent(entt::entity globalEntity, entt::registry& registry, entt::entity entity)
+		{
+			auto& comp = registry.get<TComponent>(entity);
+			std::invoke(Candidate, comp, Entity{ entity,registry }, ecs::World{ registry,globalEntity });
+		}
+
+		template<typename TComponent, auto Candidate>
+		inline auto onConstruct()
+		{
+			registry.template on_construct<TComponent>().connect<&initComponent<TComponent, Candidate>>(globalEntity);
+		}
+
+		template<typename TComponent, auto Candidate>
+		inline auto onDestory()
+		{
+			registry.template on_destroy<TComponent>().connect<&destoryComponent<TComponent, Candidate>>(globalEntity);
+		}
+
 	  private:
 		  friend class Application;
 

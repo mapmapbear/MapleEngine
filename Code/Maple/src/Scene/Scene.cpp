@@ -66,6 +66,7 @@ namespace maple
 			outEntities.emplace_back(entity);
 			return entity;
 		}
+
 	}
 
 	Scene::Scene(const std::string &initName) :
@@ -73,12 +74,6 @@ namespace maple
 	{
 		sceneGraph = std::make_shared<SceneGraph>();
 		sceneGraph->init(Application::getExecutePoint()->getRegistry());
-		Application::getExecutePoint()->getRegistry().on_construct<component::MeshRenderer>().connect<&Scene::onMeshRenderCreated>(this);
-		Application::getExecutePoint()->getRegistry().on_destroy<component::MeshRenderer>().connect<&Scene::onMeshRenderCreated>(this);
-
-
-		Application::getExecutePoint()->getGlobalComponent<component::BoundingBoxComponent>();
-		Application::getExecutePoint()->getGlobalComponent<component::DeltaTime>();
 	}
 
 	auto Scene::setSize(uint32_t w, uint32_t h) -> void

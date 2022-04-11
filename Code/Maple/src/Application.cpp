@@ -75,6 +75,10 @@ namespace maple
 		executePoint->addDependency<component::VolumetricCloud, component::Light>();
 		executePoint->addDependency<component::LightProbe, component::Transform>();
 
+		executePoint->getGlobalComponent<component::BoundingBoxComponent>();
+		executePoint->getGlobalComponent<component::DeltaTime>();
+		executePoint->getGlobalComponent<physics::component::PhysicsWorld>();
+
 		Input::create();
 		window->init();
 		graphicsContext->init();
@@ -98,7 +102,7 @@ namespace maple
 		double lastFrameTime = 0;
 		init();
 
-		while (1)
+		while (!window->isClose())
 		{
 			PROFILE_FRAMEMARKER();
 			Input::getInput()->resetPressed();
@@ -121,6 +125,8 @@ namespace maple
 				updates = 0;
 			}
 		}
+		
+		physics::exitPhysics(executePoint->getGlobalComponent<physics::component::PhysicsWorld>());
 		appDelegate->onDestory();
 		return 0;
 	}

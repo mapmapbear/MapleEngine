@@ -4,8 +4,11 @@
 #include <glm/glm.hpp>
 #include <imgui.h>
 
-#include "Mesh.h"
+#include <ecs/World.h>
+#include <Scene/Component/MeshRenderer.h>
+#include <Scene/System/ExecutePoint.h>
 
+#include "Mesh.h"
 #include "Application.h"
 #include "Vertex.h"
 #define _USE_MATH_DEFINES
@@ -480,5 +483,21 @@ namespace maple
 		const glm::vec3 axis    = (vertex1 * coord2.y - vertex2 * coord1.y);
 		const float     factor  = 1.0f / (coord1.x * coord2.y - coord2.x * coord1.y);
 		return axis * factor;
+	}
+
+	namespace 
+	{
+		inline auto meshInOut(component::MeshRenderer& mesh, ecs::World world)
+		{
+			
+		}
+	}
+	namespace mesh
+	{
+		auto registerMeshModule(std::shared_ptr<ExecutePoint> executePoint) -> void
+		{
+			//executePoint->onConstruct<component::MeshRenderer, &meshInOut>();
+			//executePoint->onDestory<component::MeshRenderer, &meshInOut>();
+		}
 	}
 };        // namespace maple

@@ -6,6 +6,7 @@
 #include "2d/SpriteSystem.h"
 #include "Scripts/Mono/MonoSystem.h"
 #include "Physics/PhysicsSystem.h"
+#include "Engine/Mesh.h"
 
 namespace maple
 {
@@ -15,5 +16,6 @@ namespace maple
 		sprite2d::registerSprite2dModule(executePoint);
 		mono::registerMonoModule(executePoint);
 		physics::registerPhysicsModule(executePoint);
+		mesh::registerMeshModule(executePoint);
 	}
 }

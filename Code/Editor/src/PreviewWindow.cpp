@@ -24,6 +24,7 @@ namespace maple
 {
 	PreviewWindow::PreviewWindow()
 	{
+/*
 		scene = new Scene("PreviewScene");
 		Application::getSceneManager()->addScene("PreviewScene", scene);
 
@@ -40,7 +41,7 @@ namespace maple
 		meshRoot.addComponent<component::Transform>();
 
 		scene->setUseSceneCamera(true);
-		scene->getCamera().second->setLocalPosition({0, 0, 3});
+		scene->getCamera().second->setLocalPosition({0, 0, 3});*/
 	}
 
 	PreviewWindow::~PreviewWindow()
