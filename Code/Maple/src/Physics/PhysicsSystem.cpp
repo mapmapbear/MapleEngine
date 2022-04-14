@@ -112,6 +112,8 @@ namespace maple
 					case ColliderType::SphereCollider:
 						collider.shape = new btSphereShape(collider.radius);
 						break;
+					default:
+						MAPLE_ASSERT(false, "Unsupported ColliderType");
 					}
 
 					if (collider.shape != nullptr)
@@ -123,25 +125,31 @@ namespace maple
 				if (rigidBody.rigidbody == nullptr)
 				{
 					btVector3 localInertia(0, 0, 0);
-					if (rigidBody.dynamic)
+					if (rigidBody.mass != 0.f && !rigidBody.kinematic )
 						collider.shape->calculateLocalInertia(rigidBody.mass, localInertia);
 
-			
-					auto worldMatrix = transform.getWorldMatrix();
-					worldMatrix[0][0] = 1.f;
-					worldMatrix[1][1] = 1.f;
-					worldMatrix[2][2] = 1.f;
-					worldMatrix[3][3] = 1.f;
-
-					btRigidBody::btRigidBodyConstructionInfo cInfo(rigidBody.dynamic ? rigidBody.mass : 0.f,
-						new btDefaultMotionState(Serialization::glmToBullet(worldMatrix)), 
-						collider.shape, localInertia);
+	
+					btRigidBody::btRigidBodyConstructionInfo cInfo(
+						rigidBody.dynamic ? rigidBody.mass : 0.f, new btDefaultMotionState(btTransform(
+							Serialization::glmToBullet(transform.getWorldOrientation()), 
+							Serialization::glmToBullet(transform.getWorldPosition())
+						)), collider.shape, localInertia);
 
 					rigidBody.rigidbody = new btRigidBody(cInfo);
 
+					if (rigidBody.mass == 0.f || !rigidBody.dynamic)
+					{
+						rigidBody.rigidbody->setCollisionFlags(btCollisionObject::CF_STATIC_OBJECT);
+					}
+					else
+					{
+						rigidBody.rigidbody->setCollisionFlags(btCollisionObject::CF_DYNAMIC_OBJECT);
+					}
+
 					if (rigidBody.kinematic)
 					{
-						rigidBody.rigidbody->setCollisionFlags(btCollisionObject::CF_KINEMATIC_OBJECT | btCollisionObject::CF_STATIC_OBJECT);
+						rigidBody.rigidbody->setCollisionFlags(btCollisionObject::CF_KINEMATIC_OBJECT | rigidBody.rigidbody->getCollisionFlags());
+						rigidBody.rigidbody->setActivationState(DISABLE_DEACTIVATION);
 					}
 
 					world.getComponent<component::PhysicsWorld>().dynamicsWorld->addRigidBody(rigidBody.rigidbody);
@@ -204,7 +212,6 @@ namespace maple
 			inline auto initRigidBody(component::RigidBody& rigidRody, Entity entity, ecs::World world)
 			{
 				//rigidbody is dynamic if and only if mass is non zero, otherwise static
-
 			}
 		}
 
@@ -221,11 +228,11 @@ namespace maple
 				{
 					world.getComponent<component::PhysicsWorld>().dynamicsWorld->removeRigidBody(rigidRody.rigidbody);
 					btMotionState* ms = rigidRody.rigidbody->getMotionState();
-					delete rigidRody.rigidbody;
 					if (ms)
 					{
 						delete ms;
 					}
+					delete rigidRody.rigidbody;
 				}
 			}
 		};

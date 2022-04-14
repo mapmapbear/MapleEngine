@@ -23,16 +23,16 @@
 #include "Application.h"
 #include "Scene/System/ExecutePoint.h"
 
-#define ALL_COMPONENTS component::Transform,				\
+#define ALL_COMPONENTS Camera,								\
+	                   Material,							\
+	                   component::Transform,				\
 	                   component::NameComponent,			\
 	                   component::ActiveComponent,			\
 	                   component::Hierarchy,				\
-	                   Camera,								\
 	                   component::Light,					\
 	                   component::CameraControllerComponent,\
 	                   component::Model,					\
 	                   component::MeshRenderer,				\
-	                   Material,							\
 	                   component::Environment
 
 namespace maple

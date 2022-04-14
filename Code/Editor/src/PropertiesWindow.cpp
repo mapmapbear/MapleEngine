@@ -146,10 +146,15 @@ namespace MM
 
 		if (ImGuiHelper::property("Dynamic", rigidRody.dynamic)) 
 		{
+
 		}
 
-		if (ImGuiHelper::property("Mass", rigidRody.mass)) 
+		if (ImGuiHelper::property("Mass", rigidRody.mass,0,0,maple::ImGuiHelper::PropertyFlag::DragFloat)) 
 		{
+			if (rigidRody.mass == 0.0f) 
+			{
+				rigidRody.dynamic = false;
+			}
 		}
 
 		ImGui::Separator();
