@@ -24,7 +24,7 @@ namespace maple
 
 	namespace component 
 	{
-		class Environment;
+		struct Environment;
 	}
 
 	namespace capture_graph

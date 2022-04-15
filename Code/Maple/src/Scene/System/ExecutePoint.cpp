@@ -21,11 +21,11 @@ namespace maple
 		auto hierarchyComponent = registry.try_get<component::Hierarchy>(entity);
 		if (hierarchyComponent)
 		{
-			entt::entity child = hierarchyComponent->getFirst();
+			entt::entity child = hierarchyComponent->first;
 			while (child != entt::null)
 			{
 				auto hierarchyComponent = registry.try_get<component::Hierarchy>(child);
-				auto next = hierarchyComponent ? hierarchyComponent->getNext() : entt::null;
+				auto next = hierarchyComponent ? hierarchyComponent->next : entt::null;
 				removeAllChildren(child, false);
 				child = next;
 			}
@@ -39,11 +39,11 @@ namespace maple
 		auto hierarchyComponent = registry.try_get<component::Hierarchy>(entity);
 		if (hierarchyComponent)
 		{
-			entt::entity child = hierarchyComponent->getFirst();
+			entt::entity child = hierarchyComponent->first;
 			while (child != entt::null)
 			{
 				auto hierarchyComponent = registry.try_get<component::Hierarchy>(child);
-				auto next = hierarchyComponent ? hierarchyComponent->getNext() : entt::null;
+				auto next = hierarchyComponent ? hierarchyComponent->next : entt::null;
 				removeEntity(child);
 				child = next;
 			}

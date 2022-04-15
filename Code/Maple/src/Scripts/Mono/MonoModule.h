@@ -3,17 +3,20 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #pragma once
+#include "Engine/Core.h"
 #include <memory>
 #include <unordered_map>
 
 namespace maple
 {
-	class MonoScript;
-	namespace component 
+	namespace component
 	{
-		struct MonoComponent 
-		{
-			std::unordered_map<std::string, std::shared_ptr<maple::MonoScript>> scripts;
-		};
+		struct MonoComponent;
+	}
+
+	namespace mono 
+	{
+		auto MAPLE_EXPORT addScript(component::MonoComponent & comp, const std::string& name,int32_t entity) -> void;
+		auto MAPLE_EXPORT remove(component::MonoComponent& comp,const std::string& script) -> void;
 	}
 };        // namespace maple

@@ -20,6 +20,10 @@
 #include "Scene/Component/Transform.h"
 #include "Scene/Component/VolumetricCloud.h"
 #include "Scene/Component/LightProbe.h"
+#include "Scene/Component/Environment.h"
+
+#include "Scene/System/EnvironmentModule.h"
+
 #include "Scene/Entity/Entity.h"
 #include "Scene/Scene.h"
 #include "Scene/SceneManager.h"
@@ -31,6 +35,7 @@
 #include "Scripts/Mono/MonoComponent.h"
 #include "Scripts/Mono/MonoScript.h"
 #include "Scripts/Mono/MonoSystem.h"
+#include "Scripts/Mono/MonoModule.h"
 
 #include "Physics/Collider.h"
 #include "Physics/RigidBody.h"
@@ -238,20 +243,20 @@ namespace MM
 		ImGui::Columns(2);
 		ImGui::Separator();
 
-		ImGuiHelper::hyperLink("Prev", getName(data.getPrev()), " Entity id:" + std::to_string((uint32_t)data.getPrev()), [&]() {
-			editor->setSelected(data.getPrev());
+		ImGuiHelper::hyperLink("Prev", getName(data.prev), " Entity id:" + std::to_string((uint32_t)data.prev), [&]() {
+			editor->setSelected(data.prev);
 		});
 
-		ImGuiHelper::hyperLink("Next", getName(data.getNext()), " Entity id:" + std::to_string((uint32_t)data.getNext()), [&]() {
-			editor->setSelected(data.getNext());
+		ImGuiHelper::hyperLink("Next", getName(data.next), " Entity id:" + std::to_string((uint32_t)data.next), [&]() {
+			editor->setSelected(data.next);
 		});
 
-		ImGuiHelper::hyperLink("First", getName(data.getFirst()), " Entity id:" + std::to_string((uint32_t)data.getFirst()), [&]() {
-			editor->setSelected(data.getFirst());
+		ImGuiHelper::hyperLink("First", getName(data.first), " Entity id:" + std::to_string((uint32_t)data.first), [&]() {
+			editor->setSelected(data.first);
 		});
 
-		ImGuiHelper::hyperLink("Parent", getName(data.getParent()), " Entity id:" + std::to_string((uint32_t)data.getParent()), [&]() {
-			editor->setSelected(data.getParent());
+		ImGuiHelper::hyperLink("Parent", getName(data.parent), " Entity id:" + std::to_string((uint32_t)data.parent), [&]() {
+			editor->setSelected(data.parent);
 		});
 
 		ImGui::Columns(1);
@@ -736,12 +741,12 @@ namespace MM
 	{
 		auto& mesh = reg.get<component::SkinnedMeshRenderer>(e);
 
-		auto& materials = mesh.getMesh()->getMaterial();
+		auto& materials = mesh.mesh->getMaterial();
 
 		ImGui::Columns(2);
 
 
-		if (auto box = mesh.getMesh()->getBoundingBox(); box != nullptr)
+		if (auto box = mesh.mesh->getBoundingBox(); box != nullptr)
 		{
 			ImGui::Separator();
 			ImGui::Columns(1);
@@ -767,7 +772,7 @@ namespace MM
 		{
 			ImGui::TextUnformatted("Empty Material");
 			if (ImGui::Button("Add Material", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f)))
-				mesh.getMesh()->setMaterial(std::make_shared<Material>());
+				mesh.mesh->setMaterial(std::make_shared<Material>());
 		}
 		else
 		{
@@ -814,12 +819,11 @@ namespace MM
 	{
 		auto &mesh = reg.get<component::MeshRenderer>(e);
 
-		auto & materials = mesh.getMesh()->getMaterial();
+		auto & materials = mesh.mesh->getMaterial();
 	
 		ImGui::Columns(2);
 
-
-		if (auto box = mesh.getMesh()->getBoundingBox(); box != nullptr) 
+		if (auto box = mesh.mesh->getBoundingBox(); box != nullptr)
 		{
 			ImGui::Separator();
 			ImGui::Columns(1);
@@ -845,7 +849,7 @@ namespace MM
 		{
 			ImGui::TextUnformatted("Empty Material");
 			if (ImGui::Button("Add Material", ImVec2(ImGui::GetContentRegionAvail().x, 0.0f)))
-				mesh.getMesh()->setMaterial(std::make_shared<Material>());
+				mesh.mesh->setMaterial(std::make_shared<Material>());
 		}
 		else
 		{
@@ -951,7 +955,7 @@ namespace MM
 				{
 					if (ImGui::Selectable(entry.path().string().c_str()))
 					{
-						mono.addScript(entry.path().string());
+						mono::addScript(mono,entry.path().string(), (int32_t)e);
 					}
 				}
 			}
@@ -974,13 +978,13 @@ namespace MM
 		ImGui::PushItemWidth(-1);
 
 		static char *boxItems[2] = {"Environment", "PseudoSky"};
-		if (ImGui::BeginCombo("", !env.isPseudoSky() ? "Environment" : "PseudoSky", 0))
+		if (ImGui::BeginCombo("", !env.pseudoSky ? "Environment" : "PseudoSky", 0))
 		{
 			for (auto n = 0; n < 2; n++)
 			{
 				if (ImGui::Selectable(boxItems[n], true))
 				{
-					env.setPseudoSky(n == 1);
+					env.pseudoSky = n == 1;
 				}
 			}
 			ImGui::EndCombo();
@@ -989,15 +993,15 @@ namespace MM
 		ImGui::PopItemWidth();
 		ImGui::NextColumn();
 
-		if (!env.isPseudoSky())
+		if (!env.pseudoSky)
 		{
-			auto label = env.getFilePath();
+			auto label = env.filePath;
 
 			auto updated = ImGuiHelper::property("File", label, true);
 			ImGuiHelper::acceptFile([&](const std::string & file) {
 				if (StringUtils::isTextureFile(file))
 				{
-					env.init(file);
+					environment::init(env,file);
 				}
 			});
 
@@ -1006,16 +1010,16 @@ namespace MM
 				ImGui::Columns(1);
 				ImGui::Separator();
 
-				if (env.getEquirectangularMap())
+				if (env.equirectangularMap)
 				{
-					ImGuiHelper::image(env.getEquirectangularMap().get(), {64, 64});
+					ImGuiHelper::image(env.equirectangularMap.get(), {64, 64});
 				}
 			}
 		}
 		else
 		{
-			ImGuiHelper::property("SkyColor Top", env.getSkyColorTop(), ImGuiHelper::PropertyFlag::ColorProperty);
-			ImGuiHelper::property("SkyColor Bottom", env.getSkyColorBottom(), ImGuiHelper::PropertyFlag::ColorProperty);
+			ImGuiHelper::property("SkyColor Top", env.skyColorTop, ImGuiHelper::PropertyFlag::ColorProperty);
+			ImGuiHelper::property("SkyColor Bottom", env.skyColorBottom, ImGuiHelper::PropertyFlag::ColorProperty);
 		}
 
 		ImGui::Columns(1);
@@ -1076,7 +1080,7 @@ namespace MM
 		ImGui::PushItemWidth(-1);
 
 		const std::array<std::string, 2> controllerTypes   = {"FPS", "Editor"};
-		std::string                      currentController = component::CameraControllerComponent::typeToString(controllerComp.getType());
+		std::string                      currentController = maple::camera_controller::typeToString(controllerComp.type);
 		if (ImGui::BeginCombo("", currentController.c_str(), 0))        // The second parameter is the label previewed before opening the combo.
 		{
 			for (auto n = 0; n < controllerTypes.size(); n++)
@@ -1084,7 +1088,7 @@ namespace MM
 				bool isSelected = currentController == controllerTypes[n];
 				if (ImGui::Selectable(controllerTypes[n].c_str(), currentController.c_str()))
 				{
-					controllerComp.setControllerType(component::CameraControllerComponent::stringToType(controllerTypes[n]));
+					camera_controller::setControllerType(controllerComp, maple::camera_controller::stringToType(controllerTypes[n]));
 				}
 				if (isSelected)
 					ImGui::SetItemDefaultFocus();
@@ -1092,8 +1096,8 @@ namespace MM
 			ImGui::EndCombo();
 		}
 
-		if (controllerComp.getController())
-			controllerComp.getController()->onImGui();
+		if (controllerComp.cameraController)
+			controllerComp.cameraController->onImGui();
 
 		ImGui::Columns(1);
 		ImGui::Separator();
@@ -1104,7 +1108,6 @@ namespace MM
 	inline auto ComponentEditorWidget<component::Atmosphere>(entt::registry &reg, entt::registry::entity_type e) -> void
 	{
 		auto &atmosphere = reg.get<component::Atmosphere>(e);
-		auto &data       = atmosphere.getData();
 
 		ImGui::Columns(2);
 
@@ -1113,23 +1116,23 @@ namespace MM
 		ImGui::Columns(3);
 		ImGui::Separator();
 
-		ImGuiHelper::propertyWithDefault("Surface Radius", atmosphere.getData().surfaceRadius, 1.f, 1.f, component::Atmosphere::SURFACE_RADIUS, ImGuiHelper::PropertyFlag::DragFloat);
-		ImGuiHelper::propertyWithDefault("Atmosphere Radius", atmosphere.getData().atmosphereRadius, 1.f, 1.f, component::Atmosphere::ATMOSPHE_RERADIUS, ImGuiHelper::PropertyFlag::DragFloat);
+		ImGuiHelper::propertyWithDefault("Surface Radius", atmosphere.surfaceRadius, 1.f, 1.f, component::Atmosphere::SURFACE_RADIUS, ImGuiHelper::PropertyFlag::DragFloat);
+		ImGuiHelper::propertyWithDefault("Atmosphere Radius", atmosphere.atmosphereRadius, 1.f, 1.f, component::Atmosphere::ATMOSPHE_RERADIUS, ImGuiHelper::PropertyFlag::DragFloat);
 
-		ImGuiHelper::propertyWithDefault("Center Point", atmosphere.getData().centerPoint, -10000.f, 0.f, {0.f, -component::Atmosphere::SURFACE_RADIUS, 0.f}, ImGuiHelper::PropertyFlag::DragFloat);
-		auto mie = 10000.f * atmosphere.getData().mieScattering;
+		ImGuiHelper::propertyWithDefault("Center Point", atmosphere.centerPoint, -10000.f, 0.f, {0.f, -component::Atmosphere::SURFACE_RADIUS, 0.f}, ImGuiHelper::PropertyFlag::DragFloat);
+		auto mie = 10000.f * atmosphere.mieScattering;
 
 		if (ImGuiHelper::propertyWithDefault("Mie Scattering", mie, 0.f, 10.f, component::Atmosphere::MIE_SCATTERING * 10000.f, ImGuiHelper::PropertyFlag::DragFloat, 0.01))
 		{
-			atmosphere.getData().mieScattering = mie / 10000.f;
+			atmosphere.mieScattering = mie / 10000.f;
 		}
-		auto ray = 10000.f * atmosphere.getData().rayleighScattering;
+		auto ray = 10000.f * atmosphere.rayleighScattering;
 
 		if (ImGuiHelper::propertyWithDefault("Ray Scattering", ray, 0.f, 10.f, component::Atmosphere::RAYLEIGH_SCATTERING * 10000.f, ImGuiHelper::PropertyFlag::DragFloat, 0.01))
 		{
-			atmosphere.getData().rayleighScattering = ray / 10000.f;
+			atmosphere.rayleighScattering = ray / 10000.f;
 		}
-		ImGuiHelper::propertyWithDefault("Anisotropy(g)", atmosphere.getData().g, 0.f, 1.f, component::Atmosphere::G, ImGuiHelper::PropertyFlag::DragFloat, 0.01);
+		ImGuiHelper::propertyWithDefault("Anisotropy(g)", atmosphere.g, 0.f, 1.f, component::Atmosphere::G, ImGuiHelper::PropertyFlag::DragFloat, 0.01);
 
 		ImGui::Columns(1);
 		ImGui::Separator();
@@ -1255,12 +1258,12 @@ namespace maple
 
 			if (mono)
 			{
-				for (auto &script : mono->getScripts())
+				for (auto &script : mono->scripts)
 				{
 					ImGui::PushID(script.first.c_str());
 					if (ImGui::Button("-"))
 					{
-						mono->remove(script.first);
+						mono::remove(*mono, script.first);
 						ImGui::PopID();
 						continue;
 					}
@@ -1288,13 +1291,11 @@ namespace maple
 			if (StringUtils::isCSharpFile(fileName))
 			{
 				auto &mono = registry.get_or_emplace<component::MonoComponent>(ent);
-				mono.setEntity(ent);
-				mono.addScript(fileName);
+				mono::addScript(mono,fileName, (int32_t)ent);
 			}
 			else if (StringUtils::isLuaFile(fileName)) 
 			{
 				auto& lua = registry.get_or_emplace<component::LuaComponent>(ent);
-				lua.setEntity(ent);//TODO
 			}
 		};
 	}

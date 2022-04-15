@@ -113,7 +113,7 @@ namespace maple
 
 	auto PreviewWindow::handleInput(float dt) -> void
 	{
-		auto       group    = Application::getExecutePoint()->getRegistry().view<component::EditorCameraController>();
+		auto       group    = Application::getExecutePoint()->getRegistry().view<EditorCameraController>();
 		const auto mousePos = Input::getInput()->getMousePosition();
 		if (previousCurserPos == glm::vec2{0, 0})
 		{
@@ -121,7 +121,7 @@ namespace maple
 		}
 		for (auto &entity : group)
 		{
-			auto &controller = group.get<component::EditorCameraController>(entity);
+			auto &controller = group.get<EditorCameraController>(entity);
 			auto  camera     = scene->getCamera();
 			controller.updateScroll(*camera.second, Input::getInput()->getScrollOffset(), dt);
 			handleRotation(dt, mousePos);

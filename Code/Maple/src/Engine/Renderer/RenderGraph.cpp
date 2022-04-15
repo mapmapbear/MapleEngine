@@ -96,8 +96,8 @@ namespace maple
 		executePoint->registerGlobalComponent<component::CameraView>();
 		executePoint->registerGlobalComponent<component::FinalPass>();
 
-		static ExecuteQueue beginQ;
-		static ExecuteQueue renderQ;
+		static ExecuteQueue beginQ("BegineScene");
+		static ExecuteQueue renderQ("OnRender");
 
 		executePoint->registerQueue(beginQ);
 		executePoint->registerQueue(renderQ);

@@ -17,14 +17,15 @@
 
 namespace maple
 {
-
-	MonoScript::MonoScript(const std::string& name, component::MonoComponent* component):
-		component(component), name(name)
+	MonoScript::MonoScript(const std::string& name, int32_t entity)
+		:name(name)
 	{
 		className = StringUtils::getFileNameWithoutExtension(name);
 		classNameInEditor = "\t" + className;
 		classNameInEditor = ICON_MDI_LANGUAGE_CSHARP + classNameInEditor;
-		loadFunction();
+		loadFunction([&](std::shared_ptr<MapleMonoObject> monoObject) {
+			monoObject->setValue(&entity, "_internal_entity_handle");
+		});
 	}
 
 	auto MonoScript::onStart() -> void
@@ -51,7 +52,7 @@ namespace maple
 		}
 	}
 
-	auto MonoScript::loadFunction() -> void
+	auto MonoScript::loadFunction(const std::function<void(std::shared_ptr<MapleMonoObject>)>& callback) -> void
 	{
 		auto clazz = MonoVirtualMachine::get()->findClass("", className);
 		if (clazz != nullptr) 
@@ -61,9 +62,9 @@ namespace maple
 			startFunc = clazz->getMethodExact("OnStart", "");
 			updateFunc = clazz->getMethodExact("OnUpdate", "single");
 			destoryFunc = clazz->getMethodExact("OnDestory", "");
-			auto entity = component->getEntity();
-			scriptObject->setValue(&component->getEntityId(), "_internal_entity_handle");
-			scriptObject->setValue(entity.tryGetComponent<component::Transform>(), "_internal_entity_handle");
+			callback(scriptObject);
+			/*	scriptObject->setValue(&component->getEntityId(), "_internal_entity_handle");
+			scriptObject->setValue(entity.tryGetComponent<component::Transform>(), "_internal_entity_handle");*/
 			scriptObject->construct();
 		}
 	}

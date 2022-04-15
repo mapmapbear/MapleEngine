@@ -70,7 +70,7 @@ namespace maple
 				.addFunction("getRegistry", &EntityManager::getRegistry)
 				.endClass()*/
 
-				.beginClass<component::NameComponent>("NameComponent")
+			/*	.beginClass<component::NameComponent>("NameComponent")
 				.addProperty("name", &component::NameComponent::name)
 				.addFunction("getEntity", &component::NameComponent::getEntity)
 				.endClass()
@@ -82,7 +82,7 @@ namespace maple
 				.endClass()
 
 				.beginClass<component::LuaComponent>("LuaComponent")
-				.endClass();
+				.endClass()*/;
 
 	
 

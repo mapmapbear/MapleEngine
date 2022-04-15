@@ -260,7 +260,7 @@ namespace maple
 		{
 			auto& transform = registry.get<component::Transform>(selectedNode);
 
-			if (auto mesh = render->getMesh()) 
+			if (auto mesh = render->mesh) 
 			{
 				auto bb = mesh->getBoundingBox()->transform(transform.getWorldMatrix());
 				GeometryRenderer::drawBox(bb, {1,1,1,1});
@@ -675,7 +675,7 @@ namespace maple
 				case maple::FileType::OBJ: {
 					if (meshRoot)
 					{
-						auto  name        = StringUtils::getFileNameWithoutExtension(filePath);
+						/*auto  name        = StringUtils::getFileNameWithoutExtension(filePath);
 						auto  modelEntity = scene->createEntity(name);
 						auto &model       = modelEntity.addComponent<component::Model>(filePath);
 						if (model.resource->getMeshes().size() == 1)
@@ -692,7 +692,7 @@ namespace maple
 							}
 						}
 						model.type = component::PrimitiveType::File;
-						modelEntity.setParent(meshRoot);
+						modelEntity.setParent(meshRoot);*/
 					}
 				}
 				break;
@@ -722,12 +722,12 @@ namespace maple
 				case maple::FileType::Shader:
 					break;
 				case maple::FileType::Material: {
-					auto entity                       = scene->createEntity("Sphere");
+				/*	auto entity                       = scene->createEntity("Sphere");
 					entity.addComponent<component::Model>().type = component::PrimitiveType::Sphere;
 					auto  mesh                        = Mesh::createSphere();
 					auto &meshRender                  = entity.addComponent<component::MeshRenderer>(mesh);
 					mesh->setMaterial(Material::create(filePath));
-					entity.setParent(meshRoot);
+					entity.setParent(meshRoot);*/
 				}
 				break;
 				case maple::FileType::Length:
@@ -854,7 +854,7 @@ namespace maple
 		for (auto entity : meshQuery)
 		{
 			auto [mesh, trans] = meshQuery.convert(entity);
-			calculateClosest(mesh.getMesh().get(), trans, entity);
+			calculateClosest(mesh.mesh.get(), trans, entity);
 		}
 
 		using SkinnedQuery = ecs::Chain
@@ -867,7 +867,7 @@ namespace maple
 		for (auto entity : skinedQuery)
 		{
 			auto [mesh, trans] = skinedQuery.convert(entity);
-			calculateClosest(mesh.getMesh().get(), trans, entity);
+			calculateClosest(mesh.mesh.get(), trans, entity);
 		}
 
 		if (closestEntity == entt::null)
@@ -887,7 +887,7 @@ namespace maple
 
 				if (model) 
 				{
-					if (auto mesh = model->getMesh(); mesh != nullptr)
+					if (auto mesh = model->mesh; mesh != nullptr)
 					{
 						auto bb = mesh->getBoundingBox()->transform(trans.getWorldMatrix());
 						focusCamera(trans.getWorldPosition(), glm::length(bb.max - bb.min));
@@ -895,7 +895,7 @@ namespace maple
 				}
 				if (skinned) 
 				{
-					if (auto mesh = skinned->getMesh(); mesh != nullptr)
+					if (auto mesh = skinned->mesh; mesh != nullptr)
 					{
 						auto bb = mesh->getBoundingBox()->transform(trans.getWorldMatrix());
 						focusCamera(trans.getWorldPosition(), glm::length(bb.max - bb.min));

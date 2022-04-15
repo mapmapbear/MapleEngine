@@ -16,6 +16,7 @@ namespace maple
 {
 	struct ExecuteQueue
 	{
+		ExecuteQueue(const std::string& name) :name(name) {};
 		std::string name;
 		std::vector<std::function<void(entt::registry& )>> jobs;
 		std::function<void(ecs::World)> preCall =  [](ecs::World) {};
@@ -27,6 +28,11 @@ namespace maple
 	  public:
 
 		inline ExecutePoint()
+			:gameStartQueue("GameStart"),
+			gameEndedQueue("GameEnded"),
+			updateQueue("Update"),
+			imGuiQueue("ImGui"),
+			factoryQueue("Factory")
 		{
 			globalEntity = create("global");
 		};
@@ -117,31 +123,38 @@ namespace maple
 		}
 
 		template<typename TComponent, auto Candidate>
-		static auto initComponent(entt::entity globalEntity, entt::registry& registry, entt::entity entity)
+		static auto delegateComponent(entt::entity globalEntity, entt::registry& registry, entt::entity entity)
 		{
 			auto & comp = registry.get<TComponent>(entity);
 			std::invoke(Candidate, comp, Entity{ entity,registry }, ecs::World{ registry,globalEntity });
 		}
-
+		
 		template<typename TComponent, auto Candidate>
-		static auto destoryComponent(entt::entity globalEntity, entt::registry& registry, entt::entity entity)
+		inline auto onConstruct(bool connect = true)
 		{
-			auto& comp = registry.get<TComponent>(entity);
-			std::invoke(Candidate, comp, Entity{ entity,registry }, ecs::World{ registry,globalEntity });
+			if(connect)
+				registry.template on_construct<TComponent>().connect<&delegateComponent<TComponent, Candidate>>(globalEntity);
+			else
+				registry.template on_construct<TComponent>().disconnect<&delegateComponent<TComponent, Candidate>>(globalEntity);
 		}
 
 		template<typename TComponent, auto Candidate>
-		inline auto onConstruct()
+		inline auto onUpdate(bool connect = true)
 		{
-			registry.template on_construct<TComponent>().connect<&initComponent<TComponent, Candidate>>(globalEntity);
+			if (connect)
+				registry.template on_update<TComponent>().connect<&delegateComponent<TComponent, Candidate>>(globalEntity);
+			else
+				registry.template on_update<TComponent>().disconnect<&delegateComponent<TComponent, Candidate>>(globalEntity);
 		}
 
 		template<typename TComponent, auto Candidate>
-		inline auto onDestory()
+		inline auto onDestory(bool connect = true)
 		{
-			registry.template on_destroy<TComponent>().connect<&destoryComponent<TComponent, Candidate>>(globalEntity);
+			if (connect)
+				registry.template on_destroy<TComponent>().connect<&delegateComponent<TComponent, Candidate>>(globalEntity);
+			else
+				registry.template on_destroy<TComponent>().disconnect<&delegateComponent<TComponent, Candidate>>(globalEntity);
 		}
-
 
 		//these two will be refactored in the future because of the ExecutePoint could belong to scene ?
 		inline auto onGameStart() 

@@ -6,6 +6,7 @@
 #include <string>
 #include <cstdint>
 #include <memory>
+#include <functional>
 #include "Engine/Core.h"
 
 namespace maple 
@@ -16,19 +17,19 @@ namespace maple
 
 	namespace component 
 	{
-		class MonoComponent;
+		struct MonoComponent;
 	}
 
 	class MAPLE_EXPORT MonoScript final
 	{
 	public:
-		MonoScript(const std::string & name, component::MonoComponent * component);
+		MonoScript(const std::string & name,int32_t entity);
 		~MonoScript();
 		auto onStart() -> void;
 		auto onUpdate(float dt) -> void;
 		inline auto getClassName() const { return className; }
 		inline auto getClassNameInEditor() const { return classNameInEditor; }
-		auto loadFunction() -> void;
+		auto loadFunction(const std::function<void(std::shared_ptr<MapleMonoObject>)> & callback) -> void;
 
 		inline auto getUpdateFunc() { return updateFunc; }
 		inline auto getStartFunc() { return startFunc; }
@@ -37,7 +38,6 @@ namespace maple
 
 	private:
 
-		component::MonoComponent* component = nullptr;
 		uint32_t id = 0;
 		std::string name;
 		std::string className;

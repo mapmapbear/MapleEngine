@@ -3,17 +3,21 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #pragma once
-#include <memory>
-#include <unordered_map>
+#include "Engine/Core.h"
+#include "ecs/World.h"
 
 namespace maple
 {
-	class MonoScript;
-	namespace component 
+	class ExecutePoint;
+
+	namespace component
 	{
-		struct MonoComponent 
+		struct  Hierarchy
 		{
-			std::unordered_map<std::string, std::shared_ptr<maple::MonoScript>> scripts;
+			entt::entity parent = entt::null;
+			entt::entity first = entt::null;
+			entt::entity next = entt::null;
+			entt::entity prev = entt::null;
 		};
 	}
-};        // namespace maple
+};

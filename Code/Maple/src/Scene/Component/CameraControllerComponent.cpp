@@ -7,46 +7,17 @@
 
 namespace maple 
 {
-	namespace component
+	auto camera_controller::setControllerType(component::CameraControllerComponent& controller, maple::ControllerType type) -> void
 	{
-		CameraControllerComponent::ControllerType CameraControllerComponent::stringToType(const std::string& type)
+		controller.type = type;
+		switch (type)
 		{
-			if (type == "FPS")
-				return ControllerType::FPS;
-			if (type == "Editor")
-				return ControllerType::EditorCamera;
-			return ControllerType::Custom;
-		}
-
-		CameraControllerComponent::CameraControllerComponent(ControllerType type)
-		{
-			setControllerType(type);
-		}
-
-		auto CameraControllerComponent::setControllerType(CameraControllerComponent::ControllerType type) -> void
-		{
-			this->type = type;
-			switch (type)
-			{
-			case ControllerType::FPS:
-				LOGW("{0} does not implement", __FUNCTION__);
-				break;
-			case ControllerType::EditorCamera:
-				cameraController = std::make_shared<EditorCameraController>();
-				break;
-			}
-		}
-
-		auto CameraControllerComponent::typeToString(ControllerType type) -> std::string
-		{
-			switch (type)
-			{
-			case ControllerType::FPS:
-				return "FPS";
-			case ControllerType::EditorCamera:
-				return "Editor";
-			}
-			return "Custom";
+		case ControllerType::FPS:
+			LOGW("{0} does not implement", __FUNCTION__);
+			break;
+		case ControllerType::EditorCamera:
+			controller.cameraController = std::make_shared<EditorCameraController>();
+			break;
 		}
 	}
 };

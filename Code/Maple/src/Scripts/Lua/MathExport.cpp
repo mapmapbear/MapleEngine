@@ -15,8 +15,6 @@ extern "C" {
 #include <string>
 #include <functional>
 
-#include "Scene/Component/Transform.h"
-
 namespace maple
 {
 	namespace MathExport

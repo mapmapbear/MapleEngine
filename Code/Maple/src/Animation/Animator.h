@@ -23,9 +23,8 @@ namespace maple
 			float playingTime;
 		};
 
-		class Animator : public Component
+		struct Animator
 		{
-		public:
 			float time = 0;
 			float seekTo = -1;
 			bool paused = false;

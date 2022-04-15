@@ -59,10 +59,6 @@ namespace MM {
 	void ComponentAddAction(entt::basic_registry<EntityType>& registry, EntityType entity)
 	{
 		auto & ent = registry.template emplace<TComponent>(entity);
-		if constexpr (std::is_base_of<maple::component::Component, TComponent >::value)
-		{
-			ent.setEntity(entity);
-		}
 	}
 
 	template <class Component, class EntityType>

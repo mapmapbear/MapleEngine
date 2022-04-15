@@ -11,7 +11,7 @@
 
 namespace maple
 {
-	class MAPLE_EXPORT Camera : public component::Component
+	class MAPLE_EXPORT Camera
 	{
 	  public:
 		Camera()                    = default;
@@ -91,13 +91,13 @@ namespace maple
 		template <typename Archive>
 		auto save(Archive &archive) const -> void
 		{
-			archive(cereal::make_nvp("Scale", scale), cereal::make_nvp("Aspect", aspectRatio), cereal::make_nvp("FOV", fov), cereal::make_nvp("Near", near_), cereal::make_nvp("Far", far_), cereal::make_nvp("Id", entity));
+			//archive(cereal::make_nvp("Scale", scale), cereal::make_nvp("Aspect", aspectRatio), cereal::make_nvp("FOV", fov), cereal::make_nvp("Near", near_), cereal::make_nvp("Far", far_), cereal::make_nvp("Id", entity));
 		}
 
 		template <typename Archive>
 		auto load(Archive &archive) -> void
 		{
-			archive(cereal::make_nvp("Scale", scale), cereal::make_nvp("Aspect", aspectRatio), cereal::make_nvp("FOV", fov), cereal::make_nvp("Near", near_), cereal::make_nvp("Far", far_), cereal::make_nvp("Id", entity));
+			//archive(cereal::make_nvp("Scale", scale), cereal::make_nvp("Aspect", aspectRatio), cereal::make_nvp("FOV", fov), cereal::make_nvp("Near", near_), cereal::make_nvp("Far", far_), cereal::make_nvp("Id", entity));
 			projectionDirty = true;
 		}
 

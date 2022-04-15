@@ -16,8 +16,6 @@
 
 #include "Engine/Camera.h"
 
-#include "Scene/Component/Transform.h"
-#include "Scene/Component/Component.h"
 #include "Application.h"
 
 namespace maple 
@@ -91,7 +89,7 @@ return #name
 		{
 			if (table)
 			{
-				(*table)["entity"] = getEntity();
+				//(*table)["entity"] = getEntity();
 			}
 
 			//load prev values
@@ -126,7 +124,7 @@ return #name
 
 				onInitFunc = std::make_shared<luabridge::LuaRef>((*table)["OnInit"]);
 				onUpdateFunc = std::make_shared<luabridge::LuaRef>((*table)["OnUpdate"]);
-				(*table)["entity"] = getEntity();
+				//(*table)["entity"] = getEntity();
 			}
 			catch (const std::exception& e)
 			{

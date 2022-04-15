@@ -185,19 +185,19 @@ namespace maple
 						{
 							meshQuery.forEach([&, i](MeshEntity meshEntity) {
 								auto [mesh, trans] = meshEntity;
-								if (mesh.castShadow && mesh.isActive())
+								if (mesh.castShadow && mesh.active && mesh.mesh != nullptr)
 								{
-									auto bb = mesh.getMesh()->getBoundingBox()->transform(trans.getWorldMatrix());
+									auto bb = mesh.mesh->getBoundingBox()->transform(trans.getWorldMatrix());
 									auto inside = shadowData.cascadeFrustums[i].isInside(bb);
 									if (inside)
 									{
 										auto& cmd = shadowData.cascadeCommandQueue[i].emplace_back();
-										cmd.mesh = mesh.getMesh().get();
+										cmd.mesh = mesh.mesh.get();
 										cmd.transform = trans.getWorldMatrix();
 
-										if (mesh.getMesh()->getSubMeshCount() <= 1) // at least two subMeshes.
+										if (mesh.mesh->getSubMeshCount() <= 1) // at least two subMeshes.
 										{
-											cmd.material = !mesh.getMesh()->getMaterial().empty() ? mesh.getMesh()->getMaterial()[0].get() : nullptr;
+											cmd.material = !mesh.mesh->getMaterial().empty() ? mesh.mesh->getMaterial()[0].get() : nullptr;
 										}
 									}
 								}});
@@ -207,16 +207,16 @@ namespace maple
 						{
 							auto [mesh, trans] = skinnedQuery.convert(skinEntity);
 
-							if (mesh.castShadow && mesh.isActive())
+							if (mesh.castShadow && mesh.mesh != nullptr)
 							{
-								auto bb = mesh.getMesh()->getBoundingBox()->transform(trans.getWorldMatrix());
+								auto bb = mesh.mesh->getBoundingBox()->transform(trans.getWorldMatrix());
 								auto inside = shadowData.cascadeFrustums[0].isInside(bb);
 								if (inside)
 								{
 									auto& cmd = shadowData.animationQueue.emplace_back();
-									cmd.mesh = mesh.getMesh().get();
+									cmd.mesh = mesh.mesh.get();
 									cmd.transform = trans.getWorldMatrix();
-									cmd.boneTransforms = mesh.getBoneTransforms();
+									cmd.boneTransforms = mesh.boneTransforms;
 								}
 							}
 						}
@@ -395,18 +395,18 @@ namespace maple
 						{
 							auto [mesh, trans] = meshQuery.convert(meshEntity);
 
-							if (mesh.isActive()) 
+							if (mesh.active && mesh.mesh)
 							{
-								auto inside = rsm.frustum.isInside(mesh.getMesh()->getBoundingBox()->transform(trans.getWorldMatrix()));
+								auto inside = rsm.frustum.isInside(mesh.mesh->getBoundingBox()->transform(trans.getWorldMatrix()));
 								if (inside)
 								{
 									auto& cmd = rsm.commandQueue.emplace_back();
-									cmd.mesh = mesh.getMesh().get();
+									cmd.mesh = mesh.mesh.get();
 									cmd.transform = trans.getWorldMatrix();
 
-									if (mesh.getMesh()->getSubMeshCount() <= 1) // at least two subMeshes.
+									if (mesh.mesh->getSubMeshCount() <= 1) // at least two subMeshes.
 									{
-										cmd.material = !mesh.getMesh()->getMaterial().empty() ? mesh.getMesh()->getMaterial()[0].get() : nullptr;
+										cmd.material = !mesh.mesh->getMaterial().empty() ? mesh.mesh->getMaterial()[0].get() : nullptr;
 									}
 								}
 							}

@@ -34,86 +34,18 @@ namespace maple
 			Length
 		};
 
-		class MAPLE_EXPORT Model final : public Component
+		struct SkinnedMeshRenderer 
 		{
-		  public:
-			Model() = default;
-			Model(const std::string& file);
-
-			template <class Archive>
-			auto save(Archive& archive) const -> void
-			{
-				archive(filePath, type, entity);
-			}
-
-			template <class Archive>
-			auto load(Archive& archive) -> void
-			{
-				archive(filePath, type, entity);
-				load();
-			}
-
-			std::string                   filePath;
-			PrimitiveType                 type = PrimitiveType::Length;
-			std::shared_ptr<MeshResource> resource;
-			std::vector<std::shared_ptr<IResource>> resources;
-			std::shared_ptr<Skeleton> skeleton;
-		  private:
-			auto load() -> void;
-		};
-
-		class MAPLE_EXPORT SkinnedMeshRenderer : public Component 
-		{
-		public:
-			SkinnedMeshRenderer(const std::shared_ptr<Mesh>& mesh);
-			SkinnedMeshRenderer() = default;
-
-			template <class Archive>
-			inline auto save(Archive& archive) const -> void
-			{
-			}
-
-			template <class Archive>
-			inline auto load(Archive& archive) -> void
-			{
-			}
-
-			inline auto& getMesh()
-			{
-				if (mesh == nullptr)
-					getMesh(meshName);
-				return mesh;
-			}
-
-			auto isActive() const -> bool;
-
-			inline auto isCastShadow() const { return castShadow; }
-
-			inline auto setCastShadow(bool shadow) { castShadow = shadow; }
-
 			bool castShadow = true;
+			std::string meshName;
+			std::string filePath;
 
-			inline auto getSkeleton() { return skeleton; }
-
-			inline auto setBoneTransform(std::shared_ptr<glm::mat4[]> transforms) 
-			{
-				boneTransforms = transforms;
-			}
-
-			inline auto getBoneTransforms() 
-			{
-				return boneTransforms;
-			}
-
-		private:
-			std::shared_ptr<Mesh>     mesh;
-			auto                      getMesh(const std::string& name) -> void;
-			std::string               meshName;
+			std::shared_ptr<Mesh> mesh;
 			std::shared_ptr<Skeleton> skeleton;
 			std::shared_ptr<glm::mat4[]> boneTransforms;
 		};
 
-		class MAPLE_EXPORT BoneComponent : public Component
+		struct BoneComponent
 		{
 		public:
 
@@ -121,42 +53,14 @@ namespace maple
 			Skeleton* skeleton;
 		};
 
-		class MAPLE_EXPORT MeshRenderer : public Component
+		struct MeshRenderer
 		{
-		public:
-
-			MeshRenderer() = default;
-			MeshRenderer(const std::shared_ptr<Mesh>& mesh);
-
-			template <class Archive>
-			inline auto save(Archive& archive) const -> void
-			{
-			}
-
-			template <class Archive>
-			inline auto load(Archive& archive) -> void
-			{
-			}
-
-			inline auto& getMesh()
-			{
-				if (mesh == nullptr)
-					getMesh(meshName);
-				return mesh;
-			}
-
-			auto isActive() const -> bool;
-			
-			inline auto isCastShadow() const { return castShadow; }
-
-			inline auto setCastShadow(bool shadow)  { castShadow = shadow; }
-
 			bool castShadow = true;
-
-		private:
-			std::shared_ptr<Mesh>     mesh;
-			auto                      getMesh(const std::string& name) -> void;
-			std::string               meshName;
+			bool active = true;
+			PrimitiveType type;
+			std::shared_ptr<Mesh> mesh;
+			std::string meshName;
+			std::string filePath;
 		};
 	}
 };        // namespace maple

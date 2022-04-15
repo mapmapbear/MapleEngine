@@ -14,6 +14,7 @@
 #include "Scene/Component/Component.h"
 #include "Scene/Component/Light.h"
 #include "Scene/Component/MeshRenderer.h"
+#include "Scene/System/HierarchyModule.h"
 
 #include "2d/Sprite.h"
 
@@ -103,25 +104,28 @@ namespace maple
 					{
 						if (strcmp("Cube", name) == 0)
 						{
-							auto entity                       = scene->createEntity(name);
-							entity.addComponent<component::Model>().type = component::PrimitiveType::Cube;
-							auto& meshRender = entity.addComponent<component::MeshRenderer>(Mesh::createCube());
+							auto entity = scene->createEntity(name);
+							auto& meshRender = entity.addComponent<component::MeshRenderer>();
+							meshRender.type = component::PrimitiveType::Cube;
+							meshRender.mesh = Mesh::createCube();
 							entity.addComponent<physics::component::Collider>(physics::ColliderType::BoxCollider);
 						}
 
 						if (strcmp("Sphere", name) == 0)
 						{
-							auto entity                       = scene->createEntity(name);
-							entity.addComponent<component::Model>().type = component::PrimitiveType::Sphere;
-							auto &meshRender                  = entity.addComponent<component::MeshRenderer>(Mesh::createSphere());
+							auto entity = scene->createEntity(name);
+							auto &meshRender = entity.addComponent<component::MeshRenderer>();
+							meshRender.type = component::PrimitiveType::Sphere;
+							meshRender.mesh = Mesh::createSphere();
 							entity.addComponent<physics::component::Collider>(physics::ColliderType::SphereCollider);
 						}
 
 						if (strcmp("Pyramid", name) == 0)
 						{
-							auto entity                       = scene->createEntity(name);
-							entity.addComponent<component::Model>().type = component::PrimitiveType::Pyramid;
-							auto &meshRender                  = entity.addComponent<component::MeshRenderer>(Mesh::createPyramid());
+							auto entity = scene->createEntity(name);
+							auto &meshRender = entity.addComponent<component::MeshRenderer>();
+							meshRender.mesh = Mesh::createPyramid();
+							meshRender.type = component::PrimitiveType::Pyramid;
 						}
 					}
 				}
@@ -149,8 +153,8 @@ namespace maple
 			if (ImGui::Selectable("Add Light Probe"))
 			{
 				auto entity = scene->createEntity("Light Probe");
-				entity.addComponent<component::LightProbe>();
-				entity.getOrAddComponent<component::Transform>();
+			//	entity.addComponent<component::LightProbe>();
+			//	entity.getOrAddComponent<component::Transform>();
 			}
 
 			ImGui::EndPopup();
@@ -182,7 +186,7 @@ namespace maple
 				auto hierarchyComponent = registry.try_get<component::Hierarchy>(entity);
 				if (hierarchyComponent)
 				{
-					component::Hierarchy::reparent(entity, entt::null, registry, *hierarchyComponent);
+					hierarchy::reparent(entity, entt::null, *hierarchyComponent, ecs::World{ registry, entt::null });
 				}
 			}
 			ImGui::EndDragDropTarget();
@@ -195,7 +199,7 @@ namespace maple
 			{
 				auto hierarchyComponent = registry.try_get<component::Hierarchy>(entity);
 
-				if (!hierarchyComponent || hierarchyComponent->getParent() == entt::null)
+				if (!hierarchyComponent || hierarchyComponent->parent == entt::null)
 					drawNode(entity, registry);
 			}
 		});
@@ -221,7 +225,7 @@ namespace maple
 			auto hierarchyComponent = registry.try_get<component::Hierarchy>(entity);
 			if (hierarchyComponent)
 			{
-				acceptable = hierarchyComponent->getParent() != entt::null;
+				acceptable = hierarchyComponent->parent != entt::null;
 			}
 
 			if (acceptable && ImGui::BeginDragDropTargetCustom(bb, ImGui::GetID("Panel Hierarchy")))
@@ -233,7 +237,7 @@ namespace maple
 					auto hierarchyComponent = registry.try_get<component::Hierarchy>(entity);
 					if (hierarchyComponent)
 					{
-						component::Hierarchy::reparent(entity, entt::null, registry, *hierarchyComponent);
+						hierarchy::reparent(entity, entt::null, *hierarchyComponent, ecs::World{ registry, entt::null });
 						Entity e(entity, Application::getExecutePoint()->getRegistry());
 						e.removeComponent<component::Hierarchy>();
 					}
@@ -269,7 +273,7 @@ namespace maple
 			auto hierarchyComponent = registry.try_get<component::Hierarchy>(node);
 			bool noChildren         = true;
 
-			if (hierarchyComponent != nullptr && hierarchyComponent->getFirst() != entt::null)
+			if (hierarchyComponent != nullptr && hierarchyComponent->first != entt::null)
 				noChildren = false;
 
 			ImGuiTreeNodeFlags nodeFlags = ((editor->getSelected() == node) ? ImGuiTreeNodeFlags_Selected : 0);
@@ -423,7 +427,7 @@ namespace maple
 				auto hierarchyComponent = registry.try_get<component::Hierarchy>(entity);
 				if (hierarchyComponent != nullptr)
 				{
-					acceptable = entity != node && (!isParentOfEntity(entity, node, registry)) && (hierarchyComponent->getParent() != node);
+					acceptable = entity != node && (!isParentOfEntity(entity, node, registry)) && (hierarchyComponent->parent != node);
 				}
 				else
 					acceptable = entity != node;
@@ -436,7 +440,7 @@ namespace maple
 						if (acceptable)
 						{
 							if (hierarchyComponent)
-								component::Hierarchy::reparent(entity, node, registry, *hierarchyComponent);
+								hierarchy::reparent(entity, node, *hierarchyComponent, ecs::World{ registry, entt::null });
 							else
 							{
 								registry.emplace<component::Hierarchy>(entity, node);
@@ -482,7 +486,7 @@ namespace maple
 
 			if (!noChildren)
 			{
-				entt::entity child = hierarchyComponent->getFirst();
+				entt::entity child = hierarchyComponent->first;
 				while (child != entt::null && registry.valid(child))
 				{
 					float HorizontalTreeLineSize = 16.0f;        //chosen arbitrarily
@@ -493,7 +497,7 @@ namespace maple
 
 					if (childHerarchyComponent)
 					{
-						entt::entity firstChild = childHerarchyComponent->getFirst();
+						entt::entity firstChild = childHerarchyComponent->first;
 						if (firstChild != entt::null && registry.valid(firstChild))
 						{
 							HorizontalTreeLineSize *= 0.5f;
@@ -511,7 +515,7 @@ namespace maple
 					if (registry.valid(child))
 					{
 						auto hierarchyComponent = registry.try_get<component::Hierarchy>(child);
-						child                   = hierarchyComponent ? hierarchyComponent->getNext() : entt::null;
+						child                   = hierarchyComponent ? hierarchyComponent->next : entt::null;
 					}
 				}
 			}
@@ -526,7 +530,7 @@ namespace maple
 		auto nodeHierarchyComponent = registry.try_get<component::Hierarchy>(child);
 		if (nodeHierarchyComponent)
 		{
-			auto parent = nodeHierarchyComponent->getParent();
+			auto parent = nodeHierarchyComponent->parent;
 			while (parent != entt::null)
 			{
 				if (parent == entity)
@@ -536,7 +540,7 @@ namespace maple
 				else
 				{
 					nodeHierarchyComponent = registry.try_get<component::Hierarchy>(parent);
-					parent                 = nodeHierarchyComponent ? nodeHierarchyComponent->getParent() : entt::null;
+					parent                 = nodeHierarchyComponent ? nodeHierarchyComponent->parent : entt::null;
 				}
 			}
 		}

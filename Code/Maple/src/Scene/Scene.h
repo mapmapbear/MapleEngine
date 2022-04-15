@@ -13,7 +13,6 @@
 namespace maple
 {
 	class Entity;
-	class SceneGraph;
 	class Camera;
 	class ExecutePoint;
 
@@ -112,7 +111,6 @@ namespace maple
 		auto updateCameraController(float dt) -> void;
 		auto copyComponents(const Entity &from, const Entity &to) -> void;
 
-		std::shared_ptr<SceneGraph>    sceneGraph;
 		std::string                    name;
 		std::string                    filePath;
 
@@ -133,7 +131,5 @@ namespace maple
 
 		BoundingBox sceneBox;
 		bool boxDirty = false;
-
-		std::shared_ptr<ExecutePoint> executePoint;
 	};
 };        // namespace maple

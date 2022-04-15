@@ -3,6 +3,7 @@
 //////////////////////////////////////////////////////////////////////////////
 #include "Entity.h"
 #include "Others/StringUtils.h"
+#include "Scene/System/HierarchyModule.h"
 
 namespace maple
 {
@@ -25,7 +26,7 @@ namespace maple
 		auto hierarchyComponent = tryGetComponent<component::Hierarchy>();
 		if (hierarchyComponent != nullptr)
 		{
-			acceptable = entity.entityHandle != entityHandle && (!entity.isParent(*this)) && (hierarchyComponent->getParent() != entityHandle);
+			acceptable = entity.entityHandle != entityHandle && (!entity.isParent(*this)) && (hierarchyComponent->parent != entityHandle);
 		}
 		else
 			acceptable = entity.entityHandle != entityHandle;
@@ -34,7 +35,7 @@ namespace maple
 			return;
 
 		if (hierarchyComponent)
-			component::Hierarchy::reparent(entityHandle, entity.entityHandle, *registry, *hierarchyComponent);
+			hierarchy::reparent(entityHandle, entity.entityHandle, *hierarchyComponent, ecs::World{*registry, entt::null});
 		else
 		{
 			registry->emplace<component::Hierarchy>(entityHandle, entity.entityHandle);
@@ -99,7 +100,7 @@ namespace maple
 	{
 		auto hierarchyComp = tryGetComponent<component::Hierarchy>();
 		if (hierarchyComp)
-			return Entity(hierarchyComp->getParent(), *registry);
+			return Entity(hierarchyComp->parent, *registry);
 		else
 			return {};
 	}
@@ -110,13 +111,13 @@ namespace maple
 		auto                hierarchyComponent = tryGetComponent<component::Hierarchy>();
 		if (hierarchyComponent)
 		{
-			entt::entity child = hierarchyComponent->getFirst();
+			entt::entity child = hierarchyComponent->first;
 			while (child != entt::null && registry->valid(child))
 			{
 				children.emplace_back(child, *registry);
 				hierarchyComponent = registry->try_get<component::Hierarchy>(child);
 				if (hierarchyComponent)
-					child = hierarchyComponent->getNext();
+					child = hierarchyComponent->next;
 			}
 		}
 		return children;
@@ -127,11 +128,11 @@ namespace maple
 		auto hierarchyComponent = registry->try_get<component::Hierarchy>(entityHandle);
 		if (hierarchyComponent)
 		{
-			entt::entity child = hierarchyComponent->getFirst();
+			entt::entity child = hierarchyComponent->first;
 			while (child != entt::null)
 			{
 				auto   hierarchyComponent = registry->try_get<component::Hierarchy>(child);
-				auto   next               = hierarchyComponent ? hierarchyComponent->getNext() : entt::null;
+				auto   next               = hierarchyComponent ? hierarchyComponent->next : entt::null;
 				Entity ent                = {child, *registry};
 				ent.removeAllChildren();
 				ent.destroy();
@@ -145,7 +146,7 @@ namespace maple
 		auto nodeHierarchyComponent = registry->try_get<component::Hierarchy>(entityHandle);
 		if (nodeHierarchyComponent)
 		{
-			auto parent = nodeHierarchyComponent->getParent();
+			auto parent = nodeHierarchyComponent->parent;
 			while (parent != entt::null)
 			{
 				if (parent == potentialParent.entityHandle)
@@ -155,7 +156,7 @@ namespace maple
 				else
 				{
 					nodeHierarchyComponent = registry->try_get<component::Hierarchy>(parent);
-					parent                 = nodeHierarchyComponent ? nodeHierarchyComponent->getParent() : entt::null;
+					parent                 = nodeHierarchyComponent ? nodeHierarchyComponent->parent : entt::null;
 				}
 			}
 		}

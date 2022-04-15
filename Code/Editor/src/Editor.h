@@ -180,7 +180,7 @@ namespace maple
 
 		LoadingDialog          dialog;
 		component::Transform              editorCameraTransform;
-		component::EditorCameraController editorCameraController;
+		EditorCameraController			  editorCameraController;
 
 		std::string selectResource;
 		std::string editingResource;

@@ -19,7 +19,7 @@ namespace maple
 
 	namespace component
 	{
-		class Light;
+		struct Light;
 		class Transform;
 	};
 

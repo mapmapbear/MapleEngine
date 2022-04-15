@@ -9,9 +9,9 @@ namespace maple
 {
 	namespace component 
 	{
-		class LightProbe : public Component
+		struct LightProbe
 		{
-		public:
+
 		};
 	}
 };        // namespace maple

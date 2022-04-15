@@ -3,7 +3,7 @@
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-#include "Component.h"
+#include "Engine/Core.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
@@ -22,7 +22,7 @@ namespace maple
 
 	namespace component 
 	{
-		class MAPLE_EXPORT Transform final : public Component
+		class MAPLE_EXPORT Transform final
 		{
 		  public:
 
@@ -124,12 +124,6 @@ namespace maple
 
 			static auto createMatrix(const glm::vec3& pos, const glm::quat& rotation)->glm::mat4;
 
-			inline auto rotationDeltaTrack(const glm::vec3& rotation) { rotationRecord.emplace_back(rotation); }
-			inline auto positionDeltaTrack(const glm::vec3& position) { positionRecord.emplace_back(position); }
-
-			inline auto& getRotationRecord() { return rotationRecord; }
-			inline auto& getPositionRecord() { return positionRecord; }
-
 		  protected:
 			glm::mat4 localMatrix = glm::mat4(1);
 			glm::mat4 worldMatrix = glm::mat4(1);
@@ -146,9 +140,6 @@ namespace maple
 
 			bool hasUpdate = false;
 			bool dirty = false;
-
-			std::vector< glm::vec3> rotationRecord;
-			std::vector< glm::vec3> positionRecord;
 		};
 	}
 };        // namespace maple

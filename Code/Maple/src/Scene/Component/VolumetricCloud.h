@@ -11,46 +11,24 @@ namespace maple
 {
 	namespace component
 	{
-		class VolumetricCloud : public Component
+		struct VolumetricCloud 
 		{
-		public:
+			float cloudSpeed = 450.0f;
+			float coverage = 0.45f;
+			float crispiness = 40.f;
+			float curliness = .1f;
+			float density = 0.02f;
+			float absorption = 0.35f;
 
-			float cloudSpeed = 450.0;
-			float coverage = 0.45;
-			float crispiness = 40.;
-			float curliness = .1;
-			float density = 0.02;
-			float absorption = 0.35;
+			float earthRadius = 600000.0f;
+			float sphereInnerRadius = 5000.0f;
+			float sphereOuterRadius = 17000.0f;
 
-			float earthRadius = 600000.0;
-			float sphereInnerRadius = 5000.0;
-			float sphereOuterRadius = 17000.0;
-
-			float perlinFrequency = 0.8;
+			float perlinFrequency = 0.8f;
 
 			bool enableGodRays;
 			bool enablePowder;
 			bool postProcess;
-
-			template <class Archive>
-			inline auto serialize(Archive& archive) -> void
-			{
-				archive(
-					cloudSpeed,
-					coverage,
-					crispiness,
-					curliness,
-					density,
-					absorption,
-					earthRadius,
-					sphereInnerRadius,
-					sphereOuterRadius,
-					perlinFrequency,
-					enableGodRays,
-					enablePowder,
-					postProcess,
-					entity);
-			}
 
 			bool weathDirty = true;
 		};

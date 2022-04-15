@@ -14,7 +14,7 @@ namespace maple
 
 	namespace component 
 	{
-		class Light;
+		struct Light;
 	};
 
 	namespace geometry_renderer 

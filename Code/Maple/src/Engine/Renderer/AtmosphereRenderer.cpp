@@ -96,9 +96,9 @@ namespace maple
 
 					data.uniformObject.projView = glm::inverse(camera.proj * inverseCamerm);
 					data.uniformObject.sunDirection = { glm::vec3(-light.lightData.direction), light.lightData.intensity };
-					data.uniformObject.rayleighScattering = { atmosphere.getData().rayleighScattering, atmosphere.getData().surfaceRadius * 1000.f };
-					data.uniformObject.mieScattering = { atmosphere.getData().mieScattering, atmosphere.getData().atmosphereRadius * 1000.f };
-					data.uniformObject.centerPoint = { atmosphere.getData().centerPoint.x * 1000.f, atmosphere.getData().centerPoint.y * 1000.f, atmosphere.getData().centerPoint.z * 1000.f, atmosphere.getData().g };
+					data.uniformObject.rayleighScattering = { atmosphere.rayleighScattering, atmosphere.surfaceRadius * 1000.f };
+					data.uniformObject.mieScattering = { atmosphere.mieScattering, atmosphere.atmosphereRadius * 1000.f };
+					data.uniformObject.centerPoint = { atmosphere.centerPoint.x * 1000.f, atmosphere.centerPoint.y * 1000.f, atmosphere.centerPoint.z * 1000.f, atmosphere.g };
 					data.pipeline = Pipeline::get(info, {data.descriptorSet}, graph);
 
 					break;

@@ -3,64 +3,53 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #pragma once
-#include "Component.h"
+#include "Engine/Core.h"
 #include <memory>
 #include <string>
 
 namespace maple
 {
+	class CameraController;
+
+	enum class ControllerType : int32_t
+	{
+		FPS = 0,
+		EditorCamera,
+		Custom
+	};
+
 	namespace component 
 	{
-		class CameraController;
-		class MAPLE_EXPORT CameraControllerComponent : public Component
+		struct CameraControllerComponent 
 		{
-		public:
-
-			enum class ControllerType : int32_t
-			{
-				FPS = 0,
-				EditorCamera,
-				Custom
-			};
-
-			static std::string    typeToString(ControllerType type);
-			static ControllerType stringToType(const std::string& type);
-
-			CameraControllerComponent() :
-				type(ControllerType::FPS)
-			{
-			}
-
-			CameraControllerComponent(ControllerType type);
-
-			auto setControllerType(CameraControllerComponent::ControllerType type) -> void;
-
-			inline auto& getController()
-			{
-				return cameraController;
-			}
-
-			template <typename Archive>
-			void save(Archive& archive) const
-			{
-				archive(cereal::make_nvp("ControllerType", type), cereal::make_nvp("Id", entity));
-			}
-
-			template <typename Archive>
-			void load(Archive& archive)
-			{
-				archive(cereal::make_nvp("ControllerType", type), cereal::make_nvp("Id", entity));
-				setControllerType(type);
-			}
-
-			inline auto getType() const
-			{
-				return type;
-			}
-
-		private:
-			ControllerType                    type = ControllerType::FPS;
+			ControllerType	type = ControllerType::FPS;
 			std::shared_ptr<CameraController> cameraController;
 		};
+	}
+
+	namespace camera_controller
+	{
+		inline auto typeToString(ControllerType type)
+		{
+			switch (type)
+			{
+			case ControllerType::FPS:
+				return "FPS";
+			case ControllerType::EditorCamera:
+				return "Editor";
+			}
+			return "Custom";
+		}
+
+		inline auto stringToType(const std::string& type)
+		{
+			if (type == "FPS")
+				return ControllerType::FPS;
+			if (type == "Editor")
+				return ControllerType::EditorCamera;
+			return ControllerType::Custom;
+		}
+
+		auto MAPLE_EXPORT setControllerType(component::CameraControllerComponent& controller, maple::ControllerType type) -> void;
 	}
 };        // namespace maple

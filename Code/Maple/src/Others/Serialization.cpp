@@ -23,7 +23,7 @@
 #include "Application.h"
 #include "Scene/System/ExecutePoint.h"
 
-#define ALL_COMPONENTS Camera,								\
+#define ALL_COMPONENTS Camera/*,								\
 	                   Material,							\
 	                   component::Transform,				\
 	                   component::NameComponent,			\
@@ -33,7 +33,7 @@
 	                   component::CameraControllerComponent,\
 	                   component::Model,					\
 	                   component::MeshRenderer,				\
-	                   component::Environment
+	                   component::Environment*/
 
 namespace maple
 {

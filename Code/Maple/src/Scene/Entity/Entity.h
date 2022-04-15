@@ -5,6 +5,7 @@
 #pragma once
 #include "Others/Console.h"
 #include "Scene/Component/Component.h"
+#include "Scene/Component/Hierarchy.h"
 #include <ecs/ComponentChain.h>
 #include <ecs/Permission.h>
 #include <entt/entt.hpp>
@@ -33,10 +34,6 @@ namespace maple
 				LOGW("Attempting to add extisting component ");
 #endif
 			T &t = registry->emplace<T>(entityHandle, std::forward<Args>(args)...);
-			if constexpr (std::is_base_of<component::Component, T>::value)
-			{
-				t.setEntity(entityHandle);
-			}
 			return t;
 		}
 
@@ -44,10 +41,6 @@ namespace maple
 		inline T &getOrAddComponent(Args &&...args)
 		{
 			T &t = registry->get_or_emplace<T>(entityHandle, std::forward<Args>(args)...);
-			if constexpr (std::is_base_of<component::Component, T>::value)
-			{
-				t.setEntity(entityHandle);
-			}
 			return t;
 		}
 
@@ -55,10 +48,6 @@ namespace maple
 		inline auto addOrReplaceComponent(Args &&...args)
 		{
 			T &t = registry->emplace_or_replace<T>(entityHandle, std::forward<Args>(args)...);
-			if constexpr (std::is_base_of<component::Component, T>::value)
-			{
-				t.setEntity(entityHandle);
-			}
 		}
 
 		template <typename T>
@@ -115,7 +104,7 @@ namespace maple
 			auto hierarchyComponent = tryGetComponent<component::Hierarchy>();
 			if (hierarchyComponent)
 			{
-				entt::entity child = hierarchyComponent->getFirst();
+				entt::entity child = hierarchyComponent->first;
 				while (child != entt::null && registry->valid(child) && registry->template has<T>(child))
 				{
 					children.emplace_back(child, *registry);
@@ -123,7 +112,7 @@ namespace maple
 					childEntity.flatChildren<T>(children);
 					hierarchyComponent = registry->try_get<component::Hierarchy>(child);
 					if (hierarchyComponent)
-						child = hierarchyComponent->getNext();
+						child = hierarchyComponent->next;
 				}
 			}
 		}

@@ -14,8 +14,7 @@ extern "C" {
 #include <entt/entt.hpp>
 #include <string>
 #include "MetaFile.h"
-#include "Scene/Component/Component.h"
-
+#include "Engine/Core.h"
 
 //TODO Need to be re factored 
 namespace maple
@@ -23,10 +22,9 @@ namespace maple
 	class Scene;
 	namespace component
 	{
-		class MAPLE_EXPORT LuaComponent : public Component
+		class MAPLE_EXPORT LuaComponent
 		{
 		public:
-
 			friend class MetaFile;
 			LuaComponent(const std::string& file, Scene* scene);
 			LuaComponent();

@@ -18,6 +18,7 @@
 #include "Scene/Component/Light.h"
 #include "Scene/Component/Transform.h"
 #include "Scene/Component/VolumetricCloud.h"
+#include "Scene/Component/Environment.h"
 #include "Scene/Scene.h"
 
 #include "Others/Randomizer.h"
@@ -77,11 +78,11 @@ namespace maple
 				auto entityHandle = *query.begin();
 				auto& envData = query.getComponent<component::Environment>(entityHandle);
 
-				skyboxData.pseudoSky = envData.isPseudoSky();
-				if (envData.isPseudoSky())
+				skyboxData.pseudoSky = envData.pseudoSky;
+				if (envData.pseudoSky)
 				{
-					skyboxData.skyUniformObject.skyColorBottom = glm::vec4(envData.getSkyColorBottom(), 1);
-					skyboxData.skyUniformObject.skyColorTop = glm::vec4(envData.getSkyColorTop(), 1);
+					skyboxData.skyUniformObject.skyColorBottom = glm::vec4(envData.skyColorBottom, 1);
+					skyboxData.skyUniformObject.skyColorTop = glm::vec4(envData.skyColorTop, 1);
 					skyboxData.skyUniformObject.viewPos = glm::vec4(cameraView.cameraTransform->getWorldPosition(), 1.f);
 					skyboxData.skyUniformObject.invView = cameraView.cameraTransform->getWorldMatrix();
 					skyboxData.skyUniformObject.invProj = glm::inverse(cameraView.proj);
@@ -97,11 +98,11 @@ namespace maple
 				{
 					skyboxData.prefilterRenderer->beginScene(envData);
 
-					if (skyboxData.skybox != envData.getEnvironment())
+					if (skyboxData.skybox != envData.environment)
 					{
-						skyboxData.environmentMap = envData.getPrefilteredEnvironment();
-						skyboxData.irradianceMap = envData.getIrradianceMap();
-						skyboxData.skybox = envData.getEnvironment();
+						skyboxData.environmentMap = envData.prefilteredEnvironment;
+						skyboxData.irradianceMap = envData.irradianceMap;
+						skyboxData.skybox = envData.environment;
 					}
 
 					auto inverseCamerm = cameraView.view;

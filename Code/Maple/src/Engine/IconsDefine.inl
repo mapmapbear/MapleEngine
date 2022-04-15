@@ -12,6 +12,7 @@
 #include "Scene/Component/MeshRenderer.h"
 #include "Scene/Component/Transform.h"
 #include "Scene/Component/VolumetricCloud.h"
+#include "Scene/Component/Environment.h"
 #include "Engine/Renderer/AtmosphereRenderer.h"
 #include "Engine/Renderer/GridRenderer.h"
 #include "Engine/Renderer/PostProcessRenderer.h"

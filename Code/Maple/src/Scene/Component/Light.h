@@ -17,41 +17,23 @@ namespace maple
 
 		struct LightData
 		{
-			glm::vec4 color;        // 16
-			glm::vec4 position;
-			glm::vec4 direction;
+			glm::vec4 color = glm::vec4(1.f, 1.f, 1.f, 1.f);        // 16
+			glm::vec4 position = {};
+			glm::vec4 direction = {};
 			//align to 16 bytes
-			float intensity;
-			float radius;
-			float type;
-			float angle;
+			float intensity = 1.f;
+			float radius = 10.f;
+			float type = 0.f;
+			float angle = 0.f;
 		};
 
-		class MAPLE_EXPORT Light : public Component
+		struct Light 
 		{
-		public:
-			// Construct.
-			Light(const glm::vec3& direction = glm::vec3(0.0f), const glm::vec4& color = glm::vec4(1.0f), float intensity = 1.0f, const LightType& type = LightType::DirectionalLight, const glm::vec3& position = glm::vec3(), float radius = 10.0f, float angle = 0.0f);
-			auto onImGui() -> void;
-
 			LightData lightData;
 			bool      showFrustum = false;
 			bool      reflectiveShadowMap = false;
 			bool	  enableLPV = false;
 			bool	  castShadow = false;
-			template <class Archive>
-			inline auto serialize(Archive& archive) -> void
-			{
-				archive(
-					lightData.color,
-					lightData.position,
-					lightData.direction,
-					lightData.radius,
-					lightData.intensity,
-					lightData.type,
-					lightData.angle,
-					entity);
-			}
 		};
 	}
 };        // namespace maple

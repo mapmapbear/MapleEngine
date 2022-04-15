@@ -69,11 +69,11 @@ namespace maple
 		executePoint->addDependency<component::Light, component::Transform>();
 		executePoint->addDependency<component::MeshRenderer, component::Transform>();
 		executePoint->addDependency<component::SkinnedMeshRenderer, component::Transform>();
-		executePoint->addDependency<component::Model, component::Transform>();
 		executePoint->addDependency<component::Sprite, component::Transform>();
 		executePoint->addDependency<component::AnimatedSprite, component::Transform>();
 		executePoint->addDependency<component::VolumetricCloud, component::Light>();
 		executePoint->addDependency<component::LightProbe, component::Transform>();
+		executePoint->addDependency<component::Hierarchy, component::Transform>();
 
 		executePoint->getGlobalComponent<component::BoundingBoxComponent>();
 		executePoint->getGlobalComponent<component::DeltaTime>();

@@ -37,7 +37,7 @@ namespace maple
 
 			if (world.getComponent<component::AppState>().state == EditorState::Play)
 			{
-				for (auto& script : mono.getScripts())
+				for (auto& script : mono.scripts)
 				{
 					if (script.second->getUpdateFunc())
 					{
@@ -55,7 +55,7 @@ namespace maple
 			for (auto entity : query)
 			{
 				auto [mono] = query.convert(entity);
-				for (auto& script : mono.getScripts())
+				for (auto& script : mono.scripts)
 				{
 					script.second->onStart();
 				}
@@ -66,10 +66,13 @@ namespace maple
 		{
 			for (auto entity : query)
 			{
-				auto [mono] = query.convert(entity);
-				for (auto& script : mono.getScripts())
+				auto ent = query.convert(entity);
+				auto [mono] = ent;
+				for (auto& script : mono.scripts)
 				{
-					script.second->loadFunction();
+					script.second->loadFunction([&](std::shared_ptr<MapleMonoObject> scriptObject) {
+						scriptObject->setValue(&entity, "_internal_entity_handle");
+					});
 				}
 			}
 		}

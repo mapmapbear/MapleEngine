@@ -19,8 +19,7 @@
 #include "Scripts/Mono/MonoComponent.h"
 
 #include "FileSystem/Skeleton.h"
-
-#include "SceneGraph.h"
+#include "Loaders/Loader.h"
 
 #include "Devices/Input.h"
 #include "Engine/Camera.h"
@@ -72,8 +71,6 @@ namespace maple
 	Scene::Scene(const std::string &initName) :
 	    name(initName)
 	{
-		sceneGraph = std::make_shared<SceneGraph>();
-		sceneGraph->init(Application::getExecutePoint()->getRegistry());
 	}
 
 	auto Scene::setSize(uint32_t w, uint32_t h) -> void
@@ -107,9 +104,9 @@ namespace maple
 		if (filePath != "")
 		{
 			Application::getExecutePoint()->clear();
-			sceneGraph->disconnectOnConstruct(true, Application::getExecutePoint()->getRegistry());
+			hierarchy::disconnectOnConstruct(Application::getExecutePoint(), true);
 			Serialization::loadScene(this, filePath);
-			sceneGraph->disconnectOnConstruct(false, Application::getExecutePoint()->getRegistry());
+			hierarchy::disconnectOnConstruct(Application::getExecutePoint(), false);
 		}
 	}
 
@@ -210,7 +207,7 @@ namespace maple
 		for (auto entity : query)
 		{
 			auto [meshRender] = query.convert(entity);
-			if (auto mesh = meshRender.getMesh())
+			if (auto mesh = meshRender.mesh)
 			{
 				if (mesh->isActive())
 					sceneBox.merge(mesh->getBoundingBox());
@@ -228,27 +225,29 @@ namespace maple
 	auto Scene::addMesh(const std::string& file) -> Entity
 	{
 		PROFILE_FUNCTION();
-		auto  name = StringUtils::getFileNameWithoutExtension(file);
-		auto  modelEntity = createEntity(name);
-		auto& model = modelEntity.addComponent<component::Model>(file);
+		auto name = StringUtils::getFileNameWithoutExtension(file);
+		auto modelEntity = createEntity(name);
 
-		MAPLE_ASSERT(model.resource != nullptr, "load resource fail");
+		std::vector<std::shared_ptr<IResource>> resources;
+		Loader::load(file, resources);
 
-		if (model.resource->getMeshes().size() == 1 && model.skeleton == nullptr)
+		bool hasSkeleton = std::find_if(resources.begin(), resources.end(), [](auto & res) {
+			return res->getResourceType() == FileType::Skeleton;
+		}) != resources.end();
+
+		for (auto& res : resources)
 		{
-			modelEntity.addComponent<component::MeshRenderer>(model.resource->getMeshes().begin()->second);
-		}
-		else
-		{
-			if (model.skeleton)
+			if (res->getResourceType() == FileType::Skeleton)
 			{
-				std::vector<Entity> outEntities;
-				model.skeleton->buildRoot();
-				auto rootEntity = addEntity(this, modelEntity, model.skeleton.get(), model.skeleton->getRoot(), outEntities);
+				auto skeleton = std::static_pointer_cast<Skeleton>(res);
+				skeleton->buildRoot();
 
-				if (model.skeleton->isBuildOffset())
+				std::vector<Entity> outEntities;
+				auto rootEntity = addEntity(this, modelEntity, skeleton.get(), skeleton->getRoot(), outEntities);
+
+				if (skeleton->isBuildOffset())
 				{
-					sceneGraph->updateTransform(modelEntity, Application::getExecutePoint()->getRegistry());
+					hierarchy::updateTransform(modelEntity, ecs::World{ Application::getExecutePoint()->getRegistry(), entt::null });
 					for (auto entity : outEntities)
 					{
 						auto& transform = entity.getComponent<component::Transform>();
@@ -256,22 +255,30 @@ namespace maple
 					}
 				}
 			}
-
-			for (auto& mesh : model.resource->getMeshes())
+			else if(res->getResourceType() == FileType::Model)
 			{
-				auto child = createEntity(mesh.first);
-				if (model.skeleton)
+				for (auto mesh : std::static_pointer_cast<MeshResource>(res)->getMeshes())
 				{
-					auto & meshRenderer = child.addComponent<component::SkinnedMeshRenderer>(mesh.second);
+					auto child = createEntity(mesh.first);
+					if (hasSkeleton) 
+					{
+						auto& meshRenderer = child.addComponent<component::SkinnedMeshRenderer>();
+						meshRenderer.mesh = mesh.second;
+						meshRenderer.meshName = mesh.first;
+						meshRenderer.filePath = file;
+					}
+					else 
+					{
+						auto& meshRenderer = child.addComponent<component::MeshRenderer>();
+						meshRenderer.type = component::PrimitiveType::File;
+						meshRenderer.mesh = mesh.second;
+						meshRenderer.meshName = mesh.first;
+						meshRenderer.filePath = file;
+					}
+					child.setParent(modelEntity);
 				}
-				else
-				{
-					child.addComponent<component::MeshRenderer>(mesh.second);
-				}
-				child.setParent(modelEntity);
 			}
 		}
-		model.type = component::PrimitiveType::File;
 		return modelEntity;
 	}
 
@@ -318,10 +325,10 @@ namespace maple
 			const auto mousePos = Input::getInput()->getMousePosition();
 			if (Application::get()->isSceneActive() &&
 				Application::get()->getEditorState() == EditorState::Play &&
-				con.getController())
+				con.cameraController)
 			{
-				con.getController()->handleMouse(trans, dt, mousePos.x, mousePos.y);
-				con.getController()->handleKeyboard(trans, dt);
+				con.cameraController->handleMouse(trans, dt, mousePos.x, mousePos.y);
+				con.cameraController->handleKeyboard(trans, dt);
 			}
 		}
 	}
@@ -333,7 +340,6 @@ namespace maple
 		deltaTime.dt = dt;
 		updateCameraController(dt);
 		getBoundingBox();
-		sceneGraph->update(Application::getExecutePoint()->getRegistry());
 	}
 
 	auto Scene::create() -> Entity

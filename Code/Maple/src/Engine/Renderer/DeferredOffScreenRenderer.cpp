@@ -21,6 +21,7 @@
 #include "Scene/Component/Light.h"
 #include "Scene/Component/Transform.h"
 #include "Scene/Component/Component.h"
+#include "Scene/Component/Environment.h"
 #include "Scene/Scene.h"
 
 #include "FileSystem/Skeleton.h"
@@ -222,11 +223,11 @@ namespace maple
 			if (!env.empty())
 			{
 				auto [evnData] = env.convert(*env.begin());
-				data.descriptorLightSet[0]->setTexture("uPrefilterMap", evnData.getPrefilteredEnvironment());
-				data.descriptorLightSet[0]->setTexture("uIrradianceMap", evnData.getIrradianceMap());
-				if (evnData.getPrefilteredEnvironment() != nullptr)
+				data.descriptorLightSet[0]->setTexture("uPrefilterMap", evnData.prefilteredEnvironment);
+				data.descriptorLightSet[0]->setTexture("uIrradianceMap", evnData.irradianceMap);
+				if (evnData.prefilteredEnvironment != nullptr)
 				{
-					int32_t cubeMapMipLevels = evnData.getPrefilteredEnvironment()->getMipMapLevels() - 1;
+					int32_t cubeMapMipLevels = evnData.prefilteredEnvironment->getMipMapLevels() - 1;
 					data.descriptorLightSet[0]->setUniform("UniformBufferLight", "cubeMapMipLevels", &cubeMapMipLevels);
 				}
 	
@@ -285,7 +286,7 @@ namespace maple
 							cmd.boneTransforms = ptr;
 							boneTransform[parent.getHandle()] = ptr;
 						}
-						skinnedMesh->setBoneTransform(cmd.boneTransforms);
+						skinnedMesh->boneTransforms = cmd.boneTransforms;
 					}
 
 					if (mesh->getSubMeshCount() <= 1)
@@ -371,7 +372,12 @@ namespace maple
 				auto [mesh, trans] = meshQuery.convert(entityHandle);
 				{
 					const auto& worldTransform = trans.getWorldMatrix();
-					forEachMesh(worldTransform, mesh.getMesh(), meshQuery.hasComponent<component::StencilComponent>(entityHandle), nullptr, {});
+					forEachMesh(
+						worldTransform, 
+						mesh.mesh, 
+						meshQuery.hasComponent<component::StencilComponent>(entityHandle), 
+						nullptr, {}
+					);
 				}
 			}
 
@@ -382,7 +388,13 @@ namespace maple
 				auto mapleEntity = entity.castTo<maple::Entity>();
 				{
 					const auto& worldTransform = trans.getWorldMatrix();
-					forEachMesh(worldTransform, mesh.getMesh(), skinnedMeshQuery.hasComponent<component::StencilComponent>(entityHandle), &mesh, mapleEntity.getParent());
+					forEachMesh(
+						worldTransform, 
+						mesh.mesh, 
+						skinnedMeshQuery.hasComponent<component::StencilComponent>(entityHandle), 
+						&mesh, 
+						mapleEntity.getParent()
+					);
 				}
 			}
 		}
@@ -555,8 +567,8 @@ namespace maple
 			if (!envQuery.empty())
 			{
 				auto [envData] = envQuery.convert(*envQuery.begin());
-				descriptorSet->setTexture("uIrradianceMap", envData.getIrradianceMap());
-				descriptorSet->setTexture("uPrefilterMap", envData.getPrefilteredEnvironment());
+				descriptorSet->setTexture("uIrradianceMap", envData.irradianceMap);
+				descriptorSet->setTexture("uPrefilterMap", envData.prefilteredEnvironment);
 				descriptorSet->setTexture("uPreintegratedFG", data.preintegratedFG);
 			}
 			descriptorSet->update();

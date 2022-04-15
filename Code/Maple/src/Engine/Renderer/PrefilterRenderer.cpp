@@ -13,6 +13,8 @@
 #include "RHI/Texture.h"
 #include "RHI/UniformBuffer.h"
 
+#include "Scene/Component/Environment.h"
+
 #include "Application.h"
 #include "Engine/Camera.h"
 #include "Engine/GBuffer.h"
@@ -107,11 +109,11 @@ namespace maple
 			return;
 		}
 
-		if (!envComponent->isPseudoSky())
+		if (!envComponent->pseudoSky)
 		{
-			if (envComponent && envComponent->getEnvironment() == nullptr)
+			if (envComponent && envComponent->environment == nullptr)
 			{
-				envComponent->setEnvironmnet(skyboxCube);
+				envComponent->environment = skyboxCube;
 			}
 
 			generateSkybox(graph);
@@ -132,9 +134,9 @@ namespace maple
 
 	auto PrefilterRenderer::beginScene(component::Environment & env) -> void
 	{
-		if (equirectangularMap != env.getEquirectangularMap() && !env.isPseudoSky())
+		if (equirectangularMap != env.equirectangularMap && !env.pseudoSky)
 		{
-			equirectangularMap = env.getEquirectangularMap();
+			equirectangularMap = env.equirectangularMap;
 			envComponent = &env;
 			updateUniform();
 		}
@@ -209,7 +211,7 @@ namespace maple
 		pipeInfo.clearTargets        = true;
 
 		pipeInfo.colorTargets[0] = irradianceCaptureColor;
-		pipeInfo.colorTargets[1] = envComponent->getIrradianceMap();
+		pipeInfo.colorTargets[1] = envComponent->irradianceMap;
 
 		auto pipeline = Pipeline::get(pipeInfo,{ irradianceSet }, graph);
 
@@ -227,7 +229,7 @@ namespace maple
 			Renderer::drawMesh(cmd, pipeline.get(), cube.get());
 
 			pipeline->end(cmd);
-			envComponent->getIrradianceMap()->update(cmd, fb, faceId);
+			envComponent->irradianceMap->update(cmd, fb, faceId);
 		}
 	}
 
@@ -244,7 +246,7 @@ namespace maple
 		pipeInfo.clearTargets        = true;
 
 		pipeInfo.colorTargets[0] = prefilterCaptureColor;
-		pipeInfo.colorTargets[1] = envComponent->getPrefilteredEnvironment();
+		pipeInfo.colorTargets[1] = envComponent->prefilteredEnvironment;
 
 		auto pipeline = Pipeline::get(pipeInfo, { prefilterSet }, graph);
 
@@ -270,7 +272,7 @@ namespace maple
 				Renderer::drawMesh(cmd, pipeline.get(), cube.get());
 
 				pipeline->end(cmd);
-				envComponent->getPrefilteredEnvironment()->update(cmd, fb, faceId, mip);
+				envComponent->prefilteredEnvironment->update(cmd, fb, faceId, mip);
 			}
 		}
 	}

@@ -13,7 +13,7 @@ namespace maple
 	class Texture2D;
 	namespace component
 	{
-		class MAPLE_EXPORT Sprite : public Component
+		class MAPLE_EXPORT Sprite
 		{
 		public:
 
