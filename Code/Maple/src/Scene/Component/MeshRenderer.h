@@ -3,7 +3,6 @@
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-#include "Component.h"
 #include "Engine/Material.h"
 #include "FileSystem/MeshResource.h"
 

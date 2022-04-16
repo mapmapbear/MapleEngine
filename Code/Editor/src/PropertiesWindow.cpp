@@ -134,6 +134,24 @@ namespace MM
 			ImGuiHelper::property("Radius", collider.radius, 0, 0, ImGuiHelper::PropertyFlag::DragFloat);
 			ImGui::Separator();
 		}
+		else if (collider.type == physics::ColliderType::CapsuleCollider)
+		{
+			ImGui::Columns(2);
+			ImGui::Separator();
+			ImGuiHelper::property("Radius", collider.radius, 0, 0, ImGuiHelper::PropertyFlag::DragFloat);
+			ImGuiHelper::property("Height", collider.height, 0, 0, ImGuiHelper::PropertyFlag::DragFloat);
+
+			auto oldCenter = collider.box.center();
+			auto center = oldCenter;
+			if (ImGuiHelper::property("Center", center, 0, 0, ImGuiHelper::PropertyFlag::DragFloat))
+			{
+				auto delta = center - oldCenter;
+				collider.box.min += delta;
+				collider.box.max += delta;
+			}
+
+			ImGui::Separator();
+		}
 		ImGui::Columns(1);
 		ImGui::Separator();
 	}

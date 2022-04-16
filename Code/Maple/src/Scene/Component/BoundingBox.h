@@ -11,7 +11,6 @@ namespace maple
 	{
 		struct BoundingBoxComponent
 		{
-
 			BoundingBox* box;
 		};
 	}

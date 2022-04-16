@@ -28,6 +28,7 @@ namespace maple
 				btCollisionShape* shape = nullptr;
 				BoundingBox box;
 				float radius;
+				float height;
 			};
 		}
 

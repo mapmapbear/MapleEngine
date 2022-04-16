@@ -3,16 +3,13 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #pragma once
-#include "Engine/Core.h"
-#include "ecs/World.h"
+#include <entt/entt.hpp>
 
 namespace maple
 {
-	class ExecutePoint;
-
 	namespace component
 	{
-		struct  Hierarchy
+		struct Hierarchy
 		{
 			entt::entity parent = entt::null;
 			entt::entity first = entt::null;

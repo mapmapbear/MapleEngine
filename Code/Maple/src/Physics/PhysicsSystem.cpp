@@ -75,13 +75,13 @@ namespace maple
 						rigidBody.localInertia = Serialization::bulletToGlm(rigidBody.rigidbody->getLocalInertia());
 						rigidBody.angularVelocity = Serialization::bulletToGlm(rigidBody.rigidbody->getAngularVelocity());
 						rigidBody.velocity = Serialization::bulletToGlm(rigidBody.rigidbody->getLinearVelocity());
-						btVector3 aabbMin;
+						/*btVector3 aabbMin;
 						btVector3 aabbMax;
 						rigidBody.rigidbody->getAabb(aabbMin, aabbMax);
 						collider.box = {
 							Serialization::bulletToGlm(aabbMin),
 							Serialization::bulletToGlm(aabbMax)
-						};
+						};*/
 					}
 				}
 			}
@@ -98,7 +98,6 @@ namespace maple
 			inline auto system(RigidBodyEntity entity, ecs::World world)
 			{
 				auto [rigidBody, collider, transform] = entity;
-
 	
 				if (collider.shape == nullptr) 
 				{
@@ -111,6 +110,10 @@ namespace maple
 						break;
 					case ColliderType::SphereCollider:
 						collider.shape = new btSphereShape(collider.radius);
+						break;
+
+					case ColliderType::CapsuleCollider:
+						collider.shape = new btCapsuleShape(collider.radius, collider.height);
 						break;
 					default:
 						MAPLE_ASSERT(false, "Unsupported ColliderType");
@@ -128,11 +131,12 @@ namespace maple
 					if (rigidBody.mass != 0.f && !rigidBody.kinematic )
 						collider.shape->calculateLocalInertia(rigidBody.mass, localInertia);
 
-	
+					auto center = collider.box.center();
+
 					btRigidBody::btRigidBodyConstructionInfo cInfo(
 						rigidBody.dynamic ? rigidBody.mass : 0.f, new btDefaultMotionState(btTransform(
 							Serialization::glmToBullet(transform.getWorldOrientation()), 
-							Serialization::glmToBullet(transform.getWorldPosition())
+							Serialization::glmToBullet(transform.getWorldPosition() + center)
 						)), collider.shape, localInertia);
 
 					rigidBody.rigidbody = new btRigidBody(cInfo);
@@ -204,6 +208,12 @@ namespace maple
 						break;
 					case ColliderType::SphereCollider:
 						collider.radius = 1.f;
+						collider.box = { {0,0,0}, {0,0,0 } };
+						break;
+					case ColliderType::CapsuleCollider:
+						collider.radius = 0.5f;
+						collider.height = 2.f;
+						collider.box = { {0,0,0}, {0,0,0 } };
 						break;
 					}
 				}

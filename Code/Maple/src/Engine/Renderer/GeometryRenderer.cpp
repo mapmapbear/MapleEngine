@@ -156,7 +156,7 @@ namespace maple
 
 	auto GeometryRenderer::drawFrustum(const Frustum &frustum, const glm::vec4& color) -> void
 	{
-		auto *vertices = frustum.vertices;
+		const glm::vec3 * vertices = frustum.getVertices();
 
 		auto c = color * 0.6f;
 		c.a = 1.0f;
@@ -186,10 +186,10 @@ namespace maple
 		drawLine({x, bottom, 0}, {x, y, 0});
 	}
 
-	auto GeometryRenderer::drawBox(const BoundingBox &box, const glm::vec4 &color) -> void
+	auto GeometryRenderer::drawBox(const glm::vec3& position, const BoundingBox &box, const glm::vec4 &color) -> void
 	{
-		glm::vec3 uuu = box.max;
-		glm::vec3 lll = box.min;
+		glm::vec3 uuu = box.max + position;
+		glm::vec3 lll = box.min + position;
 		glm::vec3 ull(uuu.x, lll.y, lll.z);
 		glm::vec3 uul(uuu.x, uuu.y, lll.z);
 		glm::vec3 ulu(uuu.x, lll.y, uuu.z);
@@ -288,6 +288,62 @@ namespace maple
 			glm::vec3 next = glm::vec3(nx, ny, 0.0f);
 
 			drawLine(position + (rotation * current), position + (rotation * next), color);
+		}
+	}
+
+	auto GeometryRenderer::drawArc(int32_t numVerts, float radius, const glm::vec3& start, const glm::vec3& end, const glm::quat& rotation, const glm::vec4& color) -> void
+	{
+		PROFILE_FUNCTION();
+		float step = 180.0f / numVerts;
+		glm::quat rot = glm::lookAt(rotation * start, rotation * end, maple::UP);
+		rot = rotation * rot;
+
+		glm::vec3 arcCentre = (start + end) * 0.5f;
+		for (int i = 0; i < numVerts; i++)
+		{
+			float cx = std::cos(glm::radians(step * i)) * radius;
+			float cy = std::sin(glm::radians(step * i)) * radius;
+			glm::vec3 current = glm::vec3(cx, cy, 0.0f);
+
+			float nx = std::cos(glm::radians(step * (i + 1))) * radius;
+			float ny = std::sin(glm::radians(step * (i + 1))) * radius;
+			glm::vec3 next = glm::vec3(nx, ny, 0.0f);
+
+			drawLine(arcCentre + (rot * current), arcCentre + (rot * next), color);
+		}
+	}
+
+	auto GeometryRenderer::drawCapsule(const glm::vec3& position, const glm::quat& rotation, float height, float radius, const glm::vec4& color) -> void
+	{
+		PROFILE_FUNCTION();
+		glm::vec3 up = (rotation * maple::UP);
+
+		glm::vec3 topSphereCentre = position + up * (height * 0.5f);
+		glm::vec3 bottomSphereCentre = position - up * (height * 0.5f);
+
+		drawCircle(20, radius, topSphereCentre, rotation * glm::quat(glm::vec3(glm::radians(90.0f), 0.0f, 0.0f)), color);
+		drawCircle(20, radius, bottomSphereCentre, rotation * glm::quat(glm::vec3(glm::radians(90.0f), 0.0f, 0.0f)), color);
+
+		float step = 360.0f / float(20);
+		for (int32_t i = 0; i < 20; i++)
+		{
+			float z = std::cos(glm::radians(step * i)) * radius;
+			float x = std::sin(glm::radians(step * i)) * radius;
+
+			glm::vec3 offset = rotation * glm::vec4(x, 0.0f, z, 0.0f);
+			drawLine(bottomSphereCentre + offset, topSphereCentre + offset, color);
+
+			if (i < 10)
+			{
+				float z2 = std::cos(glm::radians(step * (i + 10))) * radius;
+				float x2 = std::sin(glm::radians(step * (i + 10))) * radius;
+
+				glm::vec3 offset2 = rotation * glm::vec4(x2, 0.0f, z2, 0.0f);
+				//Top Hemisphere
+				drawArc(10, radius, topSphereCentre + offset, topSphereCentre + offset2, rotation, color);
+				//Bottom Hemisphere
+				drawArc(10, radius, bottomSphereCentre + offset, bottomSphereCentre + offset2, rotation * glm::quat(glm::vec3(glm::radians(180.0f), 0.0f, 0.0f)), color);
+			}
 		}
 	}
 

@@ -375,6 +375,161 @@ namespace maple
 		return std::make_shared<Mesh>(indices, data);
 	}
 
+	auto Mesh::createCapsule(float radius /*= 0.5f*/, float midHeight /*= 2.0f*/, int32_t radialSegments /*= 64*/, int32_t rings /*= 8*/) ->std::shared_ptr<Mesh>
+	{
+		PROFILE_FUNCTION();
+		int32_t prevRow = 0;
+		int32_t thisRow = 0;
+		int32_t point = 0;
+
+		float x, y, z, u, v, w;
+		constexpr float oneThird = 1.0f / 3.0f;
+		constexpr float twoThirds = 2.0f / 3.0f;
+
+		std::vector<Vertex> data;
+		std::vector<uint32_t> indices;
+
+		/* top hemisphere */
+		for (auto j = 0; j <= (rings + 1); j++)
+		{
+			v = float(j);
+
+			v /= (rings + 1);
+			w = std::sin(0.5f * M_PI * v);
+			y = radius * std::cos(0.5f * M_PI * v);
+
+			for (auto i = 0; i <= radialSegments; i++)
+			{
+				u = float(i);
+				u /= radialSegments;
+
+				x = std::sin(u * (M_PI * 2.0f));
+				z = -std::cos(u * (M_PI * 2.0f));
+
+				glm::vec3 p = glm::vec3(x * radius * w, y, z * radius * w);
+
+				Vertex vertex;
+				vertex.pos = p + glm::vec3(0.0f, 0.5f * midHeight, 0.0f);
+				vertex.normal = glm::normalize((p + glm::vec3(0.0f, 0.5f * midHeight, 0.0f)));
+				vertex.texCoord = glm::vec2(u, oneThird * v);
+				vertex.color = glm::vec4(1, 1, 1, 1.f);
+				data.emplace_back(vertex);
+				point++;
+
+				if (i > 0 && j > 0)
+				{
+					indices.push_back(prevRow + i - 1);
+					indices.push_back(prevRow + i);
+					indices.push_back(thisRow + i - 1);
+
+					indices.push_back(prevRow + i);
+					indices.push_back(thisRow + i);
+					indices.push_back(thisRow + i - 1);
+				};
+			};
+
+			prevRow = thisRow;
+			thisRow = point;
+		};
+
+		/* cylinder */
+		thisRow = point;
+		prevRow = 0;
+		for (auto j = 0; j <= (rings + 1); j++)
+		{
+			v = float(j);
+			v /= (rings + 1);
+
+			y = midHeight * v;
+			y = (midHeight * 0.5f) - y;
+
+			for (auto i = 0; i <= radialSegments; i++)
+			{
+				u = float(i);
+				u /= radialSegments;
+
+				x = std::sin(u * (M_PI * 2.0f));
+				z = -std::cos(u * (M_PI * 2.0f));
+
+				glm::vec3 p = glm::vec3(x * radius, y, z * radius);
+
+				Vertex vertex;
+				vertex.pos = p;
+				vertex.normal = glm::vec3(x, z, 0.0f);
+				vertex.texCoord = glm::vec2(u, oneThird + (v * oneThird));
+				vertex.color = glm::vec4(1, 1, 1, 1.f);
+				data.emplace_back(vertex);
+
+				point++;
+
+				if (i > 0 && j > 0)
+				{
+					indices.push_back(prevRow + i - 1);
+					indices.push_back(prevRow + i);
+					indices.push_back(thisRow + i - 1);
+
+					indices.push_back(prevRow + i);
+					indices.push_back(thisRow + i);
+					indices.push_back(thisRow + i - 1);
+				};
+			};
+
+			prevRow = thisRow;
+			thisRow = point;
+		};
+
+		/* bottom hemisphere */
+		thisRow = point;
+		prevRow = 0;
+
+		for (auto j = 0; j <= (rings + 1); j++)
+		{
+			v = float(j);
+
+			v /= (rings + 1);
+			v += 1.0f;
+			w = std::sin(0.5f * M_PI * v);
+			y = radius * std::cos(0.5f * M_PI * v);
+
+			for (auto i = 0; i <= radialSegments; i++)
+			{
+				float u2 = float(i);
+				u2 /= radialSegments;
+
+				x = std::sin(u2 * (M_PI * 2.0f));
+				z = -std::cos(u2 * (M_PI * 2.0f));
+
+				glm::vec3 p = glm::vec3(x * radius * w, y, z * radius * w);
+
+				Vertex vertex;
+				vertex.pos = p + glm::vec3(0.0f, -0.5f * midHeight, 0.0f);
+				vertex.normal = glm::normalize((p + glm::vec3(0.0f, -0.5f * midHeight, 0.0f)));
+				vertex.texCoord = glm::vec2(u2, twoThirds + ((v - 1.0f) * oneThird));
+				vertex.color = glm::vec4(1, 1, 1, 1.f);
+				data.emplace_back(vertex);
+
+				point++;
+
+				if (i > 0 && j > 0)
+				{
+					indices.push_back(prevRow + i - 1);
+					indices.push_back(prevRow + i);
+					indices.push_back(thisRow + i - 1);
+
+					indices.push_back(prevRow + i);
+					indices.push_back(thisRow + i);
+					indices.push_back(thisRow + i - 1);
+				};
+			};
+
+			prevRow = thisRow;
+			thisRow = point;
+		}
+
+		Mesh::generateNormals(data, indices);
+		return std::make_shared<Mesh>(indices, data);
+	}
+
 	auto Mesh::createSphere(uint32_t xSegments /*= 64*/, uint32_t ySegments /*= 64*/) -> std::shared_ptr<Mesh>
 	{
 		std::vector<Vertex> data;

@@ -24,8 +24,6 @@ namespace maple
 			PlaneFar
 		};
 
-		friend class RenderGraph;
-		friend class GeometryRenderer;
 		static constexpr uint32_t FRUSTUM_VERTICES = 8;
 
 		Frustum() noexcept = default;
@@ -41,11 +39,15 @@ namespace maple
 			return planes[id];
 		}
 
-		inline auto getVertices() -> glm::vec3 *
+		inline auto getVertices() const
 		{
 			return vertices;
 		}
 
+		inline auto getVertices() 
+		{
+			return vertices;
+		}
 	  private:
 		Plane     planes[6];
 		glm::vec3 vertices[FRUSTUM_VERTICES];

@@ -127,6 +127,15 @@ namespace maple
 							meshRender.mesh = Mesh::createPyramid();
 							meshRender.type = component::PrimitiveType::Pyramid;
 						}
+
+						if (strcmp("Capsule", name) == 0) 
+						{
+							auto entity = scene->createEntity(name);
+							auto& meshRender = entity.addComponent<component::MeshRenderer>();
+							meshRender.mesh = Mesh::createCapsule();
+							meshRender.type = component::PrimitiveType::Capsule;
+							entity.addComponent<physics::component::Collider>(physics::ColliderType::CapsuleCollider);
+						}
 					}
 				}
 				ImGui::EndMenu();
