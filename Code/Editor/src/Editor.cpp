@@ -270,11 +270,11 @@ namespace maple
 		if (auto collider = registry.try_get<physics::component::Collider>(selectedNode))
 		{
 			auto& transform = registry.get<component::Transform>(selectedNode);
-			auto pos = transform.getWorldPosition() + collider->box.center();
+			auto pos = transform.getWorldPosition();
 
 			if (collider->type == physics::ColliderType::BoxCollider) 
 			{
-				GeometryRenderer::drawBox(pos, collider->box, { 0,1,0,1 });
+				GeometryRenderer::drawBox({},collider->box, { 0,1,0,1 });
 			}
 
 			else if (collider->type == physics::ColliderType::SphereCollider)
@@ -283,7 +283,13 @@ namespace maple
 			}
 			else if (collider->type == physics::ColliderType::CapsuleCollider)
 			{
-				GeometryRenderer::drawCapsule(pos,transform.getWorldOrientation(),collider->height,collider->radius, { 0,1,0,1 });
+				GeometryRenderer::drawCapsule(
+					getEditorState() == EditorState::Play ? 
+					collider->box.center() : 
+					pos + collider->box.center(),
+					transform.getWorldOrientation(),
+					collider->height,collider->radius, { 0,1,0,1 }
+				);
 			}
 		}
 	}

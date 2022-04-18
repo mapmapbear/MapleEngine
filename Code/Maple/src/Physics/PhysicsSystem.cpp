@@ -11,6 +11,7 @@
 #include "Scene/Component/Component.h"
 #include "Scene/Component/Transform.h"
 #include "Scene/Component/AppState.h"
+#include "Scene/System/HierarchyModule.h"
 #include "Scene/System/ExecutePoint.h"
 #include <ecs/ecs.h>
 
@@ -64,7 +65,7 @@ namespace maple
 						}
 
 						transform.setLocalPosition(
-							Serialization::bulletToGlm(trans.getOrigin())
+							Serialization::bulletToGlm(trans.getOrigin()) - collider.originalBox.center()
 						);
 
 						transform.setLocalOrientation(
@@ -75,13 +76,14 @@ namespace maple
 						rigidBody.localInertia = Serialization::bulletToGlm(rigidBody.rigidbody->getLocalInertia());
 						rigidBody.angularVelocity = Serialization::bulletToGlm(rigidBody.rigidbody->getAngularVelocity());
 						rigidBody.velocity = Serialization::bulletToGlm(rigidBody.rigidbody->getLinearVelocity());
-						/*btVector3 aabbMin;
+						
+						btVector3 aabbMin;
 						btVector3 aabbMax;
 						rigidBody.rigidbody->getAabb(aabbMin, aabbMax);
 						collider.box = {
 							Serialization::bulletToGlm(aabbMin),
 							Serialization::bulletToGlm(aabbMax)
-						};*/
+						};
 					}
 				}
 			}
@@ -104,14 +106,11 @@ namespace maple
 					switch (collider.type)
 					{
 					case ColliderType::BoxCollider: 
-					{
 						collider.shape = new btBoxShape(Serialization::glmToBullet(collider.box.size() / 2.f));
-					}
 						break;
 					case ColliderType::SphereCollider:
 						collider.shape = new btSphereShape(collider.radius);
 						break;
-
 					case ColliderType::CapsuleCollider:
 						collider.shape = new btCapsuleShape(collider.radius, collider.height);
 						break;
@@ -125,19 +124,21 @@ namespace maple
 					}
 				}
 
+				hierarchy::updateTransform(entity, world);
+
 				if (rigidBody.rigidbody == nullptr)
 				{
 					btVector3 localInertia(0, 0, 0);
 					if (rigidBody.mass != 0.f && !rigidBody.kinematic )
 						collider.shape->calculateLocalInertia(rigidBody.mass, localInertia);
 
-					auto center = collider.box.center();
-
 					btRigidBody::btRigidBodyConstructionInfo cInfo(
 						rigidBody.dynamic ? rigidBody.mass : 0.f, new btDefaultMotionState(btTransform(
 							Serialization::glmToBullet(transform.getWorldOrientation()), 
-							Serialization::glmToBullet(transform.getWorldPosition() + center)
+							Serialization::glmToBullet(transform.getWorldPosition() + collider.box.center())
 						)), collider.shape, localInertia);
+
+					collider.originalBox = collider.box;
 
 					rigidBody.rigidbody = new btRigidBody(cInfo);
 
@@ -179,6 +180,8 @@ namespace maple
 					delete collider.shape;
 					collider.shape = nullptr;
 				}
+
+				collider.box = collider.originalBox;
 
 				if (rigidBody.rigidbody != nullptr)
 				{

@@ -113,7 +113,7 @@ namespace maple
 		template <typename... Components>
 		inline auto addGlobalComponent()
 		{
-			(registry.emplace<Components>(globalEntity.getHandle()); ...);
+			(registry.emplace<Components>(globalEntity), ...);
 		}
 
 		template <typename Component, typename... Args>
@@ -122,12 +122,7 @@ namespace maple
 			return registry.template get_or_emplace<Component>(globalEntity,std::forward<Args>(args)...);
 		}
 
-		template<typename TComponent, auto Candidate>
-		static auto delegateComponent(entt::entity globalEntity, entt::registry& registry, entt::entity entity)
-		{
-			auto & comp = registry.get<TComponent>(entity);
-			std::invoke(Candidate, comp, Entity{ entity,registry }, ecs::World{ registry,globalEntity });
-		}
+
 		
 		template<typename TComponent, auto Candidate>
 		inline auto onConstruct(bool connect = true)
@@ -175,6 +170,13 @@ namespace maple
 
 	  private:
 		  friend class Application;
+
+		  template<typename TComponent, auto Candidate>
+		  static auto delegateComponent(entt::entity globalEntity, entt::registry& registry, entt::entity entity)
+		  {
+			  auto& comp = registry.get<TComponent>(entity);
+			  std::invoke(Candidate, comp, Entity{ entity,registry }, ecs::World{ registry,globalEntity });
+		  }
 
 		  inline auto onUpdate(float dt)
 		  {

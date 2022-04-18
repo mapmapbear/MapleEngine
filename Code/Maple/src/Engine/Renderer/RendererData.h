@@ -9,6 +9,7 @@ namespace maple
 	class GBuffer;
 	class CommandBuffer;
 	class Mesh;
+	class Texture;
 
 	namespace component
 	{

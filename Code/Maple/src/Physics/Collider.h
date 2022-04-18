@@ -29,6 +29,8 @@ namespace maple
 				BoundingBox box;
 				float radius;
 				float height;
+
+				BoundingBox originalBox;
 			};
 		}
 
