@@ -6,6 +6,7 @@
 #include "Engine/Renderer/Renderer.h"
 #include "Scene/System/ExecutePoint.h"
 #include "RHI/Texture.h"
+#include "Engine/Core.h"
 #include <vector>
 
 namespace maple
@@ -45,6 +46,7 @@ namespace maple
 
 	namespace light_propagation_volume
 	{
+		auto MAPLE_EXPORT registerGlobalComponent(std::shared_ptr<ExecutePoint> point) -> void;
 		auto registerLPV(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void;
 		auto registerLPVDebug(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void;
 	};

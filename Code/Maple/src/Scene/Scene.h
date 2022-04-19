@@ -132,4 +132,9 @@ namespace maple
 		BoundingBox sceneBox;
 		bool boxDirty = false;
 	};
+
+	namespace mesh
+	{
+		auto registerMeshModule(std::shared_ptr<ExecutePoint> executePoint) -> void;
+	}
 };        // namespace maple

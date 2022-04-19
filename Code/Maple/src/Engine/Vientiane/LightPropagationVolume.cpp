@@ -416,13 +416,17 @@ namespace maple
 			}
 		}
 
-		auto registerLPV(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void
+		auto registerGlobalComponent(std::shared_ptr<ExecutePoint> executePoint) -> void
 		{
 			executePoint->registerGlobalComponent<component::LPVGrid>();
 			executePoint->registerGlobalComponent<component::InjectLightData>();
 			executePoint->registerGlobalComponent<component::InjectGeometryVolume>();
 			executePoint->registerGlobalComponent<component::PropagationData>();
+			executePoint->registerGlobalComponent<component::DebugAABBData>();
+		}
 
+		auto registerLPV(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void
+		{
 			executePoint->registerWithinQueue<inject_light_pass::beginScene>(begin);
 			executePoint->registerWithinQueue<inject_light_pass::render>(renderer);
 			executePoint->registerWithinQueue<inject_geometry_pass::beginScene>(begin);
@@ -434,7 +438,6 @@ namespace maple
 
 		auto registerLPVDebug(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void
 		{
-			executePoint->registerGlobalComponent<component::DebugAABBData>();
 			executePoint->registerWithinQueue<aabb_debug::beginScene>(begin);
 			executePoint->registerWithinQueue<aabb_debug::render>(renderer);
 		}

@@ -639,20 +639,4 @@ namespace maple
 		const float     factor  = 1.0f / (coord1.x * coord2.y - coord2.x * coord1.y);
 		return axis * factor;
 	}
-
-	namespace 
-	{
-		inline auto meshInOut(component::MeshRenderer& mesh, ecs::World world)
-		{
-			
-		}
-	}
-	namespace mesh
-	{
-		auto registerMeshModule(std::shared_ptr<ExecutePoint> executePoint) -> void
-		{
-			//executePoint->onConstruct<component::MeshRenderer, &meshInOut>();
-			//executePoint->onDestory<component::MeshRenderer, &meshInOut>();
-		}
-	}
 };        // namespace maple

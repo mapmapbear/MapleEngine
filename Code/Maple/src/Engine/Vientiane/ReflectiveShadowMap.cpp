@@ -511,6 +511,34 @@ namespace maple
 
 	namespace reflective_shadow_map
 	{
+
+		auto registerGlobalComponent(std::shared_ptr<ExecutePoint> executePoint) -> void
+		{
+			executePoint->registerGlobalComponent<component::ReflectiveShadowData>([](component::ReflectiveShadowData& data) {
+				data.shader = Shader::create("shaders/LPV/ReflectiveShadowMap.shader");
+				data.descriptorSets.resize(2);
+				data.descriptorSets[0] = DescriptorSet::create({ 0,data.shader.get() });
+				data.descriptorSets[1] = DescriptorSet::create({ 1,data.shader.get() });
+
+				TextureParameters parameters;
+
+				parameters.format = TextureFormat::RGBA32;
+				parameters.wrap = TextureWrap::ClampToBorder;
+
+				data.fluxTexture = Texture2D::create(component::ReflectiveShadowData::SHADOW_SIZE, component::ReflectiveShadowData::SHADOW_SIZE, nullptr, parameters);
+				data.fluxTexture->setName("uFluxSampler");
+
+				data.worldTexture = Texture2D::create(component::ReflectiveShadowData::SHADOW_SIZE, component::ReflectiveShadowData::SHADOW_SIZE, nullptr, parameters);
+				data.worldTexture->setName("uRSMWorldSampler");
+
+				data.normalTexture = Texture2D::create(component::ReflectiveShadowData::SHADOW_SIZE, component::ReflectiveShadowData::SHADOW_SIZE, nullptr, parameters);
+				data.normalTexture->setName("uRSMNormalSampler");
+
+				data.fluxDepth = TextureDepth::create(component::ReflectiveShadowData::SHADOW_SIZE, component::ReflectiveShadowData::SHADOW_SIZE);
+				data.fluxDepth->setName("uFluxDepthSampler");
+			});
+		}
+
 		auto registerShadowMap(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void
 		{
 			executePoint->registerGlobalComponent<component::ShadowMapData>([](component::ShadowMapData & data) {
@@ -534,30 +562,6 @@ namespace maple
 				data.cascadeCommandQueue[3].reserve(500);
 
 				data.shadowTexture->setName("uShaderMapSampler");
-			});
-
-			executePoint->registerGlobalComponent<component::ReflectiveShadowData>([](component::ReflectiveShadowData & data) {
-				data.shader = Shader::create("shaders/LPV/ReflectiveShadowMap.shader");
-				data.descriptorSets.resize(2);
-				data.descriptorSets[0] = DescriptorSet::create({ 0,data.shader.get() });
-				data.descriptorSets[1] = DescriptorSet::create({ 1,data.shader.get() });
-
-				TextureParameters parameters;
-
-				parameters.format = TextureFormat::RGBA32;
-				parameters.wrap = TextureWrap::ClampToBorder;
-
-				data.fluxTexture = Texture2D::create(component::ReflectiveShadowData::SHADOW_SIZE, component::ReflectiveShadowData::SHADOW_SIZE, nullptr, parameters);
-				data.fluxTexture->setName("uFluxSampler");
-
-				data.worldTexture = Texture2D::create(component::ReflectiveShadowData::SHADOW_SIZE, component::ReflectiveShadowData::SHADOW_SIZE, nullptr, parameters);
-				data.worldTexture->setName("uRSMWorldSampler");
-
-				data.normalTexture = Texture2D::create(component::ReflectiveShadowData::SHADOW_SIZE, component::ReflectiveShadowData::SHADOW_SIZE, nullptr, parameters);
-				data.normalTexture->setName("uRSMNormalSampler");
-
-				data.fluxDepth = TextureDepth::create(component::ReflectiveShadowData::SHADOW_SIZE, component::ReflectiveShadowData::SHADOW_SIZE);
-				data.fluxDepth->setName("uFluxDepthSampler");
 			});
 
 			executePoint->registerWithinQueue<shadow_map_pass::beginScene>(begin);

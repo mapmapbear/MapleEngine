@@ -3,6 +3,7 @@
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include <memory>
+#include "Engine/Core.h"
 
 namespace maple
 {
@@ -13,11 +14,15 @@ namespace maple
 	{
 		struct Voxelization
 		{
-			float volumeGridSize;
-			float voxelSize;
-			int32_t volumeDimension;
+			constexpr static int32_t voxelDimension = 256;
+			constexpr static int32_t voxelVolume = voxelDimension * voxelDimension * voxelDimension;
+			int32_t j = 0;
 		};
 	};
 
-	auto registerVoxelizer(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> point) -> void;
+	namespace vxgi 
+	{
+		auto MAPLE_EXPORT registerGlobalComponent(std::shared_ptr<ExecutePoint> point) -> void;
+		auto registerVoxelizer(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> point) -> void;
+	}
 };

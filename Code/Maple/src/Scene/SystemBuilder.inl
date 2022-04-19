@@ -7,8 +7,7 @@
 #include "Scripts/Mono/MonoSystem.h"
 #include "Physics/PhysicsSystem.h"
 #include "Scene/System/HierarchyModule.h"
-#include "Engine/Mesh.h"
-
+#include "Scene/Scene.h"
 
 namespace maple
 {

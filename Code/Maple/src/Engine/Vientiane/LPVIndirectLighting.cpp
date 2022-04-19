@@ -73,9 +73,13 @@ namespace maple
 			pipeline->end(renderData.commandBuffer);
 		}
 
-		auto registerLPVIndirectLight(ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void
+		auto registerGlobalComponent(std::shared_ptr<ExecutePoint> executePoint) -> void
 		{
 			executePoint->registerGlobalComponent<component::IndirectLight>();
+		}
+
+		auto registerLPVIndirectLight(ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void
+		{
 			executePoint->registerWithinQueue<lpv_indirect_lighting::dispatch>(renderer);
 		}
 	}

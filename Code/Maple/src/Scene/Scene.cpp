@@ -356,4 +356,20 @@ namespace maple
 		registry.emplace<component::NameComponent>(e, name);
 		return Entity(e, registry);
 	}
+
+	namespace
+	{
+		inline auto meshInOut(component::MeshRenderer& mesh, Entity entity, ecs::World world)
+		{
+			Application::getCurrentScene()->calculateBoundingBox();
+		}
+	}
+	namespace mesh
+	{
+		auto registerMeshModule(std::shared_ptr<ExecutePoint> executePoint) -> void
+		{
+			executePoint->onConstruct<component::MeshRenderer, &meshInOut>();
+			executePoint->onDestory<component::MeshRenderer, &meshInOut>();
+		}
+	}
 };        // namespace maple

@@ -4,10 +4,10 @@
 #pragma once
 
 #include "Engine/Renderer/Renderer.h"
+#include "Engine/Core.h"
 #include "Math/Frustum.h"
 #include "RHI/Shader.h"
 #include "Scene/System/ExecutePoint.h"
-
 
 namespace maple
 {
@@ -67,6 +67,7 @@ namespace maple
 
 	namespace reflective_shadow_map
 	{
+		auto MAPLE_EXPORT registerGlobalComponent(std::shared_ptr<ExecutePoint> executePoint) -> void;
 		auto registerShadowMap(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void;
 	};
 };        // namespace maple

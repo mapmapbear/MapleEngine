@@ -4,31 +4,29 @@
 #include "HierarchyWindow.h"
 #include "Editor.h"
 #include "Engine/GBuffer.h"
-#include "IconsMaterialDesignIcons.h"
-#include "Scene/Scene.h"
-
 #include "Engine/Camera.h"
 #include "Engine/Mesh.h"
 
+#include "2d/Sprite.h"
+#include "Scene/Scene.h"
 #include "Scene/Component/BoundingBox.h"
 #include "Scene/Component/Component.h"
 #include "Scene/Component/Light.h"
 #include "Scene/Component/MeshRenderer.h"
 #include "Scene/System/HierarchyModule.h"
-
-#include "2d/Sprite.h"
-
 #include "Scene/Component/LightProbe.h"
-
 #include "Scene/Entity/Entity.h"
 #include "Scene/Scene.h"
 #include "Scene/SceneManager.h"
 
-#include "ImGui/ImGuiHelpers.h"
+#include "Engine/Vientiane/Voxelization.h"
+#include "Engine/Vientiane/LightPropagationVolume.h"
+#include "Engine/Vientiane/LPVIndirectLighting.h"
+#include "Engine/Vientiane/ReflectiveShadowMap.h"
 
+#include "ImGui/ImGuiHelpers.h"
 #include "Others/Console.h"
 #include "imgui_internal.h"
-
 #include "Engine/IconsDefine.inl"
 
 constexpr size_t INPUT_BUFFER = 256;
@@ -93,54 +91,6 @@ namespace maple
 				entity.getOrAddComponent<component::Transform>();
 			}
 
-			const char *shapes[] = {"Sphere", "Cube", "Pyramid", "Capsule", "Cylinder", "Terrain", "Quad"};
-
-			ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 10.f);
-			if (ImGui::BeginMenu("Add 3D Object"))
-			{
-				for (auto name : shapes)
-				{
-					if (ImGui::MenuItem(name))
-					{
-						if (strcmp("Cube", name) == 0)
-						{
-							auto entity = scene->createEntity(name);
-							auto& meshRender = entity.addComponent<component::MeshRenderer>();
-							meshRender.type = component::PrimitiveType::Cube;
-							meshRender.mesh = Mesh::createCube();
-							entity.addComponent<physics::component::Collider>(physics::ColliderType::BoxCollider);
-						}
-
-						if (strcmp("Sphere", name) == 0)
-						{
-							auto entity = scene->createEntity(name);
-							auto &meshRender = entity.addComponent<component::MeshRenderer>();
-							meshRender.type = component::PrimitiveType::Sphere;
-							meshRender.mesh = Mesh::createSphere();
-							entity.addComponent<physics::component::Collider>(physics::ColliderType::SphereCollider);
-						}
-
-						if (strcmp("Pyramid", name) == 0)
-						{
-							auto entity = scene->createEntity(name);
-							auto &meshRender = entity.addComponent<component::MeshRenderer>();
-							meshRender.mesh = Mesh::createPyramid();
-							meshRender.type = component::PrimitiveType::Pyramid;
-						}
-
-						if (strcmp("Capsule", name) == 0) 
-						{
-							auto entity = scene->createEntity(name);
-							auto& meshRender = entity.addComponent<component::MeshRenderer>();
-							meshRender.mesh = Mesh::createCapsule();
-							meshRender.type = component::PrimitiveType::Capsule;
-							entity.addComponent<physics::component::Collider>(physics::ColliderType::CapsuleCollider);
-						}
-					}
-				}
-				ImGui::EndMenu();
-			}
-			ImGui::PopStyleVar();
 			if (ImGui::Selectable("Add Camera"))
 			{
 				auto  entity = scene->createEntity("Camera");
@@ -165,6 +115,79 @@ namespace maple
 			//	entity.addComponent<component::LightProbe>();
 			//	entity.getOrAddComponent<component::Transform>();
 			}
+
+			constexpr char* shapes[] = { "Sphere", "Cube", "Pyramid", "Capsule", "Cylinder", "Terrain", "Quad" };
+
+			ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 10.f);
+			if (ImGui::BeginMenu("Add 3D Object"))
+			{
+				for (auto name : shapes)
+				{
+					if (ImGui::MenuItem(name))
+					{
+						if (strcmp("Cube", name) == 0)
+						{
+							auto entity = scene->createEntity(name);
+							auto& meshRender = entity.addComponent<component::MeshRenderer>();
+							meshRender.type = component::PrimitiveType::Cube;
+							meshRender.mesh = Mesh::createCube();
+							entity.addComponent<physics::component::Collider>(physics::ColliderType::BoxCollider);
+						}
+
+						if (strcmp("Sphere", name) == 0)
+						{
+							auto entity = scene->createEntity(name);
+							auto& meshRender = entity.addComponent<component::MeshRenderer>();
+							meshRender.type = component::PrimitiveType::Sphere;
+							meshRender.mesh = Mesh::createSphere();
+							entity.addComponent<physics::component::Collider>(physics::ColliderType::SphereCollider);
+						}
+
+						if (strcmp("Pyramid", name) == 0)
+						{
+							auto entity = scene->createEntity(name);
+							auto& meshRender = entity.addComponent<component::MeshRenderer>();
+							meshRender.mesh = Mesh::createPyramid();
+							meshRender.type = component::PrimitiveType::Pyramid;
+						}
+
+						if (strcmp("Capsule", name) == 0)
+						{
+							auto entity = scene->createEntity(name);
+							auto& meshRender = entity.addComponent<component::MeshRenderer>();
+							meshRender.mesh = Mesh::createCapsule();
+							meshRender.type = component::PrimitiveType::Capsule;
+							entity.addComponent<physics::component::Collider>(physics::ColliderType::CapsuleCollider);
+						}
+					}
+				}
+				ImGui::EndMenu();
+			}
+
+			constexpr char* gi[] = { "VX-GI", "LPV-GI" };
+
+			if (ImGui::BeginMenu("Add GI Component"))
+			{
+				for (auto name : gi)
+				{
+					if (ImGui::MenuItem(name))
+					{
+						if (strcmp("VX-GI", name) == 0)
+						{
+							vxgi::registerGlobalComponent(Application::getExecutePoint());
+						}
+
+						if (strcmp("LPV-GI", name) == 0)
+						{
+							light_propagation_volume::registerGlobalComponent(Application::getExecutePoint());
+							reflective_shadow_map::registerGlobalComponent(Application::getExecutePoint());
+							lpv_indirect_lighting::registerGlobalComponent(Application::getExecutePoint());
+						}
+					}
+				}
+				ImGui::EndMenu();
+			}
+			ImGui::PopStyleVar();
 
 			ImGui::EndPopup();
 		}
