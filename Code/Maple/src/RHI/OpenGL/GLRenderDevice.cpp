@@ -166,10 +166,23 @@ namespace maple
 		GLCall(glDispatchCompute(x,y,z));
 	}
 
-	auto GLRenderDevice::memoryBarrier(CommandBuffer* commandBuffer,MemoryBarrierFlags flag) -> void
+	auto GLRenderDevice::memoryBarrier(CommandBuffer* commandBuffer, int32_t flag) -> void
 	{
 		PROFILE_FUNCTION();
-		GLCall(glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT));
+		
+		int32_t glFlag = 0;
+
+		if (flag & MemoryBarrierFlags::Shader_Image_Access_Barrier)
+		{
+			glFlag |= GL_SHADER_IMAGE_ACCESS_BARRIER_BIT;
+		}
+
+		if (flag & MemoryBarrierFlags::Texture_Fetch_Barrier)
+		{
+			glFlag |= GL_TEXTURE_FETCH_BARRIER_BIT;
+		}
+
+		GLCall(glMemoryBarrier(glFlag));
 	}
 
 	auto GLRenderDevice::presentInternal() -> void

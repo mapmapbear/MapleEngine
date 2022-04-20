@@ -3,9 +3,13 @@
 //////////////////////////////////////////////////////////////////////////////
 #include "Voxelization.h"
 #include "Engine/Renderer/RendererData.h"
+#include "Engine/Renderer/DeferredOffScreenRenderer.h"
 #include "Scene/System/ExecutePoint.h"
 #include "Scene/Component/BoundingBox.h"
 #include "RHI/Texture.h"
+#include "RHI/Shader.h"
+#include "RHI/Pipeline.h"
+#include "Engine/Renderer/Renderer.h"
 
 #include <array>
 
@@ -33,6 +37,9 @@ namespace maple
 			std::array<	std::shared_ptr<Texture3D>, VoxelBufferId::Length> voxelVolume;
 			std::array<	std::shared_ptr<Texture3D>, 6> voxelTexMipmap;
 			std::shared_ptr<Texture3D> staticFlag;
+
+			std::shared_ptr<Shader> voxelShader;
+			std::vector<std::shared_ptr<DescriptorSet>> descriptors;
 		};
 	}
 
@@ -69,6 +76,13 @@ namespace maple
 				{ TextureFormat::R8, TextureFilter::Nearest,TextureWrap::ClampToEdge },
 				{ false,false,false }
 			);
+
+			buffer.voxelShader = Shader::create("shaders/VXGI/Voxelization.shader");
+			buffer.descriptors.resize(3);
+			for (uint32_t i = 0;i<3;i++)
+			{
+				buffer.descriptors[i] = DescriptorSet::create({ i,buffer.voxelShader.get() });
+			}
 		}
 	}
 
@@ -91,12 +105,38 @@ namespace maple
 		{
 			using Entity = ecs::Chain
 				::Write<component::Voxelization>
-				::Read<component::RendererData>
 				::To<ecs::Entity>;
 
 			inline auto system(Entity entity, ecs::World world)
 			{
+				auto [voxel] = entity;
 
+				auto& buffer	 = world.getComponent<component::VoxelBuffer>();
+				auto& cameraView = world.getComponent<component::CameraView>();
+				auto& renderData = world.getComponent<component::RendererData>();
+				auto& deferredData = world.getComponent<component::DeferredData>();
+
+				for (auto text : buffer.voxelVolume) 
+				{
+					text->clear();
+				}
+
+				buffer.descriptors[0]->setUniform("UniformBufferObject", "projView", &cameraView.projView);
+				buffer.descriptors[0]->update();
+
+				PipelineInfo pipelineInfo;
+				pipelineInfo.shader = buffer.voxelShader;
+				auto pipeline = Pipeline::get(pipelineInfo);
+				pipeline->bind(renderData.commandBuffer);
+				Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, buffer.descriptors);
+				
+				for (auto & cmd : deferredData.commandQueue)
+				{
+					Renderer::drawMesh(renderData.commandBuffer, pipeline.get(), cmd.mesh);
+				}
+
+				pipeline->end(renderData.commandBuffer);
+				Renderer::memoryBarrier(renderData.commandBuffer, MemoryBarrierFlags::Shader_Image_Access_Barrier | MemoryBarrierFlags::Texture_Fetch_Barrier);
 			}
 		}
 
@@ -105,12 +145,13 @@ namespace maple
 			using Entity = ecs::Chain
 				::Write<component::Voxelization>
 				::Write<component::VoxelBuffer>
-				::Read<component::BoundingBoxComponent>
 				::To<ecs::Entity>;
 
 			inline auto system(Entity entity, ecs::World world)
 			{
-				auto [voxelization, buffer, box] = entity;
+				auto [voxelization, buffer] = entity;
+				auto& voxelbuffer = world.getComponent<component::VoxelBuffer>();
+				auto& box	 = world.getComponent<component::BoundingBoxComponent>();
 				if (box.box) 
 				{
 					if (buffer.box != *box.box)
@@ -139,6 +180,15 @@ namespace maple
 							matrix = projection * matrix;
 							buffer.viewProjInverse[i++] = glm::inverse(matrix);
 						}
+
+						float voxelScale = 1.f / buffer.volumeGridSize;
+
+						voxelbuffer.descriptors[1]->setUniform("UniformBufferGemo", "viewProjections", &buffer.viewProj);
+						voxelbuffer.descriptors[1]->setUniform("UniformBufferGemo", "viewProjectionsI", &buffer.viewProjInverse);
+						voxelbuffer.descriptors[1]->setUniform("UniformBufferGemo", "worldMinPoint", &box.box->min);
+						voxelbuffer.descriptors[1]->setUniform("UniformBufferGemo", "voxelScale", &voxelScale);
+						voxelbuffer.descriptors[1]->setUniform("UniformBufferGemo", "volumeDimension", &component::Voxelization::voxelDimension);
+						voxelbuffer.descriptors[1]->update();
 					}
 				}
 			}
@@ -153,6 +203,8 @@ namespace maple
 		auto registerVoxelizer(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> point) -> void
 		{
 			point->registerWithinQueue<setup_voxel_volumes::system>(begin);
+			point->registerWithinQueue<voxelize_static_scene::system>(begin);
+			point->registerWithinQueue<voxelize_dynamic_scene::system>(begin);
 		}
 	}
 };

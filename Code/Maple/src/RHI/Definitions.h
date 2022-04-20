@@ -332,10 +332,11 @@ namespace maple
 
 	};
 
-	enum class MemoryBarrierFlags
+	enum MemoryBarrierFlags : int32_t
 	{
-		None,
-		Shader_Image_Access_Barrier
+		None						= BIT(0),
+		Shader_Image_Access_Barrier = BIT(1),
+		Texture_Fetch_Barrier		= BIT(2),
 	};
 }        // namespace maple
 
