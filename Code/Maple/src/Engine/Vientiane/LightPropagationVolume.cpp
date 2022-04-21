@@ -137,32 +137,33 @@ namespace maple
 		{
 			using Entity = ecs::Chain
 				::Write<component::LPVGrid>
-				::Read<component::ReflectiveShadowData>
-				::Read<component::RendererData>
-				::Write<component::InjectLightData>
-				::Read<component::BoundingBoxComponent>
 				::To<ecs::Entity>;
 				
-			inline auto beginScene(Entity entity, ecs::World world)
+			inline auto beginScene(Entity entity, 
+				component::ReflectiveShadowData & rsm, 
+				component::RendererData & render,
+				component::InjectLightData & injectLight,
+				component::BoundingBoxComponent & scenAABB,
+				ecs::World world)
 			{
-				auto [lpv, rsm, render, injectLight,aabb] = entity;
+				auto [lpv] = entity;
 
-				if (aabb.box == nullptr)
+				if (scenAABB.box == nullptr)
 					return;
 
-				if (injectLight.boundingBox != *aabb.box) 
+				if (injectLight.boundingBox != *scenAABB.box)
 				{
-					auto size = aabb.box->size();
+					auto size = scenAABB.box->size();
 					auto maxValue = std::max(size.x, std::max(size.y, size.z));
 					lpv.cellSize = maxValue / lpv.gridSize;
 					lpv.gridDimension = size / lpv.cellSize;
 					glm::ceil(lpv.gridDimension);
 					lpv.gridDimension = glm::min(lpv.gridDimension, {  lpv.gridSize ,lpv.gridSize ,lpv.gridSize });
 
-					updateGrid(lpv, aabb.box);
+					updateGrid(lpv, scenAABB.box);
 
-					injectLight.boundingBox.min = aabb.box->min;
-					injectLight.boundingBox.max = aabb.box->max;
+					injectLight.boundingBox.min = scenAABB.box->min;
+					injectLight.boundingBox.max = scenAABB.box->max;
 
 					injectLight.descriptors[0]->setUniform("UniformBufferObject", "gridSize", &lpv.gridSize);
 					injectLight.descriptors[0]->setUniform("UniformBufferObject", "minAABB", glm::value_ptr(injectLight.boundingBox.min));
@@ -170,9 +171,13 @@ namespace maple
 				}
 			}
 
-			inline auto render(Entity entity, ecs::World world)
+			inline auto render(Entity entity, 
+				component::ReflectiveShadowData& rsm,
+				component::RendererData& rendererData,
+				component::InjectLightData& injectLight,
+				ecs::World world)
 			{
-				auto [lpv, rsm, rendererData,injectionLight,aabb] = entity;
+				auto [lpv] = entity;
 
 				if (lpv.lpvGridR == nullptr)
 					return;
@@ -181,20 +186,20 @@ namespace maple
 				lpv.lpvGridG->clear();
 				lpv.lpvGridB->clear();
 
-				injectionLight.descriptors[0]->setTexture("LPVGridR",lpv.lpvGridR);
-				injectionLight.descriptors[0]->setTexture("LPVGridG",lpv.lpvGridG);
-				injectionLight.descriptors[0]->setTexture("LPVGridB",lpv.lpvGridB);
-				injectionLight.descriptors[0]->setTexture("uFluxSampler", rsm.fluxTexture);
-				injectionLight.descriptors[0]->setTexture("uRSMWorldSampler", rsm.worldTexture);
-				injectionLight.descriptors[0]->update();
+				injectLight.descriptors[0]->setTexture("LPVGridR",lpv.lpvGridR);
+				injectLight.descriptors[0]->setTexture("LPVGridG",lpv.lpvGridG);
+				injectLight.descriptors[0]->setTexture("LPVGridB",lpv.lpvGridB);
+				injectLight.descriptors[0]->setTexture("uFluxSampler", rsm.fluxTexture);
+				injectLight.descriptors[0]->setTexture("uRSMWorldSampler", rsm.worldTexture);
+				injectLight.descriptors[0]->update();
 
 				PipelineInfo pipelineInfo;
-				pipelineInfo.shader = injectionLight.shader;
-				pipelineInfo.groupCountX = rsm.normalTexture->getWidth() / injectionLight.shader->getLocalSizeX();
-				pipelineInfo.groupCountY = rsm.normalTexture->getHeight() / injectionLight.shader->getLocalSizeY();
+				pipelineInfo.shader = injectLight.shader;
+				pipelineInfo.groupCountX = rsm.normalTexture->getWidth() / injectLight.shader->getLocalSizeX();
+				pipelineInfo.groupCountY = rsm.normalTexture->getHeight() / injectLight.shader->getLocalSizeY();
 				auto pipeline = Pipeline::get(pipelineInfo);
 				pipeline->bind(rendererData.commandBuffer);
-				Renderer::bindDescriptorSets(pipeline.get(), rendererData.commandBuffer, 0, injectionLight.descriptors);
+				Renderer::bindDescriptorSets(pipeline.get(), rendererData.commandBuffer, 0, injectLight.descriptors);
 				Renderer::dispatch(rendererData.commandBuffer,pipelineInfo.groupCountX,pipelineInfo.groupCountY,1);
 				pipeline->end(rendererData.commandBuffer);
 			}

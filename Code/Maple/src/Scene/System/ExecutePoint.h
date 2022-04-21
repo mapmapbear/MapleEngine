@@ -122,8 +122,6 @@ namespace maple
 			return registry.template get_or_emplace<Component>(globalEntity,std::forward<Args>(args)...);
 		}
 
-
-		
 		template<typename TComponent, auto Candidate>
 		inline auto onConstruct(bool connect = true)
 		{
@@ -230,7 +228,8 @@ namespace maple
 				auto call = ecs::CallBuilder::template buildCall(TSystem{});
 				constexpr auto reflectStr = ecs::CallBuilder::template buildFullCallName(TSystem{});
 				PROFILE_SCOPE(reflectStr.c_str());
-				call(TSystem{}, reg, globalEntity);
+				auto dependency = ecs::CallBuilder::template buildDependency(reg, globalEntity , TSystem{});
+				call(TSystem{}, reg, dependency);
 			});
 		}
 

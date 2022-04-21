@@ -107,14 +107,14 @@ namespace maple
 				::Write<component::Voxelization>
 				::To<ecs::Entity>;
 
-			inline auto system(Entity entity, ecs::World world)
+			inline auto system(Entity entity, 
+				component::VoxelBuffer & buffer,
+				component::CameraView & cameraView,
+				component::RendererData & renderData,
+				component::DeferredData& deferredData,
+				ecs::World world)
 			{
 				auto [voxel] = entity;
-
-				auto& buffer	 = world.getComponent<component::VoxelBuffer>();
-				auto& cameraView = world.getComponent<component::CameraView>();
-				auto& renderData = world.getComponent<component::RendererData>();
-				auto& deferredData = world.getComponent<component::DeferredData>();
 
 				for (auto text : buffer.voxelVolume) 
 				{
@@ -144,51 +144,51 @@ namespace maple
 		{
 			using Entity = ecs::Chain
 				::Write<component::Voxelization>
-				::Write<component::VoxelBuffer>
 				::To<ecs::Entity>;
 
-			inline auto system(Entity entity, ecs::World world)
+			inline auto system(Entity entity, 
+				component::VoxelBuffer& voxelBuffer,
+				component::BoundingBoxComponent & box,
+				ecs::World world)
 			{
-				auto [voxelization, buffer] = entity;
-				auto& voxelbuffer = world.getComponent<component::VoxelBuffer>();
-				auto& box	 = world.getComponent<component::BoundingBoxComponent>();
+				auto [voxelization] = entity;
 				if (box.box) 
 				{
-					if (buffer.box != *box.box)
+					if (voxelBuffer.box != *box.box)
 					{
-						buffer.box = *box.box;
+						voxelBuffer.box = *box.box;
 
-						auto axisSize = buffer.box.size();
-						auto center = buffer.box.center();
-						buffer.volumeGridSize = glm::max(axisSize.x, glm::max(axisSize.y, axisSize.z));
-						buffer.voxelSize = buffer.volumeGridSize / component::Voxelization::voxelDimension;
-						auto halfSize = buffer.volumeGridSize / 2.0f;
+						auto axisSize = voxelBuffer.box.size();
+						auto center = voxelBuffer.box.center();
+						voxelBuffer.volumeGridSize = glm::max(axisSize.x, glm::max(axisSize.y, axisSize.z));
+						voxelBuffer.voxelSize = voxelBuffer.volumeGridSize / component::Voxelization::voxelDimension;
+						auto halfSize = voxelBuffer.volumeGridSize / 2.0f;
 						// projection matrix
-						auto projection = glm::ortho(-halfSize, halfSize, -halfSize, halfSize, 0.0f, buffer.volumeGridSize);
+						auto projection = glm::ortho(-halfSize, halfSize, -halfSize, halfSize, 0.0f, voxelBuffer.volumeGridSize);
 						// view matrices
-						buffer.viewProj[0] = lookAt(center + glm::vec3(halfSize, 0.0f, 0.0f),
+						voxelBuffer.viewProj[0] = lookAt(center + glm::vec3(halfSize, 0.0f, 0.0f),
 							center, glm::vec3(0.0f, 1.0f, 0.0f));
-						buffer.viewProj[1] = lookAt(center + glm::vec3(0.0f, halfSize, 0.0f),
+						voxelBuffer.viewProj[1] = lookAt(center + glm::vec3(0.0f, halfSize, 0.0f),
 							center, glm::vec3(0.0f, 0.0f, -1.0f));
-						buffer.viewProj[2] = lookAt(center + glm::vec3(0.0f, 0.0f, halfSize),
+						voxelBuffer.viewProj[2] = lookAt(center + glm::vec3(0.0f, 0.0f, halfSize),
 							center, glm::vec3(0.0f, 1.0f, 0.0f));
 
 						int32_t i = 0;
 
-						for (auto& matrix : buffer.viewProj)
+						for (auto& matrix : voxelBuffer.viewProj)
 						{
 							matrix = projection * matrix;
-							buffer.viewProjInverse[i++] = glm::inverse(matrix);
+							voxelBuffer.viewProjInverse[i++] = glm::inverse(matrix);
 						}
 
-						float voxelScale = 1.f / buffer.volumeGridSize;
+						const float voxelScale = 1.f / voxelBuffer.volumeGridSize;
 
-						voxelbuffer.descriptors[1]->setUniform("UniformBufferGemo", "viewProjections", &buffer.viewProj);
-						voxelbuffer.descriptors[1]->setUniform("UniformBufferGemo", "viewProjectionsI", &buffer.viewProjInverse);
-						voxelbuffer.descriptors[1]->setUniform("UniformBufferGemo", "worldMinPoint", &box.box->min);
-						voxelbuffer.descriptors[1]->setUniform("UniformBufferGemo", "voxelScale", &voxelScale);
-						voxelbuffer.descriptors[1]->setUniform("UniformBufferGemo", "volumeDimension", &component::Voxelization::voxelDimension);
-						voxelbuffer.descriptors[1]->update();
+						voxelBuffer.descriptors[1]->setUniform("UniformBufferGemo", "viewProjections", &voxelBuffer.viewProj);
+						voxelBuffer.descriptors[1]->setUniform("UniformBufferGemo", "viewProjectionsI", &voxelBuffer.viewProjInverse);
+						voxelBuffer.descriptors[1]->setUniform("UniformBufferGemo", "worldMinPoint", &box.box->min);
+						voxelBuffer.descriptors[1]->setUniform("UniformBufferGemo", "voxelScale", &voxelScale);
+						voxelBuffer.descriptors[1]->setUniform("UniformBufferGemo", "volumeDimension", &component::Voxelization::voxelDimension);
+						voxelBuffer.descriptors[1]->update();
 					}
 				}
 			}
