@@ -69,7 +69,6 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 
-	
 		if (shader == nullptr)
 		{
 			if (isFlagOf(RenderFlags::ForwardRender))
@@ -88,11 +87,19 @@ namespace maple
 			}
 		}
 
-		DescriptorInfo descriptorDesc;
-		descriptorDesc.layoutIndex = layoutID;
-		descriptorDesc.shader      = shader.get();
-
-		descriptorSet = DescriptorSet::create(descriptorDesc);
+		if (auto iter = cachedDescriptorSet.find(shader->getName()); iter != cachedDescriptorSet.end()) 
+		{
+			descriptorSet = iter->second;
+		}
+		else 
+		{
+			DescriptorInfo descriptorDesc;
+			descriptorDesc.layoutIndex = layoutID;
+			descriptorDesc.shader = shader.get();
+			descriptorSet = cachedDescriptorSet.emplace(
+				shader->getName(), DescriptorSet::create(descriptorDesc)
+			).first->second;
+		}
 		updateDescriptorSet();
 	}
 
@@ -285,7 +292,7 @@ namespace maple
 		descriptorSet->update();
 	}
 
-	auto Material::setShader(const std::string &path) -> void
+	auto Material::setShader(const std::string& path) -> void
 	{
 		PROFILE_FUNCTION();
 		if (!StringUtils::endWith(path, "ForwardPreview.shader"))

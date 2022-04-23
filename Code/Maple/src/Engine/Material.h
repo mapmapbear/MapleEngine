@@ -272,6 +272,8 @@ namespace maple
 		std::string                    materialId;
 		std::shared_ptr<DescriptorSet> descriptorSet;
 
+		std::unordered_map<std::string, std::shared_ptr<DescriptorSet>> cachedDescriptorSet;
+
 		bool texturesUpdated = false;
 	};
 }        // namespace maple

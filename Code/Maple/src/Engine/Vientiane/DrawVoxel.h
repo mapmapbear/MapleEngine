@@ -10,24 +10,9 @@ namespace maple
 	class ExecutePoint;
 	struct ExecuteQueue;
 
-	namespace component
-	{
-		struct Voxelization
-		{
-			constexpr static int32_t voxelDimension = 256;
-			constexpr static int32_t voxelVolume = voxelDimension * voxelDimension * voxelDimension;
-			bool dirty = true;
-		};
-
-		struct UpdateRadiance 
-		{
-
-		};
-	};
-
-	namespace vxgi 
+	namespace vxgi_debug
 	{
 		auto MAPLE_EXPORT registerGlobalComponent(std::shared_ptr<ExecutePoint> point) -> void;
-		auto registerVoxelizer(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> point) -> void;
+		auto registerVXGIVisualization(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> point) -> void;
 	}
 };

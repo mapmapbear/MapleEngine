@@ -230,7 +230,6 @@ namespace maple
 					int32_t cubeMapMipLevels = evnData.prefilteredEnvironment->getMipMapLevels() - 1;
 					data.descriptorLightSet[0]->setUniform("UniformBufferLight", "cubeMapMipLevels", &cubeMapMipLevels);
 				}
-	
 			}
 
 			int32_t ssaoEnable = ssao.enable ? 1 : 0;
@@ -296,17 +295,18 @@ namespace maple
 						{
 							cmd.material->setShader(data.deferredColorAnimShader);
 						}
+						else 
+						{
+							cmd.material->setShader(data.deferredColorShader);
+						}
 						cmd.material->bind();
 					}
 					else
 					{
 						cmd.material = nullptr;
-						if (skinnedMesh)
+						for (auto material : mesh->getMaterial())
 						{
-							for (auto material : mesh->getMaterial())
-							{
-								material->setShader(data.deferredColorAnimShader);
-							}
+							material->setShader(skinnedMesh ? data.deferredColorAnimShader : data.deferredColorShader);
 						}
 					}
 
