@@ -156,6 +156,26 @@ namespace maple
 			}
 		}
 		
+		namespace update_radiance
+		{
+			using Entity = ecs::Chain
+				::With<component::UpdateRadiance>
+				::Write<component::Voxelization>
+				::To<ecs::Entity>;
+
+			using Query = ecs::Chain
+				::Read<component::Light>
+				::To<ecs::Query>;
+
+			inline auto system(Entity entity, 
+				Query lightQuery,
+				const component::RendererData& renderData, 
+				ecs::World world)
+			{
+
+			}
+		}
+
 		namespace voxelize_dynamic_scene
 		{
 			using Entity = ecs::Chain
@@ -165,18 +185,6 @@ namespace maple
 			inline auto system(Entity entity, const component::RendererData & renderData, ecs::World world)
 			{
 				
-			}
-		}
-
-		namespace update_radiance
-		{
-			using Entity = ecs::Chain
-				::With<component::UpdateRadiance>
-				::To<ecs::Entity>;
-
-			inline auto system(Entity entity, const component::RendererData& renderData, ecs::World world)
-			{
-
 			}
 		}
 
@@ -311,15 +319,16 @@ namespace maple
 
 		auto registerGlobalComponent(std::shared_ptr<ExecutePoint> point) -> void
 		{
-			point->registerGlobalComponent<component::Voxelization>();
 			point->registerGlobalComponent<global::component::VoxelBuffer>(&initVoxelBuffer);
 		}
 
 		auto registerVoxelizer(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> point) -> void
 		{
-			point->registerWithinQueue<setup_voxel_volumes::system>(begin);
-			point->registerWithinQueue<voxelize_static_scene::system>(begin);
-			point->registerWithinQueue<voxelize_dynamic_scene::system>(begin);
+			point->registerWithinQueue<begin_scene::system>(begin);
+			point->registerWithinQueue<setup_voxel_volumes::system>(renderer);
+			point->registerWithinQueue<voxelize_static_scene::system>(renderer);
+			point->registerWithinQueue<voxelize_dynamic_scene::system>(renderer);
+			point->registerWithinQueue<update_radiance::system>(renderer);
 		}
 	}
 };

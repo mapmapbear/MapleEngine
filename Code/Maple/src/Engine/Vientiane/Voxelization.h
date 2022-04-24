@@ -21,7 +21,7 @@ namespace maple
 
 		struct UpdateRadiance 
 		{
-
+			int32_t j;
 		};
 	};
 
