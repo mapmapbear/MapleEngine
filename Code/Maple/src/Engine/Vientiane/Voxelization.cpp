@@ -5,6 +5,7 @@
 #include "Engine/Renderer/RendererData.h"
 #include "Engine/Renderer/Renderer.h"
 #include "Engine/Renderer/DeferredOffScreenRenderer.h"
+#include "Engine/CaptureGraph.h"
 
 #include "Scene/System/ExecutePoint.h"
 #include "Scene/Component/BoundingBox.h"
@@ -16,6 +17,8 @@
 #include "RHI/Pipeline.h"
 
 #include <array>
+
+#include "Application.h"
 
 namespace maple
 {
@@ -34,7 +37,7 @@ namespace maple
 		MaterialBinding,//default id for material is 1..
 		FragmentUniform,
 		GeometryUniform,
-		Length
+		DescriptorLength
 	};
 
 	namespace global
@@ -57,6 +60,8 @@ namespace maple
 				std::vector<std::shared_ptr<DescriptorSet>> descriptors;
 
 				std::vector<RenderCommand> commandQueue;
+
+				std::shared_ptr<Texture2D> colorBuffer;
 			};
 		}
 	}
@@ -71,7 +76,7 @@ namespace maple
 					component::Voxelization::voxelDimension,
 					component::Voxelization::voxelDimension,
 					component::Voxelization::voxelDimension,
-					{ TextureFormat::RGBA8, TextureFilter::Linear,TextureWrap::ClampToEdge },
+					{ TextureFormat::R32UI, TextureFilter::Linear,TextureWrap::ClampToEdge },
 					{ false,false,false }
 				);
 			}
@@ -95,11 +100,15 @@ namespace maple
 				{ false,false,false }
 			);
 
+			buffer.colorBuffer = Texture2D::create();
+			buffer.colorBuffer->buildTexture(TextureFormat::RGBA8, 256, 256);
+
 			buffer.voxelShader = Shader::create("shaders/VXGI/Voxelization.shader");
-			buffer.descriptors.resize(3);
-			for (uint32_t i = 0;i<3;i++)
+			buffer.descriptors.resize(DescriptorLength);
+			for (uint32_t i = 0;i< DescriptorLength;i++)
 			{
-				buffer.descriptors[i] = DescriptorSet::create({ i,buffer.voxelShader.get() });
+				if(i != MaterialBinding)
+					buffer.descriptors[i] = DescriptorSet::create({ i,buffer.voxelShader.get() });
 			}
 		}
 	}
@@ -123,6 +132,8 @@ namespace maple
 
 				if (!voxel.dirty)
 					return;
+
+				buffer.commandQueue.clear();
 
 				for (auto entityHandle : meshQuery)
 				{
@@ -180,6 +191,7 @@ namespace maple
 				component::CameraView & cameraView,
 				component::RendererData & renderData,
 				component::DeferredData& deferredData,
+				capture_graph::component::RenderGraph & graph,
 				ecs::World world)
 			{
 	
@@ -193,22 +205,31 @@ namespace maple
 				}
 				//voxelize the whole scene now. this would be optimize in the future.
 				//voxelization the inner room is a good choice.
-				buffer.descriptors[DescriptorID::VertexUniform]->setUniform("UniformBufferObject", "projView", &cameraView.projView);
+				buffer.descriptors[DescriptorID::VertexUniform]->setUniform("UniformBufferObjectVert", "projView", &cameraView.projView);
 				buffer.descriptors[DescriptorID::VertexUniform]->update();
+
+				buffer.descriptors[DescriptorID::FragmentUniform]->setTexture("uVoxelAlbedo", buffer.voxelVolume[VoxelBufferId::Albedo]);
+				buffer.descriptors[DescriptorID::FragmentUniform]->setTexture("uVoxelNormal", buffer.voxelVolume[VoxelBufferId::Normal]);
+				buffer.descriptors[DescriptorID::FragmentUniform]->setTexture("uVoxelEmission", buffer.voxelVolume[VoxelBufferId::Emissive]);
+				buffer.descriptors[DescriptorID::FragmentUniform]->setTexture("uStaticVoxelFlag", buffer.staticFlag);
+				buffer.descriptors[DescriptorID::FragmentUniform]->update();
+
 
 				PipelineInfo pipeInfo;
 				pipeInfo.shader = buffer.voxelShader;
 				pipeInfo.cullMode = CullMode::None;
 				pipeInfo.depthTest = false;
+				pipeInfo.clearTargets = true;
+				pipeInfo.colorTargets[0] = buffer.colorBuffer;
 				
-				auto pipeline = Pipeline::get(pipeInfo);
+				auto pipeline = Pipeline::get(pipeInfo,buffer.descriptors, graph);
 				pipeline->bind(renderData.commandBuffer);
 				
 				for (auto & cmd : deferredData.commandQueue)
 				{
-					buffer.descriptors[DescriptorID::MaterialBinding] = cmd.material->getDescriptorSet();
 					cmd.material->setShader(buffer.voxelShader);
 					cmd.material->bind();
+					buffer.descriptors[DescriptorID::MaterialBinding] = cmd.material->getDescriptorSet();
 
 					Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, buffer.descriptors);
 					Renderer::drawMesh(renderData.commandBuffer, pipeline.get(), cmd.mesh);
@@ -220,6 +241,8 @@ namespace maple
 					MemoryBarrierFlags::Texture_Fetch_Barrier);
 
 				voxel.dirty = false;
+
+				Application::getRenderDoc().endCapture();
 			}//next is dynamic
 		}
 
@@ -239,6 +262,8 @@ namespace maple
 				{
 					if (voxelBuffer.box != *box.box)
 					{
+						Application::getRenderDoc().startCapture();
+
 						voxelBuffer.box = *box.box;
 
 						auto axisSize = voxelBuffer.box.size();
@@ -265,20 +290,20 @@ namespace maple
 						}
 
 						const float voxelScale = 1.f / voxelBuffer.volumeGridSize;
+						const float dimension = component::Voxelization::voxelDimension;
 
 						voxelBuffer.descriptors[DescriptorID::GeometryUniform]->setUniform("UniformBufferGemo", "viewProjections", &voxelBuffer.viewProj);
 						voxelBuffer.descriptors[DescriptorID::GeometryUniform]->setUniform("UniformBufferGemo", "viewProjectionsI", &voxelBuffer.viewProjInverse);
 						voxelBuffer.descriptors[DescriptorID::GeometryUniform]->setUniform("UniformBufferGemo", "worldMinPoint", &box.box->min);
 						voxelBuffer.descriptors[DescriptorID::GeometryUniform]->setUniform("UniformBufferGemo", "voxelScale", &voxelScale);
-						voxelBuffer.descriptors[DescriptorID::GeometryUniform]->setUniform("UniformBufferGemo", "volumeDimension", &component::Voxelization::voxelDimension);
+						voxelBuffer.descriptors[DescriptorID::GeometryUniform]->setUniform("UniformBufferGemo", "volumeDimension", &dimension);
 						voxelBuffer.descriptors[DescriptorID::GeometryUniform]->update();
 						
 						uint32_t flagVoxel = 1;
-						voxelBuffer.descriptors[DescriptorID::FragmentUniform]->setUniform("UniformBufferObject", "volumeDimension", &component::Voxelization::voxelDimension);
 						voxelBuffer.descriptors[DescriptorID::FragmentUniform]->setUniform("UniformBufferObject", "flagStaticVoxels", &flagVoxel);
 						voxelBuffer.descriptors[DescriptorID::FragmentUniform]->update();
 
-						voxel.dirty = = true;
+						voxelization.dirty = true;
 					}
 				}
 			}

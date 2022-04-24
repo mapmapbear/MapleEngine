@@ -491,6 +491,11 @@ namespace maple
 
 				OPEN_WINDOW(RenderGraphWindow, "Render Graph");
 
+				if (ImGui::MenuItem(renderDoc.isEnabled()? "Disable RenderDoc" : "Enable RenderDoc"))
+				{
+					renderDoc.toggleEnable();
+				}
+
 				ImGui::EndMenu();
 			}
 

@@ -64,6 +64,7 @@ namespace maple
 	auto Application::init() -> void
 	{
 		PROFILE_FUNCTION();
+		renderDoc.openLib();
 		executePoint = std::make_shared<ExecutePoint>();
 		executePoint->addDependency<Camera, component::Transform>();
 		executePoint->addDependency<component::Light, component::Transform>();

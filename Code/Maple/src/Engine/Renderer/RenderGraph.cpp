@@ -12,6 +12,8 @@
 #include "Engine/Vertex.h"
 #include "Engine/CaptureGraph.h"
 #include "Engine/Vientiane/LightPropagationVolume.h"
+#include "Engine/Vientiane/Voxelization.h"
+#include "Engine/Vientiane/DrawVoxel.h"
 
 #include "RHI/CommandBuffer.h"
 #include "RHI/GPUProfile.h"
@@ -105,6 +107,9 @@ namespace maple
 
 		reflective_shadow_map::registerShadowMap(beginQ, renderQ, executePoint);
 		deferred_offscreen::registerDeferredOffScreenRenderer(beginQ, renderQ, executePoint);
+		vxgi::registerVoxelizer(beginQ, renderQ, executePoint);
+		vxgi_debug::registerVXGIVisualization(beginQ, renderQ, executePoint);
+
 		light_propagation_volume::registerLPV(beginQ, renderQ, executePoint);
 		lpv_indirect_lighting::registerLPVIndirectLight(renderQ, executePoint);
 		post_process::registerSSAOPass(beginQ, renderQ, executePoint);

@@ -214,6 +214,7 @@ endif()
 		${ENGINE_LIB_SRC_DIR}/mio
 		${ENGINE_LIB_SRC_DIR}/IconFontCppHeaders
 		${ENGINE_LIB_SRC_DIR}/bullet3/src
+		${ENGINE_LIB_SRC_DIR}/renderDoc
 	)
 
 	target_link_libraries(MapleEngine 

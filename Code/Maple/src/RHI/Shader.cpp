@@ -93,8 +93,11 @@ namespace maple
 				return TextureFormat::R32I;
 			case spv::ImageFormatR32ui:
 				return TextureFormat::R32UI;
+			case spv::ImageFormatR8:
+				return TextureFormat::R8;
 		}
-		LOGW("unsupported spv::ImageFormat : {0}",format);
+
+		MAPLE_ASSERT(false, "unsupported spv::ImageFormat");
 	}
 
 	auto Shader::parseSource(const std::vector<std::string> &lines, std::unordered_map<ShaderType, std::string> &shaders) -> void

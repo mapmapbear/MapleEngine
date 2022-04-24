@@ -258,9 +258,12 @@ namespace maple
 		
 		for (auto set : sets)
 		{
-			for (auto input : set->getDescriptors())
+			if (set != nullptr) 
 			{
-				capture_graph::input(desc.shader->getName(), graph, input.textures);
+				for (auto input : set->getDescriptors())
+				{
+					capture_graph::input(desc.shader->getName(), graph, input.textures);
+				}
 			}
 		}
 

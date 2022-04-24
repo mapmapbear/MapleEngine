@@ -13,6 +13,7 @@
 #include "Event/EventDispatcher.h"
 #include "ImGui/ImGuiSystem.h"
 #include "Others/Timer.h"
+#include "Others/RenderDocExt.h"
 #include "RHI/RenderDevice.h"
 #include "RHI/GraphicsContext.h"
 #include "RHI/RenderDevice.h"
@@ -67,6 +68,12 @@ namespace maple
 		{
 			return get()->dispatcher;
 		}
+
+		inline static auto& getRenderDoc()
+		{
+			return get()->renderDoc;
+		}
+
 		inline static auto &getWindow()
 		{
 			return get()->window;
@@ -171,6 +178,8 @@ namespace maple
 		std::shared_ptr<ExecutePoint>       executePoint;
 		std::shared_ptr<AssetsLoaderFactory> loaderFactory;
 
+
+		RenderDocExt													 renderDoc;
 		EventDispatcher                                                  dispatcher;
 		Timer                                                            timer;
 		uint64_t                                                         updates     = 0;
