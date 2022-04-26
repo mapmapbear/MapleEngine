@@ -2,32 +2,18 @@
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable
 
-#define PI 3.1415926535897932384626433832795
+#include "Common/Light.h"
+#include "Common/Math.h"
+
 #define GAMMA 2.2
-#define MAX_LIGHTS 32
-#define MAX_SHADOWMAPS 4
-#define NUM_VPL 256
 
 const int NUM_PCF_SAMPLES = 16;
 const bool FADE_CASCADES = false;
 const float EPSILON = 0.00001;
 
-const float PHI = 1.61803398874989484820459;  // Φ = Golden Ratio   
-
 float ShadowFade = 1.0;
 // Constant normal incidence Fresnel factor for all dielectrics.
 const vec3 Fdielectric = vec3(0.04);
-
-struct Light
-{
-	vec4 color;
-	vec4 position;
-	vec4 direction;
-	float intensity;
-	float radius;
-	float type;
-	float angle;
-};
 
 struct Material
 {
@@ -122,7 +108,6 @@ const vec2 PoissonDistribution[64] = vec2[](
 );
 
 float calculateShadow(vec3 wsPos, int cascadeIndex, vec3 lightDirection, vec3 normal);
-int calculateCascadeIndex(vec3 wsPos);
 
 float RayMarch(vec3 startPos, vec3 viewDir, vec3 normal, vec3 cameraPos, Light light)
 {
@@ -222,7 +207,6 @@ float textureProj(vec4 shadowCoord, vec2 offset, int cascadeIndex)
 		}
 	}
 	return shadow;
-	
 }
 
 float PCFShadow(vec4 sc, int cascadeIndex)
@@ -271,20 +255,6 @@ float getPCFShadowDirectionalLight(vec4 shadowCoords, float uvRadius, vec3 light
 	return sum / NUM_PCF_SAMPLES;
 }
 
-int calculateCascadeIndex(vec3 wsPos)
-{
-	int cascadeIndex = 0;
-	vec4 viewPos = ubo.viewMatrix * vec4(wsPos, 1.0) ;
-	
-	for(int i = 0; i < ubo.shadowCount - 1; ++i)
-	{
-		if(viewPos.z < ubo.splitDepths[i].x)
-		{
-			cascadeIndex = i + 1;
-		}
-	}
-	return cascadeIndex;
-}
 
 float calculateShadow(vec3 wsPos, int cascadeIndex, vec3 lightDirection, vec3 normal)
 {
@@ -395,6 +365,11 @@ vec3 lighting(vec3 F0, vec3 wsPos, Material material,vec2 fragTexCoord)
 {
 	vec3 result = vec3(0.0);
 	
+	if( ubo.lightCount == 0)
+	{
+		return material.albedo.rgb;
+	}
+	
 	for(int i = 0; i < ubo.lightCount; i++)
 	{
 		Light light = ubo.lights[i];
@@ -441,7 +416,9 @@ vec3 lighting(vec3 F0, vec3 wsPos, Material material,vec2 fragTexCoord)
 		}
 		else
 		{
-			int cascadeIndex = calculateCascadeIndex(wsPos);
+			int cascadeIndex = calculateCascadeIndex(
+				ubo.viewMatrix,wsPos,ubo.shadowCount,ubo.splitDepths
+			);
 			vec4 shadowCoord = (ubo.biasMat * ubo.shadowTransform[cascadeIndex]) * vec4(wsPos, 1.0);
 			shadowCoord = shadowCoord * ( 1.0 / shadowCoord.w);
 
@@ -598,7 +575,10 @@ void main()
 			outColor = vec4(material.normal,1.0);
 			break;
             case 7:
-			int cascadeIndex = calculateCascadeIndex(fragPosXyzw.xyz);
+			int cascadeIndex = calculateCascadeIndex(
+				ubo.viewMatrix,fragPosXyzw.xyz,ubo.shadowCount,ubo.splitDepths
+			);
+
 			switch(cascadeIndex)
 			{
 				case 0 : outColor = outColor * vec4(0.8,0.2,0.2,1.0); break;

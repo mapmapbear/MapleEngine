@@ -115,7 +115,7 @@ namespace maple
 		using Entity = ecs::Chain
 			::Write<component::ShadowMapData>
 			::Read<component::CameraView>
-			::Write<component::ReflectiveShadowData>
+			::WriteIfExist<component::ReflectiveShadowData>
 			::To<ecs::Entity>;
 
 		using LightQuery = ecs::Chain
@@ -144,7 +144,7 @@ namespace maple
 
 		auto beginScene(Entity entity, LightQuery lightQuery, MeshQuery meshQuery, SkinnedMeshQuery skinnedQuery, BoneMeshQuery boneQuery, ecs::World world)
 		{
-			auto [shadowData,cameraView,rsm] = entity;
+			auto [shadowData,cameraView] = entity;
 
 			for (uint32_t i = 0; i < shadowData.shadowMapNum; i++)
 			{
@@ -169,7 +169,11 @@ namespace maple
 
 				if (directionaLight && directionaLight->castShadow)
 				{
-					rsm.descriptorSets[1]->setUniform("UBO", "light", &directionaLight->lightData);
+					if (entity.hasComponent<component::ReflectiveShadowData>()) 
+					{
+						auto& rsm = entity.getComponent<component::ReflectiveShadowData>();
+						rsm.descriptorSets[1]->setUniform("UBO", "light", &directionaLight->lightData);
+					}
 
 					if (directionaLight)
 					{
@@ -231,12 +235,13 @@ namespace maple
 			::Write<component::ShadowMapData>
 			::Read<component::RendererData>
 			::Write<capture_graph::component::RenderGraph>
-			::Read<component::ReflectiveShadowData>
 			::To<ecs::Entity>;
 
 		inline auto onRender(RenderEntity entity, ecs::World world)
 		{
-			auto [shadowData, rendererData,renderGraph,rsm] = entity;
+			auto [shadowData, rendererData,renderGraph] = entity;
+
+
 
 			shadowData.descriptorSet[0]->update();
 
@@ -278,7 +283,7 @@ namespace maple
 
 		inline auto onRenderAnim(RenderEntity entity, ecs::World world)
 		{
-			auto [shadowData, rendererData, renderGraph, rsm] = entity;
+			auto [shadowData, rendererData, renderGraph] = entity;
 
 			shadowData.animDescriptorSet[0]->update();
 

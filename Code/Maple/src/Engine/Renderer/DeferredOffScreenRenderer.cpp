@@ -105,6 +105,9 @@ namespace maple
 			::Write<component::Light>
 			::Read<component::Transform>;
 
+		using LightEntity = LightDefine
+			::To<ecs::Entity>;
+
 		using Query = LightDefine
 			::To<ecs::Query>;
 
@@ -129,7 +132,7 @@ namespace maple
 			::Write<component::Transform>
 			::To<ecs::Query>;
 
-		using LightEntity = LightDefine::To<ecs::Entity>;
+	
 
 		inline auto beginScene(Entity entity, Query lightQuery, EnvQuery env, MeshQuery meshQuery, SkinnedMeshQuery skinnedMeshQuery, BoneMeshQuery boneQuery, ecs::World world)
 		{
