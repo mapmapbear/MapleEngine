@@ -48,6 +48,7 @@ Feature     					 	| Completion 	| Notes
 :-          					 	| :-         	| :-
 Reflective Shadow Map				| 100%		  	| High priority
 Light propagation volumes		 	| 90%       	    | High priority (No cascade)
+Voxel Global Illumintaion     | 10%             | High priority 
 C# scripting                     	| 80%			| Using Mono (no engine API exposed yet)
 Vulkan porting 	 				    | 90%	  		| support Compute and Tessellation shader
 Skinned Mesh                | 70%       | High priority
