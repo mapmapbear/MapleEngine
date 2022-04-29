@@ -16,7 +16,7 @@ namespace maple
 		{
 			constexpr static int32_t voxelDimension = 256;
 			constexpr static int32_t voxelVolume = voxelDimension * voxelDimension * voxelDimension;
-			bool dirty = true;
+			bool dirty = false;
 		};
 
 		struct UpdateRadiance 

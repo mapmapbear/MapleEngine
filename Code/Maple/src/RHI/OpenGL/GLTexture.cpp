@@ -833,7 +833,7 @@ namespace maple
 		auto dataType = textureDataType(parameters.format);
 
 		glBindTexture(GL_TEXTURE_3D, handle);
-		glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, width, height, depth, internalFormat, dataType, &emptyData[0]);
+		glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, width, height, depth, internalFormat, GL_UNSIGNED_BYTE , &emptyData[0]);
 		glBindTexture(GL_TEXTURE_3D, 0);
 	}
 }        // namespace maple

@@ -73,7 +73,6 @@ namespace maple
 
 				struct UniformBufferVX 
 				{
-					glm::vec4 exponents;//use x/y
 					glm::vec4 worldMinPoint;//use xyz
 					float lightBleedingReduction = 0.f;
 					float voxelSize;
@@ -98,7 +97,7 @@ namespace maple
 					component::Voxelization::voxelDimension,
 					component::Voxelization::voxelDimension,
 					component::Voxelization::voxelDimension,
-					{ TextureFormat::R32UI, TextureFilter::Linear,TextureWrap::ClampToEdge },
+					{ TextureFormat::RGBA8, TextureFilter::Linear,TextureWrap::ClampToEdge },
 					{ false,false,false }
 				);
 			}
@@ -207,6 +206,7 @@ namespace maple
 				injection.descriptors[0]->setUniform("UniformBufferLight", "viewMatrix", &cameraView.view);
 				injection.descriptors[0]->setUniform("UniformBufferLight", "lightView", &shadowMapData.lightMatrix);
 				injection.descriptors[0]->setUniform("UniformBufferLight", "shadowCount", &shadowMapData.shadowMapNum);
+				injection.descriptors[0]->setUniform("UniformBufferLight", "lightCount", &numLights);
 				injection.descriptors[0]->setUniform("UniformBufferLight", "shadowTransform", shadowMapData.shadowProjView);
 				injection.descriptors[0]->setUniform("UniformBufferLight", "splitDepths", shadowMapData.splitDepth);
 				injection.descriptors[0]->setUniform("UniformBufferLight", "biasMat", &BIAS_MATRIX);
@@ -341,6 +341,11 @@ namespace maple
 					cmd.material->bind();
 					buffer.descriptors[DescriptorID::MaterialBinding] = cmd.material->getDescriptorSet();
 
+					auto& pushConstants = buffer.voxelShader->getPushConstants()[0];
+			
+					pushConstants.setValue("transform", &cmd.transform);
+					buffer.voxelShader->bindPushConstants(renderData.commandBuffer, pipeline.get());
+
 					Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, buffer.descriptors);
 					Renderer::drawMesh(renderData.commandBuffer, pipeline.get(), cmd.mesh);
 				}
@@ -382,7 +387,7 @@ namespace maple
 						voxelBuffer.voxelSize = voxelBuffer.volumeGridSize / component::Voxelization::voxelDimension;
 
 						injection.uniformData.volumeDimension = component::Voxelization::voxelDimension;
-						injection.uniformData.worldMinPoint = { voxelBuffer.box.min ,1.f };
+						injection.uniformData.worldMinPoint = { box.box->min ,1.f };
 						injection.uniformData.voxelSize = voxelBuffer.voxelSize;
 						injection.uniformData.voxelScale = 1 / voxelBuffer.volumeGridSize;
 
@@ -438,8 +443,8 @@ namespace maple
 
 		auto registerVoxelizer(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> point) -> void
 		{
+			point->registerWithinQueue<setup_voxel_volumes::system>(begin);
 			point->registerWithinQueue<begin_scene::system>(begin);
-			point->registerWithinQueue<setup_voxel_volumes::system>(renderer);
 			point->registerWithinQueue<voxelize_static_scene::system>(renderer);
 			point->registerWithinQueue<voxelize_dynamic_scene::system>(renderer);
 			point->registerWithinQueue<update_radiance::system>(renderer);
