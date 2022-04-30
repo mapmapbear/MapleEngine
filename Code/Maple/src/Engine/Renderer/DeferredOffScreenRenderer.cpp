@@ -28,8 +28,9 @@
 
 #include "PostProcessRenderer.h"
 
-#include "Engine/Vientiane/ReflectiveShadowMap.h"
-#include "Engine/Vientiane/LightPropagationVolume.h"
+#include "Engine/LPVGI/ReflectiveShadowMap.h"
+#include "Engine/LPVGI/LightPropagationVolume.h"
+#include "Engine/VXGI/DrawVoxel.h"
 
 #include "Application.h"
 #include "ImGui/ImGuiHelpers.h"
@@ -553,6 +554,13 @@ namespace maple
 		inline auto onRender(Entity entity, EnvQuery envQuery, ecs::World world)
 		{
 			auto [data, shadow, cameraView, rendererData,graph] = entity;
+
+			if (world.hasComponent<vxgi_debug::global::component::DrawVoxelRender>()) 
+			{
+				auto& voxel = world.getComponent<vxgi_debug::global::component::DrawVoxelRender>();
+				if (voxel.enable)
+					return;
+			}
 
 			auto descriptorSet = data.descriptorLightSet[0];
 			descriptorSet->setTexture("uColorSampler", rendererData.gbuffer->getBuffer(GBufferTextures::COLOR));

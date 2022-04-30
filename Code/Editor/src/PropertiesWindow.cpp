@@ -92,6 +92,38 @@ namespace MM
 
 	using namespace maple;
 
+
+	template<>
+	inline auto ComponentEditorWidget<component::Voxelization>(entt::registry& reg, entt::registry::entity_type e) -> void
+	{
+		auto& voxel = reg.get<component::Voxelization>(e);
+
+		ImGui::Columns(2);
+		ImGui::Separator();
+
+		ImGuiHelper::showProperty("Dirty", std::to_string(voxel. dirty));
+		ImGuiHelper::showProperty("VoxelSize", std::to_string(voxel.voxelSize));
+		ImGuiHelper::showProperty("VolumeGridSize", std::to_string(voxel.volumeGridSize));
+	
+		ImGui::Separator();
+		ImGui::Columns(1);
+	}
+
+	template<>
+	inline auto ComponentEditorWidget<vxgi_debug::global::component::DrawVoxelRender>(entt::registry& reg, entt::registry::entity_type e) -> void
+	{
+		auto& voxel = reg.get<vxgi_debug::global::component::DrawVoxelRender>(e);
+
+		ImGui::Columns(2);
+		ImGui::Separator();
+
+		ImGuiHelper::property("Enable", voxel.enable);
+
+		ImGui::Separator();
+		ImGui::Columns(1);
+	}
+
+
 	template<>
 	inline auto ComponentEditorWidget<physics::component::Collider>(entt::registry& reg, entt::registry::entity_type e) -> void
 	{
@@ -229,7 +261,6 @@ namespace MM
 		ImGui::Columns(1);
 	}
 
-
 	template <>
 	inline auto ComponentEditorWidget<component::SkyboxData>(entt::registry& reg, entt::registry::entity_type e) -> void
 	{
@@ -240,7 +271,6 @@ namespace MM
 		ImGuiHelper::property("CubeMap Level", skyData.cubeMapLevel, 0, 4);
 		ImGui::Columns(1);
 	}
-
 
 	template <>
 	inline auto ComponentEditorWidget<component::Hierarchy>(entt::registry& reg, entt::registry::entity_type e) -> void

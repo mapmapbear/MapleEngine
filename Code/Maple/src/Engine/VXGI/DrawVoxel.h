@@ -9,10 +9,16 @@ namespace maple
 {
 	class ExecutePoint;
 	struct ExecuteQueue;
-
 	namespace vxgi_debug
 	{
-		auto MAPLE_EXPORT registerGlobalComponent(std::shared_ptr<ExecutePoint> point) -> void;
+		namespace global::component 
+		{
+			struct DrawVoxelRender 
+			{
+				bool enable = false;
+			};
+		}
+
 		auto registerVXGIVisualization(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> point) -> void;
 	}
 };

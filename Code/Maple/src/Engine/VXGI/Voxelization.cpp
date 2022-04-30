@@ -6,7 +6,7 @@
 #include "Engine/Renderer/Renderer.h"
 #include "Engine/Renderer/DeferredOffScreenRenderer.h"
 #include "Engine/CaptureGraph.h"
-#include "Engine/Vientiane/ReflectiveShadowMap.h"
+#include "Engine/LPVGI/ReflectiveShadowMap.h"
 
 #include "Scene/System/ExecutePoint.h"
 #include "Scene/Component/BoundingBox.h"
@@ -24,15 +24,6 @@
 
 namespace maple
 {
-	enum VoxelBufferId
-	{
-		Albedo,
-		Normal,
-		Radiance,
-		Emissive,
-		Length
-	};
-
 	enum DescriptorID
 	{
 		VertexUniform,
@@ -46,26 +37,7 @@ namespace maple
 	{
 		namespace component 
 		{
-			struct VoxelBuffer
-			{
-				std::array<glm::mat4, 3> viewProj;
-				std::array<glm::mat4, 3> viewProjInverse;
-				BoundingBox box;
-				float volumeGridSize;
-				float voxelSize;
-
-				std::array<	std::shared_ptr<Texture3D>, VoxelBufferId::Length> voxelVolume;
-				std::array<	std::shared_ptr<Texture3D>, 6> voxelTexMipmap;
-				std::shared_ptr<Texture3D> staticFlag;
-
-				std::shared_ptr<Shader> voxelShader;
-				std::vector<std::shared_ptr<DescriptorSet>> descriptors;
-
-				std::vector<RenderCommand> commandQueue;
-
-				std::shared_ptr<Texture2D> colorBuffer;
-			};
-
+			
 			struct VoxelRadianceInjection 
 			{
 				std::shared_ptr<Shader> shader;
@@ -383,17 +355,17 @@ namespace maple
 
 						auto axisSize = voxelBuffer.box.size();
 						auto center = voxelBuffer.box.center();
-						voxelBuffer.volumeGridSize = glm::max(axisSize.x, glm::max(axisSize.y, axisSize.z));
-						voxelBuffer.voxelSize = voxelBuffer.volumeGridSize / component::Voxelization::voxelDimension;
+						voxelization.volumeGridSize = glm::max(axisSize.x, glm::max(axisSize.y, axisSize.z));
+						voxelization.voxelSize = voxelization.volumeGridSize / component::Voxelization::voxelDimension;
 
 						injection.uniformData.volumeDimension = component::Voxelization::voxelDimension;
 						injection.uniformData.worldMinPoint = { box.box->min ,1.f };
-						injection.uniformData.voxelSize = voxelBuffer.voxelSize;
-						injection.uniformData.voxelScale = 1 / voxelBuffer.volumeGridSize;
+						injection.uniformData.voxelSize = voxelization.voxelSize;
+						injection.uniformData.voxelScale = 1 / voxelization.volumeGridSize;
 
-						auto halfSize = voxelBuffer.volumeGridSize / 2.0f;
+						auto halfSize = voxelization.volumeGridSize / 2.0f;
 						// projection matrix
-						auto projection = glm::ortho(-halfSize, halfSize, -halfSize, halfSize, 0.0f, voxelBuffer.volumeGridSize);
+						auto projection = glm::ortho(-halfSize, halfSize, -halfSize, halfSize, 0.0f, voxelization.volumeGridSize);
 						// view matrices
 						voxelBuffer.viewProj[0] = lookAt(center + glm::vec3(halfSize, 0.0f, 0.0f),
 							center, glm::vec3(0.0f, 1.0f, 0.0f));
@@ -410,7 +382,7 @@ namespace maple
 							voxelBuffer.viewProjInverse[i++] = glm::inverse(matrix);
 						}
 
-						const float voxelScale = 1.f / voxelBuffer.volumeGridSize;
+						const float voxelScale = 1.f / voxelization.volumeGridSize;
 						const float dimension = component::Voxelization::voxelDimension;
 
 						voxelBuffer.descriptors[DescriptorID::GeometryUniform]->setUniform("UniformBufferGemo", "viewProjections", &voxelBuffer.viewProj);

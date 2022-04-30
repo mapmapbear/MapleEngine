@@ -11,9 +11,11 @@
 #include "Engine/Quad2D.h"
 #include "Engine/Vertex.h"
 #include "Engine/CaptureGraph.h"
-#include "Engine/Vientiane/LightPropagationVolume.h"
-#include "Engine/Vientiane/Voxelization.h"
-#include "Engine/Vientiane/DrawVoxel.h"
+#include "Engine/LPVGI/LightPropagationVolume.h"
+#include "Engine/LPVGI/LPVIndirectLighting.h"
+#include "Engine/LPVGI/ReflectiveShadowMap.h"
+#include "Engine/VXGI/Voxelization.h"
+#include "Engine/VXGI/DrawVoxel.h"
 
 #include "RHI/CommandBuffer.h"
 #include "RHI/GPUProfile.h"
@@ -36,9 +38,6 @@
 #include "CloudRenderer.h"
 #include "DeferredOffScreenRenderer.h"
 
-#include "Engine/Vientiane/ReflectiveShadowMap.h"
-#include "Engine/Vientiane/LPVIndirectLighting.h"
-
 #include "PostProcessRenderer.h"
 #include "Renderer2D.h"
 #include "RendererData.h"
@@ -46,7 +45,6 @@
 #include "GridRenderer.h"
 #include "GeometryRenderer.h"
 #include "FinalPass.h"
-
 
 #include "Others/Randomizer.h"
 #include "ImGui/ImGuiHelpers.h"
@@ -69,7 +67,7 @@ namespace maple
 			auto        swapChain = Application::getGraphicsContext()->getSwapChain();
 			auto        renderTargert = renderer.gbuffer->getBuffer(GBufferTextures::SCREEN);
 
-			Application::getRenderDevice()->clearRenderTarget(renderer.gbuffer->getDepthBuffer(), renderer.commandBuffer);
+			Application::getRenderDevice()->clearRenderTarget(renderer.gbuffer->getDepthBuffer(), renderer.commandBuffer, { 0, 0, 0, 0 });
 			Application::getRenderDevice()->clearRenderTarget(renderTargert, renderer.commandBuffer);
 
 			Application::getRenderDevice()->clearRenderTarget(renderer.gbuffer->getBuffer(GBufferTextures::COLOR), renderer.commandBuffer, { 0, 0, 0, 0 });
@@ -108,8 +106,6 @@ namespace maple
 		reflective_shadow_map::registerShadowMap(beginQ, renderQ, executePoint);
 		deferred_offscreen::registerDeferredOffScreenRenderer(beginQ, renderQ, executePoint);
 		vxgi::registerVoxelizer(beginQ, renderQ, executePoint);
-		vxgi_debug::registerVXGIVisualization(beginQ, renderQ, executePoint);
-
 		light_propagation_volume::registerLPV(beginQ, renderQ, executePoint);
 		lpv_indirect_lighting::registerLPVIndirectLight(renderQ, executePoint);
 		post_process::registerSSAOPass(beginQ, renderQ, executePoint);
@@ -122,6 +118,7 @@ namespace maple
 		post_process::registerSSR(renderQ, executePoint);
 		grid_renderer::registerGridRenderer(beginQ, renderQ, executePoint);
 		geometry_renderer::registerGeometryRenderer(beginQ, renderQ, executePoint);
+		vxgi_debug::registerVXGIVisualization(beginQ, renderQ, executePoint);
 		post_process::registerBloom(renderQ, executePoint);
 		final_screen_pass::registerFinalPass(renderQ, executePoint);
 	}

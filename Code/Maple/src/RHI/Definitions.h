@@ -22,6 +22,7 @@ namespace maple
 
 	class Texture;
 	class Texture2D;
+	class Texture3D;
 	class TextureCube;
 	class TextureDepth;
 	class TextureDepthArray;

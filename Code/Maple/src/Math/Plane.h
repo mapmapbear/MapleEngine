@@ -136,6 +136,11 @@ namespace maple
 			return distance;
 		}
 
+		inline operator glm::vec4() const
+		{
+			return {normal,distance};
+		}
+
 	  private:
 		glm::vec3 normal;
 		float     distance;

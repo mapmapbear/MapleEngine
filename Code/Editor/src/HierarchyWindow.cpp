@@ -19,10 +19,10 @@
 #include "Scene/Scene.h"
 #include "Scene/SceneManager.h"
 
-#include "Engine/Vientiane/Voxelization.h"
-#include "Engine/Vientiane/LightPropagationVolume.h"
-#include "Engine/Vientiane/LPVIndirectLighting.h"
-#include "Engine/Vientiane/ReflectiveShadowMap.h"
+#include "Engine/VXGI/Voxelization.h"
+#include "Engine/LPVGI/LightPropagationVolume.h"
+#include "Engine/LPVGI/LPVIndirectLighting.h"
+#include "Engine/LPVGI/ReflectiveShadowMap.h"
 
 #include "ImGui/ImGuiHelpers.h"
 #include "Others/Console.h"

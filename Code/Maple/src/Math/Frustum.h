@@ -39,6 +39,11 @@ namespace maple
 			return planes[id];
 		}
 
+		inline auto& getPlane(int32_t i) const
+		{
+			return planes[static_cast<FrustumPlane>(i)];
+		}
+
 		inline auto getVertices() const
 		{
 			return vertices;

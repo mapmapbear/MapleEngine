@@ -85,8 +85,10 @@ file(GLOB VK_APP_SRC
 	src/Engine/*.cpp
 	src/Engine/Renderer/*.cpp
 	src/Engine/Renderer/*.h
-	src/Engine/Vientiane/*.cpp
-	src/Engine/Vientiane/*.h
+	src/Engine/LPVGI/*.cpp
+	src/Engine/LPVGI/*.h
+	src/Engine/VXGI/*.cpp
+	src/Engine/VXGI/*.h
 	src/RHI/*.h
 	src/RHI/*.cpp
 	src/RHI/Vulkan/*.h

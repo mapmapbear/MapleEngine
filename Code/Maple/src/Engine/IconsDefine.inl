@@ -18,8 +18,11 @@
 #include "Engine/Renderer/PostProcessRenderer.h"
 #include "Engine/Renderer/SkyboxRenderer.h"
 #include "Engine/Renderer/FinalPass.h"
-#include "Engine/Vientiane/ReflectiveShadowMap.h"
-#include "Engine/Vientiane/LightPropagationVolume.h"
+#include "Engine/LPVGI/ReflectiveShadowMap.h"
+#include "Engine/LPVGI/LightPropagationVolume.h"
+#include "Engine/VXGI/DrawVoxel.h"
+#include "Engine/VXGI/Voxelization.h"
+
 #include "Scripts/Lua/LuaComponent.h"
 #include "Scripts/Mono/MonoComponent.h"
 #include "Animation/Animator.h"
@@ -70,6 +73,9 @@ COMP_ICON(component::MonoComponent,				ICON_MDI_LANGUAGE_CSHARP);
 COMP_ICON(component::BloomData,					ICON_MDI_BRIGHTNESS_AUTO);
 COMP_ICON(physics::component::RigidBody,		ICON_MDI_NATURE_PEOPLE);
 COMP_ICON(physics::component::Collider,			ICON_MDI_BOOMBOX);
+
+COMP_ICON(vxgi_debug::global::component::DrawVoxelRender, ICON_MDI_LIGHTHOUSE_ON);
+COMP_ICON(component::Voxelization, ICON_MDI_LIGHTHOUSE_ON);
 
 
 
