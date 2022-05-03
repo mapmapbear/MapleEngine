@@ -17,7 +17,7 @@ namespace maple
 		{
 			struct DrawVoxelRender 
 			{
-				bool enable = true;
+				bool enable = false;
 				VoxelBufferId::Id id = VoxelBufferId::Id::Albedo;
 			};
 		}

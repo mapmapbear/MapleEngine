@@ -122,6 +122,7 @@ namespace maple
 
 		TextureFormat format;
 		uint32_t      accessFlag = 0;
+		uint32_t	  mipmapLevel = 0;
 
 		std::vector<BufferMemberInfo> members;
 	};
@@ -136,8 +137,8 @@ namespace maple
 		virtual auto update() -> void                                                                                                                         = 0;
 		virtual auto setDynamicOffset(uint32_t offset) -> void                                                                                                = 0;
 		virtual auto getDynamicOffset() const -> uint32_t                                                                                                     = 0;
-		virtual auto setTexture(const std::string &name, const std::vector<std::shared_ptr<Texture>> &textures) -> void                                       = 0;
-		virtual auto setTexture(const std::string &name, const std::shared_ptr<Texture> &textures) -> void                                                    = 0;
+		virtual auto setTexture(const std::string &name, const std::vector<std::shared_ptr<Texture>> &textures, uint32_t mipLevel = 0) -> void                = 0;
+		virtual auto setTexture(const std::string &name, const std::shared_ptr<Texture> &textures, uint32_t mipLevel = 0) -> void                             = 0;
 		virtual auto setBuffer(const std::string &name, const std::shared_ptr<UniformBuffer> &buffer) -> void                                                 = 0;
 		virtual auto getUnifromBuffer(const std::string &name) -> std::shared_ptr<UniformBuffer>                                                              = 0;
 		virtual auto setUniform(const std::string &bufferName, const std::string &uniformName, const void *data, bool dynamic = false) -> void                = 0;

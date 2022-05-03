@@ -207,13 +207,14 @@ namespace maple
 		return descriptorSet[index];
 	}
 
-	auto VulkanDescriptorSet::setTexture(const std::string &name, const std::vector<std::shared_ptr<Texture>> &textures) -> void
+	auto VulkanDescriptorSet::setTexture(const std::string &name, const std::vector<std::shared_ptr<Texture>> &textures, uint32_t mipLevel) -> void
 	{
 		for (auto &descriptor : descriptors)
 		{
 			if (descriptor.type == DescriptorType::ImageSampler && descriptor.name == name)
 			{
 				descriptor.textures = textures;
+				descriptor.mipmapLevel = mipLevel;
 				descriptorDirty[0]  = true;
 				descriptorDirty[1]  = true;
 				descriptorDirty[2]  = true;
@@ -221,10 +222,10 @@ namespace maple
 		}
 	}
 
-	auto VulkanDescriptorSet::setTexture(const std::string &name, const std::shared_ptr<Texture> &texture) -> void
+	auto VulkanDescriptorSet::setTexture(const std::string &name, const std::shared_ptr<Texture> &texture, uint32_t mipLevel) -> void
 	{
 		PROFILE_FUNCTION();
-		setTexture(name, std::vector<std::shared_ptr<Texture>>{texture});
+		setTexture(name, std::vector<std::shared_ptr<Texture>>{texture},mipLevel);
 	}
 
 	auto VulkanDescriptorSet::setBuffer(const std::string &name, const std::shared_ptr<UniformBuffer> &buffer) -> void

@@ -54,7 +54,7 @@ namespace maple
 		}
 	}
 
-	auto GLDescriptorSet::setTexture(const std::string &name, const std::vector<std::shared_ptr<Texture>> &textures) -> void
+	auto GLDescriptorSet::setTexture(const std::string &name, const std::vector<std::shared_ptr<Texture>> &textures, uint32_t mipLevel) -> void
 	{
 		PROFILE_FUNCTION();
 		for (auto &descriptor : descriptors)
@@ -64,15 +64,16 @@ namespace maple
 			    descriptor.name == name)
 			{
 				descriptor.textures = textures;
+				descriptor.mipmapLevel = mipLevel;
 				return;
 			}
 		}
 		LOGW("Texture not found {0}", name);
 	}
 
-	auto GLDescriptorSet::setTexture(const std::string &name, const std::shared_ptr<Texture> &texture) -> void
+	auto GLDescriptorSet::setTexture(const std::string &name, const std::shared_ptr<Texture> &texture, uint32_t mipLevel) -> void
 	{
-		setTexture(name, std::vector<std::shared_ptr<Texture>>{texture});
+		setTexture(name, std::vector<std::shared_ptr<Texture>>{texture},mipLevel);
 	}
 
 	auto GLDescriptorSet::setBuffer(const std::string &name, const std::shared_ptr<UniformBuffer> &buffer) -> void
@@ -179,7 +180,7 @@ namespace maple
 						{
 							auto read  = descriptor.accessFlag == 0 || descriptor.accessFlag == 2;
 							auto write = descriptor.accessFlag == 1 || descriptor.accessFlag == 2;
-							descriptor.textures[0]->bindImageTexture(descriptor.binding, read, write, 0, 0);
+							descriptor.textures[0]->bindImageTexture(descriptor.binding, read, write, descriptor.mipmapLevel, 0);
 						}
 						shader->setUniform1i(descriptor.name, descriptor.binding);
 					}

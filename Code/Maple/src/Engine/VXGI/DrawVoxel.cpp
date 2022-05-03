@@ -54,7 +54,7 @@ namespace maple
 				{
 					auto drawMipLevel = 0;
 
-					auto vDimension = static_cast<unsigned>(
+					auto vDimension = static_cast<uint32_t>(
 						component::Voxelization::voxelDimension / std::pow(2.0f, drawMipLevel)
 					);
 
@@ -69,25 +69,23 @@ namespace maple
 						pipline.ubo.frustumPlanes[i] = cameraView.frustum.getPlane(i);
 					}
 
-					glm::vec4 channel = { 1,1,1,0 };
 					pipline.descriptors[0]->setTexture("uVoxelBuffer", voxelBuffer.voxelVolume[render.id]);
-					pipline.descriptors[0]->setUniform("UniformBufferObjectVert", "channels", &channel);
 					pipline.descriptors[0]->setUniform("UniformBufferObjectVert", "volumeDimension", &vDimension);
 					pipline.descriptors[0]->update();
 					pipline.descriptors[1]->setUniformBufferData("UniformBufferObjectGemo", &pipline.ubo);
 					pipline.descriptors[1]->update();
 
-					//Application::getRenderDevice()->clearRenderTarget(rendererData.gbuffer->getDepthBuffer(), rendererData.commandBuffer);
+					Application::getRenderDevice()->clearRenderTarget(rendererData.gbuffer->getDepthBuffer(), rendererData.commandBuffer);
 
 					PipelineInfo pipelineInfo;
 					pipelineInfo.shader = pipline.shader;
 					pipelineInfo.polygonMode = PolygonMode::Fill;
 					pipelineInfo.cullMode = CullMode::Back;
 					pipelineInfo.blendMode = BlendMode::SrcAlphaOneMinusSrcAlpha;
-					pipelineInfo.clearTargets = false;
+					pipelineInfo.clearTargets = true;
 					pipelineInfo.colorTargets[0] = rendererData.gbuffer->getBuffer(GBufferTextures::SCREEN);
 					pipelineInfo.depthTarget = rendererData.gbuffer->getDepthBuffer();
-					pipelineInfo.clearColor = {};
+					pipelineInfo.clearColor = {	0,0,0,1.f };
 					pipelineInfo.depthTest = true;
 
 					auto pipeline = Pipeline::get(pipelineInfo);
