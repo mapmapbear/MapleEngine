@@ -404,5 +404,26 @@ namespace maple
 			}
 		}
 
+		auto combox(const std::string & id, const char* names[], int32_t namesLen, int32_t currentIndex) -> int32_t
+		{
+			ImGui::TextUnformatted(id.c_str());
+			ImGui::NextColumn();
+			ImGui::PushItemWidth(-1);
+			int32_t idx = -1;
+			if (ImGui::BeginCombo(id.c_str(), names[currentIndex], 0))
+			{
+				for (auto n = 0; n < namesLen; n++)
+				{
+					if (ImGui::Selectable(names[n]))
+					{
+						idx = n;
+					}
+				}
+				ImGui::EndCombo();
+			}
+			ImGui::PopItemWidth();
+			ImGui::NextColumn();
+			return idx;
+		}
 	};        // namespace ImGuiHelper
 };            // namespace maple

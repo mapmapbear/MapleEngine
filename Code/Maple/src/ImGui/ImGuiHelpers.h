@@ -8,6 +8,7 @@
 #include <imgui.h>
 #include <string>
 #include <functional>
+#include <vector>
 
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui_internal.h>
@@ -53,5 +54,7 @@ namespace maple
 		MAPLE_EXPORT auto imageButton(const Quad2D * texture,const glm::vec2 & scale) -> bool;
 
 		MAPLE_EXPORT auto acceptFile(const std::function<void(const std::string& )>& callback) -> void;
+		MAPLE_EXPORT auto combox(const std::string& id, const char* names[], int32_t namesLen , int32_t currentIndex)->int32_t;
+
 	};        // namespace ImGuiHelper
 };            // namespace maple

@@ -6,23 +6,12 @@
 #include "Engine/Core.h"
 #include "Math/BoundingBox.h"
 #include "RHI/Definitions.h"
+#include "VoxelBufferId.h"
 
 namespace maple
 {
 	class ExecutePoint;
 	struct ExecuteQueue;
-
-	namespace VoxelBufferId 
-	{
-		enum Id
-		{
-			Albedo,
-			Normal,
-			Radiance,
-			Emissive,
-			Length
-		};
-	}
 
 	namespace global::component
 	{

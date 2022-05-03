@@ -2,6 +2,7 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #include "Voxelization.h"
+#include "DrawVoxel.h"
 #include "Engine/Renderer/RendererData.h"
 #include "Engine/Renderer/Renderer.h"
 #include "Engine/Renderer/DeferredOffScreenRenderer.h"

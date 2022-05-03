@@ -551,16 +551,14 @@ namespace maple
 			::Read<component::Environment>
 			::To<ecs::Query>;
 
-		inline auto onRender(Entity entity, EnvQuery envQuery, ecs::World world)
+		inline auto onRender(Entity entity, EnvQuery envQuery, 
+			const vxgi_debug::global::component::DrawVoxelRender * voxel,
+			ecs::World world)
 		{
 			auto [data, shadow, cameraView, rendererData,graph] = entity;
-
-			if (world.hasComponent<vxgi_debug::global::component::DrawVoxelRender>()) 
-			{
-				auto& voxel = world.getComponent<vxgi_debug::global::component::DrawVoxelRender>();
-				if (voxel.enable)
-					return;
-			}
+			
+			if (voxel && voxel->enable)
+				return;
 
 			auto descriptorSet = data.descriptorLightSet[0];
 			descriptorSet->setTexture("uColorSampler", rendererData.gbuffer->getBuffer(GBufferTextures::COLOR));

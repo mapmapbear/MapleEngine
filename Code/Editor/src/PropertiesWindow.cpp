@@ -118,6 +118,11 @@ namespace MM
 		ImGui::Separator();
 
 		ImGuiHelper::property("Enable", voxel.enable);
+			
+		if (auto id = ImGuiHelper::combox("Voxel BufferId", VoxelBufferId::Names, VoxelBufferId::Length, voxel.id); id != -1) 
+		{
+			voxel.id = static_cast<VoxelBufferId::Id>(id);
+		}
 
 		ImGui::Separator();
 		ImGui::Columns(1);
