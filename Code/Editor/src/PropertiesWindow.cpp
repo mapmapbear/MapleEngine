@@ -7,6 +7,7 @@
 #include "Engine/Renderer/GridRenderer.h"
 #include "Engine/Renderer/PostProcessRenderer.h"
 #include "Engine/Renderer/SkyboxRenderer.h"
+#include "Engine/Renderer/ShadowRenderer.h"
 #include "Engine/Camera.h"
 #include "Engine/Material.h"
 #include "Engine/Mesh.h"
@@ -102,6 +103,7 @@ namespace MM
 		ImGui::Separator();
 
 		ImGuiHelper::showProperty("Dirty", std::to_string(voxel. dirty));
+		ImGuiHelper::showProperty("InjectFirstBounce", std::to_string(voxel.injectFirstBounce));
 		ImGuiHelper::showProperty("VoxelSize", std::to_string(voxel.voxelSize));
 		ImGuiHelper::showProperty("VolumeGridSize", std::to_string(voxel.volumeGridSize));
 	
@@ -465,6 +467,11 @@ namespace MM
 		ImGui::Columns(2);
 		ImGui::Separator();
 		ImGuiHelper::property("Cascade Split Lambda", shadowMap.cascadeSplitLambda,0,1,ImGuiHelper::PropertyFlag::DragFloat,"%.4f",0.001);
+		if (auto id = ImGuiHelper::combox("ShadowMethod", ShadowingMethod::Names, ShadowingMethod::Length, shadowMap.shadowMethod); id != -1)
+		{
+			shadowMap.shadowMethod = static_cast<ShadowingMethod::Id>(id);
+		}
+
 		ImGui::Columns(1);
 	}
 

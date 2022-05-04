@@ -8,8 +8,10 @@
 #include "Math/BoundingBox.h"
 
 #include "Engine/Renderer/RendererData.h"
+#include "Engine/Renderer/ShadowRenderer.h"
 #include "Engine/Mesh.h"
 #include "Engine/GBuffer.h"
+
 
 #include "RHI/CommandBuffer.h"
 #include "RHI/Texture.h"

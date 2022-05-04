@@ -18,6 +18,7 @@
 #include "Engine/Renderer/PostProcessRenderer.h"
 #include "Engine/Renderer/SkyboxRenderer.h"
 #include "Engine/Renderer/FinalPass.h"
+#include "Engine/Renderer/ShadowRenderer.h"
 #include "Engine/LPVGI/ReflectiveShadowMap.h"
 #include "Engine/LPVGI/LightPropagationVolume.h"
 #include "Engine/VXGI/DrawVoxel.h"

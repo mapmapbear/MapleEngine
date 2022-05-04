@@ -6,6 +6,7 @@
 #include "Engine/Renderer/RendererData.h"
 #include "Engine/Renderer/Renderer.h"
 #include "Engine/Renderer/DeferredOffScreenRenderer.h"
+#include "Engine/Renderer/ShadowRenderer.h"
 #include "Engine/CaptureGraph.h"
 #include "Engine/LPVGI/ReflectiveShadowMap.h"
 
@@ -14,6 +15,7 @@
 #include "Scene/Component/MeshRenderer.h"
 #include "Scene/Component/Transform.h"
 #include "Scene/Component/Light.h"
+
 
 #include "RHI/Texture.h"
 #include "RHI/Shader.h"
@@ -57,7 +59,13 @@ namespace maple
 				}uniformData;
 			};
 
-			struct VoxelGenerateMipmapPipline 
+			struct VoxelMipmapVolumePipline 
+			{
+				std::shared_ptr<Shader> shader;
+				std::vector<std::shared_ptr<DescriptorSet>> descriptors;
+			};
+
+			struct VoxelMipmapBasePipline
 			{
 				std::shared_ptr<Shader> shader;
 				std::vector<std::shared_ptr<DescriptorSet>> descriptors;
@@ -191,6 +199,7 @@ namespace maple
 				injection.descriptors[0]->setUniform("UniformBufferLight", "biasMat", &BIAS_MATRIX);
 				injection.descriptors[0]->setUniform("UniformBufferLight", "initialBias", &shadowMapData.initialBias);
 
+				injection.uniformData.shadowingMethod = shadowMapData.shadowMethod;
 				injection.descriptors[0]->setUniformBufferData("UniformBufferVX", &injection.uniformData);
 
 				injection.descriptors[0]->setTexture("uVoxelAlbedo", buffer.voxelVolume[VoxelBufferId::Albedo]);
@@ -213,13 +222,102 @@ namespace maple
 			using Query = ecs::Chain
 				::Read<component::Light>
 				::To<ecs::Query>;
+			
+			/**
+			 * voxelTexMipmap radiance -> mipmap
+			 */
+			inline auto generateMipmapVolume(
+				global::component::VoxelBuffer& voxelBuffer,
+				global::component::VoxelMipmapVolumePipline& volumePipline,
+				component::BoundingBoxComponent& box,
+				const component::RendererData& renderData) 
+			{
+				auto mipmapDim = maple::component::Voxelization::voxelDimension / 4;
 
-			inline auto system(Entity entity, 
+				for (auto mipLvl = 0; mipmapDim >= 1; mipmapDim /= 2, mipLvl++)
+				{
+					auto volumeSize = glm::vec3(mipmapDim, mipmapDim, mipmapDim);
+
+					volumePipline.descriptors[0]->setUniform("UniformBufferObject", "mipDimension", &volumeSize);
+					volumePipline.descriptors[0]->setUniform("UniformBufferObject", "mipLevel", &mipLvl);
+					volumePipline.descriptors[0]->setTexture("uVoxelMipmapIn",
+						{ voxelBuffer.voxelTexMipmap.begin(), voxelBuffer.voxelTexMipmap.end() }
+					);
+					volumePipline.descriptors[0]->setTexture("uVoxelMipmapOut",
+						{ voxelBuffer.voxelTexMipmap.begin(),voxelBuffer.voxelTexMipmap.end() },
+						mipLvl + 1
+					);
+					volumePipline.descriptors[0]->update();
+
+					PipelineInfo pipelineInfo;
+					pipelineInfo.shader = volumePipline.shader;
+					pipelineInfo.groupCountX = static_cast<uint32_t>(glm::ceil(mipmapDim / volumePipline.shader->getLocalSizeX()));
+					pipelineInfo.groupCountY = static_cast<uint32_t>(glm::ceil(mipmapDim / volumePipline.shader->getLocalSizeY()));
+					pipelineInfo.groupCountZ = static_cast<uint32_t>(glm::ceil(mipmapDim / volumePipline.shader->getLocalSizeZ()));
+
+					auto pipeline = Pipeline::get(pipelineInfo);
+					pipeline->bind(renderData.commandBuffer);
+					Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, volumePipline.descriptors);
+					Renderer::dispatch(
+						renderData.commandBuffer,
+						pipelineInfo.groupCountX,
+						pipelineInfo.groupCountY,
+						pipelineInfo.groupCountZ
+					);
+
+					Renderer::memoryBarrier(renderData.commandBuffer,
+						MemoryBarrierFlags::Shader_Image_Access_Barrier |
+						MemoryBarrierFlags::Texture_Fetch_Barrier);
+
+					pipeline->end(renderData.commandBuffer);
+				}
+			}
+
+			inline auto generateMipmapMipmap(
+				const std::shared_ptr<Texture3D>& voxelRadiance,
+				const component::RendererData& renderData,
+				global::component::VoxelBuffer& buffer,
+				global::component::VoxelMipmapBasePipline& pipline)
+			{
+				auto halfDimension = component::Voxelization::voxelDimension / 2; //dimension for voxelMipmap
+				pipline.descriptors[0]->setUniform("UniformBufferObject", "mipDimension",&halfDimension);
+				pipline.descriptors[0]->setTexture("uVoxelMipmap", { buffer.voxelVolume.begin(),buffer.voxelVolume.end() });
+				pipline.descriptors[0]->setTexture("uVoxelBase", voxelRadiance);
+
+				PipelineInfo pipelineInfo;
+				pipelineInfo.shader = pipline.shader;
+
+				pipelineInfo.groupCountX = halfDimension / pipline.shader->getLocalSizeX();
+				pipelineInfo.groupCountY = halfDimension / pipline.shader->getLocalSizeY();
+				pipelineInfo.groupCountZ = halfDimension / pipline.shader->getLocalSizeZ();
+
+				auto pipeline = Pipeline::get(pipelineInfo);
+				pipeline->bind(renderData.commandBuffer);
+				Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, pipline.descriptors);
+				Renderer::dispatch(
+					renderData.commandBuffer,
+					pipelineInfo.groupCountX,
+					pipelineInfo.groupCountY,
+					pipelineInfo.groupCountZ
+				);
+				Renderer::memoryBarrier(renderData.commandBuffer,
+					MemoryBarrierFlags::Shader_Image_Access_Barrier |
+					MemoryBarrierFlags::Texture_Fetch_Barrier);
+
+				pipeline->end(renderData.commandBuffer);
+			}
+
+			inline auto system(
+				Entity entity, 
 				Query lightQuery,
 				global::component::VoxelBuffer& buffer,
 				global::component::VoxelRadianceInjectionPipline& injection,
+				global::component::VoxelMipmapBasePipline& basePipeline,
+				global::component::VoxelMipmapVolumePipline& volumePipline,
+				component::BoundingBoxComponent& box,
 				const component::RendererData& renderData, 
-				ecs::World world)
+				ecs::World world
+			)
 			{
 			
 				auto [voxel] = entity;
@@ -245,13 +343,21 @@ namespace maple
 					pipelineInfo.groupCountY, 
 					pipelineInfo.groupCountZ
 				);
-				pipeline->end(renderData.commandBuffer);
-
 				Renderer::memoryBarrier(renderData.commandBuffer,
 					MemoryBarrierFlags::Shader_Image_Access_Barrier |
 					MemoryBarrierFlags::Texture_Fetch_Barrier);
 
+				pipeline->end(renderData.commandBuffer);
+
 				voxel.dirty = false;
+
+				generateMipmapMipmap(buffer.voxelVolume[VoxelBufferId::Radiance], renderData, buffer, basePipeline);
+				generateMipmapVolume(buffer, volumePipline, box, renderData);
+
+				if (voxel.injectFirstBounce)
+				{
+					
+				}
 
 				Application::getRenderDoc().endCapture();
 			}
@@ -417,51 +523,11 @@ namespace maple
 
 			inline auto system(Entity entity,
 				global::component::VoxelBuffer& voxelBuffer,
-				global::component::VoxelGenerateMipmapPipline& pipline,
-				component::BoundingBoxComponent& box,
+
 				const component::RendererData& renderData,
 				ecs::World world)
 			{
-				auto [voxelization] = entity;
-				auto mipmapDim = maple::component::Voxelization::voxelDimension / 4;
-
-				for (auto mipLvl = 0; mipmapDim >= 1; mipmapDim /= 2, mipLvl++)
-				{
-					auto volumeSize = glm::vec3(mipmapDim, mipmapDim, mipmapDim);
-
-					pipline.descriptors[0]->setUniform("UniformBufferObject", "mipDimension", &volumeSize);
-					pipline.descriptors[0]->setUniform("UniformBufferObject", "mipLevel", &mipLvl);
-					pipline.descriptors[0]->setTexture("uVoxelMipmapIn", 
-						{ voxelBuffer.voxelTexMipmap.begin(), voxelBuffer.voxelTexMipmap.end() }
-					);
-					pipline.descriptors[0]->setTexture("uVoxelMipmapOut", 
-						{ voxelBuffer.voxelTexMipmap.begin(),voxelBuffer.voxelTexMipmap.end() },
-						mipLvl + 1
-					);
-
-					pipline.descriptors[0]->update();
-
-					PipelineInfo pipelineInfo;
-					pipelineInfo.shader = pipline.shader;
-					pipelineInfo.groupCountX = static_cast<uint32_t>(glm::ceil(mipmapDim / pipline.shader->getLocalSizeX()));
-					pipelineInfo.groupCountY = static_cast<uint32_t>(glm::ceil(mipmapDim / pipline.shader->getLocalSizeY()));
-					pipelineInfo.groupCountZ = static_cast<uint32_t>(glm::ceil(mipmapDim / pipline.shader->getLocalSizeZ()));
-
-					auto pipeline = Pipeline::get(pipelineInfo);
-					pipeline->bind(renderData.commandBuffer);
-					Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, pipline.descriptors);
-					Renderer::dispatch(
-						renderData.commandBuffer,
-						pipelineInfo.groupCountX,
-						pipelineInfo.groupCountY,
-						pipelineInfo.groupCountZ
-					);
-					pipeline->end(renderData.commandBuffer);
-
-					Renderer::memoryBarrier(renderData.commandBuffer,
-						MemoryBarrierFlags::Shader_Image_Access_Barrier |
-						MemoryBarrierFlags::Texture_Fetch_Barrier);
-				}
+				
 			}
 		}
 
@@ -474,8 +540,15 @@ namespace maple
 					DescriptorSet::create({ 0, injection.shader.get() })
 				);
 			});
-			point->registerGlobalComponent<global::component::VoxelGenerateMipmapPipline>([](auto & pipline) {
+			point->registerGlobalComponent<global::component::VoxelMipmapVolumePipline>([](auto & pipline) {
 				pipline.shader = Shader::create("shaders/VXGI/AnisoMipmapVolume.shader");
+				pipline.descriptors.emplace_back(
+					DescriptorSet::create({ 0, pipline.shader.get() })
+				);
+			});
+
+			point->registerGlobalComponent<global::component::VoxelMipmapBasePipline>([](auto& pipline) {
+				pipline.shader = Shader::create("shaders/VXGI/AnisoMipmapBase.shader");
 				pipline.descriptors.emplace_back(
 					DescriptorSet::create({ 0, pipline.shader.get() })
 				);

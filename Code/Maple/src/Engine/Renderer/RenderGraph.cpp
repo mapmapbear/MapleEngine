@@ -45,6 +45,7 @@
 #include "GridRenderer.h"
 #include "GeometryRenderer.h"
 #include "FinalPass.h"
+#include "ShadowRenderer.h"
 
 #include "Others/Randomizer.h"
 #include "ImGui/ImGuiHelpers.h"
@@ -103,9 +104,10 @@ namespace maple
 		executePoint->registerQueue(renderQ);
 		executePoint->registerWithinQueue<on_begin_renderer::system>(renderQ);
 
+		shadow_map::registerShadowMap(beginQ, renderQ, executePoint);
 		reflective_shadow_map::registerShadowMap(beginQ, renderQ, executePoint);
-		deferred_offscreen::registerDeferredOffScreenRenderer(beginQ, renderQ, executePoint);
 		vxgi::registerVoxelizer(beginQ, renderQ, executePoint);
+		deferred_offscreen::registerDeferredOffScreenRenderer(beginQ, renderQ, executePoint);
 		light_propagation_volume::registerLPV(beginQ, renderQ, executePoint);
 		lpv_indirect_lighting::registerLPVIndirectLight(renderQ, executePoint);
 		post_process::registerSSAOPass(beginQ, renderQ, executePoint);

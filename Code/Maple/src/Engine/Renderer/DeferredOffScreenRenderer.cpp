@@ -27,6 +27,7 @@
 #include "FileSystem/Skeleton.h"
 
 #include "PostProcessRenderer.h"
+#include "ShadowRenderer.h"
 
 #include "Engine/LPVGI/ReflectiveShadowMap.h"
 #include "Engine/LPVGI/LightPropagationVolume.h"
@@ -206,6 +207,7 @@ namespace maple
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "lightCount", &numLights);
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "shadowCount", &numShadows);
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "mode", &renderMode);
+			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "shadowMethod", &shadowData.shadowMethod);
 
 			if (entity.hasComponent<component::LPVGrid>()) 
 			{
