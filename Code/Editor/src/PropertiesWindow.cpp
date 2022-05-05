@@ -95,9 +95,9 @@ namespace MM
 
 
 	template<>
-	inline auto ComponentEditorWidget<component::Voxelization>(entt::registry& reg, entt::registry::entity_type e) -> void
+	inline auto ComponentEditorWidget<vxgi::component::Voxelization>(entt::registry& reg, entt::registry::entity_type e) -> void
 	{
-		auto& voxel = reg.get<component::Voxelization>(e);
+		auto& voxel = reg.get<vxgi::component::Voxelization>(e);
 
 		ImGui::Columns(2);
 		ImGui::Separator();
@@ -106,7 +106,8 @@ namespace MM
 		ImGuiHelper::showProperty("InjectFirstBounce", std::to_string(voxel.injectFirstBounce));
 		ImGuiHelper::showProperty("VoxelSize", std::to_string(voxel.voxelSize));
 		ImGuiHelper::showProperty("VolumeGridSize", std::to_string(voxel.volumeGridSize));
-	
+		ImGuiHelper::showProperty("MaxTracingDistance", std::to_string(voxel.maxTracingDistance));
+		ImGuiHelper::property("Enable Indirect", voxel.enableIndirect);
 		ImGui::Separator();
 		ImGui::Columns(1);
 	}
@@ -491,11 +492,11 @@ namespace MM
 		auto& lpv = reg.get<component::LPVGrid>(e);
 		ImGui::Columns(2);
 		ImGui::Separator();
-		ImGuiHelper::property("Indirect Light Attenuation", lpv.indirectLightAttenuation, 0.f, 2.f, maple::ImGuiHelper::PropertyFlag::DragFloat);
 		ImGuiHelper::property("OcclusionAmplifier", lpv.occlusionAmplifier, 0.f, 100.f, maple::ImGuiHelper::PropertyFlag::DragFloat);
 		ImGuiHelper::property("Propagate Count", lpv.propagateCount,1, 16);
 		ImGuiHelper::showProperty("CellSize", std::to_string(lpv.cellSize));
 		ImGuiHelper::property("DebugAABB", lpv.debugAABB);
+		ImGuiHelper::property("Enable", lpv.enableIndirect);
 		if(lpv.debugAABB)
 			ImGuiHelper::property("ShowGeometry", lpv.showGeometry);
 		ImGui::Columns(1);

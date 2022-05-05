@@ -38,9 +38,9 @@ namespace maple
 
 			float cellSize = 1.f;
 			float occlusionAmplifier = 1.0f;
-			float indirectLightAttenuation = 1.f;
 			bool debugAABB = false;
 			bool showGeometry = false;
+			bool enableIndirect = true;
 		};
 	};
 

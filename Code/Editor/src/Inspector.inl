@@ -46,6 +46,6 @@ namespace maple
 		TRIVIAL_COMPONENT(physics::component::RigidBody, true, "RigidBody");
 		TRIVIAL_COMPONENT(physics::component::Collider, true, "Collider");
 		TRIVIAL_COMPONENT(vxgi_debug::global::component::DrawVoxelRender, false, "VXGI-Debug");
-		TRIVIAL_COMPONENT(component::Voxelization, false, "VXGI-Component");
+		TRIVIAL_COMPONENT(vxgi::component::Voxelization, false, "VXGI-Component");
 	}
 }

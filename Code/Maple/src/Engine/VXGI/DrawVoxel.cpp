@@ -37,7 +37,7 @@ namespace maple
 		namespace draw_voxel 
 		{
 			using Entity = ecs::Chain
-				::Write<component::Voxelization>
+				::Write<vxgi::component::Voxelization>
 				::To<ecs::Entity>;
 
 			inline auto system(Entity entity,
@@ -45,7 +45,7 @@ namespace maple
 				global::component::DrawVoxelPipeline& pipline,
 				const component::CameraView & cameraView,
 				const global::component::DrawVoxelRender & render,
-				const maple::global::component::VoxelBuffer& voxelBuffer,
+				const maple::vxgi::global::component::VoxelBuffer& voxelBuffer,
 				const component::BoundingBoxComponent & box)
 			{
 				auto [voxel] = entity;
@@ -55,7 +55,7 @@ namespace maple
 					auto drawMipLevel = 0;
 
 					auto vDimension = static_cast<uint32_t>(
-						component::Voxelization::voxelDimension / std::pow(2.0f, drawMipLevel)
+						vxgi::component::Voxelization::voxelDimension / std::pow(2.0f, drawMipLevel)
 					);
 
 					auto vSize = voxel.volumeGridSize / vDimension;
@@ -91,7 +91,7 @@ namespace maple
 					auto pipeline = Pipeline::get(pipelineInfo);
 					pipeline->bind(rendererData.commandBuffer);
 					Renderer::bindDescriptorSets(pipeline.get(), rendererData.commandBuffer, 0, pipline.descriptors);
-					Renderer::drawArrays(rendererData.commandBuffer, DrawType::Point, component::Voxelization::voxelVolume);
+					Renderer::drawArrays(rendererData.commandBuffer, DrawType::Point, vxgi::component::Voxelization::voxelVolume);
 					pipeline->end(rendererData.commandBuffer);
 
 				}

@@ -32,6 +32,7 @@
 #include "Engine/LPVGI/ReflectiveShadowMap.h"
 #include "Engine/LPVGI/LightPropagationVolume.h"
 #include "Engine/VXGI/DrawVoxel.h"
+#include "Engine/VXGI/Voxelization.h"
 
 #include "Application.h"
 #include "ImGui/ImGuiHelpers.h"
@@ -92,6 +93,34 @@ namespace maple
 		}
 	}        // namespace component
 
+	namespace vxgi_setup 
+	{
+		using Entity = ecs::Chain
+			::Read<vxgi::component::Voxelization>
+			::To<ecs::Entity>;
+
+		inline auto system(Entity entity, const vxgi::global::component::VoxelBuffer* vxgiBuffer, component::DeferredData & deferredData)
+		{
+			auto [vxgi] = entity;
+
+			deferredData.descriptorLightSet[0]->setUniform("UniformBufferLight", "enableVXGI", &vxgi.enableIndirect);
+			if (vxgi.enableIndirect && vxgiBuffer)
+			{
+				auto& vxgi = entity.getComponent<vxgi::component::Voxelization>();
+				float scale = 1.f / vxgi.volumeGridSize;
+				deferredData.descriptorLightSet[0]->setUniform("UniformBufferLight", "volumeDimension", &vxgi::component::Voxelization::voxelDimension);
+				deferredData.descriptorLightSet[0]->setUniform("UniformBufferLight", "voxelScale", &scale);
+				deferredData.descriptorLightSet[0]->setUniform("UniformBufferLight", "maxTracingDistanceGlobal", &vxgi.maxTracingDistance);
+				deferredData.descriptorLightSet[0]->setUniform("UniformBufferLight", "aoFalloff", &vxgi.aoFalloff);
+				deferredData.descriptorLightSet[0]->setUniform("UniformBufferLight", "aoAlpha", &vxgi.aoAlpha);
+				deferredData.descriptorLightSet[0]->setUniform("UniformBufferLight", "bounceStrength", &vxgi.bounceStrength);
+				deferredData.descriptorLightSet[0]->setUniform("UniformBufferLight", "samplingFactor", &vxgi.samplingFactor);
+				deferredData.descriptorLightSet[0]->setUniform("UniformBufferLight", "worldMinPoint", &vxgiBuffer->box.min);
+				deferredData.descriptorLightSet[0]->setUniform("UniformBufferLight", "worldMaxPoint", &vxgiBuffer->box.max);
+			}
+		}
+	}
+
 	namespace deferred_offscreen
 	{
 		using Entity = ecs::Chain
@@ -101,6 +130,7 @@ namespace maple
 			::Read<component::RendererData>
 			::Read<component::SSAOData>
 			::ReadIfExist<component::LPVGrid>
+			::ReadIfExist<vxgi::component::Voxelization>
 			::To<ecs::Entity>;
 
 		using LightDefine = ecs::Chain
@@ -134,9 +164,13 @@ namespace maple
 			::Write<component::Transform>
 			::To<ecs::Query>;
 
-	
-
-		inline auto beginScene(Entity entity, Query lightQuery, EnvQuery env, MeshQuery meshQuery, SkinnedMeshQuery skinnedMeshQuery, BoneMeshQuery boneQuery, ecs::World world)
+		inline auto beginScene(Entity entity, 
+			Query lightQuery, 
+			EnvQuery env,
+			MeshQuery meshQuery, 
+			SkinnedMeshQuery skinnedMeshQuery, 
+			BoneMeshQuery boneQuery, 
+			ecs::World world)
 		{
 			auto [data, shadowData, cameraView,renderData,ssao] = entity;
 			data.commandQueue.clear();
@@ -185,6 +219,10 @@ namespace maple
 				});
 			}
 
+			const int32_t lpvEnable =
+				entity.hasComponent<component::LPVGrid>() ?
+				entity.getComponent<component::LPVGrid>().enableIndirect : 0;
+
 			const glm::mat4 *shadowTransforms = shadowData.shadowProjView;
 			const glm::vec4 *splitDepth       = shadowData.splitDepth;
 			const glm::mat4  lightView        = shadowData.lightMatrix;
@@ -208,17 +246,10 @@ namespace maple
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "shadowCount", &numShadows);
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "mode", &renderMode);
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "shadowMethod", &shadowData.shadowMethod);
-
-			if (entity.hasComponent<component::LPVGrid>()) 
-			{
-				auto & lpvData = entity.getComponent< component::LPVGrid>();
-				data.descriptorLightSet[0]->setUniform("UniformBufferLight", "indirectLightAttenuation", &lpvData.indirectLightAttenuation);
-			}
+			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "enableLPV", &lpvEnable);
 
 			if (directionaLight != nullptr) 
 			{
-				int32_t enableIndirect = directionaLight->enableLPV ? 1 : 0;
-				data.descriptorLightSet[0]->setUniform("UniformBufferLight", "enableIndirectLight", &enableIndirect);
 				int32_t enableShadow = directionaLight->castShadow ? 1 : 0;
 				data.descriptorLightSet[0]->setUniform("UniformBufferLight", "enableShadow", &enableShadow);
 			}
@@ -240,7 +271,6 @@ namespace maple
 
 			int32_t ssaoEnable = ssao.enable ? 1 : 0;
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "ssaoEnable", &ssaoEnable);
-			
 
 
 			PipelineInfo pipelineInfo{};
@@ -534,6 +564,7 @@ namespace maple
 		auto registerDeferredOffScreenRenderer(ExecuteQueue &begin, ExecuteQueue &renderer, std::shared_ptr<ExecutePoint> executePoint) -> void
 		{
 			executePoint->registerGlobalComponent<component::DeferredData>();
+			executePoint->registerWithinQueue<vxgi_setup::system>(begin);
 			executePoint->registerWithinQueue<deferred_offscreen::beginScene>(begin);
 			executePoint->registerWithinQueue<deferred_offscreen::onRender>(renderer);
 		}
@@ -553,13 +584,16 @@ namespace maple
 			::Read<component::Environment>
 			::To<ecs::Query>;
 
-		inline auto onRender(Entity entity, EnvQuery envQuery, 
-			const vxgi_debug::global::component::DrawVoxelRender * voxel,
+		inline auto onRender(
+			Entity entity, 
+			EnvQuery envQuery, 
+			const vxgi_debug::global::component::DrawVoxelRender * voxelDebug,
+			const vxgi::global::component::VoxelBuffer * voxelBuffer,
 			ecs::World world)
 		{
 			auto [data, shadow, cameraView, rendererData,graph] = entity;
 			
-			if (voxel && voxel->enable)
+			if (voxelDebug && voxelDebug->enable)
 				return;
 
 			auto descriptorSet = data.descriptorLightSet[0];
@@ -575,6 +609,13 @@ namespace maple
 			descriptorSet->setTexture("uIndirectLight", rendererData.gbuffer->getBuffer(GBufferTextures::INDIRECT_LIGHTING));
 			descriptorSet->setTexture("uShadowMap", shadow.shadowTexture);
 
+			if (voxelBuffer) 
+			{
+				descriptorSet->setTexture("uVoxelVisibility", voxelBuffer->voxelVolume[VoxelBufferId::Normal]);
+				descriptorSet->setTexture("uVoxelTex", voxelBuffer->voxelVolume[VoxelBufferId::Radiance]);
+				descriptorSet->setTexture("uVoxelTexMipmap", { voxelBuffer->voxelTexMipmap.begin(), voxelBuffer->voxelTexMipmap.end() });
+			}
+
 			if (!envQuery.empty())
 			{
 				auto [envData] = envQuery.convert(*envQuery.begin());
@@ -584,6 +625,7 @@ namespace maple
 			}
 			descriptorSet->update();
 
+		
 
 			PipelineInfo pipeInfo;
 			pipeInfo.shader = data.deferredLightShader;
