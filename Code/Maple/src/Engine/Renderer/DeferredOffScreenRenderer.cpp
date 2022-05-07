@@ -103,20 +103,21 @@ namespace maple
 		{
 			auto [vxgi] = entity;
 
-			deferredData.descriptorLightSet[0]->setUniform("UniformBufferLight", "enableVXGI", &vxgi.enableIndirect);
+			deferredData.descriptorLightSet[0]->setUniform("UniformBufferVXGI", "enableVXGI", &vxgi.enableIndirect);
 			if (vxgi.enableIndirect && vxgiBuffer)
 			{
 				auto& vxgi = entity.getComponent<vxgi::component::Voxelization>();
 				float scale = 1.f / vxgi.volumeGridSize;
-				deferredData.descriptorLightSet[0]->setUniform("UniformBufferLight", "volumeDimension", &vxgi::component::Voxelization::voxelDimension);
-				deferredData.descriptorLightSet[0]->setUniform("UniformBufferLight", "voxelScale", &scale);
-				deferredData.descriptorLightSet[0]->setUniform("UniformBufferLight", "maxTracingDistanceGlobal", &vxgi.maxTracingDistance);
-				deferredData.descriptorLightSet[0]->setUniform("UniformBufferLight", "aoFalloff", &vxgi.aoFalloff);
-				deferredData.descriptorLightSet[0]->setUniform("UniformBufferLight", "aoAlpha", &vxgi.aoAlpha);
-				deferredData.descriptorLightSet[0]->setUniform("UniformBufferLight", "bounceStrength", &vxgi.bounceStrength);
-				deferredData.descriptorLightSet[0]->setUniform("UniformBufferLight", "samplingFactor", &vxgi.samplingFactor);
-				deferredData.descriptorLightSet[0]->setUniform("UniformBufferLight", "worldMinPoint", &vxgiBuffer->box.min);
-				deferredData.descriptorLightSet[0]->setUniform("UniformBufferLight", "worldMaxPoint", &vxgiBuffer->box.max);
+				deferredData.descriptorLightSet[0]->setUniform("UniformBufferVXGI", "volumeDimension", &vxgi::component::Voxelization::voxelDimension);
+				deferredData.descriptorLightSet[0]->setUniform("UniformBufferVXGI", "voxelScale", &scale);
+				deferredData.descriptorLightSet[0]->setUniform("UniformBufferVXGI", "worldSize", &vxgi.volumeGridSize);
+				deferredData.descriptorLightSet[0]->setUniform("UniformBufferVXGI", "maxTracingDistanceGlobal", &vxgi.maxTracingDistance);
+				deferredData.descriptorLightSet[0]->setUniform("UniformBufferVXGI", "aoFalloff", &vxgi.aoFalloff);
+				deferredData.descriptorLightSet[0]->setUniform("UniformBufferVXGI", "aoAlpha", &vxgi.aoAlpha);
+				deferredData.descriptorLightSet[0]->setUniform("UniformBufferVXGI", "bounceStrength", &vxgi.bounceStrength);
+				deferredData.descriptorLightSet[0]->setUniform("UniformBufferVXGI", "samplingFactor", &vxgi.samplingFactor);
+				deferredData.descriptorLightSet[0]->setUniform("UniformBufferVXGI", "worldMinPoint", &vxgiBuffer->box.min);
+				deferredData.descriptorLightSet[0]->setUniform("UniformBufferVXGI", "worldMaxPoint", &vxgiBuffer->box.max);
 			}
 		}
 	}
@@ -231,16 +232,13 @@ namespace maple
 			int32_t renderMode = 0;
 			auto cameraPos = glm::vec4{cameraView.cameraTransform->getWorldPosition(), 1.f};
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "lights", lights, sizeof(component::LightData) * numLights, false);
-			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "cameraPosition", &cameraPos);
+			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "shadowTransform", shadowTransforms);
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "viewMatrix", &cameraView.view);
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "lightView", &lightView);
-			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "shadowTransform", shadowTransforms);
-			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "splitDepths", splitDepth);
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "biasMat", &BIAS_MATRIX);
+			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "cameraPosition", &cameraPos);
+			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "splitDepths", splitDepth);
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "shadowMapSize", &shadowData.shadowMapSize);
-			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "shadowFade", &shadowData.shadowFade);
-			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "cascadeTransitionFade", &shadowData.cascadeTransitionFade);
-			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "maxShadowDistance", &shadowData.maxShadowDistance);
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "initialBias", &shadowData.initialBias);
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "lightCount", &numLights);
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "shadowCount", &numShadows);
@@ -611,7 +609,7 @@ namespace maple
 
 			if (voxelBuffer) 
 			{
-				descriptorSet->setTexture("uVoxelVisibility", voxelBuffer->voxelVolume[VoxelBufferId::Normal]);
+				//descriptorSet->setTexture("uVoxelVisibility", voxelBuffer->voxelVolume[VoxelBufferId::Normal]);
 				descriptorSet->setTexture("uVoxelTex", voxelBuffer->voxelVolume[VoxelBufferId::Radiance]);
 				descriptorSet->setTexture("uVoxelTexMipmap", { voxelBuffer->voxelTexMipmap.begin(), voxelBuffer->voxelTexMipmap.end() });
 			}

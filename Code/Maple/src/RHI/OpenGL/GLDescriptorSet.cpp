@@ -187,7 +187,7 @@ namespace maple
 				}
 				else
 				{
-					static const int32_t MAX_TEXTURE_UNITS           = 16;
+					static const int32_t MAX_TEXTURE_UNITS           = 32;
 					int32_t              samplers[MAX_TEXTURE_UNITS] = {0};
 
 					MAPLE_ASSERT(MAX_TEXTURE_UNITS >= descriptor.textures.size(), "Texture Count greater than max");
@@ -196,7 +196,16 @@ namespace maple
 					{
 						if (descriptor.textures[i])
 						{
-							descriptor.textures[i]->bind(descriptor.binding + i);
+							if (descriptor.type == DescriptorType::ImageSampler)
+							{
+								descriptor.textures[i]->bind(descriptor.binding + i);
+							}
+							else 
+							{
+								auto read = descriptor.accessFlag == 0 || descriptor.accessFlag == 2;
+								auto write = descriptor.accessFlag == 1 || descriptor.accessFlag == 2;
+								descriptor.textures[i]->bindImageTexture(descriptor.binding + i, read, write, descriptor.mipmapLevel, 0);
+							}
 							samplers[i] = i;
 						}
 					}

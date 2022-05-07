@@ -59,7 +59,7 @@ namespace maple
 					);
 
 					auto vSize = voxel.volumeGridSize / vDimension;
-					auto model = glm::translate(glm::mat4(1.f), box.box->min) * glm::scale(glm::mat4(1.f), glm::vec3(vSize));
+					auto model = glm::scale(glm::translate(glm::mat4(1.f), box.box->min), glm::vec3(vSize));
 					pipline.ubo.mvp = cameraView.projView * model;
 					pipline.ubo.voxelSize = voxel.voxelSize;
 					pipline.ubo.worldMinPoint = box.box->min;
@@ -68,14 +68,15 @@ namespace maple
 					{
 						pipline.ubo.frustumPlanes[i] = cameraView.frustum.getPlane(i);
 					}
-
+					
 					pipline.descriptors[0]->setTexture("uVoxelBuffer", voxelBuffer.voxelVolume[render.id]);
+					pipline.descriptors[0]->setUniform("UniformBufferObjectVert", "colorChannels", &render.colorChannels);
 					pipline.descriptors[0]->setUniform("UniformBufferObjectVert", "volumeDimension", &vDimension);
 					pipline.descriptors[0]->update();
 					pipline.descriptors[1]->setUniformBufferData("UniformBufferObjectGemo", &pipline.ubo);
 					pipline.descriptors[1]->update();
 
-					Application::getRenderDevice()->clearRenderTarget(rendererData.gbuffer->getDepthBuffer(), rendererData.commandBuffer);
+					//Application::getRenderDevice()->clearRenderTarget(rendererData.gbuffer->getDepthBuffer(), rendererData.commandBuffer);
 
 					PipelineInfo pipelineInfo;
 					pipelineInfo.shader = pipline.shader;

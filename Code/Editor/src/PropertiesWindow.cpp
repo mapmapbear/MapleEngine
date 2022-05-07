@@ -127,6 +127,8 @@ namespace MM
 			voxel.id = static_cast<VoxelBufferId::Id>(id);
 		}
 
+		ImGuiHelper::property("Color Channels", voxel.colorChannels,0.f,1.f,true);
+
 		ImGui::Separator();
 		ImGui::Columns(1);
 	}

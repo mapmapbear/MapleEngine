@@ -42,7 +42,7 @@ namespace maple
 				bool dirty = false;
 				bool injectFirstBounce = true;
 				bool enableIndirect = true;
-				float volumeGridSize;
+				float volumeGridSize;//the max value in aabb   glm::max(axisSize.x, glm::max(axisSize.y, axisSize.z));
 				float voxelSize;
 				float maxTracingDistance = 1.0f;
 				float aoFalloff = 725.f;

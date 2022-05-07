@@ -5,6 +5,7 @@
 #include <memory>
 #include "Engine/Core.h"
 #include "VoxelBufferId.h"
+#include <glm/glm.hpp>
 
 namespace maple
 {
@@ -19,6 +20,7 @@ namespace maple
 			{
 				bool enable = false;
 				VoxelBufferId::Id id = VoxelBufferId::Id::Albedo;
+				glm::vec4 colorChannels = { 1,1,1,1 };
 			};
 		}
 		auto registerVXGIVisualization(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> point) -> void;
