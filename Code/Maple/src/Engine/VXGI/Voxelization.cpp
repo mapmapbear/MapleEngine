@@ -358,7 +358,7 @@ namespace maple
 
 				voxel.dirty = false;
 
-			/*	generateMipmapMipmap(buffer.voxelVolume[VoxelBufferId::Radiance], renderData, buffer, basePipeline);
+				generateMipmapMipmap(buffer.voxelVolume[VoxelBufferId::Radiance], renderData, buffer, basePipeline);
 				generateMipmapVolume(buffer, volumePipline, box, renderData);
 
 				if (voxel.injectFirstBounce)
@@ -395,7 +395,7 @@ namespace maple
 
 					generateMipmapMipmap(buffer.voxelVolume[VoxelBufferId::Radiance], renderData, buffer, basePipeline);
 					generateMipmapVolume(buffer, volumePipline, box, renderData);
-				}*/
+				}
 
 				Application::getRenderDoc().endCapture();
 			}

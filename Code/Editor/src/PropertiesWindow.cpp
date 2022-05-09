@@ -106,8 +106,11 @@ namespace MM
 		ImGuiHelper::showProperty("InjectFirstBounce", std::to_string(voxel.injectFirstBounce));
 		ImGuiHelper::showProperty("VoxelSize", std::to_string(voxel.voxelSize));
 		ImGuiHelper::showProperty("VolumeGridSize", std::to_string(voxel.volumeGridSize));
-		ImGuiHelper::showProperty("MaxTracingDistance", std::to_string(voxel.maxTracingDistance));
-		ImGuiHelper::property("Enable Indirect", voxel.enableIndirect);
+		ImGuiHelper::property("MaxTracingDistance", std::to_string(voxel.maxTracingDistance));
+		ImGuiHelper::property("AO Falloff", voxel.aoFalloff);
+		ImGuiHelper::property("Sampling Factor", voxel.samplingFactor);
+		ImGuiHelper::property("Bounce Strength", voxel.bounceStrength,0,10);
+		ImGuiHelper::property("AO Alpha", voxel.aoAlpha);
 		ImGui::Separator();
 		ImGui::Columns(1);
 	}

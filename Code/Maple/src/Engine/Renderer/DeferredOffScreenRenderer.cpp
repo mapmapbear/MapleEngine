@@ -103,7 +103,9 @@ namespace maple
 		{
 			auto [vxgi] = entity;
 
-			deferredData.descriptorLightSet[0]->setUniform("UniformBufferVXGI", "enableVXGI", &vxgi.enableIndirect);
+			int32_t enableVXGI = vxgi.enableIndirect ? 1 : 0;
+
+			deferredData.descriptorLightSet[0]->setUniform("UniformBufferVXGI", "enableVXGI", &enableVXGI);
 			if (vxgi.enableIndirect && vxgiBuffer)
 			{
 				auto& vxgi = entity.getComponent<vxgi::component::Voxelization>();
