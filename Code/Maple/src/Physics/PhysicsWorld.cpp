@@ -7,7 +7,7 @@ namespace maple
 {
 	namespace physics
 	{
-		auto exitPhysics(component::PhysicsWorld& world) -> void
+		auto exitPhysics(global::physics::component::PhysicsWorld &world) -> void
 		{
 			if (world.dynamicsWorld)
 			{

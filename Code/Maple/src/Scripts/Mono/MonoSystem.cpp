@@ -35,7 +35,7 @@ namespace maple
 			auto [mono] = entity;
 			auto dt = world.getComponent<component::DeltaTime>().dt;
 
-			if (world.getComponent<component::AppState>().state == EditorState::Play)
+			if (world.getComponent<global::component::AppState>().state == EditorState::Play)
 			{
 				for (auto& script : mono.scripts)
 				{

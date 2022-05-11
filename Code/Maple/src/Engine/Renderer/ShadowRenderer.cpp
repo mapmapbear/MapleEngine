@@ -136,52 +136,56 @@ namespace maple
 			::Write<component::Transform>
 			::To<ecs::Query>;
 
-		auto beginScene(Entity entity, LightQuery lightQuery, MeshQuery meshQuery, SkinnedMeshQuery skinnedQuery, BoneMeshQuery boneQuery, ecs::World world)
+		auto beginScene(Entity entity, LightQuery lightQuery, MeshQuery meshQuery, SkinnedMeshQuery skinnedQuery, BoneMeshQuery boneQuery, 
+			const global::component::SceneTransformChanged & sceneChanged,
+			ecs::World world)
 		{
 			auto [shadowData, cameraView] = entity;
 
-			for (uint32_t i = 0; i < shadowData.shadowMapNum; i++)
+			if (sceneChanged.dirty)
 			{
-				shadowData.cascadeCommandQueue[i].clear();
-			}
-
-			shadowData.animationQueue.clear();
-
-			if (!lightQuery.empty())
-			{
-				component::Light* directionaLight = nullptr;
-
-				for (auto entity : lightQuery)
+				for (uint32_t i = 0; i < shadowData.shadowMapNum; i++)
 				{
-					auto [light] = lightQuery.convert(entity);
-					if (static_cast<component::LightType>(light.lightData.type) == component::LightType::DirectionalLight)
-					{
-						directionaLight = &light;
-						break;
-					}
+					shadowData.cascadeCommandQueue[i].clear();
 				}
 
-				if (directionaLight && directionaLight->castShadow)
+				shadowData.animationQueue.clear();
+
+				if (!lightQuery.empty())
 				{
-					if (entity.hasComponent<component::ReflectiveShadowData>())
-					{
-						auto& rsm = entity.getComponent<component::ReflectiveShadowData>();
-						rsm.descriptorSets[1]->setUniform("UBO", "light", &directionaLight->lightData);
-					}
+					component::Light *directionaLight = nullptr;
 
-					if (directionaLight)
+					for (auto entity : lightQuery)
 					{
-						updateCascades(cameraView, shadowData, directionaLight);
-
-						for (uint32_t i = 0; i < shadowData.shadowMapNum; i++)
+						auto [light] = lightQuery.convert(entity);
+						if (static_cast<component::LightType>(light.lightData.type) == component::LightType::DirectionalLight)
 						{
-							shadowData.cascadeFrustums[i].from(shadowData.shadowProjView[i]);
+							directionaLight = &light;
+							break;
 						}
 					}
-#pragma omp parallel for num_threads(4)
-					for (int32_t i = 0; i < shadowData.shadowMapNum; i++)
+
+					if (directionaLight && directionaLight->castShadow)
 					{
-						meshQuery.forEach([&, i](MeshEntity meshEntity) {
+						if (entity.hasComponent<component::ReflectiveShadowData>())
+						{
+							auto &rsm = entity.getComponent<component::ReflectiveShadowData>();
+							rsm.descriptorSets[1]->setUniform("UBO", "light", &directionaLight->lightData);
+						}
+
+						if (directionaLight)
+						{
+							updateCascades(cameraView, shadowData, directionaLight);
+
+							for (uint32_t i = 0; i < shadowData.shadowMapNum; i++)
+							{
+								shadowData.cascadeFrustums[i].from(shadowData.shadowProjView[i]);
+							}
+						}
+#pragma omp parallel for num_threads(4)
+						for (int32_t i = 0; i < shadowData.shadowMapNum; i++)
+						{
+							meshQuery.forEach([&, i](MeshEntity meshEntity) {
 							auto [mesh, trans] = meshEntity;
 							if (mesh.castShadow && mesh.active && mesh.mesh != nullptr)
 							{
@@ -198,29 +202,30 @@ namespace maple
 										cmd.material = !mesh.mesh->getMaterial().empty() ? mesh.mesh->getMaterial()[0].get() : nullptr;
 									}
 								}
-							}});
-					}
+							} });
+						}
 
-					for (auto skinEntity : skinnedQuery)
-					{
-						auto [mesh, trans] = skinnedQuery.convert(skinEntity);
-
-						if (mesh.castShadow && mesh.mesh != nullptr)
+						for (auto skinEntity : skinnedQuery)
 						{
-							auto bb = mesh.mesh->getBoundingBox()->transform(trans.getWorldMatrix());
-							auto inside = shadowData.cascadeFrustums[0].isInside(bb);
-							if (inside)
+							auto [mesh, trans] = skinnedQuery.convert(skinEntity);
+
+							if (mesh.castShadow && mesh.mesh != nullptr)
 							{
-								auto& cmd = shadowData.animationQueue.emplace_back();
-								cmd.mesh = mesh.mesh.get();
-								cmd.transform = trans.getWorldMatrix();
-								cmd.boneTransforms = mesh.boneTransforms;
+								auto bb     = mesh.mesh->getBoundingBox()->transform(trans.getWorldMatrix());
+								auto inside = shadowData.cascadeFrustums[0].isInside(bb);
+								if (inside)
+								{
+									auto &cmd          = shadowData.animationQueue.emplace_back();
+									cmd.mesh           = mesh.mesh.get();
+									cmd.transform      = trans.getWorldMatrix();
+									cmd.boneTransforms = mesh.boneTransforms;
+								}
 							}
 						}
-					}
 
-					shadowData.descriptorSet[0]->setUniform("UniformBufferObject", "projView", shadowData.shadowProjView);
-					shadowData.animDescriptorSet[0]->setUniform("UniformBufferObject", "projView", shadowData.shadowProjView);
+						shadowData.descriptorSet[0]->setUniform("UniformBufferObject", "projView", shadowData.shadowProjView);
+						shadowData.animDescriptorSet[0]->setUniform("UniformBufferObject", "projView", shadowData.shadowProjView);
+					}
 				}
 			}
 		}
@@ -231,91 +236,92 @@ namespace maple
 			::Write<capture_graph::component::RenderGraph>
 			::To<ecs::Entity>;
 
-		inline auto onRender(RenderEntity entity, ecs::World world)
+		inline auto onRender(RenderEntity entity, const global::component::SceneTransformChanged &sceneChanged, ecs::World world)
 		{
 			auto [shadowData, rendererData, renderGraph] = entity;
 
-
-
-			shadowData.descriptorSet[0]->update();
-
-			PipelineInfo pipelineInfo;
-			pipelineInfo.shader = shadowData.shader;
-
-			pipelineInfo.cullMode = CullMode::Back;
-			pipelineInfo.transparencyEnabled = false;
-			pipelineInfo.depthBiasEnabled = false;
-			pipelineInfo.depthArrayTarget = shadowData.shadowTexture;
-			pipelineInfo.clearTargets = true;
-
-			auto pipeline = Pipeline::get(pipelineInfo, shadowData.descriptorSet, renderGraph);
-
-			for (uint32_t i = 0; i < shadowData.shadowMapNum; ++i)
+			if (sceneChanged.dirty)
 			{
-				//GPUProfile("Shadow Layer Pass");
-				pipeline->bind(rendererData.commandBuffer, i);
+				shadowData.descriptorSet[0]->update();
 
-				for (auto& command : shadowData.cascadeCommandQueue[i])
+				PipelineInfo pipelineInfo;
+				pipelineInfo.shader = shadowData.shader;
+
+				pipelineInfo.cullMode            = CullMode::Back;
+				pipelineInfo.transparencyEnabled = false;
+				pipelineInfo.depthBiasEnabled    = false;
+				pipelineInfo.depthArrayTarget    = shadowData.shadowTexture;
+				pipelineInfo.clearTargets        = true;
+
+				auto pipeline = Pipeline::get(pipelineInfo, shadowData.descriptorSet, renderGraph);
+
+				for (uint32_t i = 0; i < shadowData.shadowMapNum; ++i)
 				{
-					Mesh* mesh = command.mesh;
-					shadowData.currentDescriptorSets[0] = shadowData.descriptorSet[0];
-					const auto& trans = command.transform;
-					auto& pushConstants = shadowData.shader->getPushConstants()[0];
+					//GPUProfile("Shadow Layer Pass");
+					pipeline->bind(rendererData.commandBuffer, i);
 
-					pushConstants.setValue("transform", (void*)&trans);
-					pushConstants.setValue("cascadeIndex", (void*)&i);
+					for (auto &command : shadowData.cascadeCommandQueue[i])
+					{
+						Mesh *mesh                          = command.mesh;
+						shadowData.currentDescriptorSets[0] = shadowData.descriptorSet[0];
+						const auto &trans                   = command.transform;
+						auto &      pushConstants           = shadowData.shader->getPushConstants()[0];
 
-					shadowData.shader->bindPushConstants(rendererData.commandBuffer, pipeline.get());
+						pushConstants.setValue("transform", (void *) &trans);
+						pushConstants.setValue("cascadeIndex", (void *) &i);
 
-					Renderer::bindDescriptorSets(pipeline.get(), rendererData.commandBuffer, 0, shadowData.descriptorSet);
-					Renderer::drawMesh(rendererData.commandBuffer, pipeline.get(), mesh);
+						shadowData.shader->bindPushConstants(rendererData.commandBuffer, pipeline.get());
+
+						Renderer::bindDescriptorSets(pipeline.get(), rendererData.commandBuffer, 0, shadowData.descriptorSet);
+						Renderer::drawMesh(rendererData.commandBuffer, pipeline.get(), mesh);
+					}
+
+					pipeline->end(rendererData.commandBuffer);
 				}
-
-				pipeline->end(rendererData.commandBuffer);
 			}
 		}
 
-		inline auto onRenderAnim(RenderEntity entity, ecs::World world)
+		inline auto onRenderAnim(RenderEntity entity, const global::component::SceneTransformChanged &sceneChanged, ecs::World world)
 		{
 			auto [shadowData, rendererData, renderGraph] = entity;
 
-			shadowData.animDescriptorSet[0]->update();
-
-			PipelineInfo pipelineInfo;
-			pipelineInfo.shader = shadowData.animShader;
-
-			pipelineInfo.cullMode = CullMode::Back;
-			pipelineInfo.transparencyEnabled = false;
-			pipelineInfo.depthBiasEnabled = false;
-			pipelineInfo.depthArrayTarget = shadowData.shadowTexture;
-			pipelineInfo.clearTargets = false;
-
-			auto pipeline = Pipeline::get(pipelineInfo, shadowData.animDescriptorSet, renderGraph);
-
-
-			pipeline->bind(rendererData.commandBuffer);
-
-			for (auto& command : shadowData.animationQueue)
+			if (sceneChanged.dirty)
 			{
-				Mesh* mesh = command.mesh;
+				shadowData.animDescriptorSet[0]->update();
+				PipelineInfo pipelineInfo;
+				pipelineInfo.shader = shadowData.animShader;
+				pipelineInfo.cullMode            = CullMode::Back;
+				pipelineInfo.transparencyEnabled = false;
+				pipelineInfo.depthBiasEnabled    = false;
+				pipelineInfo.depthArrayTarget    = shadowData.shadowTexture;
+				pipelineInfo.clearTargets        = false;
 
-				if (command.boneTransforms != nullptr)
+				auto pipeline = Pipeline::get(pipelineInfo, shadowData.animDescriptorSet, renderGraph);
+
+				pipeline->bind(rendererData.commandBuffer);
+
+				for (auto &command : shadowData.animationQueue)
 				{
-					shadowData.animDescriptorSet[0]->setUniform("UniformBufferObject", "boneTransforms", command.boneTransforms.get());
-					shadowData.animDescriptorSet[0]->update();
+					Mesh *mesh = command.mesh;
 
-					const auto& trans = command.transform;
-					auto& pushConstants = shadowData.animShader->getPushConstants()[0];
+					if (command.boneTransforms != nullptr)
+					{
+						shadowData.animDescriptorSet[0]->setUniform("UniformBufferObject", "boneTransforms", command.boneTransforms.get());
+						shadowData.animDescriptorSet[0]->update();
 
-					pushConstants.setValue("transform", (void*)&trans);
+						const auto &trans         = command.transform;
+						auto &      pushConstants = shadowData.animShader->getPushConstants()[0];
 
-					shadowData.animShader->bindPushConstants(rendererData.commandBuffer, pipeline.get());
+						pushConstants.setValue("transform", (void *) &trans);
 
-					Renderer::bindDescriptorSets(pipeline.get(), rendererData.commandBuffer, 0, shadowData.animDescriptorSet);
-					Renderer::drawMesh(rendererData.commandBuffer, pipeline.get(), mesh);
+						shadowData.animShader->bindPushConstants(rendererData.commandBuffer, pipeline.get());
+
+						Renderer::bindDescriptorSets(pipeline.get(), rendererData.commandBuffer, 0, shadowData.animDescriptorSet);
+						Renderer::drawMesh(rendererData.commandBuffer, pipeline.get(), mesh);
+					}
 				}
+				pipeline->end(rendererData.commandBuffer);
 			}
-			pipeline->end(rendererData.commandBuffer);
 		}
 	}
 

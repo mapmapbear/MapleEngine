@@ -21,18 +21,21 @@ namespace maple
 		class Transform;
 	}
 
+	namespace global::physics::component
+	{
+		struct PhysicsWorld;
+	}
+
 	namespace physics 
 	{
 		namespace component
 		{
 			struct Collider;
 			struct RigidBody;
-			struct PhysicsWorld;
 		};
 
-		auto MAPLE_EXPORT updateCollider(component::Collider& collider, component::PhysicsWorld & world, component::RigidBody* rigidBody = nullptr) -> void;
-		auto MAPLE_EXPORT updateRigidBody(component::RigidBody& rigidBody, maple::component::Transform& transform, component::PhysicsWorld& world, component::Collider* collider = nullptr) -> void;
-
+		//auto MAPLE_EXPORT updateCollider(component::Collider &collider, global::physics::component::PhysicsWorld &world, component::RigidBody *rigidBody = nullptr) -> void;
+		//auto MAPLE_EXPORT updateRigidBody(component::RigidBody &rigidBody, maple::component::Transform &transform, global::physics::component::PhysicsWorld &world, component::Collider *collider = nullptr) -> void;
 		auto registerPhysicsModule(std::shared_ptr<ExecutePoint> executePoint) -> void;
 	}
 }

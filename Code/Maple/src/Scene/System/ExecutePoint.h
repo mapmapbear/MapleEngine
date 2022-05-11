@@ -3,36 +3,36 @@
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-
 #include "Engine/Core.h"
 #include "Engine/Profiler.h"
 
-#include <ecs/SystemBuilder.h>
-#include <ecs/World.h>
-#include <ecs/TypeList.h>
 #include <Scene/Entity/Entity.h>
+#include <ecs/SystemBuilder.h>
+#include <ecs/TypeList.h>
+#include <ecs/World.h>
 
 namespace maple
 {
 	struct ExecuteQueue
 	{
-		ExecuteQueue(const std::string& name) :name(name) {};
-		std::string name;
-		std::vector<std::function<void(entt::registry& )>> jobs;
-		std::function<void(ecs::World)> preCall =  [](ecs::World) {};
-		std::function<void(ecs::World)> postCall = [](ecs::World) {};
+		ExecuteQueue(const std::string &name) :
+		    name(name){};
+		std::string                                        name;
+		std::vector<std::function<void(entt::registry &)>> jobs;
+		std::function<void(ecs::World)>                    preCall  = [](ecs::World) {};
+		std::function<void(ecs::World)>                    postCall = [](ecs::World) {};
 	};
 
 	class MAPLE_EXPORT ExecutePoint
 	{
 	  public:
-
-		inline ExecutePoint()
-			:gameStartQueue("GameStart"),
-			gameEndedQueue("GameEnded"),
-			updateQueue("Update"),
-			imGuiQueue("ImGui"),
-			factoryQueue("Factory")
+		inline ExecutePoint() :
+		    gameStartQueue("GameStart"),
+		    gameEndedQueue("GameEnded"),
+		    updateQueue("Update"),
+		    imGuiQueue("ImGui"),
+		    factoryQueue("Factory"),
+		    frameEndQueue("FrmeEnd")
 		{
 			globalEntity = create("global");
 		};
@@ -43,10 +43,10 @@ namespace maple
 		}
 
 		template <typename Component>
-		inline auto registerGlobalComponent(const std::function<void(Component&) > & onInit = nullptr) -> void
+		inline auto registerGlobalComponent(const std::function<void(Component &)> &onInit = nullptr) -> void
 		{
-			factoryQueue.jobs.emplace_back([=](entt::registry& reg) {
-				auto & comp = reg.get_or_emplace<Component>(globalEntity);
+			factoryQueue.jobs.emplace_back([=](entt::registry &reg) {
+				auto &comp = reg.get_or_emplace<Component>(globalEntity);
 				if (onInit != nullptr)
 					onInit(comp);
 			});
@@ -65,6 +65,12 @@ namespace maple
 		}
 
 		template <auto System>
+		inline auto registerSystemInFrameEnd() -> void
+		{
+			expand(ecs::FunctionConstant<System>{}, frameEndQueue);
+		}
+
+		template <auto System>
 		inline auto registerGameStart() -> void
 		{
 			expand(ecs::FunctionConstant<System>{}, gameStartQueue);
@@ -75,7 +81,6 @@ namespace maple
 		{
 			expand(ecs::FunctionConstant<System>{}, gameEndedQueue);
 		}
-
 
 		template <auto System>
 		inline auto registerOnImGui() -> void
@@ -89,7 +94,7 @@ namespace maple
 			expand(ecs::FunctionConstant<System>{}, queue);
 		}
 
-		template <typename R, typename ...T>
+		template <typename R, typename... T>
 		inline auto addDependency() -> void
 		{
 			(registry.on_construct<R>().connect<&entt::registry::get_or_emplace<T>>(), ...);
@@ -99,13 +104,16 @@ namespace maple
 		auto removeAllChildren(entt::entity entity, bool root = true) -> void;
 		auto removeEntity(entt::entity entity) -> void;
 
-		auto create()->Entity;
-		auto create(const std::string& name)->Entity;
-		auto getEntityByName(const std::string& name)->Entity;
+		auto create() -> Entity;
+		auto create(const std::string &name) -> Entity;
+		auto getEntityByName(const std::string &name) -> Entity;
 
-		inline auto getGlobalEntity() const { return globalEntity; }
+		inline auto getGlobalEntity() const
+		{
+			return globalEntity;
+		}
 
-		inline auto& getRegistry()
+		inline auto &getRegistry()
 		{
 			return registry;
 		}
@@ -117,21 +125,21 @@ namespace maple
 		}
 
 		template <typename Component, typename... Args>
-		inline auto& getGlobalComponent(Args &&...args)
+		inline auto &getGlobalComponent(Args &&...args)
 		{
-			return registry.template get_or_emplace<Component>(globalEntity,std::forward<Args>(args)...);
+			return registry.template get_or_emplace<Component>(globalEntity, std::forward<Args>(args)...);
 		}
 
-		template<typename TComponent, auto Candidate>
+		template <typename TComponent, auto Candidate>
 		inline auto onConstruct(bool connect = true)
 		{
-			if(connect)
+			if (connect)
 				registry.template on_construct<TComponent>().connect<&delegateComponent<TComponent, Candidate>>(globalEntity);
 			else
 				registry.template on_construct<TComponent>().disconnect<&delegateComponent<TComponent, Candidate>>(globalEntity);
 		}
 
-		template<typename TComponent, auto Candidate>
+		template <typename TComponent, auto Candidate>
 		inline auto onUpdate(bool connect = true)
 		{
 			if (connect)
@@ -140,7 +148,7 @@ namespace maple
 				registry.template on_update<TComponent>().disconnect<&delegateComponent<TComponent, Candidate>>(globalEntity);
 		}
 
-		template<typename TComponent, auto Candidate>
+		template <typename TComponent, auto Candidate>
 		inline auto onDestory(bool connect = true)
 		{
 			if (connect)
@@ -149,10 +157,10 @@ namespace maple
 				registry.template on_destroy<TComponent>().disconnect<&delegateComponent<TComponent, Candidate>>(globalEntity);
 		}
 
-		//these two will be refactored in the future because of the ExecutePoint could belong to scene ?
-		inline auto onGameStart() 
+		//these two will be re-factored in the future because of the ExecutePoint could belong to scene ?
+		inline auto onGameStart()
 		{
-			for (auto& job : gameStartQueue.jobs)
+			for (auto &job : gameStartQueue.jobs)
 			{
 				job(registry);
 			}
@@ -160,60 +168,56 @@ namespace maple
 
 		inline auto onGameEnded()
 		{
-			for (auto& job : gameEndedQueue.jobs)
+			for (auto &job : gameEndedQueue.jobs)
 			{
 				job(registry);
 			}
 		}
 
 	  private:
-		  friend class Application;
+		friend class Application;
+		
+		inline auto flushJobs(ExecuteQueue &queue)
+		{
+			queue.preCall(ecs::World{registry, globalEntity});
+			for (auto &func : queue.jobs)
+			{
+				func(registry);
+			}
+			queue.postCall(ecs::World{registry, globalEntity});
+		}
 
-		  template<typename TComponent, auto Candidate>
-		  static auto delegateComponent(entt::entity globalEntity, entt::registry& registry, entt::entity entity)
-		  {
-			  auto& comp = registry.get<TComponent>(entity);
-			  std::invoke(Candidate, comp, Entity{ entity,registry }, ecs::World{ registry,globalEntity });
-		  }
+		template <typename TComponent, auto Candidate>
+		static auto delegateComponent(entt::entity globalEntity, entt::registry &registry, entt::entity entity)
+		{
+			auto &comp = registry.get<TComponent>(entity);
+			std::invoke(Candidate, comp, Entity{entity, registry}, ecs::World{registry, globalEntity});
+		}
 
-		  inline auto onUpdate(float dt)
-		  {
-			  for (auto& job : updateQueue.jobs)
-			  {
-				  job(registry);
-			  }
-		  }
+		inline auto onUpdate(float dt)
+		{
+			flushJobs(updateQueue);
+		}
 
-		  inline auto executeImGui()
-		  {
-			  for (auto& job : imGuiQueue.jobs)
-			  {
-				  job(registry);
-			  }
-		  }
+		inline auto executeImGui()
+		{
+			flushJobs(imGuiQueue);
+		}
 
-		  inline auto execute()
-		  {
-			  if (!factoryQueue.jobs.empty())
-			  {
-				  for (auto& job : factoryQueue.jobs)
-				  {
-					  job(registry);
-				  }
-				  factoryQueue.jobs.clear();
-			  }
+		inline auto execute()
+		{
+			if (!factoryQueue.jobs.empty())
+			{
+				flushJobs(factoryQueue);
+				factoryQueue.jobs.clear();
+			}
 
-			  for (auto g : graph)
-			  {
-				  g->preCall(ecs::World{ registry,globalEntity });
-				  for (auto& func : g->jobs)
-				  {
-					  func(registry);
-				  }
-				  g->postCall(ecs::World{ registry,globalEntity });
-			  }
-		  }
-
+			for (auto g : graph)
+			{
+				flushJobs(*g);
+			}
+			flushJobs(frameEndQueue);
+		}
 
 		template <auto System>
 		inline auto expand(ecs::FunctionConstant<System> system, ExecuteQueue &queue) -> void
@@ -224,11 +228,11 @@ namespace maple
 		template <typename TSystem>
 		inline auto build(TSystem, ExecuteQueue &queue) -> void
 		{
-			queue.jobs.emplace_back([&](entt::registry& reg) {
-				auto call = ecs::CallBuilder::template buildCall(TSystem{});
+			queue.jobs.emplace_back([&](entt::registry &reg) {
+				auto           call       = ecs::CallBuilder::template buildCall(TSystem{});
 				constexpr auto reflectStr = ecs::CallBuilder::template buildFullCallName(TSystem{});
 				PROFILE_SCOPE(reflectStr.c_str());
-				auto dependency = ecs::CallBuilder::template buildDependency(reg, globalEntity , TSystem{});
+				auto dependency = ecs::CallBuilder::template buildDependency(reg, globalEntity, TSystem{});
 				call(TSystem{}, reg, dependency);
 			});
 		}
@@ -238,6 +242,8 @@ namespace maple
 		ExecuteQueue gameEndedQueue;
 
 		ExecuteQueue updateQueue;
+
+		ExecuteQueue frameEndQueue;        //execute in end of every frame
 
 		ExecuteQueue imGuiQueue;
 

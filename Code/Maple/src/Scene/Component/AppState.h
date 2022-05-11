@@ -13,7 +13,7 @@ namespace maple
 		Preview
 	};
 
-	namespace component
+	namespace global::component
 	{
 		struct AppState 
 		{

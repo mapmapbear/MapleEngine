@@ -23,15 +23,15 @@ namespace maple
 		namespace update 
 		{
 			using Entity = ecs::Chain
-				::Write<component::PhysicsWorld>
+				::Write<global::physics::component::PhysicsWorld>
 				::Read<maple::component::DeltaTime>
 				::To<ecs::Entity>;
 
-			inline auto updateWorld(Entity entity, ecs::World world)
+			inline auto updateWorld(Entity entity,const global::component::AppState * appState, ecs::World world)
 			{
 				auto [phyWorld, dt] = entity;
 
-				if (world.getComponent<maple::component::AppState>().state == EditorState::Play)
+				if (appState->state == EditorState::Play)
 				{
 					if (phyWorld.dynamicsWorld)
 					{
@@ -50,7 +50,7 @@ namespace maple
 			{
 				auto [rigidBody, collider, transform] = entity;
 
-				if (world.getComponent<maple::component::AppState>().state == EditorState::Play)
+				if (world.getComponent<maple::global::component::AppState>().state == EditorState::Play)
 				{
 					if (rigidBody.dynamic && rigidBody.rigidbody)
 					{
@@ -97,7 +97,7 @@ namespace maple
 				::Write<maple::component::Transform>
 				::To<ecs::Entity>;
 
-			inline auto system(RigidBodyEntity entity, ecs::World world)
+			inline auto system(RigidBodyEntity entity, global::physics::component::PhysicsWorld & phyWorld, ecs::World world)
 			{
 				auto [rigidBody, collider, transform] = entity;
 	
@@ -120,7 +120,7 @@ namespace maple
 
 					if (collider.shape != nullptr)
 					{
-						world.getComponent<component::PhysicsWorld>().collisionShapes.push_back(collider.shape);
+						phyWorld.collisionShapes.push_back(collider.shape);
 					}
 				}
 
@@ -157,7 +157,7 @@ namespace maple
 						rigidBody.rigidbody->setActivationState(DISABLE_DEACTIVATION);
 					}
 
-					world.getComponent<component::PhysicsWorld>().dynamicsWorld->addRigidBody(rigidBody.rigidbody);
+					phyWorld.dynamicsWorld->addRigidBody(rigidBody.rigidbody);
 				}
 			}
 		}
@@ -170,13 +170,13 @@ namespace maple
 				::Write<maple::component::Transform>
 				::To<ecs::Entity>;
 
-			inline auto system(RigidBodyEntity entity, ecs::World world)
+			inline auto system(RigidBodyEntity entity, global::physics::component::PhysicsWorld &phyWorld, ecs::World world)
 			{
 				auto [rigidBody, collider, transform] = entity;
 
 				if (collider.shape != nullptr)
 				{
-					world.getComponent<component::PhysicsWorld>().collisionShapes.remove(collider.shape);
+					phyWorld.collisionShapes.remove(collider.shape);
 					delete collider.shape;
 					collider.shape = nullptr;
 				}
@@ -185,7 +185,7 @@ namespace maple
 
 				if (rigidBody.rigidbody != nullptr)
 				{
-					world.getComponent<component::PhysicsWorld>().dynamicsWorld->removeRigidBody(rigidBody.rigidbody);
+					phyWorld.dynamicsWorld->removeRigidBody(rigidBody.rigidbody);
 					auto state = rigidBody.rigidbody->getMotionState();
 					if (state != nullptr) 
 					{
@@ -239,7 +239,7 @@ namespace maple
 			{
 				if (rigidRody.rigidbody) 
 				{
-					world.getComponent<component::PhysicsWorld>().dynamicsWorld->removeRigidBody(rigidRody.rigidbody);
+					world.getComponent<global::physics::component::PhysicsWorld>().dynamicsWorld->removeRigidBody(rigidRody.rigidbody);
 					btMotionState* ms = rigidRody.rigidbody->getMotionState();
 					if (ms)
 					{
@@ -252,7 +252,7 @@ namespace maple
 
 		auto registerPhysicsModule(std::shared_ptr<ExecutePoint> executePoint) -> void
 		{
-			executePoint->registerGlobalComponent<component::PhysicsWorld>([](component::PhysicsWorld & world){
+			executePoint->registerGlobalComponent<global::physics::component::PhysicsWorld>([](auto &world) {
 				world.collisionConfiguration = new btDefaultCollisionConfiguration();
 				world.dispatcher = new btCollisionDispatcher(world.collisionConfiguration);//For parallel processing you can use a different dispatcher (see Extras/BulletMultiThreaded)
 				world.broadphase = new btDbvtBroadphase();

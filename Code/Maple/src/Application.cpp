@@ -78,9 +78,10 @@ namespace maple
 
 		executePoint->getGlobalComponent<component::BoundingBoxComponent>();
 		executePoint->getGlobalComponent<component::DeltaTime>();
-		executePoint->getGlobalComponent<component::AppState>();
 
-		executePoint->getGlobalComponent<physics::component::PhysicsWorld>();
+		executePoint->getGlobalComponent<global::component::AppState>();
+		executePoint->getGlobalComponent<global::physics::component::PhysicsWorld>();
+		executePoint->getGlobalComponent<global::component::SceneTransformChanged>();
 
 		Input::create();
 		window->init();
@@ -129,7 +130,7 @@ namespace maple
 			}
 		}
 		
-		physics::exitPhysics(executePoint->getGlobalComponent<physics::component::PhysicsWorld>());
+		physics::exitPhysics(executePoint->getGlobalComponent<global::physics::component::PhysicsWorld>());
 		appDelegate->onDestory();
 		return 0;
 	}
@@ -137,7 +138,7 @@ namespace maple
 	auto Application::setEditorState(EditorState state) -> void
 	{
 		this->state = state;
-		executePoint->getGlobalComponent<component::AppState>().state = state;
+		executePoint->getGlobalComponent<global::component::AppState>().state = state;
 
 		if(state == EditorState::Play)
 		{
