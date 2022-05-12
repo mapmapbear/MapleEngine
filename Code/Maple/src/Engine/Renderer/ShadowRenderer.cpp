@@ -138,12 +138,14 @@ namespace maple
 
 		auto beginScene(Entity entity, LightQuery lightQuery, MeshQuery meshQuery, SkinnedMeshQuery skinnedQuery, BoneMeshQuery boneQuery, 
 			const global::component::SceneTransformChanged & sceneChanged,
+			
 			ecs::World world)
 		{
 			auto [shadowData, cameraView] = entity;
 
-			if (sceneChanged.dirty)
+			if (sceneChanged.dirty || shadowData.dirty)
 			{
+				shadowData.dirty = false;
 				for (uint32_t i = 0; i < shadowData.shadowMapNum; i++)
 				{
 					shadowData.cascadeCommandQueue[i].clear();

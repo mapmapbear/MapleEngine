@@ -55,7 +55,7 @@ namespace maple
 						float voxelScale;
 						float traceShadowHit = 0.5;
 						int32_t volumeDimension = vxgi::component::Voxelization::voxelDimension;
-						int32_t normalWeightedLambert = 1;//default is 1
+						int32_t normalWeightedLambert = 0;//default is 0
 						int32_t shadowingMethod = 1;//2 trace / 1 shadow-mapping
 						int32_t padding;
 					}uniformData;
