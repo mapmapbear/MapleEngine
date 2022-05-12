@@ -32,7 +32,7 @@ namespace maple
 		auto MAPLE_EXPORT drawBox(const glm::vec3& position, const BoundingBox& box, const glm::vec4& color) -> void;
 		auto MAPLE_EXPORT drawTriangle(const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, const glm::vec4& color = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)) -> void;
 		auto MAPLE_EXPORT drawLight(component::Light* light, const glm::quat& rotation, const glm::vec4& color) -> void;
-		auto MAPLE_EXPORT drawCone(int32_t numCircleVerts, int32_t numLinesToCircle, float angle, float length, const glm::vec3& position, const glm::quat& rotation, const glm::vec4& color) -> void;
+		auto MAPLE_EXPORT drawCone(int32_t numCircleVerts, int32_t numLinesToCircle, float angle, float length, const glm::vec3& position, const glm::quat& rotation, const glm::vec4& color, bool backward = false) -> void;
 		auto MAPLE_EXPORT drawSphere(float radius, const glm::vec3& position, const glm::vec4& color) -> void;
 		auto MAPLE_EXPORT drawCircle(int32_t numVerts, float radius, const glm::vec3& position, const glm::quat& rotation, const glm::vec4& color) -> void;
 		auto MAPLE_EXPORT drawCapsule(const glm::vec3& position, const glm::quat& rotation, float height, float radius, const glm::vec4& color) -> void;

@@ -148,15 +148,15 @@ namespace maple
 		};
 	}
 
-	auto GeometryRenderer::drawLine(const glm::vec3 &start, const glm::vec3 &end, const glm::vec4 &color) -> void
+	auto GeometryRenderer::drawLine(const glm::vec3& start, const glm::vec3& end, const glm::vec4& color) -> void
 	{
 		auto& renderData = Application::getExecutePoint()->getGlobalComponent<component::GeometryRenderData>();
-		renderData.lines.push_back({start, end, color});
+		renderData.lines.push_back({ start, end, color });
 	}
 
-	auto GeometryRenderer::drawFrustum(const Frustum &frustum, const glm::vec4& color) -> void
+	auto GeometryRenderer::drawFrustum(const Frustum& frustum, const glm::vec4& color) -> void
 	{
-		const glm::vec3 * vertices = frustum.getVertices();
+		const glm::vec3* vertices = frustum.getVertices();
 
 		auto c = color * 0.6f;
 		c.a = 1.0f;
@@ -177,16 +177,16 @@ namespace maple
 
 	auto GeometryRenderer::drawRect(int32_t x, int32_t y, int32_t width, int32_t height) -> void
 	{
-		auto right  = x + width;
+		auto right = x + width;
 		auto bottom = y + height;
 
-		drawLine({x, y, 0}, {right, y, 0});
-		drawLine({right, y, 0}, {right, bottom, 0});
-		drawLine({right, bottom, 0}, {x, bottom, 0});
-		drawLine({x, bottom, 0}, {x, y, 0});
+		drawLine({ x, y, 0 }, { right, y, 0 });
+		drawLine({ right, y, 0 }, { right, bottom, 0 });
+		drawLine({ right, bottom, 0 }, { x, bottom, 0 });
+		drawLine({ x, bottom, 0 }, { x, y, 0 });
 	}
 
-	auto GeometryRenderer::drawBox(const glm::vec3& position, const BoundingBox &box, const glm::vec4 &color) -> void
+	auto GeometryRenderer::drawBox(const glm::vec3& position, const BoundingBox& box, const glm::vec4& color) -> void
 	{
 		glm::vec3 uuu = box.max + position;
 		glm::vec3 lll = box.min + position;
@@ -211,10 +211,10 @@ namespace maple
 		drawLine(uul, uuu, color);
 	}
 
-	auto GeometryRenderer::drawTriangle(const glm::vec3 &v0, const glm::vec3 &v1, const glm::vec3 &v2, const glm::vec4 &color) -> void
+	auto GeometryRenderer::drawTriangle(const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, const glm::vec4& color) -> void
 	{
 		auto& renderData = Application::getExecutePoint()->getGlobalComponent<component::GeometryRenderData>();
-		renderData.triangles.push_back({v0, v1, v2, color});
+		renderData.triangles.push_back({ v0, v1, v2, color });
 	}
 
 	auto GeometryRenderer::drawLight(component::Light* light, const glm::quat& rotation, const glm::vec4& color) -> void
@@ -231,7 +231,7 @@ namespace maple
 		//Spot
 		else if (light->lightData.type < 1.1f)
 		{
-			drawCone(60, 4, light->lightData.angle , light->lightData.intensity, light->lightData.position, rotation, color);
+			drawCone(60, 4, light->lightData.angle, light->lightData.intensity, light->lightData.position, rotation, color,true);
 		}
 		//Point
 		else
@@ -240,10 +240,10 @@ namespace maple
 		}
 	}
 
-	auto GeometryRenderer::drawCone(int32_t numCircleVerts, int32_t numLinesToCircle, float angle, float length, const glm::vec3& position, const glm::quat& rotation, const glm::vec4& color) -> void
+	auto GeometryRenderer::drawCone(int32_t numCircleVerts, int32_t numLinesToCircle, float angle, float length, const glm::vec3& position, const glm::quat& rotation, const glm::vec4& color, bool backward) -> void
 	{
 		float endAngle = std::tan(angle * 0.5f) * length;
-		glm::vec3 forward = glm::normalize(rotation * maple::FORWARD * -1.f);
+		glm::vec3 forward = glm::normalize(rotation * maple::FORWARD * (backward ? -1.f : 1.f));
 		glm::vec3 endPosition = position + forward * length;
 		float offset = 0.0f;
 		drawCircle(numCircleVerts, endAngle, endPosition, rotation, color);
@@ -251,7 +251,7 @@ namespace maple
 		for (int i = 0; i < numLinesToCircle; i++)
 		{
 			float a = glm::radians(i * 90.0f);
-			glm::vec3 point = rotation * glm::vec3(std::cos(a),std::sin(a), 0.0f) * endAngle;
+			glm::vec3 point = rotation * glm::vec3(std::cos(a), std::sin(a), 0.0f) * endAngle;
 			drawLine(position, position + point + forward * length, color);
 		}
 	}
@@ -355,7 +355,7 @@ namespace maple
 			::Read<component::CameraView>
 			::To<ecs::Entity>;
 
-		inline auto system(Entity entity, ecs::World world) 
+		inline auto system(Entity entity, ecs::World world)
 		{
 			auto [render, geometry, cameraView] = entity;
 			geometry.lineDescriptorSet[0]->setUniform("UniformBufferObject", "projView", &cameraView.projView);
@@ -372,9 +372,9 @@ namespace maple
 			::Write<capture_graph::component::RenderGraph>
 			::To<ecs::Entity>;
 
-		inline auto systemLines(Entity entity, ecs::World world) 
+		inline auto systemLines(Entity entity, ecs::World world)
 		{
-			auto [render, geometry, cameraView,graph] = entity;
+			auto [render, geometry, cameraView, graph] = entity;
 			auto commandBuffer = render.commandBuffer;
 
 			if (!geometry.lines.empty())
@@ -390,7 +390,7 @@ namespace maple
 				pipelineInfo.drawType = DrawType::Lines;
 				pipelineInfo.colorTargets[0] = render.gbuffer->getBuffer(GBufferTextures::SCREEN);
 
-				auto pipeline = Pipeline::get(pipelineInfo, geometry.lineDescriptorSet,graph);
+				auto pipeline = Pipeline::get(pipelineInfo, geometry.lineDescriptorSet, graph);
 
 				pipeline->bind(commandBuffer);
 				geometry.lineVertexBuffers->bind(commandBuffer, pipeline.get());
@@ -430,7 +430,7 @@ namespace maple
 
 		inline auto systemPoints(Entity entity, ecs::World world)
 		{
-			auto [render, geometry, cameraView,graph] = entity;
+			auto [render, geometry, cameraView, graph] = entity;
 			auto commandBuffer = render.commandBuffer;
 
 			if (!geometry.points.empty())
@@ -445,7 +445,7 @@ namespace maple
 				pipelineInfo.blendMode = BlendMode::SrcAlphaOneMinusSrcAlpha;
 				pipelineInfo.colorTargets[0] = render.gbuffer->getBuffer(GBufferTextures::SCREEN);
 
-				auto pipeline = Pipeline::get(pipelineInfo,geometry.pointDescriptorSet, graph);
+				auto pipeline = Pipeline::get(pipelineInfo, geometry.pointDescriptorSet, graph);
 
 				pipeline->bind(commandBuffer);
 				geometry.pointVertexBuffers->bind(commandBuffer, pipeline.get());
