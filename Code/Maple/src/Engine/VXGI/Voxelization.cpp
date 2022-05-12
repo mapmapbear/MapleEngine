@@ -129,7 +129,7 @@ namespace maple
 			}
 		}
 
-		namespace begin_scene 
+		namespace begin_scene
 		{
 			using Entity = ecs::Chain
 				::Write<component::Voxelization>
@@ -149,13 +149,13 @@ namespace maple
 			using LightQuery = LightDefine
 				::To<ecs::Query>;
 
-			inline auto system(Entity entity, 
-				Query meshQuery, 
+			inline auto system(Entity entity,
+				Query meshQuery,
 				LightQuery lightQuery,
-				global::component::VoxelBuffer & buffer, 
+				global::component::VoxelBuffer& buffer,
 				global::component::VoxelRadianceInjectionPipline& injection,
-				maple::component::ShadowMapData & shadowMapData,
-				maple::component::CameraView & cameraView,
+				maple::component::ShadowMapData& shadowMapData,
+				maple::component::CameraView& cameraView,
 				maple::component::BoundingBoxComponent& aabb,
 				ecs::World world)
 			{
@@ -176,7 +176,7 @@ namespace maple
 
 						auto& cmd = buffer.commandQueue.emplace_back();
 						cmd.mesh = mesh.mesh.get();
-						cmd.transform = worldTransform; 
+						cmd.transform = worldTransform;
 
 						if (mesh.mesh->getSubMeshCount() <= 1)
 						{
@@ -192,7 +192,7 @@ namespace maple
 					auto [light] = entity;
 					lights[numLights] = light.lightData;
 					numLights++;
-				});
+					});
 
 				injection.descriptors[0]->setUniform("UniformBufferLight", "lights", lights, sizeof(maple::component::LightData) * numLights, false);
 				injection.descriptors[0]->setUniform("UniformBufferLight", "viewMatrix", &cameraView.view);
@@ -204,7 +204,7 @@ namespace maple
 				injection.descriptors[0]->setUniform("UniformBufferLight", "biasMat", &BIAS_MATRIX);
 				injection.descriptors[0]->setUniform("UniformBufferLight", "initialBias", &shadowMapData.initialBias);
 
-				injection.uniformData.shadowingMethod = shadowMapData.shadowMethod;
+				injection.uniformData.shadowingMethod = ShadowingMethod::TraceShadowCone;        //shadowMapData.shadowMethod;
 				injection.descriptors[0]->setUniformBufferData("UniformBufferVX", &injection.uniformData);
 
 				injection.descriptors[0]->setTexture("uVoxelAlbedo", buffer.voxelVolume[VoxelBufferId::Albedo]);
@@ -216,7 +216,7 @@ namespace maple
 				injection.descriptors[0]->update();
 			}
 		}
-		
+
 		namespace update_radiance
 		{
 			using Entity = ecs::Chain
@@ -227,7 +227,7 @@ namespace maple
 			using Query = ecs::Chain
 				::Read<maple::component::Light>
 				::To<ecs::Query>;
-			
+
 			/**
 			 * voxelTexMipmap radiance -> mipmap
 			 */
@@ -285,7 +285,7 @@ namespace maple
 				global::component::VoxelMipmapBasePipline& pipline)
 			{
 				auto halfDimension = component::Voxelization::voxelDimension / 2; //dimension for voxelMipmap
-				pipline.descriptors[0]->setUniform("UniformBufferObject", "mipDimension",&halfDimension);
+				pipline.descriptors[0]->setUniform("UniformBufferObject", "mipDimension", &halfDimension);
 				pipline.descriptors[0]->setTexture("uVoxelMipmap", { buffer.voxelTexMipmap.begin(),buffer.voxelTexMipmap.end() });
 				pipline.descriptors[0]->setTexture("uVoxelBase", voxelRadiance);
 				pipline.descriptors[0]->update();
@@ -315,7 +315,7 @@ namespace maple
 			}
 
 			inline auto system(
-				Entity entity, 
+				Entity entity,
 				Query lightQuery,
 				global::component::VoxelBuffer& buffer,
 				global::component::VoxelRadianceInjectionPipline& injection,
@@ -326,7 +326,7 @@ namespace maple
 				const maple::component::RendererData& renderData,
 				ecs::World world)
 			{
-			
+
 				auto [voxel] = entity;
 
 				if (!voxel.dirty)
@@ -345,9 +345,9 @@ namespace maple
 				pipeline->bind(renderData.commandBuffer);
 				Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, injection.descriptors);
 				Renderer::dispatch(
-					renderData.commandBuffer, 
-					pipelineInfo.groupCountX, 
-					pipelineInfo.groupCountY, 
+					renderData.commandBuffer,
+					pipelineInfo.groupCountX,
+					pipelineInfo.groupCountY,
 					pipelineInfo.groupCountZ
 				);
 				Renderer::memoryBarrier(renderData.commandBuffer,
@@ -369,7 +369,7 @@ namespace maple
 					propagation.descriptors[0]->setTexture("uVoxelComposite", buffer.voxelVolume[VoxelBufferId::Radiance]);
 					propagation.descriptors[0]->setTexture("uVoxelAlbedo", buffer.voxelVolume[VoxelBufferId::Albedo]);
 					propagation.descriptors[0]->setTexture("uVoxelNormal", buffer.voxelVolume[VoxelBufferId::Normal]);
-					propagation.descriptors[0]->setTexture("uVoxelTexMipmap", {buffer.voxelTexMipmap.begin(), buffer.voxelTexMipmap.end()});
+					propagation.descriptors[0]->setTexture("uVoxelTexMipmap", { buffer.voxelTexMipmap.begin(), buffer.voxelTexMipmap.end() });
 					propagation.descriptors[0]->update();
 
 					PipelineInfo pipelineInfo;
@@ -407,32 +407,32 @@ namespace maple
 				::Write<component::Voxelization>
 				::To<ecs::Entity>;
 
-			inline auto system(Entity entity, const maple::component::RendererData & renderData, ecs::World world)
+			inline auto system(Entity entity, const maple::component::RendererData& renderData, ecs::World world)
 			{
-				
+
 			}
 		}
 
-		namespace voxelize_static_scene 
+		namespace voxelize_static_scene
 		{
 			using Entity = ecs::Chain
 				::Write<component::Voxelization>
 				::To<ecs::Entity>;
 
-			inline auto system(Entity entity, 
-				global::component::VoxelBuffer & buffer,
-				maple::component::CameraView & cameraView,
-				maple::component::RendererData & renderData,
+			inline auto system(Entity entity,
+				global::component::VoxelBuffer& buffer,
+				maple::component::CameraView& cameraView,
+				maple::component::RendererData& renderData,
 				maple::component::DeferredData& deferredData,
-				capture_graph::component::RenderGraph & graph,
+				capture_graph::component::RenderGraph& graph,
 				ecs::World world)
 			{
-	
+
 				auto [voxel] = entity;
 				if (!voxel.dirty)
 					return;
 
-				for (auto text : buffer.voxelVolume) 
+				for (auto text : buffer.voxelVolume)
 				{
 					text->clear();
 				}
@@ -454,18 +454,18 @@ namespace maple
 				pipeInfo.depthTest = false;
 				pipeInfo.clearTargets = true;
 				pipeInfo.colorTargets[0] = buffer.colorBuffer;
-				
-				auto pipeline = Pipeline::get(pipeInfo,buffer.descriptors, graph);
+
+				auto pipeline = Pipeline::get(pipeInfo, buffer.descriptors, graph);
 				pipeline->bind(renderData.commandBuffer);
-				
-				for (auto & cmd : deferredData.commandQueue)
+
+				for (auto& cmd : deferredData.commandQueue)
 				{
 					cmd.material->setShader(buffer.voxelShader);
 					cmd.material->bind();
 					buffer.descriptors[DescriptorID::MaterialBinding] = cmd.material->getDescriptorSet();
 
 					auto& pushConstants = buffer.voxelShader->getPushConstants()[0];
-			
+
 					pushConstants.setValue("transform", &cmd.transform);
 					buffer.voxelShader->bindPushConstants(renderData.commandBuffer, pipeline.get());
 
@@ -478,7 +478,7 @@ namespace maple
 					MemoryBarrierFlags::Texture_Fetch_Barrier);
 
 				pipeline->end(renderData.commandBuffer);
-			
+
 			}//next is dynamic
 		}
 
@@ -488,14 +488,14 @@ namespace maple
 				::Write<component::Voxelization>
 				::To<ecs::Entity>;
 
-			inline auto system(Entity entity, 
+			inline auto system(Entity entity,
 				global::component::VoxelBuffer& voxelBuffer,
 				global::component::VoxelRadianceInjectionPipline& injection,
-				maple::component::BoundingBoxComponent & box,
+				maple::component::BoundingBoxComponent& box,
 				ecs::World world)
 			{
 				auto [voxelization] = entity;
-				if (box.box) 
+				if (box.box)
 				{
 					if (voxelBuffer.box != *box.box)
 					{
@@ -541,7 +541,7 @@ namespace maple
 						voxelBuffer.descriptors[DescriptorID::GeometryUniform]->setUniform("UniformBufferGemo", "voxelScale", &voxelScale);
 						voxelBuffer.descriptors[DescriptorID::GeometryUniform]->setUniform("UniformBufferGemo", "volumeDimension", &dimension);
 						voxelBuffer.descriptors[DescriptorID::GeometryUniform]->update();
-						
+
 						uint32_t flagVoxel = 1;
 						voxelBuffer.descriptors[DescriptorID::FragmentUniform]->setUniform("UniformBufferObject", "flagStaticVoxels", &flagVoxel);
 						voxelBuffer.descriptors[DescriptorID::FragmentUniform]->update();
@@ -556,33 +556,33 @@ namespace maple
 		{
 			point->registerGlobalComponent<global::component::VoxelBuffer>(&initVoxelBuffer);
 
-			point->registerGlobalComponent<global::component::VoxelRadianceInjectionPipline>([](auto & injection) {
+			point->registerGlobalComponent<global::component::VoxelRadianceInjectionPipline>([](auto& injection) {
 				injection.shader = Shader::create("shaders/VXGI/InjectRadiance.shader");
 				injection.descriptors.emplace_back(
 					DescriptorSet::create({ 0, injection.shader.get() })
 				);
-			});
+				});
 
-			point->registerGlobalComponent<global::component::VoxelMipmapVolumePipline>([](auto & pipline) {
+			point->registerGlobalComponent<global::component::VoxelMipmapVolumePipline>([](auto& pipline) {
 				pipline.shader = Shader::create("shaders/VXGI/AnisoMipmapVolume.shader");
 				pipline.descriptors.emplace_back(
 					DescriptorSet::create({ 0, pipline.shader.get() })
 				);
-			});
+				});
 
 			point->registerGlobalComponent<global::component::VoxelMipmapBasePipline>([](auto& pipline) {
 				pipline.shader = Shader::create("shaders/VXGI/AnisoMipmapBase.shader");
 				pipline.descriptors.emplace_back(
 					DescriptorSet::create({ 0, pipline.shader.get() })
 				);
-			});
+				});
 
 			point->registerGlobalComponent<global::component::VoxelRadiancePropagationPipline>([](auto& pipline) {
 				pipline.shader = Shader::create("shaders/VXGI/PropagationRadiance.shader");
 				pipline.descriptors.emplace_back(
 					DescriptorSet::create({ 0, pipline.shader.get() })
 				);
-			});
+				});
 		}
 
 		auto registerVoxelizer(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> point) -> void

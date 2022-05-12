@@ -243,7 +243,7 @@ namespace maple
 	auto GeometryRenderer::drawCone(int32_t numCircleVerts, int32_t numLinesToCircle, float angle, float length, const glm::vec3& position, const glm::quat& rotation, const glm::vec4& color) -> void
 	{
 		float endAngle = std::tan(angle * 0.5f) * length;
-		glm::vec3 forward = glm::normalize(rotation * maple::FORWARD);
+		glm::vec3 forward = glm::normalize(rotation * maple::FORWARD * -1.f);
 		glm::vec3 endPosition = position + forward * length;
 		float offset = 0.0f;
 		drawCircle(numCircleVerts, endAngle, endPosition, rotation, color);

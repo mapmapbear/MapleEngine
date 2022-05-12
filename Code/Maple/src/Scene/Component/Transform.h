@@ -40,24 +40,18 @@ namespace maple
 
 			auto lookAt(const glm::vec3 &target) -> void;
 
-			inline auto &getWorldMatrix()
+			inline auto &getWorldMatrix() const 
 			{
-				if (dirty)
-					updateLocalMatrix();
 				return worldMatrix;
 			}
 
-			inline const auto &getWorldMatrixInverse()
+			inline const auto &getWorldMatrixInverse() const
 			{
-				if (dirty)
-					updateLocalMatrix();
 				return worldMatrixInverse;
 			}
 
-			inline auto &getLocalMatrix()
+			inline auto &getLocalMatrix() const
 			{
-				if (dirty)
-					updateLocalMatrix();
 				return localMatrix;
 			}
 			inline auto getWorldPosition() const

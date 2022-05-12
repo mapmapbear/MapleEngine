@@ -19,12 +19,16 @@
 
 ![image](https://github.com/flwmxd/MapleEngine/blob/main/Screenshot/LPV_GI.png)
 
+### Voxel Cone Tracing
+
+![image](https://github.com/flwmxd/MapleEngine/blob/main/Screenshot/VXGI.png)
+
 ## Current Features
 
 - OpenGL/Vulkan backends 
 - Entity-component system( Based on entt )
 - PBR/IBL
-- Global Illumination(Light Propagation Volumes)
+- Global Illumination(Light Propagation Volumes/Voxel Cone Tracing)
 - Directional lights + Cascaded shadow maps
 - Soft shadows (PCF)
 - Screen Space Ambient Occlusion (SSAO)
