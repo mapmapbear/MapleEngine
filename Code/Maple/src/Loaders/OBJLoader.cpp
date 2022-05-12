@@ -107,28 +107,39 @@ namespace maple
 				{
 					std::shared_ptr<Texture2D> texture = loadMaterialTextures("Albedo", 
 						texturesCache, 
-						mp->diffuse_texname, directory, TextureParameters(TextureFilter::Nearest, TextureFilter::Nearest, mp->diffuse_texopt.clamp ? TextureWrap::ClampToEdge : TextureWrap::Repeat));
+						mp->diffuse_texname, directory, TextureParameters(
+							TextureFilter::Linear, 
+							TextureFilter::Linear, mp->diffuse_texopt.clamp ? TextureWrap::ClampToEdge : TextureWrap::Repeat));
 					if (texture)
 						textures.albedo = texture;
 				}
 
-				if (mp->bump_texname.length() > 0)
+				if (mp->normal_texname.length() > 0)
 				{
-					//std::shared_ptr<Texture2D> texture = loadMaterialTextures("Normal", texturesCache, mp->bump_texname, directory, TextureParameters(TextureFilter::Nearest, TextureFilter::Nearest, mp->bump_texopt.clamp ? TextureWrap::ClampToEdge : TextureWrap::Repeat));
-					//if (texture)
-					//	textures.normal = texture;        //pbrMaterial->SetNormalMap(texture);
+					std::shared_ptr<Texture2D> texture = loadMaterialTextures("Normal", 
+						texturesCache, mp->normal_texname, directory, TextureParameters(
+							TextureFilter::Linear,
+							TextureFilter::Linear, mp->normal_texopt.clamp ? TextureWrap::ClampToEdge : TextureWrap::Repeat));
+					if (texture)
+						textures.normal = texture; 
 				}
 
 				if (mp->roughness_texname.length() > 0)
 				{
-					std::shared_ptr<Texture2D> texture = loadMaterialTextures("Roughness", texturesCache, mp->roughness_texname.c_str(), directory, TextureParameters(TextureFilter::Nearest, TextureFilter::Nearest, mp->roughness_texopt.clamp ? TextureWrap::ClampToEdge : TextureWrap::Repeat));
+					std::shared_ptr<Texture2D> texture = loadMaterialTextures("Roughness", texturesCache, mp->roughness_texname.c_str(), directory, 
+						TextureParameters(
+							TextureFilter::Linear,
+							TextureFilter::Linear, mp->roughness_texopt.clamp ? TextureWrap::ClampToEdge : TextureWrap::Repeat));
 					if (texture)
 						textures.roughness = texture;
 				}
 
 				if (mp->metallic_texname.length() > 0)
 				{
-					std::shared_ptr<Texture2D> texture = loadMaterialTextures("Metallic", texturesCache, mp->metallic_texname, directory, TextureParameters(TextureFilter::Nearest, TextureFilter::Nearest, mp->metallic_texopt.clamp ? TextureWrap::ClampToEdge : TextureWrap::Repeat));
+					std::shared_ptr<Texture2D> texture = loadMaterialTextures("Metallic", texturesCache, mp->metallic_texname, directory, 
+						TextureParameters(
+							TextureFilter::Linear,
+							TextureFilter::Linear, mp->metallic_texopt.clamp ? TextureWrap::ClampToEdge : TextureWrap::Repeat));
 					if (texture)
 						textures.metallic = texture;
 				}
