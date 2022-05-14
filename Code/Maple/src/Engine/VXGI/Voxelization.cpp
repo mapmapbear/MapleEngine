@@ -127,6 +127,53 @@ namespace maple
 						buffer.descriptors[i] = DescriptorSet::create({ i,buffer.voxelShader.get() });
 				}
 			}
+
+			using LightDefine = ecs::Chain
+				::Write<maple::component::Light>;
+
+			using LightEntity = LightDefine
+				::To<ecs::Entity>;
+
+			using LightQuery = LightDefine
+				::To<ecs::Query>;
+
+			inline auto updateLightingBuffer(
+				LightQuery lightQuery,
+				global::component::VoxelBuffer& buffer,
+				maple::component::ShadowMapData& shadowMapData,
+				maple::component::CameraView& cameraView,
+				global::component::VoxelRadianceInjectionPipline& injection)
+			{
+				maple::component::LightData lights[32] = {};
+				uint32_t numLights = 0;
+
+				lightQuery.forEach([&](LightEntity entity) {
+					auto [light] = entity;
+					lights[numLights] = light.lightData;
+					numLights++;
+				});
+
+				injection.descriptors[0]->setUniform("UniformBufferLight", "lights", lights, sizeof(maple::component::LightData) * numLights, false);
+				injection.descriptors[0]->setUniform("UniformBufferLight", "viewMatrix", &cameraView.view);
+				injection.descriptors[0]->setUniform("UniformBufferLight", "lightView", &shadowMapData.lightMatrix);
+				injection.descriptors[0]->setUniform("UniformBufferLight", "shadowCount", &shadowMapData.shadowMapNum);
+				injection.descriptors[0]->setUniform("UniformBufferLight", "lightCount", &numLights);
+				injection.descriptors[0]->setUniform("UniformBufferLight", "shadowTransform", shadowMapData.shadowProjView);
+				injection.descriptors[0]->setUniform("UniformBufferLight", "splitDepths", shadowMapData.splitDepth);
+				injection.descriptors[0]->setUniform("UniformBufferLight", "biasMat", &BIAS_MATRIX);
+				injection.descriptors[0]->setUniform("UniformBufferLight", "initialBias", &shadowMapData.initialBias);
+
+				injection.uniformData.shadowingMethod = ShadowingMethod::TraceShadowCone;        //shadowMapData.shadowMethod;
+				injection.descriptors[0]->setUniformBufferData("UniformBufferVX", &injection.uniformData);
+
+				injection.descriptors[0]->setTexture("uVoxelAlbedo", buffer.voxelVolume[VoxelBufferId::Albedo]);
+				injection.descriptors[0]->setTexture("uVoxelNormal", buffer.voxelVolume[VoxelBufferId::Normal]);
+				injection.descriptors[0]->setTexture("uVoxelRadiance", buffer.voxelVolume[VoxelBufferId::Radiance]);
+				injection.descriptors[0]->setTexture("uVoxelEmissive", buffer.voxelVolume[VoxelBufferId::Emissive]);
+				injection.descriptors[0]->setTexture("uShadowMap", shadowMapData.shadowTexture);
+
+				injection.descriptors[0]->update();
+			}
 		}
 
 		namespace begin_scene
@@ -138,15 +185,6 @@ namespace maple
 			using Query = ecs::Chain
 				::Write<maple::component::MeshRenderer>
 				::Write<maple::component::Transform>
-				::To<ecs::Query>;
-
-			using LightDefine = ecs::Chain
-				::Write<maple::component::Light>;
-
-			using LightEntity = LightDefine
-				::To<ecs::Entity>;
-
-			using LightQuery = LightDefine
 				::To<ecs::Query>;
 
 			inline auto system(Entity entity,
@@ -185,42 +223,43 @@ namespace maple
 					}
 				}
 
-				maple::component::LightData lights[32] = {};
-				uint32_t numLights = 0;
+				updateLightingBuffer(lightQuery, buffer, shadowMapData, cameraView, injection);
+			}
+		}
 
-				lightQuery.forEach([&](LightEntity entity) {
-					auto [light] = entity;
-					lights[numLights] = light.lightData;
-					numLights++;
-					});
+		namespace listen_light_change 
+		{
+			using Entity = ecs::Chain
+				::Without<component::UpdateRadiance>
+				::Write<component::Voxelization>
+				::To<ecs::Entity>;
 
-				injection.descriptors[0]->setUniform("UniformBufferLight", "lights", lights, sizeof(maple::component::LightData) * numLights, false);
-				injection.descriptors[0]->setUniform("UniformBufferLight", "viewMatrix", &cameraView.view);
-				injection.descriptors[0]->setUniform("UniformBufferLight", "lightView", &shadowMapData.lightMatrix);
-				injection.descriptors[0]->setUniform("UniformBufferLight", "shadowCount", &shadowMapData.shadowMapNum);
-				injection.descriptors[0]->setUniform("UniformBufferLight", "lightCount", &numLights);
-				injection.descriptors[0]->setUniform("UniformBufferLight", "shadowTransform", shadowMapData.shadowProjView);
-				injection.descriptors[0]->setUniform("UniformBufferLight", "splitDepths", shadowMapData.splitDepth);
-				injection.descriptors[0]->setUniform("UniformBufferLight", "biasMat", &BIAS_MATRIX);
-				injection.descriptors[0]->setUniform("UniformBufferLight", "initialBias", &shadowMapData.initialBias);
+			inline auto system(Entity entity,
+				LightQuery lightQuery,
+				global::component::VoxelBuffer& buffer,
+				global::component::VoxelRadianceInjectionPipline& injection,
+				const maple::global::component::SceneTransformChanged & changed,
+				maple::component::ShadowMapData& shadowMapData,
+				maple::component::CameraView& cameraView,
+				ecs::World world)
+			{
 
-				injection.uniformData.shadowingMethod = ShadowingMethod::TraceShadowCone;        //shadowMapData.shadowMethod;
-				injection.descriptors[0]->setUniformBufferData("UniformBufferVX", &injection.uniformData);
-
-				injection.descriptors[0]->setTexture("uVoxelAlbedo", buffer.voxelVolume[VoxelBufferId::Albedo]);
-				injection.descriptors[0]->setTexture("uVoxelNormal", buffer.voxelVolume[VoxelBufferId::Normal]);
-				injection.descriptors[0]->setTexture("uVoxelRadiance", buffer.voxelVolume[VoxelBufferId::Radiance]);
-				injection.descriptors[0]->setTexture("uVoxelEmissive", buffer.voxelVolume[VoxelBufferId::Emissive]);
-				injection.descriptors[0]->setTexture("uShadowMap", shadowMapData.shadowTexture);
-
-				injection.descriptors[0]->update();
+				for (auto ent : changed.entities)
+				{
+					if (lightQuery.contains(ent)) 
+					{
+						updateLightingBuffer(lightQuery, buffer, shadowMapData, cameraView, injection);
+						world.addComponent<component::UpdateRadiance>(entity);
+						break;
+					}
+				}
 			}
 		}
 
 		namespace update_radiance
 		{
 			using Entity = ecs::Chain
-				::With<component::UpdateRadiance>
+				::Check<component::UpdateRadiance>
 				::Write<component::Voxelization>
 				::To<ecs::Entity>;
 
@@ -329,7 +368,9 @@ namespace maple
 
 				auto [voxel] = entity;
 
-				if (!voxel.dirty)
+				auto hasUpdateRadiance = entity.hasComponent<component::UpdateRadiance>();
+
+				if (!voxel.dirty && !hasUpdateRadiance)
 					return;
 
 				buffer.voxelVolume[VoxelBufferId::Radiance]->clear();
@@ -398,6 +439,9 @@ namespace maple
 				}
 
 				Application::getRenderDoc().endCapture();
+				
+				if(hasUpdateRadiance)
+					world.removeComponent<component::UpdateRadiance>(entity);
 			}
 		}
 
@@ -589,6 +633,7 @@ namespace maple
 		{
 			point->registerWithinQueue<setup_voxel_volumes::system>(begin);
 			point->registerWithinQueue<begin_scene::system>(begin);
+			point->registerWithinQueue<listen_light_change::system>(begin);
 			point->registerWithinQueue<voxelize_static_scene::system>(renderer);
 			point->registerWithinQueue<voxelize_dynamic_scene::system>(renderer);
 			point->registerWithinQueue<update_radiance::system>(renderer);

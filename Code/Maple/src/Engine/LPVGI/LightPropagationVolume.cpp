@@ -32,7 +32,6 @@ namespace maple
 			TextureParameters paramemters(TextureFormat::R32UI, TextureFilter::Nearest, TextureWrap::ClampToEdge);
 			if (grid.lpvGridB == nullptr) 
 			{
-
 				grid.lpvGridR = Texture3D::create(grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z, paramemters);
 				grid.lpvGridB = Texture3D::create(grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z, paramemters);
 				grid.lpvGridG = Texture3D::create(grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z, paramemters);
@@ -57,27 +56,6 @@ namespace maple
 					grid.lpvGs.emplace_back(Texture3D::create(grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z, paramemters));
 				}
 			}
-			/*else 
-			{
-				grid.lpvGridR->buildTexture3D(TextureFormat::R32UI,grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z);
-				grid.lpvGridB->buildTexture3D(TextureFormat::R32UI,grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z);
-				grid.lpvGridG->buildTexture3D(TextureFormat::R32UI,grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z);
-
-				grid.lpvGeometryVolumeR->buildTexture3D(TextureFormat::R32UI, grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z);
-				grid.lpvGeometryVolumeG->buildTexture3D(TextureFormat::R32UI, grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z);
-				grid.lpvGeometryVolumeB->buildTexture3D(TextureFormat::R32UI, grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z);
-
-				grid.lpvAccumulatorB->buildTexture3D(TextureFormat::R32UI, grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z);
-				grid.lpvAccumulatorG->buildTexture3D(TextureFormat::R32UI, grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z);
-				grid.lpvAccumulatorR->buildTexture3D(TextureFormat::R32UI, grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z);
-
-				for (auto i = 1; i <= grid.propagateCount; i++)
-				{
-					grid.lpvBs[i]->buildTexture3D(TextureFormat::R32UI, grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z);
-					grid.lpvRs[i]->buildTexture3D(TextureFormat::R32UI, grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z);
-					grid.lpvGs[i]->buildTexture3D(TextureFormat::R32UI, grid.gridDimension.x * 4, grid.gridDimension.y, grid.gridDimension.z);
-				}
-			}	*/
 		}
 	}
 

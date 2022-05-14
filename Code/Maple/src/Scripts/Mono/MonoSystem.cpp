@@ -30,18 +30,16 @@ namespace maple
 			::Write<component::MonoComponent>
 			::To<ecs::Entity>;
 
-		inline auto system(Entity entity, ecs::World world)
+		inline auto system(Entity entity, const global::component::DeltaTime & dt, ecs::World world)
 		{
 			auto [mono] = entity;
-			auto dt = world.getComponent<component::DeltaTime>().dt;
-
 			if (world.getComponent<global::component::AppState>().state == EditorState::Play)
 			{
 				for (auto& script : mono.scripts)
 				{
 					if (script.second->getUpdateFunc())
 					{
-						script.second->getUpdateFunc()->invokeVirtual(script.second->getScriptObject()->getRawPtr(), dt);
+						script.second->getUpdateFunc()->invokeVirtual(script.second->getScriptObject()->getRawPtr(), dt.dt);
 					}
 				}
 			}

@@ -185,10 +185,9 @@ namespace maple
 			}
 		}
 
-		inline auto system(Entity entity, ecs::World world)
+		inline auto system(Entity entity, ecs::World world, const global::component::DeltaTime & dt)
 		{
 			auto [animator] = entity;
-			auto & dt = world.getComponent<component::DeltaTime>();
 
 			if (animator.seekTo >= 0)
 			{

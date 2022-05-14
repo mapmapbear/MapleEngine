@@ -18,7 +18,7 @@ namespace maple
 		inline auto system(Entity entity,ecs::World world) 
 		{
 			auto [luaComp] = entity;
-			auto dt = world.getComponent<component::DeltaTime>().dt;
+			auto dt = world.getComponent<global::component::DeltaTime>().dt;
 			
 			if (luaComp.onUpdateFunc && luaComp.onUpdateFunc->isFunction())
 			{

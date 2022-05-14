@@ -483,9 +483,9 @@ namespace MM
 	}
 
 	template <>
-	inline auto ComponentEditorWidget<component::DeltaTime>(entt::registry& reg, entt::registry::entity_type e) -> void
+	inline auto ComponentEditorWidget<global::component::DeltaTime>(entt::registry& reg, entt::registry::entity_type e) -> void
 	{
-		auto& dt = reg.get<component::DeltaTime>(e);
+		auto& dt = reg.get<global::component::DeltaTime>(e);
 		ImGui::Columns(2);
 		ImGui::Separator();
 		ImGuiHelper::showProperty("Delta Time", std::to_string(dt.dt));

@@ -6,6 +6,8 @@
 #include "Engine/Core.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
+#include <vector>
+#include <entt/entt.hpp>
 
 namespace maple
 {
@@ -146,6 +148,7 @@ namespace maple
 		struct SceneTransformChanged
 		{
 			bool dirty = true;
+			std::vector<entt::entity> entities;
 		};
 	}
 };           // namespace maple

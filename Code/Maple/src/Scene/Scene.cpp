@@ -336,7 +336,7 @@ namespace maple
 	auto Scene::onUpdate(float dt) -> void
 	{
 		PROFILE_FUNCTION();
-		auto& deltaTime = Application::getExecutePoint()->getGlobalComponent<component::DeltaTime>();
+		auto& deltaTime = Application::getExecutePoint()->getGlobalComponent<global::component::DeltaTime>();
 		deltaTime.dt = dt;
 		updateCameraController(dt);
 		getBoundingBox();

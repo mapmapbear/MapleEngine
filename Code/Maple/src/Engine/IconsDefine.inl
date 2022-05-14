@@ -48,7 +48,6 @@ namespace maple	\
 
 COMP_ICON(Camera,											ICON_MDI_CAMERA);
 COMP_ICON(component::Light,									ICON_MDI_LIGHTBULB);
-COMP_ICON(component::DeltaTime,								ICON_MDI_TIMELAPSE);
 COMP_ICON(component::Hierarchy,								ICON_MDI_TREE);
 COMP_ICON(component::Environment,							ICON_MDI_EARTH);
 COMP_ICON(component::Transform,								ICON_MDI_VECTOR_LINE);
@@ -72,6 +71,7 @@ COMP_ICON(component::AnimatedSprite,						ICON_MDI_IMAGE_AREA);
 COMP_ICON(component::LuaComponent,							ICON_MDI_LANGUAGE_LUA);
 COMP_ICON(component::MonoComponent,							ICON_MDI_LANGUAGE_CSHARP);
 COMP_ICON(component::BloomData,								ICON_MDI_BRIGHTNESS_AUTO);
+COMP_ICON(global::component::DeltaTime,						ICON_MDI_TIMELAPSE);
 COMP_ICON(physics::component::RigidBody,					ICON_MDI_NATURE_PEOPLE);
 COMP_ICON(physics::component::Collider,						ICON_MDI_BOOMBOX);
 COMP_ICON(vxgi::component::Voxelization,					ICON_MDI_LIGHTHOUSE_ON);

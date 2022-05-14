@@ -16,11 +16,11 @@ namespace maple
 			::Write<component::Transform>
 			::To<ecs::Entity>;
 
-		inline auto systemAnimatedSprite(Entity entity, ecs::World world)
+		inline auto systemAnimatedSprite(Entity entity, const global::component::DeltaTime & dt, ecs::World world)
 		{
 			auto [anim, trans] = entity;
 
-			anim.frameTimer += world.getComponent<component::DeltaTime>().dt;
+			anim.frameTimer += dt.dt;
 			if (anim.currentFrame < anim.animationFrames.size())
 			{
 				auto& frame = anim.animationFrames[anim.currentFrame];

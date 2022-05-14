@@ -30,6 +30,7 @@ namespace maple
 							if (changed)
 							{
 								changed->dirty = true;
+								changed->entities.emplace_back(entity);
 							}
 						}
 					}
@@ -41,6 +42,7 @@ namespace maple
 							if (changed)
 							{
 								changed->dirty = true;
+								changed->entities.emplace_back(entity);
 							}
 						}
 					}
@@ -91,6 +93,7 @@ namespace maple
 				{
 					sceneChanged->dirty = true;
 					transform.setWorldMatrix(glm::mat4(1.f));
+					sceneChanged->entities.emplace_back(entity);
 				}
 			}
 		}        // namespace update_none_hierarchy
@@ -109,6 +112,7 @@ namespace maple
 				if (sceneChanged)
 				{
 					sceneChanged->dirty = false;
+					sceneChanged->entities.clear();
 				}
 			}
 		}        // namespace reset_update

@@ -175,7 +175,6 @@ namespace maple
 						if (strcmp("VX-GI", name) == 0)
 						{
 							auto entity = scene->createEntity("VXGI");
-							entity.addComponent<vxgi::component::UpdateRadiance>();
 							entity.addComponent<vxgi::component::Voxelization>();
 							vxgi::registerGlobalComponent(Application::getExecutePoint());
 						}

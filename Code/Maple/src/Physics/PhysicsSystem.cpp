@@ -24,12 +24,14 @@ namespace maple
 		{
 			using Entity = ecs::Chain
 				::Write<global::physics::component::PhysicsWorld>
-				::Read<maple::component::DeltaTime>
 				::To<ecs::Entity>;
 
-			inline auto updateWorld(Entity entity,const global::component::AppState * appState, ecs::World world)
+			inline auto updateWorld(Entity entity,
+				const global::component::AppState * appState, 
+				const global::component::DeltaTime & dt,
+				ecs::World world)
 			{
-				auto [phyWorld, dt] = entity;
+				auto [phyWorld] = entity;
 
 				if (appState->state == EditorState::Play)
 				{

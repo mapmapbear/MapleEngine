@@ -45,19 +45,19 @@
 
 namespace maple
 {
-	Application::Application(AppDelegate *app)
+	Application::Application(AppDelegate* app)
 	{
-		appDelegate     = std::shared_ptr<AppDelegate>(app);
-		window          = NativeWindow::create(WindowInitData{1280, 720, false, "Maple-Engine"});
-		renderDevice    = RenderDevice::create();
+		appDelegate = std::shared_ptr<AppDelegate>(app);
+		window = NativeWindow::create(WindowInitData{ 1280, 720, false, "Maple-Engine" });
+		renderDevice = RenderDevice::create();
 		graphicsContext = GraphicsContext::create();
 
-		sceneManager  = std::make_unique<SceneManager>();
-		threadPool    = std::make_unique<ThreadPool>(4);
-		texturePool   = std::make_unique<TexturePool>();
-		luaVm         = std::make_unique<LuaVirtualMachine>();
-		monoVm        = std::make_shared<MonoVirtualMachine>();
-		renderGraph   = std::make_shared<RenderGraph>();
+		sceneManager = std::make_unique<SceneManager>();
+		threadPool = std::make_unique<ThreadPool>(4);
+		texturePool = std::make_unique<TexturePool>();
+		luaVm = std::make_unique<LuaVirtualMachine>();
+		monoVm = std::make_shared<MonoVirtualMachine>();
+		renderGraph = std::make_shared<RenderGraph>();
 		loaderFactory = std::make_shared<AssetsLoaderFactory>();
 	}
 
@@ -76,9 +76,9 @@ namespace maple
 		executePoint->addDependency<component::LightProbe, component::Transform>();
 		executePoint->addDependency<component::Hierarchy, component::Transform>();
 
-		executePoint->getGlobalComponent<component::BoundingBoxComponent>();
-		executePoint->getGlobalComponent<component::DeltaTime>();
+		executePoint->getGlobalComponent<component::BoundingBoxComponent>();//todo refactor later
 
+		executePoint->getGlobalComponent<global::component::DeltaTime>();
 		executePoint->getGlobalComponent<global::component::AppState>();
 		executePoint->getGlobalComponent<global::physics::component::PhysicsWorld>();
 		executePoint->getGlobalComponent<global::component::SceneTransformChanged>();
@@ -125,11 +125,11 @@ namespace maple
 			{
 				secondTimer += 1.0f;
 				LOGV("frames : {0}", frames);
-				frames  = 0;
+				frames = 0;
 				updates = 0;
 			}
 		}
-		
+
 		physics::exitPhysics(executePoint->getGlobalComponent<global::physics::component::PhysicsWorld>());
 		appDelegate->onDestory();
 		return 0;
@@ -140,18 +140,18 @@ namespace maple
 		this->state = state;
 		executePoint->getGlobalComponent<global::component::AppState>().state = state;
 
-		if(state == EditorState::Play)
+		if (state == EditorState::Play)
 		{
 			executePoint->onGameStart();
 		}
-		else 
+		else
 		{
 			executePoint->onGameEnded();
 		}
 	}
 
 	//update all things
-	auto Application::onUpdate(const Timestep &delta) -> void
+	auto Application::onUpdate(const Timestep& delta) -> void
 	{
 		PROFILE_FUNCTION();
 		auto scene = sceneManager->getCurrentScene();
@@ -171,8 +171,8 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 		renderDevice->begin();
-	/*	renderGraph->beginPreviewScene(sceneManager->getSceneByName("PreviewScene"));
-		renderGraph->onRenderPreview();*/
+		/*	renderGraph->beginPreviewScene(sceneManager->getSceneByName("PreviewScene"));
+			renderGraph->onRenderPreview();*/
 		renderGraph->beginScene(sceneManager->getCurrentScene());
 		executePoint->execute();
 		onRenderDebug();
@@ -196,7 +196,7 @@ namespace maple
 		sceneActive = active;
 	}
 
-	auto Application::onSceneCreated(Scene *scene) -> void
+	auto Application::onSceneCreated(Scene* scene) -> void
 	{
 	}
 
@@ -232,7 +232,7 @@ namespace maple
 		}
 	}
 
-	auto Application::postOnMainThread(const std::function<bool()> &mainCallback) -> std::future<bool>
+	auto Application::postOnMainThread(const std::function<bool()>& mainCallback) -> std::future<bool>
 	{
 		PROFILE_FUNCTION();
 		std::promise<bool> promise;
@@ -263,11 +263,11 @@ namespace maple
 		}
 	}
 
-	auto AppDelegate::getScene()->Scene* 
+	auto AppDelegate::getScene()->Scene*
 	{
 		return Application::get()->getCurrentScene();
 	}
 
-	maple::Application *Application::app = nullptr;
+	maple::Application* Application::app = nullptr;
 
 };        // namespace maple
