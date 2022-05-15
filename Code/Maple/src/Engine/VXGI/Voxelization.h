@@ -49,6 +49,7 @@ namespace maple
 				float samplingFactor = 0.5f;
 				float bounceStrength = 1.f;
 				float aoAlpha = 0.01;
+				float traceShadowHit = 0.5f;
 			};
 
 			struct UpdateRadiance

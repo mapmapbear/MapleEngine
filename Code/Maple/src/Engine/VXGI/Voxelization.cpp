@@ -50,14 +50,10 @@ namespace maple
 					struct UniformBufferVX
 					{
 						glm::vec4 worldMinPoint;//use xyz
-						float lightBleedingReduction = 0.f;
 						float voxelSize;
 						float voxelScale;
 						float traceShadowHit = 0.5;
 						int32_t volumeDimension = vxgi::component::Voxelization::voxelDimension;
-						int32_t normalWeightedLambert = 0;//default is 0
-						int32_t shadowingMethod = 1;//2 trace / 1 shadow-mapping
-						int32_t padding;
 					}uniformData;
 				};
 
@@ -138,6 +134,7 @@ namespace maple
 				::To<ecs::Query>;
 
 			inline auto updateLightingBuffer(
+				const vxgi::component::Voxelization& voxel,
 				LightQuery lightQuery,
 				global::component::VoxelBuffer& buffer,
 				maple::component::ShadowMapData& shadowMapData,
@@ -154,23 +151,16 @@ namespace maple
 				});
 
 				injection.descriptors[0]->setUniform("UniformBufferLight", "lights", lights, sizeof(maple::component::LightData) * numLights, false);
-				injection.descriptors[0]->setUniform("UniformBufferLight", "viewMatrix", &cameraView.view);
-				injection.descriptors[0]->setUniform("UniformBufferLight", "lightView", &shadowMapData.lightMatrix);
-				injection.descriptors[0]->setUniform("UniformBufferLight", "shadowCount", &shadowMapData.shadowMapNum);
 				injection.descriptors[0]->setUniform("UniformBufferLight", "lightCount", &numLights);
-				injection.descriptors[0]->setUniform("UniformBufferLight", "shadowTransform", shadowMapData.shadowProjView);
-				injection.descriptors[0]->setUniform("UniformBufferLight", "splitDepths", shadowMapData.splitDepth);
-				injection.descriptors[0]->setUniform("UniformBufferLight", "biasMat", &BIAS_MATRIX);
-				injection.descriptors[0]->setUniform("UniformBufferLight", "initialBias", &shadowMapData.initialBias);
 
-				injection.uniformData.shadowingMethod = ShadowingMethod::TraceShadowCone;        //shadowMapData.shadowMethod;
+				injection.uniformData.traceShadowHit = voxel.traceShadowHit;
+
 				injection.descriptors[0]->setUniformBufferData("UniformBufferVX", &injection.uniformData);
 
 				injection.descriptors[0]->setTexture("uVoxelAlbedo", buffer.voxelVolume[VoxelBufferId::Albedo]);
 				injection.descriptors[0]->setTexture("uVoxelNormal", buffer.voxelVolume[VoxelBufferId::Normal]);
 				injection.descriptors[0]->setTexture("uVoxelRadiance", buffer.voxelVolume[VoxelBufferId::Radiance]);
 				injection.descriptors[0]->setTexture("uVoxelEmissive", buffer.voxelVolume[VoxelBufferId::Emissive]);
-				injection.descriptors[0]->setTexture("uShadowMap", shadowMapData.shadowTexture);
 
 				injection.descriptors[0]->update();
 			}
@@ -223,7 +213,7 @@ namespace maple
 					}
 				}
 
-				updateLightingBuffer(lightQuery, buffer, shadowMapData, cameraView, injection);
+				updateLightingBuffer(voxel,lightQuery, buffer, shadowMapData, cameraView, injection);
 			}
 		}
 
@@ -244,11 +234,13 @@ namespace maple
 				ecs::World world)
 			{
 
+				auto [voxel] = entity;
+
 				for (auto ent : changed.entities)
 				{
 					if (lightQuery.contains(ent)) 
 					{
-						updateLightingBuffer(lightQuery, buffer, shadowMapData, cameraView, injection);
+						updateLightingBuffer(voxel, lightQuery, buffer, shadowMapData, cameraView, injection);
 						world.addComponent<component::UpdateRadiance>(entity);
 						break;
 					}

@@ -231,7 +231,7 @@ namespace maple
 		//Spot
 		else if (light->lightData.type < 1.1f)
 		{
-			drawCone(60, 4, light->lightData.angle, light->lightData.intensity, light->lightData.position, rotation, color,true);
+			drawCone(60, 4, light->lightData.angle, light->lightData.intensity, light->lightData.position, rotation, color,	true);
 		}
 		//Point
 		else
