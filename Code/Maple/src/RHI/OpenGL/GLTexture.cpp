@@ -734,19 +734,6 @@ namespace maple
 		{
 			GLCall(glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, parameters.minFilter == TextureFilter::Linear ? GL_LINEAR : GL_NEAREST));
 		}
-/*
-* 
-* 
-		glTexImage3D(GLenum target,
-			GLint level,
-			GLint internalformat,
-			GLsizei width,
-			GLsizei height,
-			GLsizei depth,
-			GLint border,
-			GLenum format, //GL_RED, GL_RG, GL_RGB, GL_BGR, GL_RGBA, GL_BGRA, GL_RED_INTEGER, GL_RG_INTEGER, GL_RGB_INTEGER, GL_BGR_INTEGER, GL_RGBA_INTEGER, GL_BGRA_INTEGER, GL_STENCIL_INDEX, GL_DEPTH_COMPONENT, GL_DEPTH_STENCIL.
-			GLenum type,
-			const void* data);*/
 
 		auto internalFormat = textureFormatToGL(parameters.format, false);
 		auto textureFormat = internalFormatToFormat(internalFormat);

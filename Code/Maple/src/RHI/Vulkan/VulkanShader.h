@@ -70,8 +70,10 @@ namespace maple
 			return std::vector<Descriptor>{};
 		}
 
-		inline auto getDescriptorLayout(uint32_t index) const
+		inline auto getDescriptorLayout(uint32_t index) const -> const VkDescriptorSetLayout *
 		{
+			if (descriptorSetLayouts.empty())
+				return nullptr;
 			return &descriptorSetLayouts[index];
 		}
 
