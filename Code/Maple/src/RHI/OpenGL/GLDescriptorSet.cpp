@@ -40,7 +40,7 @@ namespace maple
 		}
 	}
 
-	auto GLDescriptorSet::update() -> void
+	auto GLDescriptorSet::update(const CommandBuffer* cmd, bool compute) -> void
 	{
 		PROFILE_FUNCTION();
 

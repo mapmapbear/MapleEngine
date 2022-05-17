@@ -1158,6 +1158,8 @@ namespace maple
 				return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
 			case DescriptorType::ImageSampler:
 				return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			case DescriptorType::Image:
+				return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 			}
 
 			return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;

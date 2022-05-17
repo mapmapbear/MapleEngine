@@ -21,7 +21,7 @@ namespace maple
 		VulkanShader(const std::vector<uint32_t> &vertData, const std::vector<uint32_t> &fragData);
 		~VulkanShader();
 		NO_COPYABLE(VulkanShader);
-		auto bindPushConstants(CommandBuffer *commandBuffer, Pipeline *pipeline) -> void override;
+		auto bindPushConstants(const CommandBuffer *commandBuffer, Pipeline *pipeline) -> void override;
 
 		auto bind() const -> void override{};
 		auto unbind() const -> void override{};

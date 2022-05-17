@@ -16,9 +16,9 @@ namespace maple
 		~GLPipeline();
 
 		auto init(const PipelineInfo &pipelineDesc) -> bool;
-		auto end(CommandBuffer *commandBuffer) -> void override;
-		auto bind(CommandBuffer *commandBuffer, uint32_t layer = 0, int32_t cubeFace = -1, int32_t mipMapLevel = 0) -> FrameBuffer * override;
-		auto clearRenderTargets(CommandBuffer *commandBuffer) -> void override;
+		auto end(const CommandBuffer *commandBuffer) -> void override;
+		auto bind(const CommandBuffer *commandBuffer, uint32_t layer = 0, int32_t cubeFace = -1, int32_t mipMapLevel = 0) -> FrameBuffer * override;
+		auto clearRenderTargets(const CommandBuffer *commandBuffer) -> void override;
 		auto bindVertexArray() -> void;
 		auto createFrameBuffers() -> void;
 		auto getWidth() -> uint32_t override;

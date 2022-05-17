@@ -72,7 +72,7 @@ namespace maple
 				finalData.finalDescriptorSet->setTexture("uBloomSampler", renderData.gbuffer->getBuffer(GBufferTextures::BLOOM_SCREEN));
 			}
 
-			finalData.finalDescriptorSet->update();
+			finalData.finalDescriptorSet->update(renderData.commandBuffer);
 
 			PipelineInfo pipelineDesc{};
 			pipelineDesc.shader = finalData.finalShader;

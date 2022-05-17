@@ -102,7 +102,7 @@ namespace maple
 		updateUniform();
 	}
 
-	auto PrefilterRenderer::renderScene(capture_graph::component::RenderGraph& graph) -> void
+	auto PrefilterRenderer::renderScene(const CommandBuffer* cmd, capture_graph::component::RenderGraph& graph) -> void
 	{
 		if (envComponent == nullptr)
 		{
@@ -116,13 +116,13 @@ namespace maple
 				envComponent->environment = skyboxCube;
 			}
 
-			generateSkybox(graph);
+			generateSkybox(cmd,graph);
 
-			updateIrradianceDescriptor();
-			generateIrradianceMap(graph);
+			updateIrradianceDescriptor(cmd);
+			generateIrradianceMap(cmd,graph);
 
-			updatePrefilterDescriptor();
-			generatePrefilterMap(graph);
+			updatePrefilterDescriptor(cmd);
+			generatePrefilterMap(cmd,graph);
 
 			envComponent = nullptr;
 		}
@@ -142,36 +142,35 @@ namespace maple
 		}
 	}
 
-	auto PrefilterRenderer::updateIrradianceDescriptor() -> void
+	auto PrefilterRenderer::updateIrradianceDescriptor(const CommandBuffer * cmd) -> void
 	{
 		if (envComponent)
 		{
 			irradianceSet->setTexture("uCubeMapSampler", skyboxCube);
-			irradianceSet->update();
+			irradianceSet->update(cmd);
 		}
 	}
 
-	auto PrefilterRenderer::updatePrefilterDescriptor() -> void
+	auto PrefilterRenderer::updatePrefilterDescriptor(const CommandBuffer* cmd) -> void
 	{
 		if (envComponent)
 		{
 			prefilterSet->setTexture("uCubeMapSampler", skyboxCube);
-			prefilterSet->update();
+			prefilterSet->update(cmd);
 		}
 	}
 
-	auto PrefilterRenderer::generateSkybox(capture_graph::component::RenderGraph& graph) -> void
+	auto PrefilterRenderer::generateSkybox(const CommandBuffer* cmd,capture_graph::component::RenderGraph& graph) -> void
 	{
 		
 		const auto proj         = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
 		cubeMapSet->setUniform("UniformBufferObject", "proj", glm::value_ptr(proj));
 
-		auto cmd = Application::getGraphicsContext()->getSwapChain()->getCurrentCommandBuffer();
 		if (equirectangularMap)
 		{
 			cubeMapSet->setTexture("equirectangularMap", equirectangularMap);
 		}
-		cubeMapSet->update();
+		cubeMapSet->update(cmd);
 
 		PipelineInfo pipeInfo;
 		pipeInfo.shader              = cubeMapShader;
@@ -200,7 +199,7 @@ namespace maple
 		skyboxCube->generateMipmap(cmd);
 	}
 
-	auto PrefilterRenderer::generateIrradianceMap(capture_graph::component::RenderGraph& graph) -> void
+	auto PrefilterRenderer::generateIrradianceMap(const CommandBuffer* cmd, capture_graph::component::RenderGraph& graph) -> void
 	{
 		PipelineInfo pipeInfo;
 		pipeInfo.shader   = irradianceShader;
@@ -214,8 +213,6 @@ namespace maple
 		pipeInfo.colorTargets[1] = envComponent->irradianceMap;
 
 		auto pipeline = Pipeline::get(pipeInfo,{ irradianceSet }, graph);
-
-		auto cmd = Application::getGraphicsContext()->getSwapChain()->getCurrentCommandBuffer();
 
 		for (auto faceId = 0; faceId < 6; faceId++)
 		{
@@ -233,9 +230,9 @@ namespace maple
 		}
 	}
 
-	auto PrefilterRenderer::generatePrefilterMap(capture_graph::component::RenderGraph & graph) -> void
+	auto PrefilterRenderer::generatePrefilterMap(const CommandBuffer* cmd,capture_graph::component::RenderGraph & graph) -> void
 	{
-		cubeMapSet->update();
+		cubeMapSet->update(cmd);
 
 		PipelineInfo pipeInfo;
 		pipeInfo.shader   = prefilterShader;
@@ -249,8 +246,6 @@ namespace maple
 		pipeInfo.colorTargets[1] = envComponent->prefilteredEnvironment;
 
 		auto pipeline = Pipeline::get(pipeInfo, { prefilterSet }, graph);
-
-		auto cmd = Application::getGraphicsContext()->getSwapChain()->getCurrentCommandBuffer();
 
 		auto maxMips = 5;// std::pow(component::Environment::PrefilterMapSize, 2);
 

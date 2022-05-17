@@ -13,21 +13,21 @@ namespace maple
 {
 	class VulkanPipeline : public Pipeline
 	{
-	  public:
+	public:
 		constexpr static uint32_t MAX_DESCRIPTOR_SET = 1500;
 
-		VulkanPipeline(const PipelineInfo &info);
+		VulkanPipeline(const PipelineInfo& info);
 		virtual ~VulkanPipeline();
 		NO_COPYABLE(VulkanPipeline);
 
-		auto init(const PipelineInfo &info) -> bool;
+		auto init(const PipelineInfo& info) -> bool;
 
-		auto getWidth() -> uint32_t override;
-		auto getHeight() -> uint32_t override;
+		auto getWidth()->uint32_t override;
+		auto getHeight()->uint32_t override;
 
-		auto bind(CommandBuffer *commandBuffer, uint32_t layer = 0, int32_t cubeFace = -1, int32_t mipMapLevel = 0) -> FrameBuffer * override;
-		auto end(CommandBuffer *commandBuffer) -> void override;
-		auto clearRenderTargets(CommandBuffer *commandBuffer) -> void override;
+		auto bind(const CommandBuffer* commandBuffer, uint32_t layer = 0, int32_t cubeFace = -1, int32_t mipMapLevel = 0)->FrameBuffer* override;
+		auto end(const CommandBuffer* commandBuffer) -> void override;
+		auto clearRenderTargets(const CommandBuffer* commandBuffer) -> void override;
 
 		inline auto getShader() const -> std::shared_ptr<Shader> override
 		{
@@ -39,9 +39,7 @@ namespace maple
 			return pipelineLayout;
 		}
 
-
-
-	  private:
+	private:
 		auto transitionAttachments() -> void;
 		auto createFrameBuffers() -> void;
 
@@ -51,6 +49,7 @@ namespace maple
 
 		VkPipelineLayout pipelineLayout;
 		VkPipeline       pipeline;
+		bool			 computePipline = false;
 		bool             depthBiasEnabled;
 		float            depthBiasConstant;
 		float            depthBiasSlope;

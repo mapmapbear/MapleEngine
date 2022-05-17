@@ -223,7 +223,7 @@ namespace maple
 		shaderIndicator = nullptr;
 	}
 
-	auto GLShader::bindPushConstants(CommandBuffer *cmdBuffer, Pipeline *pipeline) -> void
+	auto GLShader::bindPushConstants(const CommandBuffer *cmdBuffer, Pipeline *pipeline) -> void
 	{
 		PROFILE_FUNCTION();
 		int index = 0;

@@ -244,7 +244,7 @@ namespace maple
 
 			if (sceneChanged.dirty)
 			{
-				shadowData.descriptorSet[0]->update();
+				shadowData.descriptorSet[0]->update(rendererData.commandBuffer);
 
 				PipelineInfo pipelineInfo;
 				pipelineInfo.shader = shadowData.shader;
@@ -289,7 +289,7 @@ namespace maple
 
 			if (sceneChanged.dirty)
 			{
-				shadowData.animDescriptorSet[0]->update();
+				shadowData.animDescriptorSet[0]->update(rendererData.commandBuffer);
 				PipelineInfo pipelineInfo;
 				pipelineInfo.shader = shadowData.animShader;
 				pipelineInfo.cullMode            = CullMode::Back;
@@ -309,7 +309,7 @@ namespace maple
 					if (command.boneTransforms != nullptr)
 					{
 						shadowData.animDescriptorSet[0]->setUniform("UniformBufferObject", "boneTransforms", command.boneTransforms.get());
-						shadowData.animDescriptorSet[0]->update();
+						shadowData.animDescriptorSet[0]->update(rendererData.commandBuffer);
 
 						const auto &trans         = command.transform;
 						auto &      pushConstants = shadowData.animShader->getPushConstants()[0];

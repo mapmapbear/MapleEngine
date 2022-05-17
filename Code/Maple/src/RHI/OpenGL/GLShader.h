@@ -37,7 +37,7 @@ namespace maple
 		auto init() -> void;
 		auto bind() const -> void override;
 		auto unbind() const -> void override;
-		auto bindPushConstants(CommandBuffer *cmdBuffer, Pipeline *pipeline) -> void override;
+		auto bindPushConstants(const CommandBuffer *cmdBuffer, Pipeline *pipeline) -> void override;
 
 		auto setUserUniformBuffer(ShaderType type, uint8_t *data, uint32_t size) -> void;
 		auto setUniform(const std::string &name, uint8_t *data) -> void;

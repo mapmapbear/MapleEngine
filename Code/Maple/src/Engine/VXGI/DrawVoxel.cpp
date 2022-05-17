@@ -72,9 +72,9 @@ namespace maple
 					pipline.descriptors[0]->setTexture("uVoxelBuffer", voxelBuffer.voxelVolume[render.id]);
 					pipline.descriptors[0]->setUniform("UniformBufferObjectVert", "colorChannels", &render.colorChannels);
 					pipline.descriptors[0]->setUniform("UniformBufferObjectVert", "volumeDimension", &vDimension);
-					pipline.descriptors[0]->update();
+					pipline.descriptors[0]->update(rendererData.commandBuffer);
 					pipline.descriptors[1]->setUniformBufferData("UniformBufferObjectGemo", &pipline.ubo);
-					pipline.descriptors[1]->update();
+					pipline.descriptors[1]->update(rendererData.commandBuffer);
 
 					//Application::getRenderDevice()->clearRenderTarget(rendererData.gbuffer->getDepthBuffer(), rendererData.commandBuffer);
 

@@ -13,7 +13,7 @@ namespace maple
 	{
 	}
 
-	auto GLRenderPass::beginRenderPass(CommandBuffer *commandBuffer, const glm::vec4 &clearColor, FrameBuffer *frame, SubPassContents contents, uint32_t width, uint32_t height, int32_t cubeFace, int32_t mipMapLevel) const -> void
+	auto GLRenderPass::beginRenderPass(const CommandBuffer *commandBuffer, const glm::vec4 &clearColor, FrameBuffer *frame, SubPassContents contents, uint32_t width, uint32_t height, int32_t cubeFace, int32_t mipMapLevel) const -> void
 	{
 		GLCall(glClearColor(clearColor.x, clearColor.y, clearColor.z, clearColor.w));
 		if (frame != nullptr)
@@ -34,7 +34,7 @@ namespace maple
 			GLRenderDevice::clear(RendererBufferColor | RendererBufferDepth | RendererBufferStencil);
 	}
 
-	auto GLRenderPass::endRenderPass(CommandBuffer *commandBuffer) -> void
+	auto GLRenderPass::endRenderPass(const CommandBuffer *commandBuffer) -> void
 	{
 		GLCall(glBindFramebuffer(GL_FRAMEBUFFER, 0));
 	}

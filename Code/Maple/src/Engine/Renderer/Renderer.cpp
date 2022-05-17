@@ -7,32 +7,32 @@
 
 namespace maple
 {
-	auto Renderer::bindDescriptorSets(Pipeline *pipeline, CommandBuffer *cmdBuffer, uint32_t dynamicOffset, const std::vector<std::shared_ptr<DescriptorSet>> &descriptorSets) -> void
+	auto Renderer::bindDescriptorSets(Pipeline *pipeline, const CommandBuffer *cmdBuffer, uint32_t dynamicOffset, const std::vector<std::shared_ptr<DescriptorSet>> &descriptorSets) -> void
 	{
 		RenderDevice::bindDescriptorSets(pipeline, cmdBuffer, dynamicOffset, descriptorSets);
 	}
 
-	auto Renderer::drawIndexed(CommandBuffer *commandBuffer, DrawType type, uint32_t count, uint32_t start) -> void
+	auto Renderer::drawIndexed(const CommandBuffer *commandBuffer, DrawType type, uint32_t count, uint32_t start) -> void
 	{
 		RenderDevice::drawIndexed(commandBuffer, type, count, start);
 	}
 
-	auto Renderer::drawArrays(CommandBuffer* commandBuffer, DrawType type, uint32_t count, uint32_t start /*= 0*/) -> void
+	auto Renderer::drawArrays(const CommandBuffer* commandBuffer, DrawType type, uint32_t count, uint32_t start /*= 0*/) -> void
 	{
 		RenderDevice::drawArrays(commandBuffer, type, count, start);
 	}
 
-	auto Renderer::dispatch(CommandBuffer* commandBuffer, uint32_t x, uint32_t y, uint32_t z) -> void
+	auto Renderer::dispatch(const CommandBuffer* commandBuffer, uint32_t x, uint32_t y, uint32_t z) -> void
 	{
 		Application::getRenderDevice()->dispatch(commandBuffer, x, y, z);
 	}
 
-	auto Renderer::memoryBarrier(CommandBuffer* commandBuffer, int32_t flags) -> void
+	auto Renderer::memoryBarrier(const CommandBuffer* commandBuffer, int32_t flags) -> void
 	{
 		Application::getRenderDevice()->memoryBarrier(commandBuffer,flags);
 	}
 
-	auto Renderer::drawMesh(CommandBuffer* cmdBuffer, Pipeline* pipeline, Mesh* mesh) -> void
+	auto Renderer::drawMesh(const CommandBuffer* cmdBuffer, Pipeline* pipeline, Mesh* mesh) -> void
 	{
 		mesh->getVertexBuffer()->bind(cmdBuffer, pipeline);
 		mesh->getIndexBuffer()->bind(cmdBuffer);

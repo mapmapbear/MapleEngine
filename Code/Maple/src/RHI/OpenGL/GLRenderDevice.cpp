@@ -160,13 +160,13 @@ namespace maple
 		GLCall(glClear(rendererBufferToGL(bufferMask)));
 	}
 
-	auto GLRenderDevice::dispatch(CommandBuffer *commandBuffer, uint32_t x, uint32_t y, uint32_t z) -> void
+	auto GLRenderDevice::dispatch(const CommandBuffer *commandBuffer, uint32_t x, uint32_t y, uint32_t z) -> void
 	{
 		PROFILE_FUNCTION();
 		GLCall(glDispatchCompute(x,y,z));
 	}
 
-	auto GLRenderDevice::memoryBarrier(CommandBuffer* commandBuffer, int32_t flag) -> void
+	auto GLRenderDevice::memoryBarrier(const CommandBuffer* commandBuffer, int32_t flag) -> void
 	{
 		PROFILE_FUNCTION();
 		
@@ -189,7 +189,7 @@ namespace maple
 	{
 	}
 
-	auto GLRenderDevice::presentInternal(CommandBuffer *commandBuffer) -> void
+	auto GLRenderDevice::presentInternal(const CommandBuffer *commandBuffer) -> void
 	{
 	}
 
@@ -327,28 +327,28 @@ namespace maple
 		glColorMask(r, g, b, a);
 	}
 
-	auto GLRenderDevice::drawInternal(CommandBuffer *commandBuffer, const DrawType type, uint32_t count, DataType dataType, const void *indices) const -> void
+	auto GLRenderDevice::drawInternal(const CommandBuffer *commandBuffer, const DrawType type, uint32_t count, DataType dataType, const void *indices) const -> void
 	{
 		PROFILE_FUNCTION();
 		//NumDrawCalls++;
 		GLCall(glDrawElements(drawTypeToGL(type), count, dataTypeToGL(dataType), indices));
 	}
 
-	auto GLRenderDevice::drawIndexedInternal(CommandBuffer *commandBuffer, const DrawType type, uint32_t count, uint32_t start) const -> void
+	auto GLRenderDevice::drawIndexedInternal(const CommandBuffer *commandBuffer, const DrawType type, uint32_t count, uint32_t start) const -> void
 	{
 		PROFILE_FUNCTION();
 		//NumDrawCalls++;
 		GLCall(	glDrawElements( drawTypeToGL(type), count, dataTypeToGL(DataType::UnsignedInt), (void*)(sizeof(uint32_t) * start) ) );
 	}
 
-	auto GLRenderDevice::drawArraysInternal(CommandBuffer* commandBuffer, DrawType type, uint32_t count, uint32_t start /*= 0*/) const -> void
+	auto GLRenderDevice::drawArraysInternal(const CommandBuffer* commandBuffer, DrawType type, uint32_t count, uint32_t start /*= 0*/) const -> void
 	{
 		PROFILE_FUNCTION();
 		//NumDrawCalls++;
 		GLCall(glDrawArrays(drawTypeToGL(type), start, count));
 	}
 
-	auto GLRenderDevice::bindDescriptorSetsInternal(Pipeline *pipeline, CommandBuffer *commandBuffer, uint32_t dynamicOffset, const std::vector<std::shared_ptr<DescriptorSet>> &descriptorSets) -> void
+	auto GLRenderDevice::bindDescriptorSetsInternal(Pipeline *pipeline, const CommandBuffer *commandBuffer, uint32_t dynamicOffset, const std::vector<std::shared_ptr<DescriptorSet>> &descriptorSets) -> void
 	{
 		PROFILE_FUNCTION();
 		for (auto descriptor : descriptorSets)
@@ -358,7 +358,7 @@ namespace maple
 		}
 	}
 
-	auto GLRenderDevice::clearRenderTarget(const std::shared_ptr<Texture> &texture, CommandBuffer *commandBuffer, const glm::vec4 &clearColor) -> void
+	auto GLRenderDevice::clearRenderTarget(const std::shared_ptr<Texture> &texture, const CommandBuffer *commandBuffer, const glm::vec4 &clearColor) -> void
 	{
 		if (texture == nullptr)
 		{

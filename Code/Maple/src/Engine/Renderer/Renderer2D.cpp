@@ -122,7 +122,7 @@ namespace maple
 				}
 
 				data.descriptorSet->setTexture("textures", data.textures);
-				data.descriptorSet->update();
+				data.descriptorSet->update(cmd);
 
 				pipeline->bind(cmd);
 
@@ -229,7 +229,7 @@ namespace maple
 				if (!data.commands.empty())
 				{
 					data.projViewSet->setUniformBufferData("UniformBufferObject", &data.systemBuffer);
-					data.projViewSet->update();
+					data.projViewSet->update(render.commandBuffer);
 				}
 			}
 		}

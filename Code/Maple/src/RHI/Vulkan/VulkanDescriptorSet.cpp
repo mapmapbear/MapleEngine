@@ -19,12 +19,12 @@ namespace maple
 {
 	namespace
 	{
-		inline auto transitionImageLayout(Texture *texture)
+		inline auto transitionImageLayout(const CommandBuffer* cmd, Texture* texture)
 		{
 			if (!texture)
 				return;
 
-			VulkanCommandBuffer *commandBuffer = (VulkanCommandBuffer *) Application::getGraphicsContext()->getSwapChain()->getCurrentCommandBuffer();
+			const VulkanCommandBuffer *commandBuffer = (VulkanCommandBuffer *)cmd;
 			if (texture->getType() == TextureType::Color)
 			{
 				if (((VulkanTexture2D *) texture)->getImageLayout() != VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
@@ -106,14 +106,14 @@ namespace maple
 		PROFILE_FUNCTION();
 	}
 
-	auto VulkanDescriptorSet::update() -> void
+	auto VulkanDescriptorSet::update(const CommandBuffer* commandBuffer, bool compute) -> void
 	{
 		PROFILE_FUNCTION();
 
 		dynamic = false;
 
 		int32_t  descriptorWritesCount = 0;
-		uint32_t currentFrame          = Application::getGraphicsContext()->getSwapChain()->getCurrentBufferIndex();
+		currentFrame = compute ? 0 : Application::getGraphicsContext()->getSwapChain()->getCurrentBufferIndex();
 
 		for (auto &bufferInfo : uniformBuffersData)
 		{
@@ -136,7 +136,7 @@ namespace maple
 
 			for (auto &imageInfo : descriptors)
 			{
-				if (imageInfo.type == DescriptorType::ImageSampler)
+				if (imageInfo.type == DescriptorType::ImageSampler || imageInfo.type == DescriptorType::Image)
 				{
 					if (!imageInfo.textures.empty())
 					{
@@ -145,7 +145,7 @@ namespace maple
 						{
 							if (imageInfo.textures[i])
 							{
-								transitionImageLayout(imageInfo.textures[i].get());
+								transitionImageLayout(commandBuffer,imageInfo.textures[i].get());
 
 								const auto &des               = *static_cast<VkDescriptorImageInfo *>(imageInfo.textures[i]->getDescriptorInfo());
 								imageInfoPool[i + imageIndex] = des;
@@ -158,7 +158,7 @@ namespace maple
 							VkWriteDescriptorSet writeDescriptorSet{};
 							writeDescriptorSet.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 							writeDescriptorSet.dstSet          = descriptorSet[currentFrame];
-							writeDescriptorSet.descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+							writeDescriptorSet.descriptorType  = VkConverter::descriptorTypeToVK(imageInfo.type);
 							writeDescriptorSet.dstBinding      = imageInfo.binding;
 							writeDescriptorSet.pImageInfo      = &imageInfoPool[imageIndex];
 							writeDescriptorSet.descriptorCount = validCount;
@@ -203,15 +203,15 @@ namespace maple
 
 	auto VulkanDescriptorSet::getDescriptorSet() -> VkDescriptorSet
 	{
-		auto index = Application::getGraphicsContext()->getSwapChain()->getCurrentBufferIndex();
-		return descriptorSet[index];
+		return descriptorSet[currentFrame];
 	}
 
 	auto VulkanDescriptorSet::setTexture(const std::string &name, const std::vector<std::shared_ptr<Texture>> &textures, uint32_t mipLevel) -> void
 	{
 		for (auto &descriptor : descriptors)
 		{
-			if (descriptor.type == DescriptorType::ImageSampler && descriptor.name == name)
+			if ( (descriptor.type == DescriptorType::ImageSampler || descriptor.type == DescriptorType::Image)
+				&& descriptor.name == name)
 			{
 				descriptor.textures = textures;
 				descriptor.mipmapLevel = mipLevel;

@@ -110,7 +110,7 @@ namespace maple
 			auto pipeline = Pipeline::get(pipeInfo);
 
 			pipeline->bind(render.commandBuffer);
-			grid.descriptorSet->update();
+			grid.descriptorSet->update(render.commandBuffer);
 			Renderer::bindDescriptorSets(pipeline.get(), render.commandBuffer, 0, { grid.descriptorSet });
 			Renderer::drawMesh(render.commandBuffer, pipeline.get(), grid.quad.get());
 			pipeline->end(render.commandBuffer);

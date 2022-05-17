@@ -147,7 +147,7 @@ namespace maple
 		static auto createFromFiles(const std::array<std::string, 6> &files) -> std::shared_ptr<TextureCube>;
 		static auto createFromVCross(const std::vector<std::string> &files, uint32_t mips, TextureParameters params, TextureLoadOptions loadOptions, InputFormat = InputFormat::VERTICAL_CROSS) -> std::shared_ptr<TextureCube>;
 
-		virtual auto update(CommandBuffer *commandBuffer, FrameBuffer *framebuffer, int32_t cubeIndex, int32_t mipmapLevel = 0) -> void = 0;
+		virtual auto update(const CommandBuffer *commandBuffer, FrameBuffer *framebuffer, int32_t cubeIndex, int32_t mipmapLevel = 0) -> void = 0;
 
 		virtual auto generateMipmap(const CommandBuffer *commandBuffer) -> void = 0;
 		inline auto  getType() const -> TextureType override
@@ -164,7 +164,7 @@ namespace maple
 		{
 			return TextureType::Depth;
 		};
-		virtual auto resize(uint32_t width, uint32_t height, CommandBuffer *commandBuffer = nullptr) -> void = 0;
+		virtual auto resize(uint32_t width, uint32_t height, const CommandBuffer *commandBuffer = nullptr) -> void = 0;
 	};
 
 	class MAPLE_EXPORT TextureDepthArray : public Texture

@@ -171,17 +171,17 @@ namespace maple
 				injectLight.descriptors[0]->setTexture("LPVGridB",lpv.lpvGridB);
 				injectLight.descriptors[0]->setTexture("uFluxSampler", rsm.fluxTexture);
 				injectLight.descriptors[0]->setTexture("uRSMWorldSampler", rsm.worldTexture);
-				injectLight.descriptors[0]->update();
+				injectLight.descriptors[0]->update(rendererData.computeCommandBuffer,true);
 
 				PipelineInfo pipelineInfo;
 				pipelineInfo.shader = injectLight.shader;
 				pipelineInfo.groupCountX = rsm.normalTexture->getWidth() / injectLight.shader->getLocalSizeX();
 				pipelineInfo.groupCountY = rsm.normalTexture->getHeight() / injectLight.shader->getLocalSizeY();
 				auto pipeline = Pipeline::get(pipelineInfo);
-				pipeline->bind(rendererData.commandBuffer);
-				Renderer::bindDescriptorSets(pipeline.get(), rendererData.commandBuffer, 0, injectLight.descriptors);
-				Renderer::dispatch(rendererData.commandBuffer,pipelineInfo.groupCountX,pipelineInfo.groupCountY,1);
-				pipeline->end(rendererData.commandBuffer);
+				pipeline->bind(rendererData.computeCommandBuffer);
+				Renderer::bindDescriptorSets(pipeline.get(), rendererData.computeCommandBuffer, 0, injectLight.descriptors);
+				Renderer::dispatch(rendererData.computeCommandBuffer,pipelineInfo.groupCountX,pipelineInfo.groupCountY,1);
+				pipeline->end(rendererData.computeCommandBuffer);
 			}
 		};
 
@@ -214,6 +214,8 @@ namespace maple
 				if (lpv.lpvGridR == nullptr)
 					return;
 
+				auto cmdBuffer = rendererData.computeCommandBuffer;
+
 				lpv.lpvGeometryVolumeR->clear();
 				lpv.lpvGeometryVolumeG->clear();
 				lpv.lpvGeometryVolumeB->clear();
@@ -225,18 +227,18 @@ namespace maple
 				geometry.descriptors[0]->setTexture("uRSMWorldSampler", rsm.worldTexture);
 				geometry.descriptors[0]->setTexture("uFluxSampler", rsm.fluxTexture);
 
-				geometry.descriptors[0]->update();
+				geometry.descriptors[0]->update(cmdBuffer,true);
 
 				PipelineInfo pipelineInfo;
 				pipelineInfo.shader = geometry.shader;
 				pipelineInfo.groupCountX = rsm.normalTexture->getWidth() / geometry.shader->getLocalSizeX();
 				pipelineInfo.groupCountY = rsm.normalTexture->getHeight() / geometry.shader->getLocalSizeY();
 				auto pipeline = Pipeline::get(pipelineInfo);
-				pipeline->bind(rendererData.commandBuffer);
-				Renderer::bindDescriptorSets(pipeline.get(), rendererData.commandBuffer, 0, geometry.descriptors);
-				Renderer::dispatch(rendererData.commandBuffer, pipelineInfo.groupCountX, pipelineInfo.groupCountY, 1);
-				Renderer::memoryBarrier(rendererData.commandBuffer, MemoryBarrierFlags::Shader_Image_Access_Barrier);
-				pipeline->end(rendererData.commandBuffer);
+				pipeline->bind(cmdBuffer);
+				Renderer::bindDescriptorSets(pipeline.get(), cmdBuffer, 0, geometry.descriptors);
+				Renderer::dispatch(cmdBuffer, pipelineInfo.groupCountX, pipelineInfo.groupCountY, 1);
+				Renderer::memoryBarrier(cmdBuffer, MemoryBarrierFlags::Shader_Image_Access_Barrier);
+				pipeline->end(cmdBuffer);
 			}
 		};
 
@@ -288,7 +290,7 @@ namespace maple
 				pipelineInfo.groupCountY = lpv.gridSize / data.shader->getLocalSizeY();
 				pipelineInfo.groupCountZ = lpv.gridSize / data.shader->getLocalSizeZ();
 				auto pipeline = Pipeline::get(pipelineInfo);
-				pipeline->bind(rendererData.commandBuffer);
+				pipeline->bind(rendererData.computeCommandBuffer);
 				for (auto i = 1; i <= lpv.propagateCount; i++)
 				{
 					data.descriptors[0]->setTexture("LPVGridR", lpv.lpvRs[i - 1]);
@@ -299,11 +301,11 @@ namespace maple
 					data.descriptors[0]->setTexture("LPVGridG_", lpv.lpvGs[i]);
 					data.descriptors[0]->setTexture("LPVGridB_", lpv.lpvBs[i]);  
 					data.descriptors[0]->setUniform("UniformObject", "step", &i );
-					data.descriptors[0]->update();
-					Renderer::bindDescriptorSets(pipeline.get(), rendererData.commandBuffer, 0, data.descriptors);
-					Renderer::dispatch(rendererData.commandBuffer, pipelineInfo.groupCountX, pipelineInfo.groupCountY, pipelineInfo.groupCountZ);
+					data.descriptors[0]->update(rendererData.computeCommandBuffer,true);
+					Renderer::bindDescriptorSets(pipeline.get(), rendererData.computeCommandBuffer, 0, data.descriptors);
+					Renderer::dispatch(rendererData.computeCommandBuffer, pipelineInfo.groupCountX, pipelineInfo.groupCountY, pipelineInfo.groupCountZ);
 				}
-				pipeline->end(rendererData.commandBuffer);
+				pipeline->end(rendererData.computeCommandBuffer);
 			}
 		};
 		
@@ -350,7 +352,7 @@ namespace maple
 
 				for (auto descriptor : data.descriptors)
 				{
-					descriptor->update();
+					descriptor->update(renderData.commandBuffer);
 				}
 
 				auto min = aabb.box->min;

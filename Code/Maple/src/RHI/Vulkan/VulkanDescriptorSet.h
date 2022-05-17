@@ -19,7 +19,7 @@ namespace maple
 		VulkanDescriptorSet(const DescriptorInfo &info);
 		~VulkanDescriptorSet();
 		NO_COPYABLE(VulkanDescriptorSet);
-		auto update() -> void override;
+		auto update(const CommandBuffer* commandBuffer, bool compute = false) -> void override;
 
 		inline auto setDynamicOffset(uint32_t offset) -> void override
 		{
@@ -71,5 +71,8 @@ namespace maple
 		std::vector<VkDescriptorSet>                                                 descriptorSet;
 		std::vector<std::unordered_map<std::string, std::shared_ptr<UniformBuffer>>> uniformBuffers;
 		std::unordered_map<std::string, UniformBufferInfo>                           uniformBuffersData;
+
+
+		uint32_t currentFrame = 0;
 	};
 };        // namespace maple

@@ -214,7 +214,7 @@ namespace maple
 		return 0;
 	}
 
-	auto GLPipeline::bind(CommandBuffer *commandBuffer, uint32_t layer, int32_t cubeFace, int32_t mipMapLevel) -> FrameBuffer *
+	auto GLPipeline::bind(const CommandBuffer *commandBuffer, uint32_t layer, int32_t cubeFace, int32_t mipMapLevel) -> FrameBuffer *
 	{
 		PROFILE_FUNCTION();
 		if (!shader->isComputeShader())
@@ -307,7 +307,7 @@ namespace maple
 		return nullptr;
 	}
 
-	auto GLPipeline::end(CommandBuffer *commandBuffer) -> void
+	auto GLPipeline::end(const CommandBuffer *commandBuffer) -> void
 	{
 		PROFILE_FUNCTION();
 		if (!shader->isComputeShader())
@@ -316,7 +316,7 @@ namespace maple
 		}
 	}
 
-	auto GLPipeline::clearRenderTargets(CommandBuffer *commandBuffer) -> void
+	auto GLPipeline::clearRenderTargets(const CommandBuffer *commandBuffer) -> void
 	{
 		PROFILE_FUNCTION();
 		for (auto framebuffer : frameBuffers)

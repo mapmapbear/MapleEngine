@@ -142,16 +142,16 @@ namespace maple
 		state = CommandBufferState::Ended;
 	}
 
-	auto VulkanCommandBuffer::executeSecondary(CommandBuffer *primaryCmdBuffer) -> void
+	auto VulkanCommandBuffer::executeSecondary(const CommandBuffer *primaryCmdBuffer) -> void
 	{
 		PROFILE_FUNCTION();
 		MAPLE_ASSERT(!primary, "Used ExecuteSecondary on primary command buffer!");
 		state = CommandBufferState::Submitted;
 
-		vkCmdExecuteCommands(static_cast<VulkanCommandBuffer *>(primaryCmdBuffer)->getCommandBuffer(), 1, &commandBuffer);
+		vkCmdExecuteCommands(static_cast<const VulkanCommandBuffer *>(primaryCmdBuffer)->getCommandBuffer(), 1, &commandBuffer);
 	}
 
-	auto VulkanCommandBuffer::updateViewport(uint32_t width, uint32_t height) -> void
+	auto VulkanCommandBuffer::updateViewport(uint32_t width, uint32_t height) const-> void
 	{
 		PROFILE_FUNCTION();
 		VkViewport viewport = {};

@@ -154,7 +154,7 @@ namespace maple
 
 		auto bind(uint32_t slot = 0) const -> void override {};
 		auto unbind(uint32_t slot = 0) const -> void override {};
-		auto resize(uint32_t width, uint32_t height, CommandBuffer* commandBuffer) -> void override;
+		auto resize(uint32_t width, uint32_t height, const CommandBuffer* commandBuffer) -> void override;
 
 		auto transitionImage(VkImageLayout newLayout, const VulkanCommandBuffer* commandBuffer = nullptr) -> void override;
 
@@ -221,7 +221,7 @@ namespace maple
 		}
 
 	protected:
-		auto init(CommandBuffer* commandBuffer = nullptr) -> void;
+		auto init(const CommandBuffer* commandBuffer = nullptr) -> void;
 		auto release() -> void;
 
 	private:
@@ -264,7 +264,7 @@ namespace maple
 		auto updateDescriptor() -> void;
 		auto load(uint32_t mips) -> void;
 
-		auto update(CommandBuffer* commandBuffer, FrameBuffer* framebuffer, int32_t cubeIndex, int32_t mipmapLevel = 0) -> void override;
+		auto update(const CommandBuffer* commandBuffer, FrameBuffer* framebuffer, int32_t cubeIndex, int32_t mipmapLevel = 0) -> void override;
 
 		auto transitionImage(VkImageLayout newLayout, const VulkanCommandBuffer* commandBuffer = nullptr) -> void override;
 

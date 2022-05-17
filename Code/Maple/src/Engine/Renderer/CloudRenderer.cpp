@@ -142,7 +142,7 @@ namespace maple
 				PipelineInfo info;
 				info.shader = perlinWorley;
 				auto pipeline = Pipeline::get(info, { perlinWorleySet },graph);
-				perlinWorleySet->update();
+				perlinWorleySet->update(cmd,true);
 				pipeline->bind(cmd);
 				Renderer::bindDescriptorSets(pipeline.get(), cmd, 0, { perlinWorleySet });
 				Renderer::dispatch(cmd, 128 / 4, 128 / 4, 128 / 4);
@@ -155,7 +155,7 @@ namespace maple
 				PipelineInfo info;
 				info.shader = worleyShader;
 				auto pipeline = Pipeline::get(info, { worleySet },graph);
-				worleySet->update();
+				worleySet->update(cmd, true);
 				pipeline->bind(cmd);
 				Renderer::bindDescriptorSets(pipeline.get(), cmd, 0, { worleySet });
 				Renderer::dispatch(cmd, 32 / 4, 32 / 4, 32 / 4);
@@ -167,7 +167,7 @@ namespace maple
 			{
 				descriptorSet->setUniformBufferData("UniformBufferObject", &uniformObject);
 				descriptorSet->setTexture("outWeatherTex", weather);
-				descriptorSet->update();
+				descriptorSet->update(cmd, true);
 
 				PipelineInfo info;
 				info.shader = shader;
@@ -205,8 +205,8 @@ namespace maple
 
 			if (!weather.generatedNoise)
 			{
-				weather.executePerlin3D(render.commandBuffer,graph);
-				weather.executeWorley3D(render.commandBuffer,graph);
+				weather.executePerlin3D(render.computeCommandBuffer,graph);
+				weather.executeWorley3D(render.computeCommandBuffer,graph);
 				weather.generatedNoise = true;
 			}
 
@@ -305,7 +305,7 @@ namespace maple
 				{
 					data.uniformObject.frames++;
 					data.descriptorSet->setUniformBufferData("UniformBufferObject", &data.uniformObject);
-					data.descriptorSet->update();
+					data.descriptorSet->update(render.commandBuffer);
 					data.pipeline->bind(render.commandBuffer);
 					Renderer::bindDescriptorSets(data.pipeline.get(), render.commandBuffer, 0, { data.descriptorSet });
 					Renderer::dispatch(render.commandBuffer,
@@ -316,7 +316,7 @@ namespace maple
 				}
 
 				{
-					data.screenDescriptorSet->update();
+					data.screenDescriptorSet->update(render.commandBuffer);
 					PipelineInfo info;
 					info.shader = data.screenCloudShader;
 					info.colorTargets[0] = render.gbuffer->getBuffer(GBufferTextures::SCREEN);
@@ -328,7 +328,7 @@ namespace maple
 					auto pipeline = Pipeline::get(info, { data.screenDescriptorSet }, graph);
 
 					data.screenDescriptorSet->setTexture("uCloudSampler", data.computeInputs[0]);
-					data.screenDescriptorSet->update();
+					data.screenDescriptorSet->update(render.commandBuffer);
 
 					pipeline->bind(render.commandBuffer);
 					Renderer::bindDescriptorSets(pipeline.get(), render.commandBuffer, 0, { data.screenDescriptorSet });

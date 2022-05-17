@@ -120,7 +120,7 @@ namespace maple
 				if (data.pipeline) 
 				{
 					data.descriptorSet->setUniformBufferData("UniformBuffer", &data.uniformObject);
-					data.descriptorSet->update();
+					data.descriptorSet->update(render.commandBuffer);
 					data.pipeline->bind(render.commandBuffer);
 					Renderer::bindDescriptorSets(data.pipeline.get(), render.commandBuffer, 0, { data.descriptorSet });
 					Renderer::drawMesh(render.commandBuffer, data.pipeline.get(), render.screenQuad.get());

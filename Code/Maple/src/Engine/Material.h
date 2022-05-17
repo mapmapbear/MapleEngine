@@ -15,6 +15,7 @@ namespace maple
 	class Shader;
 	class Pipeline;
 	class UniformBuffer;
+	class CommandBuffer;
 	class DescriptorSet;
 
 	static constexpr float   PBR_WORKFLOW_SEPARATE_TEXTURES  = 0.0f;
@@ -110,7 +111,7 @@ namespace maple
 		auto setAOTexture(const std::string &path) -> void;
 		auto setEmissiveTexture(const std::string &path) -> void;
 
-		auto bind() -> void;
+		auto bind(const CommandBuffer * cmdBuffer) -> void;
 
 		inline auto &isTexturesUpdated() const
 		{

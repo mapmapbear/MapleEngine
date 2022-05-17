@@ -23,8 +23,8 @@ namespace maple
 		virtual auto beginRecording() -> void                                                          = 0;
 		virtual auto beginRecordingSecondary(RenderPass *renderPass, FrameBuffer *framebuffer) -> void = 0;
 		virtual auto endRecording() -> void                                                            = 0;
-		virtual auto executeSecondary(CommandBuffer *primaryCmdBuffer) -> void                         = 0;
-		virtual auto updateViewport(uint32_t width, uint32_t height) -> void                           = 0;
+		virtual auto executeSecondary(const CommandBuffer *primaryCmdBuffer) -> void                         = 0;
+		virtual auto updateViewport(uint32_t width, uint32_t height) const -> void					   = 0;
 		virtual auto bindPipeline(Pipeline *pipeline) -> void                                          = 0;
 		virtual auto unbindPipeline() -> void                                                          = 0;
 		virtual auto isRecording() const -> bool

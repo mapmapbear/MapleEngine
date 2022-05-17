@@ -139,7 +139,9 @@ namespace maple
 				global::component::VoxelBuffer& buffer,
 				maple::component::ShadowMapData& shadowMapData,
 				maple::component::CameraView& cameraView,
-				global::component::VoxelRadianceInjectionPipline& injection)
+				global::component::VoxelRadianceInjectionPipline& injection,
+				const maple::component::RendererData & rendererData
+			)
 			{
 				maple::component::LightData lights[32] = {};
 				uint32_t numLights = 0;
@@ -162,7 +164,7 @@ namespace maple
 				injection.descriptors[0]->setTexture("uVoxelRadiance", buffer.voxelVolume[VoxelBufferId::Radiance]);
 				injection.descriptors[0]->setTexture("uVoxelEmissive", buffer.voxelVolume[VoxelBufferId::Emissive]);
 
-				injection.descriptors[0]->update();
+				injection.descriptors[0]->update(rendererData.computeCommandBuffer,true);
 			}
 		}
 
@@ -185,6 +187,7 @@ namespace maple
 				maple::component::ShadowMapData& shadowMapData,
 				maple::component::CameraView& cameraView,
 				maple::component::BoundingBoxComponent& aabb,
+				const maple::component::RendererData & renderData,
 				ecs::World world)
 			{
 				auto [voxel] = entity;
@@ -213,7 +216,7 @@ namespace maple
 					}
 				}
 
-				updateLightingBuffer(voxel,lightQuery, buffer, shadowMapData, cameraView, injection);
+				updateLightingBuffer(voxel,lightQuery, buffer, shadowMapData, cameraView, injection,renderData);
 			}
 		}
 
@@ -231,6 +234,7 @@ namespace maple
 				const maple::global::component::SceneTransformChanged & changed,
 				maple::component::ShadowMapData& shadowMapData,
 				maple::component::CameraView& cameraView,
+				const maple::component::RendererData& renderData,
 				ecs::World world)
 			{
 
@@ -240,7 +244,7 @@ namespace maple
 				{
 					if (lightQuery.contains(ent)) 
 					{
-						updateLightingBuffer(voxel, lightQuery, buffer, shadowMapData, cameraView, injection);
+						updateLightingBuffer(voxel, lightQuery, buffer, shadowMapData, cameraView, injection, renderData);
 						world.addComponent<component::UpdateRadiance>(entity);
 						break;
 					}
@@ -283,7 +287,7 @@ namespace maple
 						{ voxelBuffer.voxelTexMipmap.begin(),voxelBuffer.voxelTexMipmap.end() },
 						mipLvl + 1
 					);
-					volumePipline.descriptors[0]->update();
+					volumePipline.descriptors[0]->update(renderData.computeCommandBuffer,true);
 
 					PipelineInfo pipelineInfo;
 					pipelineInfo.shader = volumePipline.shader;
@@ -292,20 +296,20 @@ namespace maple
 					pipelineInfo.groupCountZ = static_cast<uint32_t>(glm::ceil(mipmapDim / (float)volumePipline.shader->getLocalSizeZ()));
 
 					auto pipeline = Pipeline::get(pipelineInfo);
-					pipeline->bind(renderData.commandBuffer);
-					Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, volumePipline.descriptors);
+					pipeline->bind(renderData.computeCommandBuffer);
+					Renderer::bindDescriptorSets(pipeline.get(), renderData.computeCommandBuffer, 0, volumePipline.descriptors);
 					Renderer::dispatch(
-						renderData.commandBuffer,
+						renderData.computeCommandBuffer,
 						pipelineInfo.groupCountX,
 						pipelineInfo.groupCountY,
 						pipelineInfo.groupCountZ
 					);
 
-					Renderer::memoryBarrier(renderData.commandBuffer,
+					Renderer::memoryBarrier(renderData.computeCommandBuffer,
 						MemoryBarrierFlags::Shader_Image_Access_Barrier |
 						MemoryBarrierFlags::Texture_Fetch_Barrier);
 
-					pipeline->end(renderData.commandBuffer);
+					pipeline->end(renderData.computeCommandBuffer);
 				}
 			}
 
@@ -319,7 +323,7 @@ namespace maple
 				pipline.descriptors[0]->setUniform("UniformBufferObject", "mipDimension", &halfDimension);
 				pipline.descriptors[0]->setTexture("uVoxelMipmap", { buffer.voxelTexMipmap.begin(),buffer.voxelTexMipmap.end() });
 				pipline.descriptors[0]->setTexture("uVoxelBase", voxelRadiance);
-				pipline.descriptors[0]->update();
+				pipline.descriptors[0]->update(renderData.computeCommandBuffer,true);
 
 
 				PipelineInfo pipelineInfo;
@@ -330,19 +334,19 @@ namespace maple
 				pipelineInfo.groupCountZ = halfDimension / pipline.shader->getLocalSizeZ();
 
 				auto pipeline = Pipeline::get(pipelineInfo);
-				pipeline->bind(renderData.commandBuffer);
-				Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, pipline.descriptors);
+				pipeline->bind(renderData.computeCommandBuffer);
+				Renderer::bindDescriptorSets(pipeline.get(), renderData.computeCommandBuffer, 0, pipline.descriptors);
 				Renderer::dispatch(
-					renderData.commandBuffer,
+					renderData.computeCommandBuffer,
 					pipelineInfo.groupCountX,
 					pipelineInfo.groupCountY,
 					pipelineInfo.groupCountZ
 				);
-				Renderer::memoryBarrier(renderData.commandBuffer,
+				Renderer::memoryBarrier(renderData.computeCommandBuffer,
 					MemoryBarrierFlags::Shader_Image_Access_Barrier |
 					MemoryBarrierFlags::Texture_Fetch_Barrier);
 
-				pipeline->end(renderData.commandBuffer);
+				pipeline->end(renderData.computeCommandBuffer);
 			}
 
 			inline auto system(
@@ -375,19 +379,19 @@ namespace maple
 				pipelineInfo.groupCountZ = component::Voxelization::voxelDimension / injection.shader->getLocalSizeZ();
 
 				auto pipeline = Pipeline::get(pipelineInfo);
-				pipeline->bind(renderData.commandBuffer);
-				Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, injection.descriptors);
+				pipeline->bind(renderData.computeCommandBuffer);
+				Renderer::bindDescriptorSets(pipeline.get(), renderData.computeCommandBuffer, 0, injection.descriptors);
 				Renderer::dispatch(
-					renderData.commandBuffer,
+					renderData.computeCommandBuffer,
 					pipelineInfo.groupCountX,
 					pipelineInfo.groupCountY,
 					pipelineInfo.groupCountZ
 				);
-				Renderer::memoryBarrier(renderData.commandBuffer,
+				Renderer::memoryBarrier(renderData.computeCommandBuffer,
 					MemoryBarrierFlags::Shader_Image_Access_Barrier |
 					MemoryBarrierFlags::Texture_Fetch_Barrier);
 
-				pipeline->end(renderData.commandBuffer);
+				pipeline->end(renderData.computeCommandBuffer);
 
 				voxel.dirty = false;
 
@@ -403,7 +407,7 @@ namespace maple
 					propagation.descriptors[0]->setTexture("uVoxelAlbedo", buffer.voxelVolume[VoxelBufferId::Albedo]);
 					propagation.descriptors[0]->setTexture("uVoxelNormal", buffer.voxelVolume[VoxelBufferId::Normal]);
 					propagation.descriptors[0]->setTexture("uVoxelTexMipmap", { buffer.voxelTexMipmap.begin(), buffer.voxelTexMipmap.end() });
-					propagation.descriptors[0]->update();
+					propagation.descriptors[0]->update(renderData.computeCommandBuffer,true);
 
 					PipelineInfo pipelineInfo;
 					pipelineInfo.shader = propagation.shader;
@@ -412,19 +416,19 @@ namespace maple
 					pipelineInfo.groupCountZ = component::Voxelization::voxelDimension / propagation.shader->getLocalSizeZ();
 
 					auto pipeline = Pipeline::get(pipelineInfo);
-					pipeline->bind(renderData.commandBuffer);
-					Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, propagation.descriptors);
+					pipeline->bind(renderData.computeCommandBuffer);
+					Renderer::bindDescriptorSets(pipeline.get(), renderData.computeCommandBuffer, 0, propagation.descriptors);
 					Renderer::dispatch(
-						renderData.commandBuffer,
+						renderData.computeCommandBuffer,
 						pipelineInfo.groupCountX,
 						pipelineInfo.groupCountY,
 						pipelineInfo.groupCountZ
 					);
-					Renderer::memoryBarrier(renderData.commandBuffer,
+					Renderer::memoryBarrier(renderData.computeCommandBuffer,
 						MemoryBarrierFlags::Shader_Image_Access_Barrier |
 						MemoryBarrierFlags::Texture_Fetch_Barrier);
 
-					pipeline->end(renderData.commandBuffer);
+					pipeline->end(renderData.computeCommandBuffer);
 
 					generateMipmapMipmap(buffer.voxelVolume[VoxelBufferId::Radiance], renderData, buffer, basePipeline);
 					generateMipmapVolume(buffer, volumePipline, box, renderData);
@@ -475,13 +479,13 @@ namespace maple
 				//voxelize the whole scene now. this would be optimize in the future.
 				//voxelization the inner room is a good choice.
 				buffer.descriptors[DescriptorID::VertexUniform]->setUniform("UniformBufferObjectVert", "projView", &cameraView.projView);
-				buffer.descriptors[DescriptorID::VertexUniform]->update();
+				buffer.descriptors[DescriptorID::VertexUniform]->update(renderData.commandBuffer);
 
 				buffer.descriptors[DescriptorID::FragmentUniform]->setTexture("uVoxelAlbedo", buffer.voxelVolume[VoxelBufferId::Albedo]);
 				buffer.descriptors[DescriptorID::FragmentUniform]->setTexture("uVoxelNormal", buffer.voxelVolume[VoxelBufferId::Normal]);
 				buffer.descriptors[DescriptorID::FragmentUniform]->setTexture("uVoxelEmission", buffer.voxelVolume[VoxelBufferId::Emissive]);
 				buffer.descriptors[DescriptorID::FragmentUniform]->setTexture("uStaticVoxelFlag", buffer.staticFlag);
-				buffer.descriptors[DescriptorID::FragmentUniform]->update();
+				buffer.descriptors[DescriptorID::FragmentUniform]->update(renderData.commandBuffer);
 
 
 				PipelineInfo pipeInfo;
@@ -497,7 +501,7 @@ namespace maple
 				for (auto& cmd : deferredData.commandQueue)
 				{
 					cmd.material->setShader(buffer.voxelShader);
-					cmd.material->bind();
+					cmd.material->bind(renderData.commandBuffer);
 					buffer.descriptors[DescriptorID::MaterialBinding] = cmd.material->getDescriptorSet();
 
 					auto& pushConstants = buffer.voxelShader->getPushConstants()[0];
@@ -528,6 +532,7 @@ namespace maple
 				global::component::VoxelBuffer& voxelBuffer,
 				global::component::VoxelRadianceInjectionPipline& injection,
 				maple::component::BoundingBoxComponent& box,
+				const maple::component::RendererData& rendererData,
 				ecs::World world)
 			{
 				auto [voxelization] = entity;
@@ -576,11 +581,11 @@ namespace maple
 						voxelBuffer.descriptors[DescriptorID::GeometryUniform]->setUniform("UniformBufferGemo", "worldMinPoint", &box.box->min);
 						voxelBuffer.descriptors[DescriptorID::GeometryUniform]->setUniform("UniformBufferGemo", "voxelScale", &voxelScale);
 						voxelBuffer.descriptors[DescriptorID::GeometryUniform]->setUniform("UniformBufferGemo", "volumeDimension", &dimension);
-						voxelBuffer.descriptors[DescriptorID::GeometryUniform]->update();
+						voxelBuffer.descriptors[DescriptorID::GeometryUniform]->update(rendererData.commandBuffer);
 
 						uint32_t flagVoxel = 1;
 						voxelBuffer.descriptors[DescriptorID::FragmentUniform]->setUniform("UniformBufferObject", "flagStaticVoxels", &flagVoxel);
-						voxelBuffer.descriptors[DescriptorID::FragmentUniform]->update();
+						voxelBuffer.descriptors[DescriptorID::FragmentUniform]->update(rendererData.commandBuffer);
 
 						voxelization.dirty = true;
 					}

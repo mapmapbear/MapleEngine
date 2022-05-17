@@ -121,36 +121,35 @@ namespace maple
 			}
 		}
 
-		inline auto onRender(Entity entity, ecs::World world)
+		inline auto onRender(Entity entity, const component::RendererData& rendererData, ecs::World world)
 		{
 			auto [skyboxData, cameraView, graph] = entity;
 
-			auto& renderData = world.getComponent<component::RendererData>(entity);
 
 			GPUProfile("SkyBox Pass");
 			if (skyboxData.pseudoSky)
 			{
-				skyboxData.pseudoSkydescriptorSet->update();
+				skyboxData.pseudoSkydescriptorSet->update(rendererData.commandBuffer);
 				PipelineInfo info;
 				info.shader = skyboxData.pseudoSkyshader;
-				info.colorTargets[0] = renderData.gbuffer->getBuffer(GBufferTextures::PSEUDO_SKY);
+				info.colorTargets[0] = rendererData.gbuffer->getBuffer(GBufferTextures::PSEUDO_SKY);
 				info.polygonMode = PolygonMode::Fill;
 				info.clearTargets = true;
 				info.transparencyEnabled = false;
 
 				auto pipeline = Pipeline::get(info, { skyboxData.pseudoSkydescriptorSet },graph);
 
-				skyboxData.pseudoSkydescriptorSet->setTexture("uPositionSampler", renderData.gbuffer->getBuffer(GBufferTextures::POSITION));
-				skyboxData.pseudoSkydescriptorSet->update();
+				skyboxData.pseudoSkydescriptorSet->setTexture("uPositionSampler", rendererData.gbuffer->getBuffer(GBufferTextures::POSITION));
+				skyboxData.pseudoSkydescriptorSet->update(rendererData.commandBuffer);
 
-				pipeline->bind(renderData.commandBuffer);
-				Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, { skyboxData.pseudoSkydescriptorSet });
-				Renderer::drawMesh(renderData.commandBuffer, pipeline.get(), skyboxData.screenMesh.get());
-				pipeline->end(renderData.commandBuffer);
+				pipeline->bind(rendererData.commandBuffer);
+				Renderer::bindDescriptorSets(pipeline.get(), rendererData.commandBuffer, 0, { skyboxData.pseudoSkydescriptorSet });
+				Renderer::drawMesh(rendererData.commandBuffer, pipeline.get(), skyboxData.screenMesh.get());
+				pipeline->end(rendererData.commandBuffer);
 			}
 			else
 			{
-				skyboxData.prefilterRenderer->renderScene(graph);
+				skyboxData.prefilterRenderer->renderScene(rendererData.commandBuffer,graph);
 
 				if (skyboxData.skybox == nullptr)
 				{
@@ -165,11 +164,11 @@ namespace maple
 				pipelineInfo.transparencyEnabled = false;
 				//pipelineInfo.clearTargets        = false;
 
-				pipelineInfo.depthTarget = renderData.gbuffer->getDepthBuffer();
-				pipelineInfo.colorTargets[0] = renderData.gbuffer->getBuffer(GBufferTextures::SCREEN);
+				pipelineInfo.depthTarget = rendererData.gbuffer->getDepthBuffer();
+				pipelineInfo.colorTargets[0] = rendererData.gbuffer->getBuffer(GBufferTextures::SCREEN);
 
 				auto skyboxPipeline = Pipeline::get(pipelineInfo, {skyboxData.descriptorSet}, graph);
-				skyboxPipeline->bind(renderData.commandBuffer);
+				skyboxPipeline->bind(rendererData.commandBuffer);
 				if (skyboxData.cubeMapMode == 0)
 				{
 					skyboxData.descriptorSet->setTexture("uCubeMap", skyboxData.skybox);
@@ -184,15 +183,15 @@ namespace maple
 				}
 
 				skyboxData.descriptorSet->setUniform("UniformBufferObjectLod", "lodLevel", &skyboxData.cubeMapLevel);
-				skyboxData.descriptorSet->update();
+				skyboxData.descriptorSet->update(rendererData.commandBuffer);
 
 				auto& constants = skyboxData.skyboxShader->getPushConstants();
 				constants[0].setValue("projView", glm::value_ptr(skyboxData.projView));
-				skyboxData.skyboxShader->bindPushConstants(renderData.commandBuffer, skyboxPipeline.get());
+				skyboxData.skyboxShader->bindPushConstants(rendererData.commandBuffer, skyboxPipeline.get());
 
-				Renderer::bindDescriptorSets(skyboxPipeline.get(), renderData.commandBuffer, 0, { skyboxData.descriptorSet });
-				Renderer::drawMesh(renderData.commandBuffer, skyboxPipeline.get(), skyboxData.skyboxMesh.get());
-				skyboxPipeline->end(renderData.commandBuffer);
+				Renderer::bindDescriptorSets(skyboxPipeline.get(), rendererData.commandBuffer, 0, { skyboxData.descriptorSet });
+				Renderer::drawMesh(rendererData.commandBuffer, skyboxPipeline.get(), skyboxData.skyboxMesh.get());
+				skyboxPipeline->end(rendererData.commandBuffer);
 			}
 		}
 	}

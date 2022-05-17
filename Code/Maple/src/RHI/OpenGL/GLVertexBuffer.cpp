@@ -92,7 +92,7 @@ namespace maple
         }
     }
 
-    auto GLVertexBuffer::bind(CommandBuffer* commandBuffer, Pipeline* pipeline) -> void
+    auto GLVertexBuffer::bind(const CommandBuffer* commandBuffer, Pipeline* pipeline) -> void
     {
         PROFILE_FUNCTION();
         GLCall(glBindBuffer(GL_ARRAY_BUFFER, handle));

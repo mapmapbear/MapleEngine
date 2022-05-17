@@ -180,7 +180,7 @@ namespace maple
 			return textureFormat;
 		}
 
-		auto update(CommandBuffer *commandBuffer, FrameBuffer *framebuffer, int32_t cubeIndex, int32_t mipmapLevel = 0) -> void override;
+		auto update(const CommandBuffer *commandBuffer, FrameBuffer *framebuffer, int32_t cubeIndex, int32_t mipmapLevel = 0) -> void override;
 
 		auto generateMipmap(const CommandBuffer *commandBuffer) -> void override;
 
@@ -211,7 +211,7 @@ namespace maple
 
 		auto bind(uint32_t slot = 0) const -> void override;
 		auto unbind(uint32_t slot = 0) const -> void override;
-		auto resize(uint32_t width, uint32_t height, CommandBuffer *commandBuffer) -> void override;
+		auto resize(uint32_t width, uint32_t height, const CommandBuffer *commandBuffer) -> void override;
 
 		inline auto getHandle() const -> void * override
 		{

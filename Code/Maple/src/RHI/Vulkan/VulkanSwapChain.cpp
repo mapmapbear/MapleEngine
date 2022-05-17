@@ -22,16 +22,16 @@ namespace maple
 {
 	namespace
 	{
-		inline auto createPlatformSurface(NativeWindow *window)
+		inline auto createPlatformSurface(NativeWindow* window)
 		{
 			VkSurfaceKHR surface;
-			glfwCreateWindowSurface(VulkanContext::get()->getVkInstance(), static_cast<GLFWwindow *>(window->getNativeInterface()), nullptr, (VkSurfaceKHR *) &surface);
+			glfwCreateWindowSurface(VulkanContext::get()->getVkInstance(), static_cast<GLFWwindow*>(window->getNativeInterface()), nullptr, (VkSurfaceKHR*)&surface);
 			return surface;
 		}
 	}        // namespace
 
 	VulkanSwapChain::VulkanSwapChain(uint32_t width, uint32_t height) :
-	    width(width), height(height)
+		width(width), height(height)
 	{
 	}
 
@@ -53,7 +53,7 @@ namespace maple
 		vkDestroySwapchainKHR(*VulkanDevice::get(), swapChain, VK_NULL_HANDLE);
 	}
 
-	auto VulkanSwapChain::init(bool vsync, NativeWindow *window) -> bool
+	auto VulkanSwapChain::init(bool vsync, NativeWindow* window) -> bool
 	{
 		PROFILE_FUNCTION();
 		this->vsync = vsync;
@@ -78,20 +78,20 @@ namespace maple
 
 		VkBool32 queueIndexSupported;
 		vkGetPhysicalDeviceSurfaceSupportKHR(*VulkanDevice::get()->getPhysicalDevice(),
-		                                     VulkanDevice::get()->getPhysicalDevice()->getQueueFamilyIndices().graphicsFamily.value(),
-		                                     surface, &queueIndexSupported);
+			VulkanDevice::get()->getPhysicalDevice()->getQueueFamilyIndices().graphicsFamily.value(),
+			surface, &queueIndexSupported);
 
 		if (queueIndexSupported == VK_FALSE)
 			LOGE("Graphics Queue not supported");
 
 		/*	vkGetPhysicalDeviceSurfaceSupportKHR(*VulkanDevice::get()->getPhysicalDevice(),
-		                                     VulkanDevice::get()->getPhysicalDevice()->getQueueFamilyIndices().presentFamily.value(),
-		                                     surface, &queueIndexSupported);
+											 VulkanDevice::get()->getPhysicalDevice()->getQueueFamilyIndices().presentFamily.value(),
+											 surface, &queueIndexSupported);
 
 		if (queueIndexSupported == VK_FALSE)
 			LOGE("Present Queue not supported");*/
 
-		// Swap chain
+			// Swap chain
 		VkSurfaceCapabilitiesKHR surfaceCapabilities;
 		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(*VulkanDevice::get()->getPhysicalDevice(), surface, &surfaceCapabilities);
 
@@ -103,7 +103,7 @@ namespace maple
 
 		VkExtent2D swapChainExtent;
 
-		swapChainExtent.width  = static_cast<uint32_t>(width);
+		swapChainExtent.width = static_cast<uint32_t>(width);
 		swapChainExtent.height = static_cast<uint32_t>(height);
 
 		auto swapChainPresentMode = VulkanHelper::chooseSwapPresentMode(pPresentModes, vsync);
@@ -124,15 +124,15 @@ namespace maple
 			preTransform = surfaceCapabilities.currentTransform;
 		}
 
-		VkCompositeAlphaFlagBitsKHR              compositeAlpha      = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+		VkCompositeAlphaFlagBitsKHR              compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 		std::vector<VkCompositeAlphaFlagBitsKHR> compositeAlphaFlags = {
-		    VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
-		    VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR,
-		    VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR,
-		    VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR,
+			VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+			VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR,
+			VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR,
+			VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR,
 		};
 
-		for (auto &compositeAlphaFlag : compositeAlphaFlags)
+		for (auto& compositeAlphaFlag : compositeAlphaFlags)
 		{
 			if (surfaceCapabilities.supportedCompositeAlpha & compositeAlphaFlag)
 			{
@@ -142,23 +142,23 @@ namespace maple
 		}
 
 		VkSwapchainCreateInfoKHR swapChainCI{};
-		swapChainCI.sType                 = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-		swapChainCI.surface               = surface;
-		swapChainCI.minImageCount         = swapChainBufferCount;
-		swapChainCI.imageFormat           = colorFormat;
-		swapChainCI.imageExtent.width     = swapChainExtent.width;
-		swapChainCI.imageExtent.height    = swapChainExtent.height;
-		swapChainCI.preTransform          = preTransform;
-		swapChainCI.compositeAlpha        = compositeAlpha;
-		swapChainCI.imageArrayLayers      = 1;
-		swapChainCI.presentMode           = swapChainPresentMode;
-		swapChainCI.oldSwapchain          = oldSwapChain;
-		swapChainCI.imageColorSpace       = colorSpace;
-		swapChainCI.imageSharingMode      = VK_SHARING_MODE_EXCLUSIVE;
+		swapChainCI.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+		swapChainCI.surface = surface;
+		swapChainCI.minImageCount = swapChainBufferCount;
+		swapChainCI.imageFormat = colorFormat;
+		swapChainCI.imageExtent.width = swapChainExtent.width;
+		swapChainCI.imageExtent.height = swapChainExtent.height;
+		swapChainCI.preTransform = preTransform;
+		swapChainCI.compositeAlpha = compositeAlpha;
+		swapChainCI.imageArrayLayers = 1;
+		swapChainCI.presentMode = swapChainPresentMode;
+		swapChainCI.oldSwapchain = oldSwapChain;
+		swapChainCI.imageColorSpace = colorSpace;
+		swapChainCI.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
 		swapChainCI.queueFamilyIndexCount = 0;
-		swapChainCI.imageUsage            = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-		swapChainCI.pQueueFamilyIndices   = VK_NULL_HANDLE;
-		swapChainCI.clipped               = VK_TRUE;
+		swapChainCI.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+		swapChainCI.pQueueFamilyIndices = VK_NULL_HANDLE;
+		swapChainCI.clipped = VK_TRUE;
 
 		/*auto &indices = VulkanDevice::get()->getPhysicalDevice()->getQueueFamilyIndices();
 		if (indices.graphicsFamily != indices.presentFamily)
@@ -191,27 +191,27 @@ namespace maple
 		uint32_t swapChainImageCount;
 		VK_CHECK_RESULT(vkGetSwapchainImagesKHR(*VulkanDevice::get(), swapChain, &swapChainImageCount, VK_NULL_HANDLE));
 
-		VkImage *pSwapChainImages = new VkImage[swapChainImageCount];
+		VkImage* pSwapChainImages = new VkImage[swapChainImageCount];
 		VK_CHECK_RESULT(vkGetSwapchainImagesKHR(*VulkanDevice::get(), swapChain, &swapChainImageCount, pSwapChainImages));
 
 		for (uint32_t i = 0; i < swapChainBufferCount; i++)
 		{
 			VkImageViewCreateInfo viewCI{};
-			viewCI.sType  = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			viewCI.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 			viewCI.format = colorFormat;
 #ifdef PLATFORM_MACOS
-			viewCI.components = {VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY};
+			viewCI.components = { VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY };
 #else
-			viewCI.components = {VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A};
+			viewCI.components = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
 #endif
-			viewCI.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-			viewCI.subresourceRange.baseMipLevel   = 0;
-			viewCI.subresourceRange.levelCount     = 1;
+			viewCI.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			viewCI.subresourceRange.baseMipLevel = 0;
+			viewCI.subresourceRange.levelCount = 1;
 			viewCI.subresourceRange.baseArrayLayer = 0;
-			viewCI.subresourceRange.layerCount     = 1;
-			viewCI.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
-			viewCI.flags                           = 0;
-			viewCI.image                           = pSwapChainImages[i];
+			viewCI.subresourceRange.layerCount = 1;
+			viewCI.viewType = VK_IMAGE_VIEW_TYPE_2D;
+			viewCI.flags = 0;
+			viewCI.image = pSwapChainImages[i];
 
 			VkImageView imageView;
 			VK_CHECK_RESULT(vkCreateImageView(*VulkanDevice::get(), &viewCI, VK_NULL_HANDLE, &imageView));
@@ -222,6 +222,7 @@ namespace maple
 
 		delete[] pSwapChainImages;
 		createFrameData();
+		createComputeData();
 		return true;
 	}
 
@@ -232,20 +233,42 @@ namespace maple
 			if (!frames[i].commandBuffer)
 			{
 				VkSemaphoreCreateInfo semaphoreInfo = {};
-				semaphoreInfo.sType                 = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-				semaphoreInfo.pNext                 = nullptr;
-				semaphoreInfo.flags                 = 0;
+				semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+				semaphoreInfo.pNext = nullptr;
+				semaphoreInfo.flags = 0;
 
 				if (frames[i].presentSemaphore == VK_NULL_HANDLE)
 					VK_CHECK_RESULT(vkCreateSemaphore(*VulkanDevice::get(), &semaphoreInfo, nullptr, &frames[i].presentSemaphore));
 
 				frames[i].commandPool = std::make_shared<VulkanCommandPool>(VulkanDevice::get()->getPhysicalDevice()->getQueueFamilyIndices().graphicsFamily.value(),
-				                                                            VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+					VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
 				frames[i].commandBuffer = std::make_shared<VulkanCommandBuffer>();
 				frames[i].commandBuffer->init(true, *frames[i].commandPool);
 				LOGI("Create the {0} VulkanCommandBuffer", i);
 			}
+		}
+	}
+
+	auto VulkanSwapChain::createComputeData() -> void
+	{
+		if (computeData.commandBuffer == nullptr)
+		{
+			computeData.commandPool = std::make_shared<VulkanCommandPool>(
+				VulkanDevice::get()->getPhysicalDevice()->getQueueFamilyIndices().computeFamily.value(),
+				VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+
+			VkSemaphoreCreateInfo semaphoreInfo = {};
+			semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+			semaphoreInfo.pNext = nullptr;
+			semaphoreInfo.flags = 0;
+
+			if (computeData.semaphore == VK_NULL_HANDLE)
+				VK_CHECK_RESULT(vkCreateSemaphore(*VulkanDevice::get(), &semaphoreInfo, nullptr, &computeData.semaphore));
+
+			computeData.commandBuffer = std::make_shared<VulkanCommandBuffer>();
+			computeData.commandBuffer->init(true, *computeData.commandPool);
+			LOGI("Create Vulkan Compute CommandBuffer");
 		}
 	}
 
@@ -264,18 +287,18 @@ namespace maple
 		if ((formatCount == 1) && (surfaceFormats[0].format == VK_FORMAT_UNDEFINED))
 		{
 			colorFormat = VK_FORMAT_B8G8R8A8_UNORM;        //use this one as default when there is no surface format
-			colorSpace  = surfaceFormats[0].colorSpace;
+			colorSpace = surfaceFormats[0].colorSpace;
 		}
 		else
 		{
 			bool flag = false;
-			for (auto &&surfaceFormat : surfaceFormats)        //VK_FORMAT_B8G8R8A8_UNORM
+			for (auto&& surfaceFormat : surfaceFormats)        //VK_FORMAT_B8G8R8A8_UNORM
 			{
 				if (surfaceFormat.format == VK_FORMAT_B8G8R8A8_UNORM)
 				{
 					colorFormat = surfaceFormat.format;
-					colorSpace  = surfaceFormat.colorSpace;
-					flag        = true;
+					colorSpace = surfaceFormat.colorSpace;
+					flag = true;
 					break;
 				}
 			}
@@ -284,7 +307,7 @@ namespace maple
 			if (!flag)
 			{
 				colorFormat = surfaceFormats[0].format;
-				colorSpace  = surfaceFormats[0].colorSpace;
+				colorSpace = surfaceFormats[0].colorSpace;
 			}
 		}
 	}
@@ -323,8 +346,9 @@ namespace maple
 	auto VulkanSwapChain::queueSubmit() -> void
 	{
 		PROFILE_FUNCTION();
-		auto &frameData = getFrameData();
+		auto& frameData = getFrameData();
 		frameData.commandBuffer->executeInternal(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, frameData.presentSemaphore, true);
+		computeData.commandBuffer->executeInternal(VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, computeData.semaphore, false);
 	}
 
 	auto VulkanSwapChain::begin() -> void
@@ -338,15 +362,24 @@ namespace maple
 		commandBuffer->reset();
 		VulkanContext::getDeletionQueue(currentBuffer).flush();
 		commandBuffer->beginRecording();
+
+		auto cmd = computeData.commandBuffer;
+		if (cmd->getState() == CommandBufferState::Submitted) 
+		{
+			cmd->wait();
+		}
+		cmd->reset();
+		cmd->beginRecording();
 	}
 
 	auto VulkanSwapChain::end() -> void
 	{
 		PROFILE_FUNCTION();
 		getCurrentCommandBuffer()->endRecording();
+		computeData.commandBuffer->endRecording();
 	}
 
-	auto VulkanSwapChain::getCurrentCommandBuffer() -> CommandBuffer *
+	auto VulkanSwapChain::getCurrentCommandBuffer() -> CommandBuffer*
 	{
 		return getFrameData().commandBuffer.get();
 	}
@@ -357,14 +390,14 @@ namespace maple
 		PROFILE_FUNCTION();
 
 		VkPresentInfoKHR present;
-		present.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-		present.pNext              = VK_NULL_HANDLE;
-		present.swapchainCount     = 1;
-		present.pSwapchains        = &swapChain;
-		present.pImageIndices      = &acquireImageIndex;
+		present.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+		present.pNext = VK_NULL_HANDLE;
+		present.swapchainCount = 1;
+		present.pSwapchains = &swapChain;
+		present.pImageIndices = &acquireImageIndex;
 		present.waitSemaphoreCount = 1;
-		present.pWaitSemaphores    = &waitSemaphore;
-		present.pResults           = VK_NULL_HANDLE;
+		present.pWaitSemaphores = &waitSemaphore;
+		present.pResults = VK_NULL_HANDLE;
 
 		auto error = vkQueuePresentKHR(VulkanDevice::get()->getPresentQueue(), &present);
 
@@ -384,13 +417,19 @@ namespace maple
 		VulkanContext::getDeletionQueue(currentBuffer).flush();
 	}
 
-	auto VulkanSwapChain::getFrameData() -> FrameData &
+
+	auto VulkanSwapChain::getComputeCmdBuffer()->CommandBuffer*
+	{
+		return computeData.commandBuffer.get();
+	}
+
+	auto VulkanSwapChain::getFrameData() -> FrameData&
 	{
 		MAPLE_ASSERT(currentBuffer < swapChainBufferCount, "buffer index is out of bounds");
 		return frames[currentBuffer];
 	}
 
-	auto VulkanSwapChain::onResize(uint32_t width, uint32_t height, bool forceResize /*= false*/, NativeWindow *windowHandle /*= nullptr*/) -> void
+	auto VulkanSwapChain::onResize(uint32_t width, uint32_t height, bool forceResize /*= false*/, NativeWindow* windowHandle /*= nullptr*/) -> void
 	{
 		PROFILE_FUNCTION();
 
@@ -399,7 +438,7 @@ namespace maple
 
 		VulkanContext::get()->waitIdle();
 
-		this->width  = width;
+		this->width = width;
 		this->height = height;
 
 		for (uint32_t i = 0; i < swapChainBufferCount; i++)

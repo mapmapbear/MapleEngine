@@ -65,12 +65,12 @@ namespace maple
 		}
 	}
 
-	auto VulkanVertexBuffer::bind(CommandBuffer *commandBuffer, Pipeline *pipeline) -> void
+	auto VulkanVertexBuffer::bind(const CommandBuffer *commandBuffer, Pipeline *pipeline) -> void
 	{
 		PROFILE_FUNCTION();
 		VkDeviceSize offsets[1] = {0};
 		if (commandBuffer)
-			vkCmdBindVertexBuffers(static_cast<VulkanCommandBuffer *>(commandBuffer)->getCommandBuffer(), 0, 1, &buffer, offsets);
+			vkCmdBindVertexBuffers(static_cast<const VulkanCommandBuffer *>(commandBuffer)->getCommandBuffer(), 0, 1, &buffer, offsets);
 	}
 
 	auto VulkanVertexBuffer::unbind() -> void

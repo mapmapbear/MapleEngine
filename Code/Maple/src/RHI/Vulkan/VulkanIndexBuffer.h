@@ -26,7 +26,7 @@ namespace maple
 
 		NO_COPYABLE(VulkanIndexBuffer);
 
-		auto bind(CommandBuffer *commandBuffer) const -> void override;
+		auto bind(const CommandBuffer *commandBuffer) const -> void override;
 		auto unbind() const -> void override;
 		auto setData(uint32_t size, const void *data) -> void;
 		auto releasePointer() -> void override;

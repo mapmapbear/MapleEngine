@@ -24,7 +24,7 @@ namespace maple
 			float      farPlane;
 			float      fov;
 			Frustum    frustum;
-			component::Transform *cameraTransform;
+			component::Transform* cameraTransform;
 		};
 
 		struct EnvironmentData
@@ -38,6 +38,7 @@ namespace maple
 		struct RendererData
 		{
 			CommandBuffer* commandBuffer = nullptr;
+			CommandBuffer* computeCommandBuffer = nullptr;
 			GBuffer* gbuffer = nullptr;
 			std::shared_ptr<Mesh> screenQuad;
 		};
@@ -51,17 +52,17 @@ namespace maple
 
 #ifdef MAPLE_OPENGL
 	constexpr glm::mat4 BIAS_MATRIX = {
-	    0.5, 0.0, 0.0, 0.0,
-	    0.0, 0.5, 0.0, 0.0,
-	    0.0, 0.0, 0.5, 0.0,
-	    0.5, 0.5, 0.5, 1.0};
+		0.5, 0.0, 0.0, 0.0,
+		0.0, 0.5, 0.0, 0.0,
+		0.0, 0.0, 0.5, 0.0,
+		0.5, 0.5, 0.5, 1.0 };
 #endif        // MAPLE_OPENGL
 
 #ifdef MAPLE_VULKAN
 	constexpr glm::mat4 BIAS_MATRIX = {
-	    0.5, 0.0, 0.0, 0.0,
-	    0.0, 0.5, 0.0, 0.0,
-	    0.0, 0.0, 1.0, 0.0,
-	    0.5, 0.5, 0.0, 1.0};
+		0.5, 0.0, 0.0, 0.0,
+		0.0, 0.5, 0.0, 0.0,
+		0.0, 0.0, 1.0, 0.0,
+		0.5, 0.5, 0.0, 1.0 };
 #endif
 }        // namespace maple

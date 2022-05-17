@@ -335,7 +335,7 @@ namespace maple
 						{
 							cmd.material->setShader(data.deferredColorShader);
 						}
-						cmd.material->bind();
+						cmd.material->bind(renderData.commandBuffer);
 					}
 					else
 					{
@@ -448,13 +448,13 @@ namespace maple
 		{
 			auto [data, shadowData, cameraView, renderData,ssao,graph] = entity;
 
-			data.descriptorColorSet[0]->update();
-			data.descriptorColorSet[2]->update();
+			data.descriptorColorSet[0]->update(renderData.commandBuffer);
+			data.descriptorColorSet[2]->update(renderData.commandBuffer);
 
-			data.descriptorAnimSet[0]->update();
-			data.descriptorAnimSet[2]->update();
+			data.descriptorAnimSet[0]->update(renderData.commandBuffer);
+			data.descriptorAnimSet[2]->update(renderData.commandBuffer);
 
-			data.stencilDescriptorSet->update();
+			data.stencilDescriptorSet->update(renderData.commandBuffer);
 
 			std::shared_ptr<Pipeline> pipeline;
 
@@ -475,7 +475,7 @@ namespace maple
 				if (command.boneTransforms != nullptr)
 				{
 					data.descriptorAnimSet[0]->setUniform("UniformBufferObject", "boneTransforms", command.boneTransforms.get());
-					data.descriptorAnimSet[0]->update();
+					data.descriptorAnimSet[0]->update(renderData.commandBuffer);
 				}
 
 				pushConstants.setValue("transform", &command.transform);
@@ -497,13 +497,13 @@ namespace maple
 
 						if (command.boneTransforms != nullptr)
 						{
-							material->bind();
+							material->bind(renderData.commandBuffer);
 							data.descriptorAnimSet[1] = material->getDescriptorSet();
 							Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, data.descriptorAnimSet);
 						}
 						else 
 						{
-							material->bind();
+							material->bind(renderData.commandBuffer);
 							data.descriptorColorSet[1] = material->getDescriptorSet();
 							Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, data.descriptorColorSet);
 						}
@@ -623,7 +623,7 @@ namespace maple
 				descriptorSet->setTexture("uPrefilterMap", envData.prefilteredEnvironment);
 				descriptorSet->setTexture("uPreintegratedFG", data.preintegratedFG);
 			}
-			descriptorSet->update();
+			descriptorSet->update(rendererData.commandBuffer);
 
 		
 

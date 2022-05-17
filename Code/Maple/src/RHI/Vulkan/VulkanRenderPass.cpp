@@ -184,7 +184,7 @@ namespace maple
 		delete[] clearValue;
 	}
 
-	auto VulkanRenderPass::beginRenderPass(CommandBuffer *commandBuffer, const glm::vec4 &clearColor, FrameBuffer *frame, SubPassContents contents, uint32_t width, uint32_t height, int32_t cubeFace, int32_t mipMapLevel) const -> void
+	auto VulkanRenderPass::beginRenderPass(const CommandBuffer *commandBuffer, const glm::vec4 &clearColor, FrameBuffer *frame, SubPassContents contents, uint32_t width, uint32_t height, int32_t cubeFace, int32_t mipMapLevel) const -> void
 	{
 		PROFILE_FUNCTION();
 		if (!depthOnly)
@@ -215,7 +215,7 @@ namespace maple
 		info.clearValueCount          = uint32_t(clearCount);
 		info.pClearValues             = clearValue;
 
-		auto vkCmd = static_cast<VulkanCommandBuffer *>(commandBuffer);
+		auto vkCmd = static_cast<const VulkanCommandBuffer *>(commandBuffer);
 
 		MAPLE_ASSERT(vkCmd->isRecording(), "must recording");
 
@@ -223,10 +223,9 @@ namespace maple
 		commandBuffer->updateViewport(width, height);
 	}
 
-	auto VulkanRenderPass::endRenderPass(CommandBuffer *commandBuffer) -> void
+	auto VulkanRenderPass::endRenderPass(const CommandBuffer *commandBuffer) -> void
 	{
 		PROFILE_FUNCTION();
-		vkCmdEndRenderPass(static_cast<VulkanCommandBuffer *>(commandBuffer)->getCommandBuffer());
+		vkCmdEndRenderPass(static_cast<const VulkanCommandBuffer *>(commandBuffer)->getCommandBuffer());
 	}
-
 };        // namespace maple

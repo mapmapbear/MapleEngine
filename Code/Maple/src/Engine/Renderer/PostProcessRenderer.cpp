@@ -79,7 +79,7 @@ namespace maple
 			descriptorSet->setTexture("uSsaoNoise", renderData.gbuffer->getSSAONoise());
 			descriptorSet->setUniform("UBO", "ssaoRadius", &ssaoData.ssaoRadius);
 			descriptorSet->setUniform("UBO", "projection", &camera.proj);
-			descriptorSet->update();
+			descriptorSet->update(renderData.commandBuffer);
 
 			auto commandBuffer = renderData.commandBuffer;
 
@@ -124,7 +124,7 @@ namespace maple
 				return;
 			auto descriptorSet = ssaoData.ssaoBlurSet[0];
 			descriptorSet->setTexture("uSsaoSampler", renderData.gbuffer->getBuffer(GBufferTextures::SSAO_SCREEN));
-			descriptorSet->update();
+			descriptorSet->update(renderData.commandBuffer);
 
 			auto commandBuffer = renderData.commandBuffer;
 
@@ -171,9 +171,8 @@ namespace maple
 			ssrData.ssrDescriptorSet->setTexture("uViewNormalSampler", render.gbuffer->getBuffer(GBufferTextures::VIEW_NORMALS));
 			ssrData.ssrDescriptorSet->setTexture("uPBRSampler", render.gbuffer->getBuffer(GBufferTextures::PBR));
 			ssrData.ssrDescriptorSet->setTexture("uScreenSampler", render.gbuffer->getBuffer(GBufferTextures::SCREEN));
-			ssrData.ssrDescriptorSet->update();
-
 			auto commandBuffer = render.commandBuffer;
+			ssrData.ssrDescriptorSet->update(commandBuffer);
 
 			PipelineInfo pipeInfo;
 			pipeInfo.shader = ssrData.ssrShader;
@@ -219,10 +218,11 @@ namespace maple
 			if (!bloom.enable)
 				return;
 
-			bloomData.bloomDescriptorSet->setTexture("uScreenSampler", render.gbuffer->getBuffer(GBufferTextures::SCREEN));
-			bloomData.bloomDescriptorSet->update();
-
 			auto commandBuffer = render.commandBuffer;
+
+			bloomData.bloomDescriptorSet->setTexture("uScreenSampler", render.gbuffer->getBuffer(GBufferTextures::SCREEN));
+			bloomData.bloomDescriptorSet->update(commandBuffer);
+
 
 			PipelineInfo pipeInfo;
 			pipeInfo.shader = bloomData.bloomShader;
@@ -274,12 +274,12 @@ namespace maple
 
 				int32_t dir = 1 - i;
 
+				auto commandBuffer = render.commandBuffer;
+
 				bloomData.bloomDescriptorSet->setUniform("UBO", "dir", &dir);
 				bloomData.bloomDescriptorSet->setUniform("UBO", "blurScale", &bloomData.blurScale);
 				bloomData.bloomDescriptorSet->setUniform("UBO", "blurStrength", &bloomData.blurStrength);
-				bloomData.bloomDescriptorSet->update();
-
-				auto commandBuffer = render.commandBuffer;
+				bloomData.bloomDescriptorSet->update(commandBuffer);
 
 				PipelineInfo pipeInfo;
 				pipeInfo.shader = bloomData.bloomShader;

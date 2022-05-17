@@ -20,14 +20,23 @@ namespace maple
 		std::shared_ptr<VulkanCommandBuffer> commandBuffer;
 	};
 
+
+	struct ComputeData
+	{
+		VkQueue queue;										// Separate queue for compute commands (queue family may differ from the one used for graphics)
+		std::shared_ptr<VulkanCommandPool> commandPool;		// Use a separate command pool (queue family may differ from the one used for graphics)
+		std::shared_ptr<VulkanCommandBuffer> commandBuffer;	// Command buffer storing the dispatch commands and barriers
+		VkSemaphore semaphore;								// Execution dependency between compute & graphic submission
+	};
+
 	class VulkanSwapChain final : public SwapChain
 	{
-	  public:
+	public:
 		VulkanSwapChain(uint32_t width, uint32_t height);
 		NO_COPYABLE(VulkanSwapChain);
 		virtual ~VulkanSwapChain();
 
-		auto init(bool vsync, NativeWindow *window) -> bool override;
+		auto init(bool vsync, NativeWindow* window) -> bool override;
 		auto init(bool vsync) -> bool override;
 
 		auto getCurrentImage() -> std::shared_ptr<Texture> override
@@ -69,20 +78,23 @@ namespace maple
 		auto begin() -> void;
 		auto end() -> void;
 
-		auto getCurrentCommandBuffer() -> CommandBuffer * override;
+		auto getCurrentCommandBuffer()->CommandBuffer* override;
 
-		auto onResize(uint32_t width, uint32_t height, bool forceResize = false, NativeWindow *windowHandle = nullptr) -> void;
+		auto onResize(uint32_t width, uint32_t height, bool forceResize = false, NativeWindow* windowHandle = nullptr) -> void;
 
 		auto acquireNextImage() -> void;
 
 		auto present(VkSemaphore waitSemaphore) -> void;
 
-		auto getFrameData() -> FrameData &;
+		auto getFrameData()->FrameData&;
 
 		autoUnpack(swapChain);
 
-	  private:
+		auto getComputeCmdBuffer()->CommandBuffer* override;
+
+	private:
 		auto createFrameData() -> void;
+		auto createComputeData() -> void;
 
 		FrameData frames[MAX_SWAPCHAIN_BUFFERS];
 
@@ -90,18 +102,19 @@ namespace maple
 
 		std::vector<std::shared_ptr<Texture2D>> swapChainBuffers;
 
-		uint32_t currentBuffer        = -1;
-		uint32_t acquireImageIndex    = -1;
-		uint32_t queueNodeIndex       = -1;
-		uint32_t width                = 0;
-		uint32_t height               = 0;
+		uint32_t currentBuffer = -1;
+		uint32_t acquireImageIndex = -1;
+		uint32_t queueNodeIndex = -1;
+		uint32_t width = 0;
+		uint32_t height = 0;
 		uint32_t swapChainBufferCount = 0;
-		bool     vsync                = false;
+		bool     vsync = false;
 
-		VkSwapchainKHR  swapChain    = nullptr;
+		VkSwapchainKHR  swapChain = nullptr;
 		VkSwapchainKHR  oldSwapChain = nullptr;
-		VkSurfaceKHR    surface      = nullptr;
+		VkSurfaceKHR    surface = nullptr;
 		VkFormat        colorFormat;
 		VkColorSpaceKHR colorSpace;
+		ComputeData computeData;
 	};
 };        // namespace maple

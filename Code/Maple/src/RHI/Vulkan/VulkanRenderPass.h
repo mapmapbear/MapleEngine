@@ -16,9 +16,9 @@ namespace maple
 		NO_COPYABLE(VulkanRenderPass);
 		auto init(const RenderPassInfo &info) -> void;
 
-		auto beginRenderPass(CommandBuffer *commandBuffer, const glm::vec4 &clearColor, FrameBuffer *frame, SubPassContents contents, uint32_t width, uint32_t height, int32_t cubeFace, int32_t mipMapLevel) const -> void override;
+		auto beginRenderPass(const CommandBuffer *commandBuffer, const glm::vec4 &clearColor, FrameBuffer *frame, SubPassContents contents, uint32_t width, uint32_t height, int32_t cubeFace, int32_t mipMapLevel) const -> void override;
 
-		auto endRenderPass(CommandBuffer *commandBuffer) -> void override;
+		auto endRenderPass(const CommandBuffer *commandBuffer) -> void override;
 
 		inline auto getAttachmentCount() const -> int32_t override
 		{

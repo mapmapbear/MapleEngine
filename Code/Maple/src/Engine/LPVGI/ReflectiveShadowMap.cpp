@@ -146,10 +146,10 @@ namespace maple
 
 			rsm.descriptorSets[0]->setUniform("UniformBufferObject", "lightProjection", &rsm.projView);
 
-			rsm.descriptorSets[0]->update();
-			rsm.descriptorSets[1]->update();
-
 			auto commandBuffer = renderData.commandBuffer;
+
+			rsm.descriptorSets[0]->update(commandBuffer);
+			rsm.descriptorSets[1]->update(commandBuffer);
 
 			PipelineInfo pipeInfo;
 			pipeInfo.shader = rsm.shader;
@@ -194,7 +194,7 @@ namespace maple
 						descriptorSet->setUniform("UBO", "albedoColor", &material->getProperties().albedoColor);
 						descriptorSet->setUniform("UBO", "usingAlbedoMap", &material->getProperties().usingAlbedoMap);
 						descriptorSet->setTexture("uDiffuseMap", material->getTextures().albedo);
-						descriptorSet->update();
+						descriptorSet->update(commandBuffer);
 
 						Renderer::bindDescriptorSets(pipeline.get(), commandBuffer, 0, rsm.descriptorSets);
 						Renderer::drawIndexed(commandBuffer, DrawType::Triangle, end - start, start);
@@ -211,7 +211,7 @@ namespace maple
 						descriptorSet->setUniform("UBO", "albedoColor", &command.material->getProperties().albedoColor);
 						descriptorSet->setUniform("UBO", "usingAlbedoMap", &command.material->getProperties().usingAlbedoMap);
 						descriptorSet->setTexture("uDiffuseMap", command.material->getTextures().albedo);
-						descriptorSet->update();
+						descriptorSet->update(commandBuffer);
 					}
 					Renderer::bindDescriptorSets(pipeline.get(), commandBuffer, 0, rsm.descriptorSets);
 					Renderer::drawMesh(commandBuffer, pipeline.get(), mesh);

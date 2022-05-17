@@ -18,22 +18,22 @@ namespace maple
 		{
 			switch (type)
 			{
-				case VK_PHYSICAL_DEVICE_TYPE_OTHER:
-					return "Other";
-				case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
-					return "Integrated GPU";
-				case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
-					return "Discrete GPU";
-				case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
-					return "Virtual GPU";
-				case VK_PHYSICAL_DEVICE_TYPE_CPU:
-					return "CPU";
-				default:
-					return "UNKNOWN";
+			case VK_PHYSICAL_DEVICE_TYPE_OTHER:
+				return "Other";
+			case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+				return "Integrated GPU";
+			case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+				return "Discrete GPU";
+			case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
+				return "Virtual GPU";
+			case VK_PHYSICAL_DEVICE_TYPE_CPU:
+				return "CPU";
+			default:
+				return "UNKNOWN";
 			}
 		}
 
-		inline auto lookupQueueFamilyIndices(int32_t flags, std::vector<VkQueueFamilyProperties> &queueFamilyProperties) -> QueueFamilyIndices
+		inline auto lookupQueueFamilyIndices(int32_t flags, std::vector<VkQueueFamilyProperties>& queueFamilyProperties) -> QueueFamilyIndices
 		{
 			QueueFamilyIndices indices;
 
@@ -41,7 +41,7 @@ namespace maple
 			{
 				for (uint32_t i = 0; i < queueFamilyProperties.size(); i++)
 				{
-					auto &queueFamilyProperty = queueFamilyProperties[i];
+					auto& queueFamilyProperty = queueFamilyProperties[i];
 					if ((queueFamilyProperty.queueFlags & VK_QUEUE_COMPUTE_BIT) && ((queueFamilyProperty.queueFlags & VK_QUEUE_GRAPHICS_BIT) == 0))
 					{
 						indices.computeFamily = i;
@@ -54,7 +54,7 @@ namespace maple
 			{
 				for (uint32_t i = 0; i < queueFamilyProperties.size(); i++)
 				{
-					auto &queueFamilyProperty = queueFamilyProperties[i];
+					auto& queueFamilyProperty = queueFamilyProperties[i];
 					if ((queueFamilyProperty.queueFlags & VK_QUEUE_TRANSFER_BIT) && ((queueFamilyProperty.queueFlags & VK_QUEUE_GRAPHICS_BIT) == 0) && ((queueFamilyProperty.queueFlags & VK_QUEUE_COMPUTE_BIT) == 0))
 					{
 						indices.presentFamily = i;
@@ -138,7 +138,7 @@ namespace maple
 			if (vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &extCount, &extensions.front()) == VK_SUCCESS)
 			{
 				LOGI("Selected physical device has {0} extensions", extensions.size());
-				for (const auto &ext : extensions)
+				for (const auto& ext : extensions)
 				{
 					supportedExtensions.emplace(ext.extensionName);
 				}
@@ -147,16 +147,16 @@ namespace maple
 
 		static const float defaultQueuePriority(0.0f);
 
-		int32_t requestedQueueTypes = VK_QUEUE_GRAPHICS_BIT;        // | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT;
-		indices                     = lookupQueueFamilyIndices(requestedQueueTypes, queueFamilyProperties);
+		int32_t requestedQueueTypes = VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT;        // | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT;
+		indices = lookupQueueFamilyIndices(requestedQueueTypes, queueFamilyProperties);
 
 		// Graphics queue
 		if (requestedQueueTypes & VK_QUEUE_GRAPHICS_BIT)
 		{
 			VkDeviceQueueCreateInfo queueInfo{};
-			queueInfo.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+			queueInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
 			queueInfo.queueFamilyIndex = indices.graphicsFamily.value();
-			queueInfo.queueCount       = 1;
+			queueInfo.queueCount = 1;
 			queueInfo.pQueuePriorities = &defaultQueuePriority;
 			queueCreateInfos.emplace_back(queueInfo);
 		}
@@ -168,9 +168,9 @@ namespace maple
 			{
 				// If compute family index differs, we need an additional queue create info for the compute queue
 				VkDeviceQueueCreateInfo queueInfo{};
-				queueInfo.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+				queueInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
 				queueInfo.queueFamilyIndex = indices.computeFamily.value();
-				queueInfo.queueCount       = 1;
+				queueInfo.queueCount = 1;
 				queueInfo.pQueuePriorities = &defaultQueuePriority;
 				queueCreateInfos.emplace_back(queueInfo);
 			}
@@ -183,9 +183,9 @@ namespace maple
 			{
 				// If compute family index differs, we need an additional queue create info for the compute queue
 				VkDeviceQueueCreateInfo queueInfo{};
-				queueInfo.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+				queueInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
 				queueInfo.queueFamilyIndex = indices.presentFamily.value();
-				queueInfo.queueCount       = 1;
+				queueInfo.queueCount = 1;
 				queueInfo.pQueuePriorities = &defaultQueuePriority;
 				queueCreateInfos.emplace_back(queueInfo);
 			}
@@ -231,10 +231,10 @@ namespace maple
 	auto VulkanDevice::createTracyContext() -> void
 	{
 		VkCommandBufferAllocateInfo allocInfo = {};
-		allocInfo.sType                       = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		allocInfo.level                       = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		allocInfo.commandPool                 = *commandPool;
-		allocInfo.commandBufferCount          = 1;
+		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		allocInfo.commandPool = *commandPool;
+		allocInfo.commandBufferCount = 1;
 
 #if defined(MAPLE_PROFILE) && defined(TRACY_ENABLE)
 		VkCommandBuffer tracyBuffer;
@@ -252,9 +252,9 @@ namespace maple
 		VkPhysicalDeviceFeatures physicalDeviceFeatures;
 		vkGetPhysicalDeviceFeatures(*physicalDevice, &physicalDeviceFeatures);
 
-		std::vector<const char *> deviceExtensions = {
-		    VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-		    VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME};
+		std::vector<const char*> deviceExtensions = {
+			VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+			VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME };
 
 		if (physicalDevice->isExtensionSupported(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
 		{
@@ -263,8 +263,8 @@ namespace maple
 		}
 
 		VkPhysicalDeviceDescriptorIndexingFeaturesEXT indexingFeatures{};
-		indexingFeatures.sType                           = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
-		indexingFeatures.runtimeDescriptorArray          = VK_TRUE;
+		indexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT;
+		indexingFeatures.runtimeDescriptorArray = VK_TRUE;
 		indexingFeatures.descriptorBindingPartiallyBound = VK_TRUE;
 
 #if defined(PLATFORM_MACOS) || defined(PLATFORM_IOS)
@@ -277,14 +277,14 @@ namespace maple
 
 		// Device
 		VkDeviceCreateInfo deviceCreateInfo{};
-		deviceCreateInfo.sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-		deviceCreateInfo.queueCreateInfoCount    = static_cast<uint32_t>(physicalDevice->queueCreateInfos.size());
-		deviceCreateInfo.pQueueCreateInfos       = physicalDevice->queueCreateInfos.data();
-		deviceCreateInfo.enabledExtensionCount   = static_cast<uint32_t>(deviceExtensions.size());
+		deviceCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+		deviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(physicalDevice->queueCreateInfos.size());
+		deviceCreateInfo.pQueueCreateInfos = physicalDevice->queueCreateInfos.data();
+		deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
 		deviceCreateInfo.ppEnabledExtensionNames = deviceExtensions.data();
-		deviceCreateInfo.pEnabledFeatures        = &physicalDeviceFeatures;
-		deviceCreateInfo.enabledLayerCount       = 0;
-		deviceCreateInfo.pNext                   = (void *) &indexingFeatures;
+		deviceCreateInfo.pEnabledFeatures = &physicalDeviceFeatures;
+		deviceCreateInfo.enabledLayerCount = 0;
+		deviceCreateInfo.pNext = (void*)&indexingFeatures;
 
 		auto result = vkCreateDevice(*physicalDevice, &deviceCreateInfo, VK_NULL_HANDLE, &device);
 		if (result != VK_SUCCESS)
@@ -295,39 +295,40 @@ namespace maple
 
 		vkGetDeviceQueue(device, physicalDevice->indices.graphicsFamily.value(), 0, &graphicsQueue);
 		vkGetDeviceQueue(device, physicalDevice->indices.graphicsFamily.value(), 0, &presentQueue);
+		vkGetDeviceQueue(device, physicalDevice->indices.computeFamily.value(), 0, &computeQueue);
 
 #ifdef USE_VMA_ALLOCATOR
 		VmaAllocatorCreateInfo allocatorInfo = {};
-		allocatorInfo.physicalDevice         = *physicalDevice;
-		allocatorInfo.device                 = device;
-		allocatorInfo.instance               = VulkanContext::get()->getVkInstance();
+		allocatorInfo.physicalDevice = *physicalDevice;
+		allocatorInfo.device = device;
+		allocatorInfo.instance = VulkanContext::get()->getVkInstance();
 
 		VmaVulkanFunctions fn;
-		fn.vkAllocateMemory                        = (PFN_vkAllocateMemory) vkAllocateMemory;
-		fn.vkBindBufferMemory                      = (PFN_vkBindBufferMemory) vkBindBufferMemory;
-		fn.vkBindImageMemory                       = (PFN_vkBindImageMemory) vkBindImageMemory;
-		fn.vkCmdCopyBuffer                         = (PFN_vkCmdCopyBuffer) vkCmdCopyBuffer;
-		fn.vkCreateBuffer                          = (PFN_vkCreateBuffer) vkCreateBuffer;
-		fn.vkCreateImage                           = (PFN_vkCreateImage) vkCreateImage;
-		fn.vkDestroyBuffer                         = (PFN_vkDestroyBuffer) vkDestroyBuffer;
-		fn.vkDestroyImage                          = (PFN_vkDestroyImage) vkDestroyImage;
-		fn.vkFlushMappedMemoryRanges               = (PFN_vkFlushMappedMemoryRanges) vkFlushMappedMemoryRanges;
-		fn.vkFreeMemory                            = (PFN_vkFreeMemory) vkFreeMemory;
-		fn.vkGetBufferMemoryRequirements           = (PFN_vkGetBufferMemoryRequirements) vkGetBufferMemoryRequirements;
-		fn.vkGetImageMemoryRequirements            = (PFN_vkGetImageMemoryRequirements) vkGetImageMemoryRequirements;
-		fn.vkGetPhysicalDeviceMemoryProperties     = (PFN_vkGetPhysicalDeviceMemoryProperties) vkGetPhysicalDeviceMemoryProperties;
-		fn.vkGetPhysicalDeviceProperties           = (PFN_vkGetPhysicalDeviceProperties) vkGetPhysicalDeviceProperties;
-		fn.vkInvalidateMappedMemoryRanges          = (PFN_vkInvalidateMappedMemoryRanges) vkInvalidateMappedMemoryRanges;
-		fn.vkMapMemory                             = (PFN_vkMapMemory) vkMapMemory;
-		fn.vkUnmapMemory                           = (PFN_vkUnmapMemory) vkUnmapMemory;
-		fn.vkGetBufferMemoryRequirements2KHR       = 0;        //(PFN_vkGetBufferMemoryRequirements2KHR)vkGetBufferMemoryRequirements2KHR;
-		fn.vkGetImageMemoryRequirements2KHR        = 0;        //(PFN_vkGetImageMemoryRequirements2KHR)vkGetImageMemoryRequirements2KHR;
-		fn.vkBindImageMemory2KHR                   = 0;
-		fn.vkBindBufferMemory2KHR                  = 0;
+		fn.vkAllocateMemory = (PFN_vkAllocateMemory)vkAllocateMemory;
+		fn.vkBindBufferMemory = (PFN_vkBindBufferMemory)vkBindBufferMemory;
+		fn.vkBindImageMemory = (PFN_vkBindImageMemory)vkBindImageMemory;
+		fn.vkCmdCopyBuffer = (PFN_vkCmdCopyBuffer)vkCmdCopyBuffer;
+		fn.vkCreateBuffer = (PFN_vkCreateBuffer)vkCreateBuffer;
+		fn.vkCreateImage = (PFN_vkCreateImage)vkCreateImage;
+		fn.vkDestroyBuffer = (PFN_vkDestroyBuffer)vkDestroyBuffer;
+		fn.vkDestroyImage = (PFN_vkDestroyImage)vkDestroyImage;
+		fn.vkFlushMappedMemoryRanges = (PFN_vkFlushMappedMemoryRanges)vkFlushMappedMemoryRanges;
+		fn.vkFreeMemory = (PFN_vkFreeMemory)vkFreeMemory;
+		fn.vkGetBufferMemoryRequirements = (PFN_vkGetBufferMemoryRequirements)vkGetBufferMemoryRequirements;
+		fn.vkGetImageMemoryRequirements = (PFN_vkGetImageMemoryRequirements)vkGetImageMemoryRequirements;
+		fn.vkGetPhysicalDeviceMemoryProperties = (PFN_vkGetPhysicalDeviceMemoryProperties)vkGetPhysicalDeviceMemoryProperties;
+		fn.vkGetPhysicalDeviceProperties = (PFN_vkGetPhysicalDeviceProperties)vkGetPhysicalDeviceProperties;
+		fn.vkInvalidateMappedMemoryRanges = (PFN_vkInvalidateMappedMemoryRanges)vkInvalidateMappedMemoryRanges;
+		fn.vkMapMemory = (PFN_vkMapMemory)vkMapMemory;
+		fn.vkUnmapMemory = (PFN_vkUnmapMemory)vkUnmapMemory;
+		fn.vkGetBufferMemoryRequirements2KHR = 0;        //(PFN_vkGetBufferMemoryRequirements2KHR)vkGetBufferMemoryRequirements2KHR;
+		fn.vkGetImageMemoryRequirements2KHR = 0;        //(PFN_vkGetImageMemoryRequirements2KHR)vkGetImageMemoryRequirements2KHR;
+		fn.vkBindImageMemory2KHR = 0;
+		fn.vkBindBufferMemory2KHR = 0;
 		fn.vkGetPhysicalDeviceMemoryProperties2KHR = 0;
-		fn.vkGetImageMemoryRequirements2KHR        = 0;
-		fn.vkGetBufferMemoryRequirements2KHR       = 0;
-		allocatorInfo.pVulkanFunctions             = &fn;
+		fn.vkGetImageMemoryRequirements2KHR = 0;
+		fn.vkGetBufferMemoryRequirements2KHR = 0;
+		allocatorInfo.pVulkanFunctions = &fn;
 
 		if (vmaCreateAllocator(&allocatorInfo, &allocator) != VK_SUCCESS)
 		{
@@ -353,7 +354,7 @@ namespace maple
 	std::shared_ptr<VulkanDevice> VulkanDevice::instance;
 
 #if defined(MAPLE_PROFILE) && defined(TRACY_ENABLE)
-	auto VulkanDevice::getTracyContext() -> tracy::VkCtx *
+	auto VulkanDevice::getTracyContext() -> tracy::VkCtx*
 	{
 		return tracyContext;
 	}

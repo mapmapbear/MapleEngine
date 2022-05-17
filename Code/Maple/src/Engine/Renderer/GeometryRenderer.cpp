@@ -379,7 +379,7 @@ namespace maple
 
 			if (!geometry.lines.empty())
 			{
-				geometry.lineDescriptorSet[0]->update();
+				geometry.lineDescriptorSet[0]->update(render.commandBuffer);
 
 				PipelineInfo pipelineInfo;
 				pipelineInfo.shader = geometry.lineShader;
@@ -435,7 +435,7 @@ namespace maple
 
 			if (!geometry.points.empty())
 			{
-				geometry.pointDescriptorSet[0]->update();
+				geometry.pointDescriptorSet[0]->update(render.commandBuffer);
 				PipelineInfo pipelineInfo;
 				pipelineInfo.shader = geometry.pointShader;
 				pipelineInfo.polygonMode = PolygonMode::Fill;

@@ -276,7 +276,7 @@ namespace maple
 		}
 	}
 
-	auto Material::bind() -> void
+	auto Material::bind(const CommandBuffer* cmdBuffer) -> void
 	{
 		PROFILE_FUNCTION();
 
@@ -289,7 +289,7 @@ namespace maple
 		{
 			updateDescriptorSet();
 		}
-		descriptorSet->update();
+		descriptorSet->update(cmdBuffer);
 	}
 
 	auto Material::setShader(const std::string& path) -> void

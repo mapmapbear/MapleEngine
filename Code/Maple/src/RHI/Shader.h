@@ -100,7 +100,7 @@ namespace maple
 		virtual auto getFilePath() const -> const std::string &                                  = 0;
 		virtual auto getHandle() const -> void *                                                 = 0;
 		virtual auto getPushConstants() -> std::vector<PushConstant> &                           = 0;
-		virtual auto bindPushConstants(CommandBuffer *commandBuffer, Pipeline *pipeline) -> void = 0;
+		virtual auto bindPushConstants(const CommandBuffer *commandBuffer, Pipeline *pipeline) -> void = 0;
 		virtual auto getPushConstant(uint32_t index) -> PushConstant *
 		{
 			return nullptr;

@@ -247,13 +247,13 @@ namespace maple
 		unload();
 	}
 
-	auto VulkanShader::bindPushConstants(CommandBuffer* cmdBuffer, Pipeline* pipeline) -> void
+	auto VulkanShader::bindPushConstants(const CommandBuffer* cmdBuffer, Pipeline* pipeline) -> void
 	{
 		uint32_t index = 0;
 		for (auto& pc : pushConstants)
 		{
 			vkCmdPushConstants(
-				static_cast<VulkanCommandBuffer*>(cmdBuffer)->getCommandBuffer(),
+				static_cast<const VulkanCommandBuffer*>(cmdBuffer)->getCommandBuffer(),
 				static_cast<VulkanPipeline*>(pipeline)->getPipelineLayout(),
 				VkConverter::shaderTypeToVK(pc.shaderStage)
 				, index, pc.size, pc.data.data());

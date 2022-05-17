@@ -412,7 +412,7 @@ namespace maple
 		GLCall(glBindTexture(GL_TEXTURE_CUBE_MAP, 0));
 	}
 
-	auto GLTextureCube::update(CommandBuffer *commandBuffer, FrameBuffer *framebuffer, int32_t cubeIndex, int32_t mipmapLevel /*= 0*/) -> void
+	auto GLTextureCube::update(const CommandBuffer *commandBuffer, FrameBuffer *framebuffer, int32_t cubeIndex, int32_t mipmapLevel /*= 0*/) -> void
 	{
 		PROFILE_FUNCTION();
 	}
@@ -608,7 +608,7 @@ namespace maple
 		GLCall(glBindTexture(GL_TEXTURE_2D, 0));
 	}
 
-	auto GLTextureDepth::resize(uint32_t width, uint32_t height, CommandBuffer *commandBuffer) -> void
+	auto GLTextureDepth::resize(uint32_t width, uint32_t height, const CommandBuffer *commandBuffer) -> void
 	{
 		this->width  = width;
 		this->height = height;

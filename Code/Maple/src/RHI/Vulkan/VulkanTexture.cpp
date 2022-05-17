@@ -487,7 +487,7 @@ namespace maple
 #endif
 	}
 
-	auto VulkanTextureDepth::resize(uint32_t width, uint32_t height, CommandBuffer* commandBuffer) -> void
+	auto VulkanTextureDepth::resize(uint32_t width, uint32_t height, const CommandBuffer* commandBuffer) -> void
 	{
 		PROFILE_FUNCTION();
 		this->width = width;
@@ -504,7 +504,7 @@ namespace maple
 		descriptor.imageLayout = imageLayout;
 	}
 
-	auto VulkanTextureDepth::init(CommandBuffer* commandBuffer) -> void
+	auto VulkanTextureDepth::init(const CommandBuffer* commandBuffer) -> void
 	{
 		PROFILE_FUNCTION();
 		vkFormat = VulkanHelper::getDepthFormat(stencil);
@@ -624,10 +624,10 @@ namespace maple
 		PROFILE_FUNCTION();
 	}
 
-	auto VulkanTextureCube::update(CommandBuffer* commandBuffer, FrameBuffer* framebuffer, int32_t cubeIndex, int32_t mipMapLevel) -> void
+	auto VulkanTextureCube::update(const CommandBuffer* commandBuffer, FrameBuffer* framebuffer, int32_t cubeIndex, int32_t mipMapLevel) -> void
 	{
 		PROFILE_FUNCTION();
-		auto cmd = static_cast<VulkanCommandBuffer*>(commandBuffer);
+		auto cmd = static_cast<const VulkanCommandBuffer*>(commandBuffer);
 
 		auto frameBuffer = static_cast<VulkanFrameBuffer*>(framebuffer);
 

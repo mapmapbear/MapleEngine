@@ -32,7 +32,7 @@ namespace maple
 	{
 	}
 
-	auto GLCommandBuffer::executeSecondary(CommandBuffer *primaryCmdBuffer) -> void
+	auto GLCommandBuffer::executeSecondary(const CommandBuffer *primaryCmdBuffer) -> void
 	{
 	}
 

@@ -19,36 +19,36 @@ namespace maple
 
 	class VulkanPhysicalDevice final
 	{
-	  public:
+	public:
 		VulkanPhysicalDevice();
 		NO_COPYABLE(VulkanPhysicalDevice);
-		inline auto isExtensionSupported(const std::string &extensionName) const
+		inline auto isExtensionSupported(const std::string& extensionName) const
 		{
 			return supportedExtensions.find(extensionName) != supportedExtensions.end();
 		}
 
-		auto getMemoryTypeIndex(uint32_t typeBits, VkMemoryPropertyFlags properties) const -> uint32_t;
+		auto getMemoryTypeIndex(uint32_t typeBits, VkMemoryPropertyFlags properties) const->uint32_t;
 
 		inline operator auto() const
 		{
 			return physicalDevice;
 		}
 
-		inline auto &getProperties() const
+		inline auto& getProperties() const
 		{
 			return physicalDeviceProperties;
 		};
 
-		inline auto &getQueueFamilyIndices() const
+		inline auto& getQueueFamilyIndices() const
 		{
 			return indices;
 		}
-		inline auto &getMemoryProperties() const
+		inline auto& getMemoryProperties() const
 		{
 			return memoryProperties;
 		}
 
-	  private:
+	private:
 		std::vector<VkQueueFamilyProperties> queueFamilyProperties;
 		std::unordered_set<std::string>      supportedExtensions;
 		std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
@@ -63,7 +63,7 @@ namespace maple
 
 	class VulkanDevice final
 	{
-	  public:
+	public:
 		VulkanDevice();
 		~VulkanDevice();
 
@@ -86,6 +86,12 @@ namespace maple
 		{
 			return presentQueue;
 		}
+
+		inline auto getComputeQueue()
+		{
+			return computeQueue;
+		}
+
 		inline auto getCommandPool()
 		{
 			return commandPool;
@@ -113,14 +119,14 @@ namespace maple
 		inline auto getAllocator() const
 		{
 			return allocator;
-		}
+	}
 #endif
 
 #if defined(MAPLE_PROFILE) && defined(TRACY_ENABLE)
-		auto getTracyContext() -> tracy::VkCtx *;
+		auto getTracyContext()->tracy::VkCtx*;
 #endif
 
-	  private:
+	private:
 		auto createTracyContext() -> void;
 
 		std::shared_ptr<VulkanPhysicalDevice> physicalDevice;
@@ -130,13 +136,14 @@ namespace maple
 		VkDevice device = nullptr;
 		VkQueue  graphicsQueue;
 		VkQueue  presentQueue;
+		VkQueue  computeQueue;
 
 		VkDescriptorPool         descriptorPool;
 		VkPhysicalDeviceFeatures enabledFeatures;
 		VkPipelineCache          pipelineCache;
 
 #if defined(MAPLE_PROFILE) && defined(TRACY_ENABLE)
-		tracy::VkCtx *tracyContext;
+		tracy::VkCtx* tracyContext;
 #endif
 
 #ifdef USE_VMA_ALLOCATOR
@@ -144,5 +151,5 @@ namespace maple
 #endif
 
 		bool enableDebugMarkers = false;
-	};
+};
 };        // namespace maple

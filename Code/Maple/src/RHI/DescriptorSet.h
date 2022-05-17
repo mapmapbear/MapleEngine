@@ -13,6 +13,8 @@ namespace maple
 	class Shader;
 	class Texture;
 	class UniformBuffer;
+	class CommandBuffer;
+
 	enum class TextureType : int32_t;
 	enum class ShaderType : int32_t;
 	enum class TextureFormat : int32_t;
@@ -134,7 +136,7 @@ namespace maple
 		virtual ~DescriptorSet() = default;
 		static auto create(const DescriptorInfo &desc) -> std::shared_ptr<DescriptorSet>;
 
-		virtual auto update() -> void                                                                                                                         = 0;
+		virtual auto update(const CommandBuffer * commandBuffer, bool compute = false) -> void																  = 0;
 		virtual auto setDynamicOffset(uint32_t offset) -> void                                                                                                = 0;
 		virtual auto getDynamicOffset() const -> uint32_t                                                                                                     = 0;
 		virtual auto setTexture(const std::string &name, const std::vector<std::shared_ptr<Texture>> &textures, uint32_t mipLevel = 0) -> void                = 0;

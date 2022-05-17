@@ -43,7 +43,7 @@ namespace maple
 		GLCall(glDeleteBuffers(1, &handle));
 	}
 
-	auto GLIndexBuffer::bind(CommandBuffer *commandBuffer) const -> void
+	auto GLIndexBuffer::bind(const CommandBuffer *commandBuffer) const -> void
 	{
 		PROFILE_FUNCTION();
 		GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, handle));

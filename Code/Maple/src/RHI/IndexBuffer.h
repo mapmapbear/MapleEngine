@@ -13,7 +13,7 @@ namespace maple
 	{
 	  public:
 		virtual ~IndexBuffer()                                                  = default;
-		virtual auto bind(CommandBuffer *commandBuffer = nullptr) const -> void = 0;
+		virtual auto bind(const CommandBuffer *commandBuffer = nullptr) const -> void = 0;
 		virtual auto unbind() const -> void                                     = 0;
 		virtual auto getCount() const -> uint32_t                               = 0;
 		virtual auto setCount(uint32_t indexCount) -> void                      = 0;

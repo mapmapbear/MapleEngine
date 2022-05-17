@@ -43,16 +43,16 @@ namespace maple
 
 		auto init() -> void;
 		auto present() -> void;
-		auto renderScene(capture_graph::component::RenderGraph& graph) -> void;
+		auto renderScene(const CommandBuffer* cmd, capture_graph::component::RenderGraph& graph) -> void;
 		auto beginScene(component::Environment & env) -> void;
 
 	  private:
-		auto updateIrradianceDescriptor() -> void;
-		auto updatePrefilterDescriptor() -> void;
+		auto updateIrradianceDescriptor(const CommandBuffer* cmd) -> void;
+		auto updatePrefilterDescriptor(const CommandBuffer* cmd) -> void;
 
-		auto generateSkybox(capture_graph::component::RenderGraph& graph) -> void;
-		auto generateIrradianceMap(capture_graph::component::RenderGraph& graph) -> void;
-		auto generatePrefilterMap(capture_graph::component::RenderGraph & graph) -> void;
+		auto generateSkybox(const CommandBuffer* cmd, capture_graph::component::RenderGraph& graph) -> void;
+		auto generateIrradianceMap(const CommandBuffer* cmd, capture_graph::component::RenderGraph& graph) -> void;
+		auto generatePrefilterMap(const CommandBuffer* cmd, capture_graph::component::RenderGraph & graph) -> void;
 
 		auto createPipeline() -> void;
 		auto updateUniform() -> void;

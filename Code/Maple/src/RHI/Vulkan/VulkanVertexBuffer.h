@@ -16,7 +16,7 @@ namespace maple
 		VulkanVertexBuffer(const BufferUsage &usage);
 		~VulkanVertexBuffer();
 
-		auto bind(CommandBuffer *commandBuffer, Pipeline *pipeline) -> void override;
+		auto bind(const CommandBuffer *commandBuffer, Pipeline *pipeline) -> void override;
 		auto resize(uint32_t size) -> void override;
 		auto setData(uint32_t size, const void *data) -> void override;
 		auto setDataSub(uint32_t size, const void *data, uint32_t offset) -> void override;

@@ -11,7 +11,7 @@ namespace maple
 		GLIndexBuffer(const uint32_t *data, uint32_t count, BufferUsage bufferUsage);
 		~GLIndexBuffer();
 
-		auto bind(CommandBuffer *commandBuffer) const -> void override;
+		auto bind(const CommandBuffer *commandBuffer) const -> void override;
 		auto unbind() const -> void override;
 		auto getCount() const -> uint32_t override;
 
