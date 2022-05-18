@@ -1,6 +1,8 @@
 #version 450
 #extension GL_ARB_shader_image_load_store : require
 
+#include "VXGI.glsl"
+
 layout(location = 0) in GeometryOut
 {
     vec3 wsPosition;
@@ -62,8 +64,9 @@ uint convVec4ToRGBA8(vec4 val)
     (uint(val.x) & 0x000000FF);
 }
 
-#define imageAtomicRGBA8Avg(grid, coords, value)    \
+#define imageAtomicRGBA8Avg(grid, coords, v)        \
 {                                                   \
+    vec4 value = v;                                 \
     value.rgb *= 255.0;                             \
     uint newVal = convVec4ToRGBA8(value);           \
     uint prevStoredVal = 0;                         \
@@ -83,16 +86,6 @@ uint convVec4ToRGBA8(vec4 val)
     }                                               \
 }
 
-vec3 encodeNormal(vec3 normal)
-{
-    return normal * 0.5f + vec3(0.5f);
-}
-
-vec3 decodeNormal(vec3 normal)
-{
-    return normal * 2.0f - vec3(1.0f);
-}
-
 vec4 getAlbedo()
 {
 	return (1.0 - materialProperties.usingAlbedoMap) * materialProperties.albedoColor + materialProperties.usingAlbedoMap * texture(uAlbedoMap, In.texCoord);
@@ -103,6 +96,17 @@ vec3 getEmissive()
 	return (1.0 - materialProperties.usingEmissiveMap) * materialProperties.emissiveColor.rgb + materialProperties.usingEmissiveMap * texture(uEmissiveMap, In.texCoord).rgb;
 }
 
+#define GAMMA 2.2
+
+vec4 gammaCorrectTexture(vec4 samp)
+{
+	return vec4(pow(samp.rgb, vec3(GAMMA)), samp.a);
+}
+
+vec3 gammaCorrectTextureRGB(vec3 samp)
+{
+	return vec3(pow(samp, vec3(GAMMA)));
+}
 
 void main()
 {
@@ -114,9 +118,8 @@ void main()
 
     // writing coords position
     ivec3 position = ivec3(In.wsPosition);
-    // fragment albedo
     vec4 albedo = getAlbedo();
-    float opacity = albedo.a;
+    float opacity = 1.0f;
 
     if(ubo.flagStaticVoxels == 0)
     {
@@ -129,10 +132,11 @@ void main()
         // premultiplied alpha
         albedo.rgb *= opacity;
         albedo.a = 1.0f;
+        albedo = gammaCorrectTexture(albedo);
         // emission
-        vec4 emissive = vec4(getEmissive(),1.0);
+        vec4 emissive = vec4(gammaCorrectTextureRGB(getEmissive()),1.0);
         // bring normal to 0-1 range
-        vec4 normal = vec4(encodeNormal(In.normal), 1.0f);
+        vec4 normal = vec4(encodeNormal(normalize(In.normal)), 1.0f);
         imageAtomicRGBA8Avg(uVoxelNormal, position, normal);
         imageAtomicRGBA8Avg(uVoxelAlbedo, position, albedo);
         imageAtomicRGBA8Avg(uVoxelEmission, position, emissive);

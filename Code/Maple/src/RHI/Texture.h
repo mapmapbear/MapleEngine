@@ -121,7 +121,7 @@ namespace maple
 		virtual auto setData(const void *data) -> void override
 		{}
 
-		virtual auto generateMipmaps() -> void = 0;
+		virtual auto generateMipmaps(const CommandBuffer* cmd ) -> void = 0;
 
 		inline auto getType() const -> TextureType override
 		{

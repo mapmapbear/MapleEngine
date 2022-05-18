@@ -473,7 +473,7 @@ namespace maple
 		auto init(uint32_t width, uint32_t height, uint32_t depth) -> void;
 		auto bind(uint32_t slot = 0) const -> void override;
 		auto unbind(uint32_t slot = 0) const -> void override;
-		auto generateMipmaps() -> void override;
+		auto generateMipmaps(const CommandBuffer * cmd) -> void override;
 		auto bindImageTexture(uint32_t unit, bool read, bool write, uint32_t level, uint32_t layer) -> void override;
 		auto buildTexture3D(TextureFormat format, uint32_t width, uint32_t height, uint32_t depth) -> void override;
 
@@ -504,6 +504,11 @@ namespace maple
 		inline auto getFormat() const -> TextureFormat override
 		{
 			return parameters.format;
+		}
+
+		virtual auto getDescriptorInfo() const -> void*
+		{
+			return (void*)&descriptor;
 		}
 
 		auto clear() -> void override;

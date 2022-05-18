@@ -23,11 +23,15 @@ layout(set = 3, binding = 0) uniform UniformBufferGemo
 {
 	mat4 viewProjections[3];
 	mat4 viewProjectionsI[3];
+	
 	vec3 worldMinPoint;
 	float voxelScale;
-	float volumeDimension;
-} ubo;
 
+	float volumeDimension;
+	float padding1;
+	float padding2;
+	float padding3;
+} ubo;
 
 
 int calculateAxis(vec3 faceNormal)
@@ -93,7 +97,7 @@ void main()
 	}
 
 	vec4 trianglePlane;
-	trianglePlane.xyz = normalize(faceNormal.xyz);
+	trianglePlane.xyz = normalize(cross(pos[1].xyz - pos[0].xyz, pos[2].xyz - pos[0].xyz)); // the normal after projection
 	trianglePlane.w = -dot(pos[0].xyz, trianglePlane.xyz);
 
     // change winding, otherwise there are artifacts for the back faces.

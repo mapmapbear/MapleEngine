@@ -4,6 +4,7 @@
 
 #include "Common/Light.h"
 #include "Common/Math.h"
+#include "VXGI/VXGI.glsl"
 
 #define GAMMA 2.2
 
@@ -11,7 +12,6 @@ const int NUM_PCF_SAMPLES = 16;
 const bool FADE_CASCADES = false;
 const float EPSILON = 0.00001;
 
-float ShadowFade = 1.0;
 // Constant normal incidence Fresnel factor for all dielectrics.
 const vec3 Fdielectric = vec3(0.04);
 
@@ -42,12 +42,13 @@ layout(set = 0, binding = 6)  uniform sampler2D uPBRSampler;
 layout(set = 0, binding = 7)  uniform samplerCube uIrradianceMap;
 layout(set = 0, binding = 8)  uniform samplerCube uPrefilterMap;
 layout(set = 0, binding = 9)  uniform sampler2D uPreintegratedFG;
-layout(set = 0, binding = 10)  uniform sampler2D uIndirectLight; 
-//layout(set = 0, binding = 13) uniform sampler2D uViewPositionSampler;
-//layout(set = 0, binding = 14) uniform sampler2D uViewNormalSampler; //GI
-layout(set = 0, binding = 11) uniform sampler2D uOutputSampler; //used for debug
+layout(set = 0, binding = 10) uniform sampler2D uIndirectLight; //LPV GI
 
-layout(set = 0, binding = 12) uniform UniformBufferLight
+layout(set = 0, binding = 11) uniform sampler3D uVoxelTex; 
+layout(set = 0, binding = 12) uniform sampler3D uVoxelTexMipmap[6];
+//VXGI
+//layout(set = 0, binding = 18) uniform sampler2D uOutputSampler; //used for debug
+layout(set = 0, binding = 18) uniform UniformBufferLight
 {
 	Light lights[MAX_LIGHTS];
 	mat4 shadowTransform[MAX_SHADOWMAPS];
@@ -56,29 +57,45 @@ layout(set = 0, binding = 12) uniform UniformBufferLight
 	mat4 biasMat;
 	vec4 cameraPosition;
 	vec4 splitDepths[MAX_SHADOWMAPS];
+	
 	float shadowMapSize;
-	float maxShadowDistance;
-	float shadowFade;
-	float cascadeTransitionFade;
+	float initialBias;
+
 	int lightCount;
 	int shadowCount;
 	int mode;
 	int cubeMapMipLevels;
-	float initialBias;
+	
 	int ssaoEnable;
-	int enableIndirectLight;
+	int enableLPV;
 	int enableShadow;
-	float indirectLightAttenuation;
+	int shadowMethod;
+
+	float padd;
+	float padd2;
 } ubo;
 
-/*layout(set = 0, binding = 12) uniform VirtualPointLight
+layout(set = 0, binding = 19) uniform UniformBufferVXGI
 {
-	vec4 VPLSamples[NUM_VPL];
-	float rsmRMax;
-	float rsmIntensity;
-	float numberOfSamples;
-	float padding2; 
-} vpl;*/
+	float voxelScale;
+	float maxTracingDistanceGlobal;
+	float aoFalloff;
+	float bounceStrength;
+
+	vec3 worldMinPoint;
+	float aoAlpha;
+
+	vec3 worldMaxPoint;
+	float samplingFactor;
+
+	int enableVXGI;
+	int volumeDimension;
+	float worldSize; //max in aabb
+	float padding;
+} uboVXGI;
+
+
+
 
 const vec2 PoissonDistribution16[16] = vec2[](
 	  vec2(-0.94201624, -0.39906216), vec2(0.94558609, -0.76890725), vec2(-0.094184101, -0.92938870), vec2(0.34495938, 0.29387760),
@@ -86,7 +103,6 @@ const vec2 PoissonDistribution16[16] = vec2[](
 	  vec2(0.44323325, -0.97511554), vec2(0.53742981, -0.47373420), vec2(-0.26496911, -0.41893023), vec2(0.79197514, 0.19090188),
 	  vec2(-0.24188840, 0.99706507), vec2(-0.81409955, 0.91437590), vec2(0.19984126, 0.78641367), vec2(0.14383161, -0.14100790)
 );
-
 
 const vec2 PoissonDistribution[64] = vec2[](
 	vec2(-0.884081, 0.124488), vec2(-0.714377, 0.027940), vec2(-0.747945, 0.227922), vec2(-0.939609, 0.243634),
@@ -106,8 +122,6 @@ const vec2 PoissonDistribution[64] = vec2[](
 	vec2(0.122595, 0.280353),vec2(-0.043643, 0.312119),vec2(0.132993, 0.085170),vec2(-0.192106, 0.285848),
 	vec2(0.183621, -0.713242),vec2(0.265220, -0.596716),vec2(-0.009628, -0.483058),vec2(-0.018516, 0.435703)
 );
-
-float calculateShadow(vec3 wsPos, int cascadeIndex, vec3 lightDirection, vec3 normal);
 
 float RayMarch(vec3 startPos, vec3 viewDir, vec3 normal, vec3 cameraPos, Light light)
 {
@@ -196,7 +210,7 @@ float random(vec4 seed4)
 float textureProj(vec4 shadowCoord, vec2 offset, int cascadeIndex)
 {
 	float shadow = 1.0;
-	float ambient = 0.01;
+	float ambient = 0.00;
 	
 	if ( shadowCoord.z > -1.0 && shadowCoord.z < 1.0 && shadowCoord.w > 0)
 	{
@@ -238,38 +252,6 @@ float getShadowBias(vec3 lightDirection, vec3 normal, int shadowIndex)
 	float bias = max(minBias * (1.0 - dot(normal, lightDirection)), minBias);
 	return bias;
 }
-
-float getPCFShadowDirectionalLight(vec4 shadowCoords, float uvRadius, vec3 lightDirection, vec3 normal, vec3 wsPos, int cascadeIndex)
-{
-	float bias = getShadowBias(lightDirection, normal, cascadeIndex);
-	float sum = 0;
-	
-	for (int i = 0; i < NUM_PCF_SAMPLES; i++)
-	{
-		int index = int(float(NUM_PCF_SAMPLES)*random(vec4(wsPos.xyz, 1)))%NUM_PCF_SAMPLES;
-		
-		float z = texture(uShadowMap, vec3(shadowCoords.xy + (samplePoisson(index) * uvRadius), cascadeIndex)).r;
-		sum += step(shadowCoords.z - bias, z);
-	}
-	
-	return sum / NUM_PCF_SAMPLES;
-}
-
-
-float calculateShadow(vec3 wsPos, int cascadeIndex, vec3 lightDirection, vec3 normal)
-{
-	vec4 shadowCoord = (ubo.biasMat * ubo.shadowTransform[cascadeIndex]) * vec4(wsPos, 1.0);
-	shadowCoord = shadowCoord * ( 1.0 / shadowCoord.w);
-	const float NEAR = 0.01;
-	float uvRadius =  ubo.shadowMapSize * NEAR / shadowCoord.z;
-	uvRadius = min(uvRadius, 0.002f);
-	vec4 viewPos = ubo.viewMatrix * vec4(wsPos, 1.0);
-	
-	float shadowAmount = 1.0;
-	shadowAmount = getPCFShadowDirectionalLight(shadowCoord, uvRadius, lightDirection, normal, wsPos, cascadeIndex);
-	return 1.0 - ((1.0 - shadowAmount) * ShadowFade);
-}
-
 
 // GGX/Towbridge-Reitz normal distribution function.
 // Uses Disney's reparametrization of alpha = roughness^2
@@ -320,46 +302,156 @@ vec3 fresnelSchlickRoughness(vec3 F0, float cosTheta, float roughness)
 }
 
 
-
-
-/*
-vec3 calcVPLIrradiance(vec3 vVPLFlux, vec3 vVPLNormal, vec3 vVPLPos, vec3 vFragPos, vec3 vFragNormal)
+const vec3 diffuseConeDirections[] =
 {
-	vec3 VPL2Frag = normalize(vFragPos - vVPLPos);
-	float dist = pow(length(VPL2Frag),4); // I'm not sure this is 4 or 2 ?
-	if( dist < EPSILON ){
-		return vec3(0,0,0);
-	}
-	return vVPLFlux * max(dot(vVPLNormal, VPL2Frag), 0) * max(dot(vFragNormal, -VPL2Frag), 0) / dist ;
+    vec3(0.0f, 1.0f, 0.0f),
+    vec3(0.0f, 0.5f, 0.866025f),
+    vec3(0.823639f, 0.5f, 0.267617f),
+    vec3(0.509037f, 0.5f, -0.7006629f),
+    vec3(-0.50937f, 0.5f, -0.7006629f),
+    vec3(-0.823639f, 0.5f, 0.267617f)
+};
+
+const float diffuseConeWeights[] =
+{
+    PI / 4.0f,
+    3.0f * PI / 20.0f,
+    3.0f * PI / 20.0f,
+    3.0f * PI / 20.0f,
+    3.0f * PI / 20.0f,
+    3.0f * PI / 20.0f,
+};
+
+
+bool intersectRayWithWorldAABB(vec3 ro, vec3 rd, out float enter, out float leave)
+{
+    vec3 tempMin = (uboVXGI.worldMinPoint - ro) / rd; 
+    vec3 tempMax = (uboVXGI.worldMaxPoint - ro) / rd;
+    
+    vec3 v3Max = max (tempMax, tempMin);
+    vec3 v3Min = min (tempMax, tempMin);
+    
+    leave = min (v3Max.x, min (v3Max.y, v3Max.z));
+    enter = max (max (v3Min.x, 0.0), max (v3Min.y, v3Min.z));    
+    
+    return leave > enter;
 }
 
-vec3 indirectIllumination(vec3 fragPos, vec3 normal, vec3 fragColor)
+vec4 anistropicSample(vec3 coord, vec3 weight, uvec3 face, float lod)
 {
-	vec4 lightSpacePos = ( ubo.biasMat * ubo.shadowTransform[0] ) * vec4(fragPos, 1.0);
-	lightSpacePos = lightSpacePos * ( 1.0 / lightSpacePos.w);
-	vec3 result = vec3(0.0);
-	if( vpl.numberOfSamples >= 1 )
-	{
-		for(int i=0; i < vpl.numberOfSamples; i++)
-		{
-			vec4 rnd = vpl.VPLSamples[i];
-			vec2 coords = vpl.rsmRMax * rnd.zw + lightSpacePos.xy;
-
-			vec3 vplP = texture(uRSMWorldSampler, coords.xy).xyz;
-			vec3 vplN = texture(uRSMNormalSampler, coords.xy).xyz;
-
-			vec3 viewNormal = texture(uViewNormalSampler,fragTexCoord).xyz;
-			vec3 viewPosition = texture(uViewPositionSampler,fragTexCoord).xyz;
-			vec3 vplFlux = texture(uFluxSampler, coords.xy).rgb;
-
-			float dist = length (rnd.zw);
-			result += calcVPLIrradiance( vplFlux, vplN, vplP, fragPos,normal)  * dist * dist;
-		}
-		result /=  vpl.numberOfSamples;
-	}
-	return result * vpl.rsmIntensity;
+    // anisotropic volumes level
+    float anisoLevel = min(max(lod - 1.0f, 0.0f),7);
+    // directional sample
+	// 128 64 32 16 8 4 2 1
+    vec4 anisoSample = weight.x * textureLod(uVoxelTexMipmap[face.x], coord, anisoLevel)
+                     + weight.y * textureLod(uVoxelTexMipmap[face.y], coord, anisoLevel)
+                     + weight.z * textureLod(uVoxelTexMipmap[face.z], coord, anisoLevel);
+    // linearly interpolate on base level
+    if(lod < 1.0f)
+    {
+        vec4 baseColor = texture(uVoxelTex, coord);
+        anisoSample = mix(baseColor, anisoSample, clamp(lod, 0.0f, 1.0f));
+    }
+    return anisoSample;                    
 }
-*/
+
+
+vec4 traceCone(vec3 position, vec3 normal, vec3 direction, float aperture, bool traceOcclusion)
+{
+    uvec3 visibleFace;
+    visibleFace.x = (direction.x < 0.0) ? 0 : 1;
+    visibleFace.y = (direction.y < 0.0) ? 2 : 3;
+    visibleFace.z = (direction.z < 0.0) ? 4 : 5;
+    traceOcclusion = traceOcclusion && uboVXGI.aoAlpha < 1.0f;
+    // world space grid voxel size
+    float voxelWorldSize = 2.0 * uboVXGI.worldSize / uboVXGI.volumeDimension;
+    // weight per axis for aniso sampling
+    vec3 weight = direction * direction;
+    // move further to avoid self collision
+    float dst = voxelWorldSize;
+    vec3 startPosition = position + normal * dst;
+    // final results
+    vec4 coneSample = vec4(0.0f);
+    float occlusion = 0.0f;
+    float maxDistance = uboVXGI.maxTracingDistanceGlobal * uboVXGI.worldSize;
+    float falloff = 0.5f * uboVXGI.aoFalloff * uboVXGI.voxelScale;
+    // out of boundaries check
+    float enter = 0.0; float leave = 0.0;
+
+    if(!intersectRayWithWorldAABB(position, direction, enter, leave))
+    {
+        coneSample.a = 1.0f;
+    }
+
+    while(coneSample.a < 1.0f && dst <= maxDistance)
+    {
+        vec3 conePosition = startPosition + direction * dst;
+        // cone expansion and respective mip level based on diameter
+        float diameter = 2.0f * aperture * dst;
+        float mipLevel = log2(diameter / voxelWorldSize);
+        // convert position to texture coord
+        vec3 coord = worldToVoxel(conePosition,uboVXGI.worldMinPoint,uboVXGI.voxelScale);
+        // get directional sample from anisotropic representation
+        vec4 anisoSample = anistropicSample(coord, weight, visibleFace, mipLevel);
+        // front to back composition
+        coneSample += (1.0f - coneSample.a) * anisoSample;
+        // ambient occlusion
+        if(traceOcclusion && occlusion < 1.0)
+        {
+            occlusion += ((1.0f - occlusion) * anisoSample.a) / (1.0f + falloff * diameter);
+        }
+        // move further into volume
+        dst += diameter * uboVXGI.samplingFactor;
+    }
+
+    return vec4(coneSample.rgb, occlusion);
+}
+
+vec4 calculateIndirectLightingFromVXGI(vec3 position, vec3 normal, vec3 viewDir, vec3 albedo, vec3 specular, float roughness, bool ambientOcclusion, vec3 kd)
+{
+    vec4 specularTrace = vec4(0.0f);
+    vec4 diffuseTrace = vec4(0.0f);
+    vec3 coneDirection = vec3(0.0f);
+
+    if(roughness > 0)
+    {
+        vec3 coneDirection = reflect(-viewDir, normal);
+        coneDirection = normalize(coneDirection);
+		float aperture = tan (HALF_PI * roughness) + 0.01;
+        specularTrace = traceCone(position, normal, coneDirection, aperture, false);
+        specularTrace.rgb *= (1 - roughness);
+    }
+
+    // component greater than zero
+    if(any(greaterThan(albedo, diffuseTrace.rgb)))
+    {
+        // diffuse cone setup
+        const float aperture = 0.57735f;
+        vec3 guide = vec3(0.0f, 1.0f, 0.0f);
+
+        if (abs(dot(normal,guide)) == 1.0f)
+        {
+            guide = vec3(0.0f, 0.0f, 1.0f);
+        }
+
+        // Find a tangent and a bitangent
+        vec3 right = normalize(guide - dot(normal, guide) * normal);
+        vec3 up = cross(right, normal);
+
+        for(int i = 0; i < 6; i++)
+        {
+            coneDirection = normal;
+            coneDirection += diffuseConeDirections[i].x * right + diffuseConeDirections[i].z * up;
+            coneDirection = normalize(coneDirection);
+            // cumulative result
+            diffuseTrace += traceCone(position, normal, coneDirection, aperture, ambientOcclusion) * diffuseConeWeights[i];
+        }
+        diffuseTrace.rgb *= albedo;
+    }
+
+    vec3 result = uboVXGI.bounceStrength * (kd * diffuseTrace.rgb / PI + specularTrace.rgb);
+    return vec4(result, ambientOcclusion ? clamp(1.0f - diffuseTrace.a + uboVXGI.aoAlpha, 0.0f, 1.0f) : 1.0f);
+}
 
 vec3 lighting(vec3 F0, vec3 wsPos, Material material,vec2 fragTexCoord)
 {
@@ -402,7 +494,7 @@ vec3 lighting(vec3 F0, vec3 wsPos, Material material,vec2 fragTexCoord)
 			float cutoffAngle   = 1.0f - light.angle;      
 			float dist          = length(L);
 			L = normalize(L);
-			float theta         = dot(L.xyz, light.direction.xyz * -1);
+			float theta         = dot(L.xyz, light.direction.xyz);
 			float epsilon       = cutoffAngle - cutoffAngle * 0.9f;
 			float attenuation 	= ((theta - cutoffAngle) / epsilon); // atteunate when approaching the outer cone
 			attenuation         *= light.radius / (pow(dist, 2.0) + 1.0);//saturate(1.0f - dist / light.range);
@@ -410,30 +502,27 @@ vec3 lighting(vec3 F0, vec3 wsPos, Material material,vec2 fragTexCoord)
 			// Erase light if there is no need to compute it
 			intensity *= step(theta, cutoffAngle);
 			value = clamp(attenuation, 0.0, 1.0);
-
-			//indirect = indirectIllumination(wsPos, material.normal,material.view);
-			//value = RayMarch(wsPos, material.view, material.normal,ubo.cameraPosition.xyz,light);
 		}
 		else
 		{
-			int cascadeIndex = calculateCascadeIndex(
-				ubo.viewMatrix,wsPos,ubo.shadowCount,ubo.splitDepths
-			);
-			vec4 shadowCoord = (ubo.biasMat * ubo.shadowTransform[cascadeIndex]) * vec4(wsPos, 1.0);
-			shadowCoord = shadowCoord * ( 1.0 / shadowCoord.w);
-
+			light.direction.xyz *= -1;
 			if(ubo.enableShadow == 1.0)
 			{
+				int cascadeIndex = calculateCascadeIndex(
+					ubo.viewMatrix,wsPos,ubo.shadowCount,ubo.splitDepths
+				);
+				vec4 shadowCoord = (ubo.biasMat * ubo.shadowTransform[cascadeIndex]) * vec4(wsPos, 1.0);
+				shadowCoord = shadowCoord * ( 1.0 / shadowCoord.w);
 				value = PCFShadow(shadowCoord , cascadeIndex);
 			}
-		
-			if(ubo.enableIndirectLight == 1)
+
+			if(ubo.enableLPV == 1)
 			{
 				indirect = texture(uIndirectLight,fragTexCoord).rgb;
 			}
 		}
-		
-		vec3 Li = light.direction.xyz * -1;
+
+		vec3 Li = light.direction.xyz;
 		vec3 Lradiance = lightColor;
 		vec3 Lh = normalize(Li + material.view);
 		
@@ -442,7 +531,6 @@ vec3 lighting(vec3 F0, vec3 wsPos, Material material,vec2 fragTexCoord)
 		float cosLh = max(0.0, dot(material.normal, Lh));
 		
 		vec3 F = fresnelSchlick(F0, max(0.0, dot(Lh, material.view)));
-		//vec3 F = fresnelSchlickRoughness(F0, max(0.0, dot(Lh,  material.view)), material.roughness);
 		
 		float D = ndfGGX(cosLh, material.roughness);
 		float G = gaSchlickGGX(cosLi, material.normalDotView, material.roughness);
@@ -453,8 +541,16 @@ vec3 lighting(vec3 F0, vec3 wsPos, Material material,vec2 fragTexCoord)
 		// Cook-Torrance
 		vec3 specularBRDF = (F * D * G) / max(EPSILON, 4.0 * cosLi * material.normalDotView);
 		
+		vec3 indirectShading = ( diffuseBRDF + specularBRDF ) * indirect;
+
 		vec3 directShading = (diffuseBRDF + specularBRDF) * Lradiance * cosLi * value;
-		vec3 indirectShading = ( diffuseBRDF + specularBRDF )* indirect * ubo.indirectLightAttenuation;
+
+		if(uboVXGI.enableVXGI == 1)
+		{
+			indirectShading = calculateIndirectLightingFromVXGI(
+				wsPos, material.normal, material.view, material.albedo.xyz, specularBRDF, material.roughness ,false, kd
+			).rgb;
+		}
 
 		result += directShading + indirectShading;
 	}
@@ -512,12 +608,12 @@ void main()
 	
 	Material material;
     material.albedo			= albedo;
-    material.metallic		= vec3(pbr.x);
-    material.roughness		= pbr.y;
+    material.metallic		= vec3(pbr.r);
+    material.roughness		= pbr.g;
     material.normal			= normalize(normalTex.xyz);
 	material.ao				= pbr.z;
 	material.ssao			= 1;
-	vec3 emissive = vec3(fragPosXyzw.w,normalTex.w,pbr.w);
+	vec3 emissive 			= vec3(fragPosXyzw.w,normalTex.w,pbr.w);
 
 	if(ubo.ssaoEnable == 1)
 	{
@@ -528,17 +624,7 @@ void main()
 	material.view 			= normalize(ubo.cameraPosition.xyz -wsPos);
 	material.normalDotView  = max(dot(material.normal, material.view), 0.0);
 
-
-	float shadowDistance = ubo.maxShadowDistance;
-	float transitionDistance = ubo.shadowFade;
-	
 	vec4 viewPos = ubo.viewMatrix * vec4(wsPos, 1.0);
-	
-	float distance = length(viewPos);
-	
-	ShadowFade = distance - (shadowDistance - transitionDistance);
-	ShadowFade /= transitionDistance;
-	ShadowFade = clamp(1.0 - ShadowFade, 0.0, 1.0);
 	
 	vec3 Lr =  reflect(-material.view,material.normal); 
 	//2.0 * material.normalDotView * material.normal - material.view;
@@ -597,7 +683,7 @@ void main()
 			outColor = texture(uPBRSampler,fragTexCoord);
 			break;			
 			case 11:
-			outColor = vec4(texture(uOutputSampler,fragTexCoord).rgb,1);
+			//outColor = vec4(texture(uOutputSampler,fragTexCoord).rgb,1);
 			break;
 		}
 	}

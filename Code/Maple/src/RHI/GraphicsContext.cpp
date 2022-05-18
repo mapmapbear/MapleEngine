@@ -6,6 +6,7 @@
 #ifdef MAPLE_VULKAN
 #	include "RHI/ImGui/VKImGuiRenderer.h"
 #	include "RHI/Vulkan/VulkanCommandBuffer.h"
+#	include "RHI/Vulkan/VulkanComputePipeline.h"
 #	include "RHI/Vulkan/VulkanContext.h"
 #	include "RHI/Vulkan/VulkanDescriptorSet.h"
 #	include "RHI/Vulkan/VulkanFrameBuffer.h"
@@ -246,7 +247,15 @@ namespace maple
 #endif        // MAPLE_OPENGL
 
 #ifdef MAPLE_VULKAN
-		std::shared_ptr<Pipeline> pipeline = std::make_shared<VulkanPipeline>(desc);
+		std::shared_ptr<Pipeline> pipeline;
+		if (desc.shader->isComputeShader()) 
+		{
+			pipeline = std::make_shared<VulkanComputePipeline>(desc);
+		}
+		else 
+		{
+			pipeline = std::make_shared<VulkanPipeline>(desc);
+		}
 		return pipelineCache.emplace(std::piecewise_construct, std::forward_as_tuple(hash), std::forward_as_tuple(pipeline, Application::getTimer().currentTimestamp())).first->second.asset;
 #endif        // MAPLE_OPENGL
 	}

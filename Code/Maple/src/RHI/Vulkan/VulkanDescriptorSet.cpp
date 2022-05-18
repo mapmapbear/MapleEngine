@@ -32,6 +32,13 @@ namespace maple
 					((VulkanTexture2D *) texture)->transitionImage(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, commandBuffer);
 				}
 			}
+			else if (texture->getType() == TextureType::Color3D)
+			{
+				if (((VulkanTexture3D*)texture)->getImageLayout() != VK_IMAGE_LAYOUT_GENERAL)
+				{
+					((VulkanTexture3D*)texture)->transitionImage(VK_IMAGE_LAYOUT_GENERAL, commandBuffer);
+				}
+			}
 			else if (texture->getType() == TextureType::Cube)
 			{
 				if (((VulkanTextureCube *) texture)->getImageLayout() != VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)

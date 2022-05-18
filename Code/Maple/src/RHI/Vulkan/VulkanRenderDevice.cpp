@@ -124,7 +124,10 @@ namespace maple
 			}
 		}
 
-		vkCmdBindDescriptorSets(static_cast<const VulkanCommandBuffer *>(commandBuffer)->getCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, static_cast<VulkanPipeline *>(pipeline)->getPipelineLayout(), 0, numDesciptorSets, descriptorSetPool, numDynamicDescriptorSets, &dynamicOffset);
+		vkCmdBindDescriptorSets(
+			static_cast<const VulkanCommandBuffer *>(commandBuffer)->getCommandBuffer(), 
+			static_cast<VulkanPipeline*>(pipeline)->getPipelineBindPoint(), 
+			static_cast<VulkanPipeline *>(pipeline)->getPipelineLayout(), 0, numDesciptorSets, descriptorSetPool, numDynamicDescriptorSets, &dynamicOffset);
 	}
 
 	auto VulkanRenderDevice::clearRenderTarget(const std::shared_ptr<Texture> &texture,const CommandBuffer *commandBuffer, const glm::vec4 &clearColor) -> void

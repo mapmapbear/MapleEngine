@@ -268,6 +268,11 @@ namespace maple
 					data.descriptorLightSet[0]->setUniform("UniformBufferLight", "cubeMapMipLevels", &cubeMapMipLevels);
 				}
 			}
+			else 
+			{
+				data.descriptorLightSet[0]->setTexture("uPrefilterMap", renderData.unitCube);
+				data.descriptorLightSet[0]->setTexture("uIrradianceMap", renderData.unitCube);
+			}
 
 			int32_t ssaoEnable = ssao.enable ? 1 : 0;
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "ssaoEnable", &ssaoEnable);

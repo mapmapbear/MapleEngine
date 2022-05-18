@@ -23,6 +23,7 @@ layout(set = 0, binding = 3) uniform UniformBuffer
 	int padding2;
 } ubo;
 
+
 layout(location = 0) out vec4 outFrag;
 
 

@@ -761,7 +761,7 @@ namespace maple
 		GLCall(glBindTexture(GL_TEXTURE_3D, handle));
 	}
 
-	auto GLTexture3D::generateMipmaps() -> void
+	auto GLTexture3D::generateMipmaps(const CommandBuffer* cmd) -> void
 	{
 		PROFILE_FUNCTION();
 		GLCall(glBindTexture(GL_TEXTURE_3D, handle));

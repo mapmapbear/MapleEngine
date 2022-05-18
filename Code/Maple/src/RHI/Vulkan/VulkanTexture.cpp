@@ -101,13 +101,13 @@ namespace maple
 						VK_FILTER_LINEAR);
 
 					barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-					barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+					barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 					barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
 					barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
 					vkCmdPipelineBarrier(commandBuffer,
 						VK_PIPELINE_STAGE_TRANSFER_BIT,
-						VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+						VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
 						0,
 						0,
 						nullptr,
@@ -130,13 +130,13 @@ namespace maple
 				barrier.subresourceRange.baseMipLevel = mipLevels - 1;
 				barrier.subresourceRange.baseArrayLayer = face;
 				barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-				barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+				barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 				barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 				barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
 				vkCmdPipelineBarrier(commandBuffer,
 					VK_PIPELINE_STAGE_TRANSFER_BIT,
-					VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+					VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
 					0,
 					0,
 					nullptr,
@@ -867,10 +867,12 @@ namespace maple
 	{
 	}
 
-	auto VulkanTexture3D::generateMipmaps() -> void
+	auto VulkanTexture3D::generateMipmaps(const CommandBuffer* cmd) -> void
 	{
-		if (loadOptions.generateMipMaps && mipLevels > 1)
+		if (loadOptions.generateMipMaps && mipLevels > 1) 
+		{
 			tools::generateMipmaps(textureImage, VkConverter::textureFormatToVK(parameters.format, parameters.srgb), width, height, depth, mipLevels);
+		}
 	}
 
 	auto VulkanTexture3D::bindImageTexture(uint32_t unit, bool read, bool write, uint32_t level, uint32_t layer) -> void
@@ -898,15 +900,12 @@ namespace maple
 		parameters.format = format;
 		parameters.srgb = false;
 
-#ifdef USE_VMA_ALLOCATOR
 		VulkanHelper::createImage(width, height, mipLevels, vkFormat,
 			VK_IMAGE_TYPE_3D, VK_IMAGE_TILING_OPTIMAL,
-			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+			VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+#ifdef USE_VMA_ALLOCATOR
 			textureImage, textureImageMemory, 1, 0, allocation, depth);
 #else
-		VulkanHelper::createImage(width, height, mipLevels, vkFormat,
-			VK_IMAGE_TYPE_3D, VK_IMAGE_TILING_OPTIMAL,
-			VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 			textureImage, textureImageMemory, 1, 0, depth);
 #endif
 

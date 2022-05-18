@@ -15,7 +15,7 @@ namespace maple
 	{
 	public:
 		constexpr static uint32_t MAX_DESCRIPTOR_SET = 1500;
-
+		VulkanPipeline() = default;
 		VulkanPipeline(const PipelineInfo& info);
 		virtual ~VulkanPipeline();
 		NO_COPYABLE(VulkanPipeline);
@@ -39,16 +39,19 @@ namespace maple
 			return pipelineLayout;
 		}
 
+		virtual auto getPipelineBindPoint() const ->VkPipelineBindPoint {
+			return VK_PIPELINE_BIND_POINT_GRAPHICS;
+		}
+
+	protected:
+		std::shared_ptr<Shader> shader;
+		VkPipelineLayout pipelineLayout;
+		VkPipeline       pipeline;
 	private:
 		auto transitionAttachments() -> void;
 		auto createFrameBuffers() -> void;
-
-		std::shared_ptr<Shader>                   shader;
 		std::shared_ptr<RenderPass>               renderPass;
 		std::vector<std::shared_ptr<FrameBuffer>> framebuffers;
-
-		VkPipelineLayout pipelineLayout;
-		VkPipeline       pipeline;
 		bool			 computePipline = false;
 		bool             depthBiasEnabled;
 		float            depthBiasConstant;

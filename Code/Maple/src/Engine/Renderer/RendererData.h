@@ -41,6 +41,7 @@ namespace maple
 			CommandBuffer* computeCommandBuffer = nullptr;
 			GBuffer* gbuffer = nullptr;
 			std::shared_ptr<Mesh> screenQuad;
+			std::shared_ptr<TextureCube> unitCube;//1
 		};
 
 		struct WindowSize

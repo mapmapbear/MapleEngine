@@ -91,6 +91,7 @@ namespace maple
 		executePoint->registerGlobalComponent<component::RendererData>([&](component::RendererData& data) {
 			data.screenQuad = Mesh::createQuad(true);
 			data.gbuffer = gBuffer.get();
+			data.unitCube = TextureCube::create(1);
 		});
 
 		executePoint->registerGlobalComponent<capture_graph::component::RenderGraph>();
@@ -292,6 +293,7 @@ namespace maple
 		winSize.height = screenBufferHeight;
 		winSize.width = screenBufferWidth;
 		renderData.commandBuffer = Application::getGraphicsContext()->getSwapChain()->getCurrentCommandBuffer();
+		renderData.computeCommandBuffer = Application::getGraphicsContext()->getSwapChain()->getComputeCmdBuffer();
 	}
 
 	auto RenderGraph::onResize(uint32_t width, uint32_t height) -> void

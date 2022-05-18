@@ -80,7 +80,7 @@ namespace maple
 
 		auto unbind(uint32_t slot = 0) const -> void override;
 
-		auto generateMipmaps() -> void override;
+		auto generateMipmaps(const CommandBuffer* cmd) -> void override;
 
 		auto bindImageTexture(uint32_t unit, bool read, bool write, uint32_t level, uint32_t layer) -> void override;
 

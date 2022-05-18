@@ -170,7 +170,7 @@ namespace maple
 			{
 				LOGI("[VULKAN] - DEBUG : [{0}] Code {1}  : {2}", pLayerPrefix, msgCode, pMsg);
 			}
-			return VK_FALSE;
+ 			return VK_FALSE;
 		}
 
 		inline auto createDebugReportCallbackEXT(VkInstance instance, const VkDebugReportCallbackCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDebugReportCallbackEXT *pCallback) -> VkResult

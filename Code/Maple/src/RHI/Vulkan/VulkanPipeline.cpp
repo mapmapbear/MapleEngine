@@ -239,87 +239,73 @@ namespace maple
 		description = info;
 		pipelineLayout = vkShader->getPipelineLayout();
 
-		if (shader->isComputeShader())
+		transitionAttachments();
+		createFrameBuffers();
+		// Pipeline
+		std::vector<VkDynamicState>      dynamicStateDescriptors;
+		VkPipelineDynamicStateCreateInfo dynamicStateCI{};
+		dynamicStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+		dynamicStateCI.pNext = NULL;
+		dynamicStateCI.pDynamicStates = dynamicStateDescriptors.data();
+
+		// Vertex layout
+		VkVertexInputBindingDescription      vertexBindingDescription{};
+		VkPipelineVertexInputStateCreateInfo vi{};
+		createVertexLayout(vertexBindingDescription, vi, vkShader);
+
+		VkPipelineInputAssemblyStateCreateInfo inputAssemblyCI{};
+		VkPipelineRasterizationStateCreateInfo rs{};
+		createRasterization(inputAssemblyCI, rs, info);
+
+		VkPipelineColorBlendStateCreateInfo              cb{};
+		std::vector<VkPipelineColorBlendAttachmentState> blendAttachState;
+		createColorBlend(cb, blendAttachState, info, std::static_pointer_cast<VulkanRenderPass>(renderPass));
+
+		VkPipelineViewportStateCreateInfo vp{};
+		createViewport(vp, dynamicStateDescriptors);
+
+		if (info.depthBiasEnabled)
 		{
-			VkComputePipelineCreateInfo computePipelineCreateInfo{};
-			computePipelineCreateInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
-			computePipelineCreateInfo.layout = pipelineLayout;
-			computePipelineCreateInfo.flags = 0;
-			computePipelineCreateInfo.stage = vkShader->getShaderStages()[0];
-			VkPipeline pipeline;
-			VK_CHECK_RESULT(vkCreateComputePipelines(*VulkanDevice::get(), VulkanDevice::get()->getPipelineCache(), 1, &computePipelineCreateInfo, nullptr, &pipeline));
+			dynamicStateDescriptors.emplace_back(VK_DYNAMIC_STATE_DEPTH_BIAS);
+			depthBiasConstant = 1.25f;
+			depthBiasSlope = 1.75f;
+			depthBiasEnabled = true;
 		}
 		else
 		{
-
-			transitionAttachments();
-			createFrameBuffers();
-			// Pipeline
-			std::vector<VkDynamicState>      dynamicStateDescriptors;
-			VkPipelineDynamicStateCreateInfo dynamicStateCI{};
-			dynamicStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-			dynamicStateCI.pNext = NULL;
-			dynamicStateCI.pDynamicStates = dynamicStateDescriptors.data();
-
-			// Vertex layout
-			VkVertexInputBindingDescription      vertexBindingDescription{};
-			VkPipelineVertexInputStateCreateInfo vi{};
-			createVertexLayout(vertexBindingDescription, vi, vkShader);
-
-			VkPipelineInputAssemblyStateCreateInfo inputAssemblyCI{};
-			VkPipelineRasterizationStateCreateInfo rs{};
-			createRasterization(inputAssemblyCI, rs, info);
-
-			VkPipelineColorBlendStateCreateInfo              cb{};
-			std::vector<VkPipelineColorBlendAttachmentState> blendAttachState;
-			createColorBlend(cb, blendAttachState, info, std::static_pointer_cast<VulkanRenderPass>(renderPass));
-
-			VkPipelineViewportStateCreateInfo vp{};
-			createViewport(vp, dynamicStateDescriptors);
-
-			if (info.depthBiasEnabled)
-			{
-				dynamicStateDescriptors.emplace_back(VK_DYNAMIC_STATE_DEPTH_BIAS);
-				depthBiasConstant = 1.25f;
-				depthBiasSlope = 1.75f;
-				depthBiasEnabled = true;
-			}
-			else
-			{
-				depthBiasEnabled = false;
-			}
-
-			VkPipelineDepthStencilStateCreateInfo ds{};
-			createDepthStencil(ds, info);
-			VkPipelineMultisampleStateCreateInfo ms{};
-			createMultisample(ms);
-
-			dynamicStateCI.dynamicStateCount = uint32_t(dynamicStateDescriptors.size());
-			dynamicStateCI.pDynamicStates = dynamicStateDescriptors.data();
-
-			VkGraphicsPipelineCreateInfo graphicsPipelineCreateInfo{};
-			graphicsPipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-			graphicsPipelineCreateInfo.pNext = NULL;
-			graphicsPipelineCreateInfo.layout = pipelineLayout;
-			graphicsPipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
-			graphicsPipelineCreateInfo.basePipelineIndex = -1;
-			graphicsPipelineCreateInfo.pVertexInputState = &vi;
-			graphicsPipelineCreateInfo.pInputAssemblyState = &inputAssemblyCI;
-			graphicsPipelineCreateInfo.pRasterizationState = &rs;
-			graphicsPipelineCreateInfo.pColorBlendState = &cb;
-			graphicsPipelineCreateInfo.pTessellationState = VK_NULL_HANDLE;
-			graphicsPipelineCreateInfo.pMultisampleState = &ms;
-			graphicsPipelineCreateInfo.pDynamicState = &dynamicStateCI;
-			graphicsPipelineCreateInfo.pViewportState = &vp;
-			graphicsPipelineCreateInfo.pDepthStencilState = &ds;
-			graphicsPipelineCreateInfo.pStages = vkShader->getShaderStages().data();
-			graphicsPipelineCreateInfo.stageCount = vkShader->getShaderStages().size();
-			graphicsPipelineCreateInfo.renderPass = *std::static_pointer_cast<VulkanRenderPass>(renderPass);
-			graphicsPipelineCreateInfo.subpass = 0;
-
-			VK_CHECK_RESULT(vkCreateGraphicsPipelines(*VulkanDevice::get(), VulkanDevice::get()->getPipelineCache(), 1, &graphicsPipelineCreateInfo, VK_NULL_HANDLE, &pipeline));
-
+			depthBiasEnabled = false;
 		}
+
+		VkPipelineDepthStencilStateCreateInfo ds{};
+		createDepthStencil(ds, info);
+		VkPipelineMultisampleStateCreateInfo ms{};
+		createMultisample(ms);
+
+		dynamicStateCI.dynamicStateCount = uint32_t(dynamicStateDescriptors.size());
+		dynamicStateCI.pDynamicStates = dynamicStateDescriptors.data();
+
+		VkGraphicsPipelineCreateInfo graphicsPipelineCreateInfo{};
+		graphicsPipelineCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+		graphicsPipelineCreateInfo.pNext = NULL;
+		graphicsPipelineCreateInfo.layout = pipelineLayout;
+		graphicsPipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
+		graphicsPipelineCreateInfo.basePipelineIndex = -1;
+		graphicsPipelineCreateInfo.pVertexInputState = &vi;
+		graphicsPipelineCreateInfo.pInputAssemblyState = &inputAssemblyCI;
+		graphicsPipelineCreateInfo.pRasterizationState = &rs;
+		graphicsPipelineCreateInfo.pColorBlendState = &cb;
+		graphicsPipelineCreateInfo.pTessellationState = VK_NULL_HANDLE;
+		graphicsPipelineCreateInfo.pMultisampleState = &ms;
+		graphicsPipelineCreateInfo.pDynamicState = &dynamicStateCI;
+		graphicsPipelineCreateInfo.pViewportState = &vp;
+		graphicsPipelineCreateInfo.pDepthStencilState = &ds;
+		graphicsPipelineCreateInfo.pStages = vkShader->getShaderStages().data();
+		graphicsPipelineCreateInfo.stageCount = vkShader->getShaderStages().size();
+		graphicsPipelineCreateInfo.renderPass = *std::static_pointer_cast<VulkanRenderPass>(renderPass);
+		graphicsPipelineCreateInfo.subpass = 0;
+
+		VK_CHECK_RESULT(vkCreateGraphicsPipelines(*VulkanDevice::get(), VulkanDevice::get()->getPipelineCache(), 1, &graphicsPipelineCreateInfo, VK_NULL_HANDLE, &pipeline));
+
 		return true;
 	}
 
@@ -367,30 +353,27 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 		FrameBuffer* framebuffer = nullptr;
-		if (!computePipline) 
+		transitionAttachments();
+
+		if (depthBiasEnabled)
+			vkCmdSetDepthBias(static_cast<const VulkanCommandBuffer*>(cmdBuffer)->getCommandBuffer(), depthBiasConstant, 0.0f, depthBiasSlope);
+
+		if (description.swapChainTarget)
 		{
-			transitionAttachments();
-
-			if (depthBiasEnabled)
-				vkCmdSetDepthBias(static_cast<const VulkanCommandBuffer*>(cmdBuffer)->getCommandBuffer(), depthBiasConstant, 0.0f, depthBiasSlope);
-
-			if (description.swapChainTarget)
-			{
-				framebuffer = framebuffers[VulkanContext::get()->getSwapChain()->getCurrentImageIndex()].get();
-			}
-			else if (description.depthArrayTarget)
-			{
-				framebuffer = framebuffers[layer].get();
-			}
-			else
-			{
-				framebuffer = framebuffers[0].get();
-			}
-
-			auto mipScale = std::pow(0.5, mipMapLevel);
-
-			renderPass->beginRenderPass(cmdBuffer, description.clearColor, framebuffer, SubPassContents::Inline, getWidth() * mipScale, getHeight() * mipScale, cubeFace, mipMapLevel);
+			framebuffer = framebuffers[VulkanContext::get()->getSwapChain()->getCurrentImageIndex()].get();
 		}
+		else if (description.depthArrayTarget)
+		{
+			framebuffer = framebuffers[layer].get();
+		}
+		else
+		{
+			framebuffer = framebuffers[0].get();
+		}
+
+		auto mipScale = std::pow(0.5, mipMapLevel);
+
+		renderPass->beginRenderPass(cmdBuffer, description.clearColor, framebuffer, SubPassContents::Inline, getWidth() * mipScale, getHeight() * mipScale, cubeFace, mipMapLevel);
 
 		vkCmdBindPipeline(static_cast<const VulkanCommandBuffer*>(cmdBuffer)->getCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 		return framebuffer;
@@ -399,10 +382,7 @@ namespace maple
 	auto VulkanPipeline::end(const CommandBuffer* commandBuffer) -> void
 	{
 		PROFILE_FUNCTION();
-		if (!computePipline)
-		{
-			renderPass->endRenderPass(commandBuffer);
-		}
+		renderPass->endRenderPass(commandBuffer);
 	}
 
 	auto VulkanPipeline::clearRenderTargets(const CommandBuffer* commandBuffer) -> void

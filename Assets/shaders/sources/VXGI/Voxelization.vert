@@ -28,9 +28,9 @@ void main()
 
     vec4 fragColor = inColor;
 
-    outVertex.fragNormal =  transpose(inverse(mat3(pushConsts.transform))) * normalize(inNormal);
-    
     outVertex.fragTexCoord = inTexCoord;
+
+    outVertex.fragNormal =  transpose(inverse(mat3(pushConsts.transform))) * normalize(inNormal);
 
     gl_Position = fragPosition;
 }

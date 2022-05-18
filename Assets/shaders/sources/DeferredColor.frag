@@ -152,7 +152,6 @@ void main()
 	}
 
 	vec3 emissive   = getEmissive();
-
  
     outColor    	= gammaCorrectTexture(texColor);
 	outPosition		= vec4(fragPosition.xyz, emissive.x);

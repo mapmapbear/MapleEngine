@@ -147,7 +147,7 @@ namespace maple
 				Renderer::bindDescriptorSets(pipeline.get(), cmd, 0, { perlinWorleySet });
 				Renderer::dispatch(cmd, 128 / 4, 128 / 4, 128 / 4);
 				pipeline->end(cmd);
-				perlin3D->generateMipmaps();
+				perlin3D->generateMipmaps(cmd);
 			}
 
 			inline auto executeWorley3D(CommandBuffer* cmd, capture_graph::component::RenderGraph& graph)
@@ -160,7 +160,7 @@ namespace maple
 				Renderer::bindDescriptorSets(pipeline.get(), cmd, 0, { worleySet });
 				Renderer::dispatch(cmd, 32 / 4, 32 / 4, 32 / 4);
 				pipeline->end(cmd);
-				worley3D->generateMipmaps();
+				worley3D->generateMipmaps(cmd);
 			}
 
 			inline auto execute(CommandBuffer* cmd, capture_graph::component::RenderGraph& graph)
