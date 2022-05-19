@@ -93,37 +93,7 @@ namespace maple
 		}
 	}        // namespace component
 
-	namespace vxgi_setup 
-	{
-		using Entity = ecs::Chain
-			::Read<vxgi::component::Voxelization>
-			::To<ecs::Entity>;
-
-		inline auto system(Entity entity, const vxgi::global::component::VoxelBuffer* vxgiBuffer, component::DeferredData & deferredData)
-		{
-			auto [vxgi] = entity;
-
-			int32_t enableVXGI = vxgi.enableIndirect ? 1 : 0;
-
-			deferredData.descriptorLightSet[0]->setUniform("UniformBufferVXGI", "enableVXGI", &enableVXGI);
-			if (vxgi.enableIndirect && vxgiBuffer)
-			{
-				auto& vxgi = entity.getComponent<vxgi::component::Voxelization>();
-				float scale = 1.f / vxgi.volumeGridSize;
-				deferredData.descriptorLightSet[0]->setUniform("UniformBufferVXGI", "volumeDimension", &vxgi::component::Voxelization::voxelDimension);
-				deferredData.descriptorLightSet[0]->setUniform("UniformBufferVXGI", "voxelScale", &scale);
-				deferredData.descriptorLightSet[0]->setUniform("UniformBufferVXGI", "worldSize", &vxgi.volumeGridSize);
-				deferredData.descriptorLightSet[0]->setUniform("UniformBufferVXGI", "maxTracingDistanceGlobal", &vxgi.maxTracingDistance);
-				deferredData.descriptorLightSet[0]->setUniform("UniformBufferVXGI", "aoFalloff", &vxgi.aoFalloff);
-				deferredData.descriptorLightSet[0]->setUniform("UniformBufferVXGI", "aoAlpha", &vxgi.aoAlpha);
-				deferredData.descriptorLightSet[0]->setUniform("UniformBufferVXGI", "bounceStrength", &vxgi.bounceStrength);
-				deferredData.descriptorLightSet[0]->setUniform("UniformBufferVXGI", "samplingFactor", &vxgi.samplingFactor);
-				deferredData.descriptorLightSet[0]->setUniform("UniformBufferVXGI", "worldMinPoint", &vxgiBuffer->box.min);
-				deferredData.descriptorLightSet[0]->setUniform("UniformBufferVXGI", "worldMaxPoint", &vxgiBuffer->box.max);
-			}
-		}
-	}
-
+	
 	namespace deferred_offscreen
 	{
 		using Entity = ecs::Chain
@@ -569,7 +539,6 @@ namespace maple
 		auto registerDeferredOffScreenRenderer(ExecuteQueue &begin, ExecuteQueue &renderer, std::shared_ptr<ExecutePoint> executePoint) -> void
 		{
 			executePoint->registerGlobalComponent<component::DeferredData>();
-			executePoint->registerWithinQueue<vxgi_setup::system>(begin);
 			executePoint->registerWithinQueue<deferred_offscreen::beginScene>(begin);
 			executePoint->registerWithinQueue<deferred_offscreen::onRender>(renderer);
 		}
@@ -605,21 +574,11 @@ namespace maple
 			descriptorSet->setTexture("uColorSampler", rendererData.gbuffer->getBuffer(GBufferTextures::COLOR));
 			descriptorSet->setTexture("uPositionSampler", rendererData.gbuffer->getBuffer(GBufferTextures::POSITION));
 			descriptorSet->setTexture("uNormalSampler", rendererData.gbuffer->getBuffer(GBufferTextures::NORMALS));
-
-			//descriptorSet->setTexture("uViewPositionSampler", gBuffer->getBuffer(GBufferTextures::VIEW_POSITION));
-			//descriptorSet->setTexture("uViewNormalSampler", gBuffer->getBuffer(GBufferTextures::VIEW_NORMALS));
 			descriptorSet->setTexture("uPBRSampler", rendererData.gbuffer->getBuffer(GBufferTextures::PBR));
 			descriptorSet->setTexture("uSSAOSampler", rendererData.gbuffer->getBuffer(GBufferTextures::SSAO_BLUR));
 			descriptorSet->setTexture("uDepthSampler", rendererData.gbuffer->getDepthBuffer());
 			descriptorSet->setTexture("uIndirectLight", rendererData.gbuffer->getBuffer(GBufferTextures::INDIRECT_LIGHTING));
 			descriptorSet->setTexture("uShadowMap", shadow.shadowTexture);
-
-			if (voxelBuffer) 
-			{
-				//descriptorSet->setTexture("uVoxelVisibility", voxelBuffer->voxelVolume[VoxelBufferId::Normal]);
-				descriptorSet->setTexture("uVoxelTex", voxelBuffer->voxelVolume[VoxelBufferId::Radiance]);
-				descriptorSet->setTexture("uVoxelTexMipmap", { voxelBuffer->voxelTexMipmap.begin(), voxelBuffer->voxelTexMipmap.end() });
-			}
 
 			if (!envQuery.empty())
 			{
@@ -629,7 +588,6 @@ namespace maple
 				descriptorSet->setTexture("uPreintegratedFG", data.preintegratedFG);
 			}
 			descriptorSet->update(rendererData.commandBuffer);
-
 		
 
 			PipelineInfo pipeInfo;

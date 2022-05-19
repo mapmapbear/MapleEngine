@@ -111,6 +111,7 @@ namespace maple
 		deferred_offscreen::registerDeferredOffScreenRenderer(beginQ, renderQ, executePoint);
 		light_propagation_volume::registerLPV(beginQ, renderQ, executePoint);
 		lpv_indirect_lighting::registerLPVIndirectLight(renderQ, executePoint);
+		vxgi::registerVXGIIndirectLighting(beginQ, executePoint);
 		post_process::registerSSAOPass(beginQ, renderQ, executePoint);
 		deferred_lighting::registerDeferredLighting(beginQ, renderQ, executePoint);
 		light_propagation_volume::registerLPVDebug(beginQ, renderQ, executePoint);
