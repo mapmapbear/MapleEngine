@@ -148,7 +148,6 @@ namespace maple
 #ifdef USE_VMA_ALLOCATOR
 			auto alloc = allocation;
 			queue.emplace([buffer, alloc, bufferId] { 
-				LOGI("bufferId : {0}",bufferId);
 				vmaDestroyBuffer(VulkanDevice::get()->getAllocator(), buffer, alloc); });
 #else
 

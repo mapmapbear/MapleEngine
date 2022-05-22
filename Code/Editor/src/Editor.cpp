@@ -802,7 +802,7 @@ namespace maple
 	auto Editor::processIcons() -> void
 	{
 #ifdef MAPLE_VULKAN
-		constexpr bool flipY = false;
+		constexpr bool flipY = true;
 #else
 		constexpr bool flipY = true;
 #endif        // MAPLE_VULKAN

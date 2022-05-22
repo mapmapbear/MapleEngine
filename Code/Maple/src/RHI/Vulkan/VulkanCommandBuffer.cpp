@@ -43,14 +43,6 @@ namespace maple
 
 		VK_CHECK_RESULT(vkAllocateCommandBuffers(*VulkanDevice::get(), &cmdBufferCI, &commandBuffer));
 
-/*
-		VkSemaphoreCreateInfo semaphoreInfo = {};
-		semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-		semaphoreInfo.pNext = nullptr;
-		VK_CHECK_RESULT(vkCreateSemaphore(*VulkanDevice::get(), &semaphoreInfo, nullptr, &semaphore));
-
-		fence = std::make_shared<VulkanFence>(false);*/
-
 		return true;
 	}
 
@@ -66,14 +58,6 @@ namespace maple
 		cmdBufferCI.level = primary ? VK_COMMAND_BUFFER_LEVEL_PRIMARY : VK_COMMAND_BUFFER_LEVEL_SECONDARY;
 		VK_CHECK_RESULT(vkAllocateCommandBuffers(*VulkanDevice::get(), &cmdBufferCI, &commandBuffer));
 
-/*
-		VkSemaphoreCreateInfo semaphoreInfo = {};
-		semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-		semaphoreInfo.pNext = nullptr;
-		VK_CHECK_RESULT(vkCreateSemaphore(*VulkanDevice::get(), &semaphoreInfo, nullptr, &semaphore));
-
-		fence = std::make_shared<VulkanFence>(true);*/
-
 		return true;
 	}
 
@@ -87,9 +71,6 @@ namespace maple
 
 		if (state == CommandBufferState::Submitted)
 			wait();
-
-		if (semaphore)
-			vkDestroySemaphore(*VulkanDevice::get(), semaphore, nullptr);
 		if (commandBuffer)
 			vkFreeCommandBuffers(*VulkanDevice::get(), commandPool, 1, &commandBuffer);
 	}
@@ -205,20 +186,13 @@ namespace maple
 	{
 		if (state != CommandBufferState::Idle)
 		{
-			/*Application::getGraphicsContext()->waitIdle();
+			Application::getGraphicsContext()->waitIdle();
 			if (state == CommandBufferState::Submitted)
-				wait();*/
+				wait();
 		}
 		return true;
 	}
 
-	auto VulkanCommandBuffer::executeInternal(
-		const std::vector<VkPipelineStageFlags>& flags,
-		const std::vector<VkSemaphore>& waitSemaphores,
-		bool waitFence) -> void
-	{
-		executeInternal(flags, waitSemaphores, { semaphore }, waitFence);
-	}
 
 	auto VulkanCommandBuffer::executeInternal(const std::vector<VkPipelineStageFlags>& flags,
 		const std::vector<VkSemaphore>& waitSemaphores,
@@ -259,7 +233,6 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 		MAPLE_ASSERT(state == CommandBufferState::Submitted, "");
-	//	fence->waitAndReset();
 		state = CommandBufferState::Idle;
 	}
 

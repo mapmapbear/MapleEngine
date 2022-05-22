@@ -696,9 +696,11 @@ namespace maple
 #endif
 	}
 
-	auto VulkanHelper::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels, uint32_t layerCount, VkCommandBuffer commandBuffer, bool depth, uint32_t baseArrayLayer) -> void
+	auto VulkanHelper::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels, uint32_t layerCount, const VulkanCommandBuffer* cmd, bool depth, uint32_t baseArrayLayer) -> void
 	{
 		PROFILE_FUNCTION();
+
+		auto commandBuffer = cmd != nullptr ? cmd->getCommandBuffer() : nullptr;
 
 		bool singleTimeCommand = false;
 
@@ -727,8 +729,18 @@ namespace maple
 		imageMemoryBarrier.subresourceRange = subresourceRange;
 		imageMemoryBarrier.srcAccessMask = layoutToAccessMask(oldLayout, false);
 		imageMemoryBarrier.dstAccessMask = layoutToAccessMask(newLayout, true);
-		imageMemoryBarrier.srcQueueFamilyIndex = VulkanDevice::get()->getPhysicalDevice()->getQueueFamilyIndices().graphicsFamily.value();
-		imageMemoryBarrier.dstQueueFamilyIndex = VulkanDevice::get()->getPhysicalDevice()->getQueueFamilyIndices().graphicsFamily.value();
+		
+		if (cmd != nullptr && cmd->getCommandBuffeType() == CommandBufferType::Compute) 
+		{
+			imageMemoryBarrier.srcQueueFamilyIndex = VulkanDevice::get()->getPhysicalDevice()->getQueueFamilyIndices().computeFamily.value();
+			imageMemoryBarrier.dstQueueFamilyIndex = VulkanDevice::get()->getPhysicalDevice()->getQueueFamilyIndices().computeFamily.value();
+		}
+		else 
+		{
+			imageMemoryBarrier.srcQueueFamilyIndex = VulkanDevice::get()->getPhysicalDevice()->getQueueFamilyIndices().graphicsFamily.value();
+			imageMemoryBarrier.dstQueueFamilyIndex = VulkanDevice::get()->getPhysicalDevice()->getQueueFamilyIndices().graphicsFamily.value();
+		}
+
 
 		vkCmdPipelineBarrier(
 			commandBuffer,

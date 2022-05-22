@@ -346,7 +346,7 @@ namespace maple
 #ifdef USE_VMA_ALLOCATOR
 		VulkanHelper::createImage(width, height, mipLevels, vkFormat, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory, 1, 0, allocation);
 #else
-		VulkanHelper::createImage(width, height, mipLevels, vkFormat, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory, 1, 0);
+		VulkanHelper::createImage(width, height, mipLevels, vkFormat, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory, 1, 0);
 #endif
 
 		textureImageView = VulkanHelper::createImageView(textureImage, vkFormat, mipLevels, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, 1);
@@ -375,7 +375,7 @@ namespace maple
 
 		if (newLayout != imageLayout)
 		{
-			VulkanHelper::transitionImageLayout(textureImage, VkConverter::textureFormatToVK(parameters.format, parameters.srgb), imageLayout, newLayout, mipLevels, 1, commandBuffer ? commandBuffer->getCommandBuffer() : nullptr, false);
+			VulkanHelper::transitionImageLayout(textureImage, VkConverter::textureFormatToVK(parameters.format, parameters.srgb), imageLayout, newLayout, mipLevels, 1, commandBuffer , false);
 		}
 		imageLayout = newLayout;
 		updateDescriptor();
@@ -547,7 +547,7 @@ namespace maple
 
 		if (newLayout != imageLayout)
 		{
-			VulkanHelper::transitionImageLayout(textureImage, vkFormat, imageLayout, newLayout, 1, 1, commandBuffer ? commandBuffer->getCommandBuffer() : nullptr);
+			VulkanHelper::transitionImageLayout(textureImage, vkFormat, imageLayout, newLayout, 1, 1, commandBuffer );
 		}
 		imageLayout = newLayout;
 		updateDescriptor();
@@ -701,7 +701,7 @@ namespace maple
 		PROFILE_FUNCTION();
 		if (newLayout != imageLayout)
 		{
-			VulkanHelper::transitionImageLayout(textureImage, vkFormat, imageLayout, newLayout, numMips, 6, commandBuffer ? commandBuffer->getCommandBuffer() : nullptr, false);
+			VulkanHelper::transitionImageLayout(textureImage, vkFormat, imageLayout, newLayout, numMips, 6, commandBuffer , false);
 		}
 		imageLayout = newLayout;
 		updateDescriptor();
@@ -806,7 +806,7 @@ namespace maple
 		auto vkCmd = static_cast<const VulkanCommandBuffer*>(commandBuffer);
 
 		VulkanHelper::transitionImageLayout(textureImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, 
-			VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1, count, vkCmd != nullptr?vkCmd->getCommandBuffer() : nullptr, true);
+			VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1, count, vkCmd, true);
 
 		imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 		textureSampler = VulkanHelper::createTextureSampler();
@@ -853,7 +853,7 @@ namespace maple
 		PROFILE_FUNCTION();
 		if (newLayout != imageLayout)
 		{
-			VulkanHelper::transitionImageLayout(textureImage, VulkanHelper::getDepthFormat(), imageLayout, newLayout, 1, count, commandBuffer ? commandBuffer->getCommandBuffer() : nullptr);
+			VulkanHelper::transitionImageLayout(textureImage, VulkanHelper::getDepthFormat(), imageLayout, newLayout, 1, count, commandBuffer );
 		}
 		imageLayout = newLayout;
 		updateDescriptor();
@@ -964,7 +964,7 @@ namespace maple
 			VulkanHelper::transitionImageLayout(textureImage,
 				VkConverter::textureFormatToVK(parameters.format, parameters.srgb),
 				imageLayout, newLayout, mipLevels, 1,
-				commandBuffer ? commandBuffer->getCommandBuffer() : nullptr, false);
+				commandBuffer, false);
 		}
 		imageLayout = newLayout;
 		updateDescriptor();

@@ -57,6 +57,7 @@ namespace maple
 			}
 
 			extensions.emplace_back("VK_EXT_debug_report");
+			extensions.emplace_back("VK_EXT_debug_marker ");
 			extensions.emplace_back("VK_KHR_surface");
 
 #if defined(TRACY_ENABLE) && defined(PLATFORM_WINDOWS)

@@ -65,7 +65,6 @@ namespace maple
 			auto [renderer] = entity;
 			if (renderer.gbuffer == nullptr)
 				return;
-			auto        swapChain = Application::getGraphicsContext()->getSwapChain();
 			auto        renderTargert = renderer.gbuffer->getBuffer(GBufferTextures::SCREEN);
 
 			Application::getRenderDevice()->clearRenderTarget(renderer.gbuffer->getDepthBuffer(), renderer.commandBuffer, { 0, 0, 0, 0 });

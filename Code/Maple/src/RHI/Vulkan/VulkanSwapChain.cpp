@@ -86,13 +86,6 @@ namespace maple
 		if (queueIndexSupported == VK_FALSE)
 			LOGE("Graphics Queue not supported");
 
-		/*	vkGetPhysicalDeviceSurfaceSupportKHR(*VulkanDevice::get()->getPhysicalDevice(),
-											 VulkanDevice::get()->getPhysicalDevice()->getQueueFamilyIndices().presentFamily.value(),
-											 surface, &queueIndexSupported);
-
-		if (queueIndexSupported == VK_FALSE)
-			LOGE("Present Queue not supported");*/
-
 			// Swap chain
 		VkSurfaceCapabilitiesKHR surfaceCapabilities;
 		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(*VulkanDevice::get()->getPhysicalDevice(), surface, &surfaceCapabilities);
@@ -162,15 +155,6 @@ namespace maple
 		swapChainCI.pQueueFamilyIndices = VK_NULL_HANDLE;
 		swapChainCI.clipped = VK_TRUE;
 
-		/*auto &indices = VulkanDevice::get()->getPhysicalDevice()->getQueueFamilyIndices();
-		if (indices.graphicsFamily != indices.presentFamily)
-		{
-			uint32_t queueFamilyIndices[]    = {indices.graphicsFamily.value(), indices.presentFamily.value()};
-			swapChainCI.imageSharingMode      = VK_SHARING_MODE_CONCURRENT;
-			swapChainCI.queueFamilyIndexCount = 2;
-			swapChainCI.pQueueFamilyIndices   = queueFamilyIndices;
-		}
-*/
 
 		if (surfaceCapabilities.supportedUsageFlags & VK_IMAGE_USAGE_TRANSFER_SRC_BIT)
 		{
@@ -225,14 +209,15 @@ namespace maple
 		delete[] pSwapChainImages;
 		createFrameData();
 		createComputeData();
-
-		VkSemaphoreCreateInfo semaphoreCreateInfo{};
-		semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-		VK_CHECK_RESULT(vkCreateSemaphore(*VulkanDevice::get(), &semaphoreCreateInfo, nullptr, &graphicsSemaphore));
-
+		
+		if (graphicsSemaphore == nullptr)
+		{
+			VkSemaphoreCreateInfo semaphoreCreateInfo{};
+			semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+			VK_CHECK_RESULT(vkCreateSemaphore(*VulkanDevice::get(), &semaphoreCreateInfo, nullptr, &graphicsSemaphore));
+		}
 
 		// Signal the semaphore
-
 		VkSubmitInfo submitInfo{};
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		submitInfo.signalSemaphoreCount = 1;
@@ -245,24 +230,27 @@ namespace maple
 
 	auto VulkanSwapChain::createFrameData() -> void
 	{
-		VkSemaphoreCreateInfo semaphoreInfo = {};
-		semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-		semaphoreInfo.pNext = nullptr;
-		semaphoreInfo.flags = 0;
-
-		VK_CHECK_RESULT(vkCreateSemaphore(*VulkanDevice::get(), &semaphoreInfo, nullptr, &presentSemaphore));
-		VK_CHECK_RESULT(vkCreateSemaphore(*VulkanDevice::get(), &semaphoreInfo, nullptr, &rendererSemaphore));
-
-		for (uint32_t i = 0; i < swapChainBufferCount; i++)
+		if (presentSemaphore == nullptr) 
 		{
-			if (!frames[i].commandBuffer)
-			{
-				frames[i].commandPool = std::make_shared<VulkanCommandPool>(VulkanDevice::get()->getPhysicalDevice()->getQueueFamilyIndices().graphicsFamily.value(),
-					VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+			VkSemaphoreCreateInfo semaphoreInfo = {};
+			semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+			semaphoreInfo.pNext = nullptr;
+			semaphoreInfo.flags = 0;
 
-				frames[i].commandBuffer = std::make_shared<VulkanCommandBuffer>();
-				frames[i].commandBuffer->init(true, *frames[i].commandPool);
-				LOGI("Create the {0} VulkanCommandBuffer", i);
+			VK_CHECK_RESULT(vkCreateSemaphore(*VulkanDevice::get(), &semaphoreInfo, nullptr, &presentSemaphore));
+			VK_CHECK_RESULT(vkCreateSemaphore(*VulkanDevice::get(), &semaphoreInfo, nullptr, &rendererSemaphore));
+
+			for (uint32_t i = 0; i < swapChainBufferCount; i++)
+			{
+				if (!frames[i].commandBuffer)
+				{
+					frames[i].commandPool = std::make_shared<VulkanCommandPool>(VulkanDevice::get()->getPhysicalDevice()->getQueueFamilyIndices().graphicsFamily.value(),
+						VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
+
+					frames[i].commandBuffer = std::make_shared<VulkanCommandBuffer>();
+					frames[i].commandBuffer->init(true, *frames[i].commandPool);
+					LOGI("Create the {0} VulkanCommandBuffer", i);
+				}
 			}
 		}
 	}
@@ -467,7 +455,6 @@ namespace maple
 
 		if (!forceResize && this->width == width && this->height == height)
 			return;
-
 	
 
 		this->width = width;

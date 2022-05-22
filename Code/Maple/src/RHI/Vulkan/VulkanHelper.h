@@ -232,7 +232,7 @@ namespace maple
 		auto chooseSwapPresentMode(const std::vector<VkPresentModeKHR> &presentModes, bool vsync) -> VkPresentModeKHR;
 		auto chooseSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities) -> VkExtent2D;
 
-		auto transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels = 1, uint32_t layerCount = 1, VkCommandBuffer commandBuffer = nullptr, bool depth = true, uint32_t baseArrayLayer = 0) -> void;
+		auto transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels = 1, uint32_t layerCount = 1, const VulkanCommandBuffer* cmd = nullptr, bool depth = true, uint32_t baseArrayLayer = 0) -> void;
 		auto copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height,uint32_t depth = 1, int32_t offsetX = 0, int32_t offsetY = 0, int32_t offsetZ = 0) -> void;
 		auto createTextureSampler(VkFilter magFilter = VK_FILTER_LINEAR, VkFilter minFilter = VK_FILTER_LINEAR, float minLod = 0.0f, float maxLod = 1.0f, bool anisotropyEnable = false, float maxAnisotropy = 1.0f, VkSamplerAddressMode modeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VkSamplerAddressMode modeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VkSamplerAddressMode modeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE) -> VkSampler;
 		auto beginSingleTimeCommands() -> VkCommandBuffer;

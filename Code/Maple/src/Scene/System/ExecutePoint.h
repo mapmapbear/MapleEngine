@@ -48,6 +48,8 @@ namespace maple
 			factoryQueue.jobs.emplace_back([=](entt::registry &reg) {
 				if (onInit != nullptr)
 					onInit(reg.get_or_emplace<Components>(globalEntity)...);
+				else
+					(reg.get_or_emplace<Components>(globalEntity),...);
 			});
 		}
 

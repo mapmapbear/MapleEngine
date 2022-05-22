@@ -533,7 +533,7 @@ namespace maple
 		VkImageLayout         imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		VkDeviceMemory        textureImageMemory = nullptr;
 		VkImageView           textureImageView = nullptr;
-		VkSampler             textureSampler;
+		VkSampler             textureSampler = nullptr;
 		VkDescriptorImageInfo descriptor;
 
 #ifdef USE_VMA_ALLOCATOR

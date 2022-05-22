@@ -211,7 +211,7 @@ namespace maple
 			if (previewTexture == nullptr)
 			{
 				previewTexture = Texture2D::create();
-				previewTexture->setName("PreviewTexture");
+				previewTexture->setName("SceneTexture");
 			}
 			editor.getCamera()->setAspectRatio(this->width / (float) this->height);
 			previewTexture->buildTexture(TextureFormat::RGBA8, this->width, this->height, false, false, false);

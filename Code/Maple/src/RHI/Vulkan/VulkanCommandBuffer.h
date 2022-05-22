@@ -47,18 +47,8 @@ namespace maple
 			return state;
 		}
 
-		inline auto getSemaphore() const
-		{
-			return semaphore;
-		}
-
 		auto wait() -> void;
 		auto reset() -> void;
-
-		auto executeInternal(
-			const std::vector<VkPipelineStageFlags> & flags, 
-			const std::vector<VkSemaphore> & waitSemaphores,
-			bool waitFence) -> void;
 
 
 		auto executeInternal(
@@ -82,8 +72,6 @@ namespace maple
 		bool                         primary;
 
 		CommandBufferState           state = CommandBufferState::Idle;
-		std::shared_ptr<VulkanFence> fence;
-		VkSemaphore                  semaphore = nullptr;
 
 		Pipeline* boundPipeline = nullptr;
 		RenderPass* boundRenderPass = nullptr;
