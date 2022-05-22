@@ -53,6 +53,7 @@
 
 #include "imgui_impl_vulkan.h"
 #include <stdio.h>
+#include <assert.h>
 
 // Reusable buffers used for rendering 1 current in-flight frame, for ImGui_ImplVulkan_RenderDrawData()
 // [Please zero-clear before use!]
@@ -343,6 +344,8 @@ void ImGui_ImplVulkan_CreateDescriptorSets(ImDrawData *draw_data, uint32_t frame
 					descriptorWrites[0].pImageInfo           = (VkDescriptorImageInfo *) g_DescriptorImageInfos[pcmd->TextureId];
 					descriptorWrites[0].descriptorCount      = 1;
 					descriptorWrites[0].dstBinding           = 0;
+
+					IM_ASSERT(descriptorWrites[0].pImageInfo != nullptr, "should not be null");
 
 					g_DescriptorSetHasUpdated.at(frameIndex)[pcmd->TextureId] = true;
 					vkUpdateDescriptorSets(v->Device, 1, descriptorWrites, 0, nullptr);

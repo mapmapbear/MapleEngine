@@ -66,7 +66,7 @@ namespace maple
 			auto renderPassNode = getRenderPassNode(name, graph);
 			for (auto & t : lists)
 			{
-				if(t != nullptr)
+				if(t != nullptr && t->getType() != TextureType::Color3D && t->getType() != TextureType::Cube)
 					renderPassNode->inputs.emplace(getImageNode(t,graph));
 			}
 		}
@@ -76,7 +76,7 @@ namespace maple
 			auto renderPassNode = getRenderPassNode(name, graph);
 			for (auto& t : lists)
 			{
-				if (t != nullptr)
+				if (t != nullptr && t->getType() != TextureType::Color3D && t->getType() != TextureType::Cube)
 					renderPassNode->outputs.emplace(getImageNode(t, graph));
 			}
 		}

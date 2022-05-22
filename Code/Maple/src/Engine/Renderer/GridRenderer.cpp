@@ -100,7 +100,7 @@ namespace maple
 
 			PipelineInfo pipeInfo;
 			pipeInfo.shader = grid.gridShader;
-			pipeInfo.cullMode = CullMode::Back;
+			pipeInfo.cullMode = CullMode::None;
 			pipeInfo.transparencyEnabled = true;
 			pipeInfo.depthBiasEnabled = false;
 			pipeInfo.clearTargets = false;

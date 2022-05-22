@@ -78,7 +78,7 @@ namespace maple
 			pipelineDesc.shader = finalData.finalShader;
 
 			pipelineDesc.polygonMode = PolygonMode::Fill;
-			pipelineDesc.cullMode = CullMode::Back;
+			pipelineDesc.cullMode = CullMode::None;
 			pipelineDesc.transparencyEnabled = false;
 
 			if (finalData.renderTarget)

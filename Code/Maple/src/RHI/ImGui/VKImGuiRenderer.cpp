@@ -149,6 +149,8 @@ namespace maple
 						texture->transitionImage(VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL, vkCommnadBuffer);
 						descriptorImageMap[pcmd->TextureId] = texture->getDescriptor();
 					}
+				//	auto text = ((Texture*)pcmd->TextureId);
+				//	MAPLE_ASSERT(descriptorImageMap[pcmd->TextureId] != nullptr, text->getName());
 				}
 			}
 		}
