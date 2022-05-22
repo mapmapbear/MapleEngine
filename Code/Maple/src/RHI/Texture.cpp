@@ -109,13 +109,13 @@ namespace maple
 	}
 	//###################################################
 
-	auto TextureDepth::create(uint32_t width, uint32_t height, bool stencil) -> std::shared_ptr<TextureDepth>
+	auto TextureDepth::create(uint32_t width, uint32_t height, bool stencil,const CommandBuffer * commandBuffer) -> std::shared_ptr<TextureDepth>
 	{
 #ifdef MAPLE_OPENGL
 		return std::make_shared<GLTextureDepth>(width, height, stencil);
 #endif        // MAPLE_OPENGL
 #ifdef MAPLE_VULKAN
-		return std::make_shared<VulkanTextureDepth>(width, height, stencil);
+		return std::make_shared<VulkanTextureDepth>(width, height, stencil, commandBuffer);
 #endif        // MAPLE_VULKAN
 	}
 	///#####################################################################################
@@ -170,13 +170,13 @@ namespace maple
 	}
 
 	///#####################################################################################
-	auto TextureDepthArray::create(uint32_t width, uint32_t height, uint32_t count) -> std::shared_ptr<TextureDepthArray>
+	auto TextureDepthArray::create(uint32_t width, uint32_t height, uint32_t count, const CommandBuffer* commandBuffer) -> std::shared_ptr<TextureDepthArray>
 	{
 #ifdef MAPLE_OPENGL
 		return std::make_shared<GLTextureDepthArray>(width, height, count);
 #endif        // MAPLE_OPENGL
 #ifdef MAPLE_VULKAN
-		return std::make_shared<VulkanTextureDepthArray>(width, height, count);
+		return std::make_shared<VulkanTextureDepthArray>(width, height, count, commandBuffer);
 #endif        // MAPLE_VULKAN
 	}
 

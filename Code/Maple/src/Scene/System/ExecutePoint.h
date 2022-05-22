@@ -42,13 +42,12 @@ namespace maple
 			graph.emplace_back(&queue);
 		}
 
-		template <typename Component>
-		inline auto registerGlobalComponent(const std::function<void(Component &)> &onInit = nullptr) -> void
+		template <typename... Components>
+		inline auto registerGlobalComponent(const std::function<void(Components&...)> &onInit = nullptr) -> void
 		{
 			factoryQueue.jobs.emplace_back([=](entt::registry &reg) {
-				auto &comp = reg.get_or_emplace<Component>(globalEntity);
 				if (onInit != nullptr)
-					onInit(comp);
+					onInit(reg.get_or_emplace<Components>(globalEntity)...);
 			});
 		}
 

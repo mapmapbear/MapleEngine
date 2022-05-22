@@ -19,6 +19,8 @@
 
 namespace maple
 {
+#define DEBUG_IMAGE_ADDRESS(img) void();//LOGI("{:x},function : {}, line : {}",(uint64_t)img,__FUNCTION__,__LINE__)
+
 	namespace tools
 	{
 		inline auto generateMipmaps(VkImage image, VkFormat imageFormat, uint32_t texWidth, uint32_t texHeight, uint32_t depth, uint32_t mipLevels, uint32_t faces = 1, VkCommandBuffer commandBuffer = nullptr, VkImageLayout initLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) -> void
@@ -311,6 +313,8 @@ namespace maple
 
 		transitionImage(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
+
+		DEBUG_IMAGE_ADDRESS(textureImage);
 		return true;
 	}
 
@@ -359,6 +363,8 @@ namespace maple
 
 		transitionImage(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 		updateDescriptor();
+
+		DEBUG_IMAGE_ADDRESS(textureImage);
 	}
 
 	auto VulkanTexture2D::transitionImage(VkImageLayout newLayout, const VulkanCommandBuffer* commandBuffer) -> void
@@ -436,17 +442,17 @@ namespace maple
 			{
 				auto memory = textureImageMemory;
 				deletionQueue.emplace([memory] { vkFreeMemory(*VulkanDevice::get(), memory, nullptr); });
-		}
+			}
 #endif
+		}
 	}
-}
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	VulkanTextureDepth::VulkanTextureDepth(uint32_t width, uint32_t height, bool stencil) :
+	VulkanTextureDepth::VulkanTextureDepth(uint32_t width, uint32_t height, bool stencil, const CommandBuffer* commandBuffer) :
 		stencil(stencil), width(width), height(height)
 	{
-		init();
+		init(commandBuffer);
 	}
 
 	VulkanTextureDepth::~VulkanTextureDepth()
@@ -458,6 +464,8 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 		auto& deletionQueue = VulkanContext::getDeletionQueue();
+
+		imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
 		if (textureSampler)
 		{
@@ -483,7 +491,7 @@ namespace maple
 			auto device = VulkanDevice::get();
 			vkDestroyImage(*device, image, nullptr);
 			vkFreeMemory(*device, imageMemory, nullptr);
-	});
+			});
 #endif
 	}
 
@@ -526,6 +534,8 @@ namespace maple
 			VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
 			VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE);
 		updateDescriptor();
+
+		DEBUG_IMAGE_ADDRESS(textureImage);
 	}
 
 	auto VulkanTextureDepth::transitionImage(VkImageLayout newLayout, const VulkanCommandBuffer* commandBuffer) -> void
@@ -598,9 +608,9 @@ namespace maple
 			{
 				auto imageMemory = textureImageMemory;
 				deletionQueue.emplace([imageMemory] { vkFreeMemory(*VulkanDevice::get(), imageMemory, nullptr); });
-		}
+			}
 #endif
-	}
+		}
 	}
 
 	auto VulkanTextureCube::generateMipmap(const CommandBuffer* commandBuffer) -> void
@@ -610,6 +620,7 @@ namespace maple
 		tools::generateMipmaps(textureImage, vkFormat, size, size, 1, numMips, 6, vkCmd->getCommandBuffer());
 		imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		updateDescriptor();
+		DEBUG_IMAGE_ADDRESS(textureImage);
 	}
 
 	auto VulkanTextureCube::updateDescriptor() -> void
@@ -737,14 +748,15 @@ namespace maple
 			VK_IMAGE_VIEW_TYPE_CUBE, VK_IMAGE_ASPECT_COLOR_BIT, 6);
 
 		imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		DEBUG_IMAGE_ADDRESS(textureImage);
 
 		updateDescriptor();
 	}
 
-	VulkanTextureDepthArray::VulkanTextureDepthArray(uint32_t width, uint32_t height, uint32_t count) :
+	VulkanTextureDepthArray::VulkanTextureDepthArray(uint32_t width, uint32_t height, uint32_t count, const CommandBuffer* commandBuffer) :
 		width(width), height(height), count(count)
 	{
-		init();
+		init(commandBuffer);
 	}
 
 	VulkanTextureDepthArray::~VulkanTextureDepthArray()
@@ -752,14 +764,14 @@ namespace maple
 		release();
 	}
 
-	auto VulkanTextureDepthArray::resize(uint32_t width, uint32_t height, uint32_t count) -> void
+	auto VulkanTextureDepthArray::resize(uint32_t width, uint32_t height, uint32_t count, const CommandBuffer* commandBuffer) -> void
 	{
 		this->width = width;
 		this->height = height;
 		this->count = count;
 
 		release();
-		init();
+		init(commandBuffer);
 	}
 
 	auto VulkanTextureDepthArray::getHandleArray(uint32_t index) -> void*
@@ -775,7 +787,7 @@ namespace maple
 		descriptor.imageLayout = imageLayout;
 	}
 
-	auto VulkanTextureDepthArray::init() -> void
+	auto VulkanTextureDepthArray::init(const CommandBuffer* commandBuffer) -> void
 	{
 		auto depthFormat = VulkanHelper::getDepthFormat();
 
@@ -790,12 +802,16 @@ namespace maple
 			imageViews.emplace_back(VulkanHelper::createImageView(textureImage, depthFormat, 1, VK_IMAGE_VIEW_TYPE_2D_ARRAY, VK_IMAGE_ASPECT_DEPTH_BIT, 1, i));
 		}
 		format = TextureFormat::DEPTH;
-		VulkanHelper::transitionImageLayout(textureImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1, count);
-		imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-		textureSampler = VulkanHelper::createTextureSampler(
 
-		);
+		auto vkCmd = static_cast<const VulkanCommandBuffer*>(commandBuffer);
+
+		VulkanHelper::transitionImageLayout(textureImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, 
+			VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1, count, vkCmd != nullptr?vkCmd->getCommandBuffer() : nullptr, true);
+
+		imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+		textureSampler = VulkanHelper::createTextureSampler();
 		updateDescriptor();
+		DEBUG_IMAGE_ADDRESS(textureImage);
 	}
 
 	auto VulkanTextureDepthArray::release() -> void
@@ -828,7 +844,7 @@ namespace maple
 		queue.emplace([textureImage, textureImageMemory]() {
 			vkDestroyImage(*VulkanDevice::get(), textureImage, nullptr);
 			vkFreeMemory(*VulkanDevice::get(), textureImageMemory, nullptr);
-	});
+			});
 #endif
 	}
 
@@ -869,7 +885,7 @@ namespace maple
 
 	auto VulkanTexture3D::generateMipmaps(const CommandBuffer* cmd) -> void
 	{
-		if (loadOptions.generateMipMaps && mipLevels > 1) 
+		if (loadOptions.generateMipMaps && mipLevels > 1)
 		{
 			tools::generateMipmaps(textureImage, VkConverter::textureFormatToVK(parameters.format, parameters.srgb), width, height, depth, mipLevels);
 		}
@@ -929,6 +945,7 @@ namespace maple
 
 		transitionImage(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 		updateDescriptor();
+		DEBUG_IMAGE_ADDRESS(textureImage);
 	}
 
 	auto VulkanTexture3D::clear() -> void
@@ -980,7 +997,7 @@ namespace maple
 		{
 			auto memory = textureImageMemory;
 			deletionQueue.emplace([memory] { vkFreeMemory(*VulkanDevice::get(), memory, nullptr); });
-	}
+		}
 #endif
 	}
 

@@ -39,9 +39,7 @@ namespace maple
 			return pipelineLayout;
 		}
 
-		virtual auto getPipelineBindPoint() const ->VkPipelineBindPoint {
-			return VK_PIPELINE_BIND_POINT_GRAPHICS;
-		}
+		virtual auto getPipelineBindPoint() const ->VkPipelineBindPoint { return VK_PIPELINE_BIND_POINT_GRAPHICS; }
 
 	protected:
 		std::shared_ptr<Shader> shader;

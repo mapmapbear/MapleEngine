@@ -12,6 +12,7 @@
 #include "VulkanShader.h"
 #include "VulkanTexture.h"
 #include "VulkanUniformBuffer.h"
+#include "VulkanCommandBuffer.h"
 
 #include "Application.h"
 
@@ -113,13 +114,18 @@ namespace maple
 		PROFILE_FUNCTION();
 	}
 
-	auto VulkanDescriptorSet::update(const CommandBuffer* commandBuffer, bool compute) -> void
+	auto VulkanDescriptorSet::update(const CommandBuffer* commandBuffer) -> void
 	{
 		PROFILE_FUNCTION();
 
 		dynamic = false;
 
 		int32_t  descriptorWritesCount = 0;
+
+		const auto vkCmd = static_cast<const VulkanCommandBuffer*>(commandBuffer);
+
+		auto compute = vkCmd->getCommandBuffeType() == CommandBufferType::Compute;
+
 		currentFrame = compute ? 0 : Application::getGraphicsContext()->getSwapChain()->getCurrentBufferIndex();
 
 		for (auto &bufferInfo : uniformBuffersData)

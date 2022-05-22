@@ -7,7 +7,7 @@
 
 namespace maple
 {
-	GBuffer::GBuffer(uint32_t width, uint32_t height) :
+	GBuffer::GBuffer(uint32_t width, uint32_t height, const CommandBuffer* commandBuffer) :
 	    width(width), height(height)
 	{
 		formats[PREV_DISPLAY]     = TextureFormat::RGBA8;
@@ -27,17 +27,17 @@ namespace maple
 		formats[VOLUMETRIC_LIGHT] = TextureFormat::RGB8;
 		formats[PSEUDO_SKY]       = TextureFormat::RGBA8;
 		formats[INDIRECT_LIGHTING] = TextureFormat::RGBA32;
-		buildTexture();
+		//buildTexture(commandBuffer);
 	}
 
-	auto GBuffer::resize(uint32_t width, uint32_t height, CommandBuffer *commandBuffer) -> void
+	auto GBuffer::resize(uint32_t width, uint32_t height, const CommandBuffer *commandBuffer) -> void
 	{
 		this->width  = width;
 		this->height = height;
 		buildTexture(commandBuffer);
 	}
 
-	auto GBuffer::buildTexture(CommandBuffer *commandBuffer) -> void
+	auto GBuffer::buildTexture(const CommandBuffer *commandBuffer) -> void
 	{
 		if (depthBuffer == nullptr)
 		{
@@ -46,7 +46,7 @@ namespace maple
 				screenTextures[i] = Texture2D::create();
 				screenTextures[i]->setName(getGBufferTextureName((GBufferTextures) i));
 			}
-			depthBuffer = TextureDepth::create(width, height, true);
+			depthBuffer = TextureDepth::create(width, height, true,commandBuffer);
 			depthBuffer->setName("GBuffer-Depth");
 #if defined(__ANDROID__)
 			constexpr int32_t SSAO_NOISE_DIM = 8;

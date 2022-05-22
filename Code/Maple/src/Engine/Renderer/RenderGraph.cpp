@@ -84,16 +84,13 @@ namespace maple
 
 	auto RenderGraph::init(uint32_t width, uint32_t height) -> void
 	{
-		gBuffer = std::make_shared<GBuffer>(width, height);
-
 		auto executePoint = Application::getExecutePoint();
-
-		executePoint->registerGlobalComponent<component::RendererData>([&](component::RendererData& data) {
+		gBuffer = std::make_shared<GBuffer>(width, height);
+		executePoint->registerGlobalComponent<component::RendererData>([&, width,height](component::RendererData& data) {
 			data.screenQuad = Mesh::createQuad(true);
-			data.gbuffer = gBuffer.get();
 			data.unitCube = TextureCube::create(1);
+			data.gbuffer = gBuffer.get();
 		});
-
 		executePoint->registerGlobalComponent<capture_graph::component::RenderGraph>();
 		executePoint->registerGlobalComponent<component::CameraView>();
 		executePoint->registerGlobalComponent<component::FinalPass>();
@@ -301,7 +298,17 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 		setScreenBufferSize(width, height);
-		gBuffer->resize(width, height);
+		auto cmd = Application::getGraphicsContext()->getSwapChain()->getCurrentCommandBuffer();
+		if (cmd != nullptr) 
+		{
+			cmd->addTask([&,width,height](const CommandBuffer * command) {
+				gBuffer->resize(width, height, command);
+			});
+		}
+		else 
+		{
+			gBuffer->resize(width, height, cmd);
+		}
 	}
 
 	auto RenderGraph::onImGui() -> void

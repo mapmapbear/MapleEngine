@@ -142,7 +142,7 @@ namespace maple
 				PipelineInfo info;
 				info.shader = perlinWorley;
 				auto pipeline = Pipeline::get(info, { perlinWorleySet },graph);
-				perlinWorleySet->update(cmd,true);
+				perlinWorleySet->update(cmd);
 				pipeline->bind(cmd);
 				Renderer::bindDescriptorSets(pipeline.get(), cmd, 0, { perlinWorleySet });
 				Renderer::dispatch(cmd, 128 / 4, 128 / 4, 128 / 4);
@@ -155,7 +155,7 @@ namespace maple
 				PipelineInfo info;
 				info.shader = worleyShader;
 				auto pipeline = Pipeline::get(info, { worleySet },graph);
-				worleySet->update(cmd, true);
+				worleySet->update(cmd);
 				pipeline->bind(cmd);
 				Renderer::bindDescriptorSets(pipeline.get(), cmd, 0, { worleySet });
 				Renderer::dispatch(cmd, 32 / 4, 32 / 4, 32 / 4);
@@ -167,7 +167,7 @@ namespace maple
 			{
 				descriptorSet->setUniformBufferData("UniformBufferObject", &uniformObject);
 				descriptorSet->setTexture("outWeatherTex", weather);
-				descriptorSet->update(cmd, true);
+				descriptorSet->update(cmd);
 
 				PipelineInfo info;
 				info.shader = shader;

@@ -665,7 +665,7 @@ namespace maple
 		GLCall(glBindTexture(GL_TEXTURE_2D_ARRAY, 0));
 	}
 
-	auto GLTextureDepthArray::resize(uint32_t width, uint32_t height, uint32_t count) -> void
+	auto GLTextureDepthArray::resize(uint32_t width, uint32_t height, uint32_t count, const CommandBuffer* commandBuffer) -> void
 	{
 		PROFILE_FUNCTION();
 		this->width  = width;
@@ -685,7 +685,7 @@ namespace maple
 		GLCall(glBindTexture(GL_TEXTURE_2D_ARRAY, 0));
 	}
 
-	auto GLTextureDepthArray::init() -> void
+	auto GLTextureDepthArray::init(const CommandBuffer* commandBuffer) -> void
 	{
 		GLCall(glGenTextures(1, &handle));
 		GLCall(glBindTexture(GL_TEXTURE_2D_ARRAY, handle));

@@ -149,7 +149,7 @@ namespace maple
 	class VulkanTextureDepth : public TextureDepth, public VkTexture
 	{
 	public:
-		VulkanTextureDepth(uint32_t width, uint32_t height, bool stencil);
+		VulkanTextureDepth(uint32_t width, uint32_t height, bool stencil, const CommandBuffer* commandBuffer );
 		~VulkanTextureDepth();
 
 		auto bind(uint32_t slot = 0) const -> void override {};
@@ -367,12 +367,12 @@ namespace maple
 	class VulkanTextureDepthArray : public TextureDepthArray, public VkTexture
 	{
 	public:
-		VulkanTextureDepthArray(uint32_t width, uint32_t height, uint32_t count);
+		VulkanTextureDepthArray(uint32_t width, uint32_t height, uint32_t count, const CommandBuffer* commandBuffer);
 		~VulkanTextureDepthArray();
 
 		auto bind(uint32_t slot = 0) const -> void override {};
 		auto unbind(uint32_t slot = 0) const -> void override {};
-		auto resize(uint32_t width, uint32_t height, uint32_t count) -> void override;
+		auto resize(uint32_t width, uint32_t height, uint32_t count, const CommandBuffer* commandBuffer) -> void override;
 
 		auto getHandle() const -> void* override
 		{
@@ -441,7 +441,7 @@ namespace maple
 		auto transitionImage(VkImageLayout newLayout, const VulkanCommandBuffer* commandBuffer) -> void override;
 
 	protected:
-		auto init() -> void override;
+		auto init(const CommandBuffer* commandBuffer) -> void override;
 		auto release() -> void;
 
 	private:

@@ -70,9 +70,7 @@ namespace maple
 		swapChain->end();
 		swapChain->queueSubmit();
 
-		auto &frameData = swapChain->getFrameData();
-		auto  semphore  = frameData.commandBuffer->getSemaphore();
-		swapChain->present(semphore);
+		swapChain->present();
 		swapChain->acquireNextImage();
 	}
 

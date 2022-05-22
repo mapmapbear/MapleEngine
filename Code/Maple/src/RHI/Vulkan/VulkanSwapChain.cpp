@@ -37,9 +37,11 @@ namespace maple
 
 	VulkanSwapChain::~VulkanSwapChain()
 	{
+		vkDestroySemaphore(*VulkanDevice::get(), presentSemaphore, nullptr);
+		vkDestroySemaphore(*VulkanDevice::get(), rendererSemaphore, nullptr);
+
 		for (uint32_t i = 0; i < swapChainBufferCount; i++)
 		{
-			vkDestroySemaphore(*VulkanDevice::get(), frames[i].presentSemaphore, nullptr);
 			frames[i].commandBuffer->flush();
 			frames[i].commandBuffer = nullptr;
 		}
@@ -223,23 +225,38 @@ namespace maple
 		delete[] pSwapChainImages;
 		createFrameData();
 		createComputeData();
+
+		VkSemaphoreCreateInfo semaphoreCreateInfo{};
+		semaphoreCreateInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+		VK_CHECK_RESULT(vkCreateSemaphore(*VulkanDevice::get(), &semaphoreCreateInfo, nullptr, &graphicsSemaphore));
+
+
+		// Signal the semaphore
+
+		VkSubmitInfo submitInfo{};
+		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submitInfo.signalSemaphoreCount = 1;
+		submitInfo.pSignalSemaphores = &computeData.semaphore;
+		VK_CHECK_RESULT(vkQueueSubmit(VulkanDevice::get()->getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE));
+		VK_CHECK_RESULT(vkQueueWaitIdle(VulkanDevice::get()->getGraphicsQueue()));
+
 		return true;
 	}
 
 	auto VulkanSwapChain::createFrameData() -> void
 	{
+		VkSemaphoreCreateInfo semaphoreInfo = {};
+		semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+		semaphoreInfo.pNext = nullptr;
+		semaphoreInfo.flags = 0;
+
+		VK_CHECK_RESULT(vkCreateSemaphore(*VulkanDevice::get(), &semaphoreInfo, nullptr, &presentSemaphore));
+		VK_CHECK_RESULT(vkCreateSemaphore(*VulkanDevice::get(), &semaphoreInfo, nullptr, &rendererSemaphore));
+
 		for (uint32_t i = 0; i < swapChainBufferCount; i++)
 		{
 			if (!frames[i].commandBuffer)
 			{
-				VkSemaphoreCreateInfo semaphoreInfo = {};
-				semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-				semaphoreInfo.pNext = nullptr;
-				semaphoreInfo.flags = 0;
-
-				if (frames[i].presentSemaphore == VK_NULL_HANDLE)
-					VK_CHECK_RESULT(vkCreateSemaphore(*VulkanDevice::get(), &semaphoreInfo, nullptr, &frames[i].presentSemaphore));
-
 				frames[i].commandPool = std::make_shared<VulkanCommandPool>(VulkanDevice::get()->getPhysicalDevice()->getQueueFamilyIndices().graphicsFamily.value(),
 					VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT);
 
@@ -266,8 +283,9 @@ namespace maple
 			if (computeData.semaphore == VK_NULL_HANDLE)
 				VK_CHECK_RESULT(vkCreateSemaphore(*VulkanDevice::get(), &semaphoreInfo, nullptr, &computeData.semaphore));
 
-			computeData.commandBuffer = std::make_shared<VulkanCommandBuffer>();
+			computeData.commandBuffer = std::make_shared<VulkanCommandBuffer>(CommandBufferType::Compute);
 			computeData.commandBuffer->init(true, *computeData.commandPool);
+
 			LOGI("Create Vulkan Compute CommandBuffer");
 		}
 	}
@@ -322,7 +340,7 @@ namespace maple
 			return;
 		{
 			PROFILE_SCOPE("vkAcquireNextImageKHR");
-			auto result = vkAcquireNextImageKHR(*VulkanDevice::get(), swapChain, UINT64_MAX, frames[nextCmdBufferIndex].presentSemaphore, VK_NULL_HANDLE, &acquireImageIndex);
+			auto result = vkAcquireNextImageKHR(*VulkanDevice::get(), swapChain, UINT64_MAX, presentSemaphore, VK_NULL_HANDLE, &acquireImageIndex);
 
 			if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
 			{
@@ -347,8 +365,11 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 		auto& frameData = getFrameData();
-		frameData.commandBuffer->executeInternal(VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, frameData.presentSemaphore, true);
-		computeData.commandBuffer->executeInternal(VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, computeData.semaphore, false);
+		frameData.commandBuffer->executeInternal(
+			{ VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT },
+			{ presentSemaphore, computeData.semaphore },
+			{ graphicsSemaphore, rendererSemaphore },
+			true);
 	}
 
 	auto VulkanSwapChain::begin() -> void
@@ -363,8 +384,10 @@ namespace maple
 		VulkanContext::getDeletionQueue(currentBuffer).flush();
 		commandBuffer->beginRecording();
 
+
+		vkQueueWaitIdle(VulkanDevice::get()->getComputeQueue());
 		auto cmd = computeData.commandBuffer;
-		if (cmd->getState() == CommandBufferState::Submitted) 
+		if (cmd->getState() == CommandBufferState::Submitted)
 		{
 			cmd->wait();
 		}
@@ -385,7 +408,7 @@ namespace maple
 	}
 
 	//swap buffer
-	auto VulkanSwapChain::present(VkSemaphore waitSemaphore) -> void
+	auto VulkanSwapChain::present() -> void
 	{
 		PROFILE_FUNCTION();
 
@@ -396,7 +419,7 @@ namespace maple
 		present.pSwapchains = &swapChain;
 		present.pImageIndices = &acquireImageIndex;
 		present.waitSemaphoreCount = 1;
-		present.pWaitSemaphores = &waitSemaphore;
+		present.pWaitSemaphores = &rendererSemaphore;
 		present.pResults = VK_NULL_HANDLE;
 
 		auto error = vkQueuePresentKHR(VulkanDevice::get()->getPresentQueue(), &present);
@@ -413,6 +436,15 @@ namespace maple
 		{
 			VK_CHECK_RESULT(error);
 		}
+
+		VK_CHECK_RESULT(vkQueueWaitIdle(VulkanDevice::get()->getGraphicsQueue()));
+		VulkanContext::get()->waitIdle();
+
+		computeData.commandBuffer->executeInternal(
+			{ VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT },
+			{ graphicsSemaphore },
+			{ computeData.semaphore },
+			true);
 
 		VulkanContext::getDeletionQueue(currentBuffer).flush();
 	}
@@ -436,7 +468,7 @@ namespace maple
 		if (!forceResize && this->width == width && this->height == height)
 			return;
 
-		VulkanContext::get()->waitIdle();
+	
 
 		this->width = width;
 		this->height = height;

@@ -262,8 +262,8 @@ namespace maple
 
 		auto bind(uint32_t slot = 0) const -> void override;
 		auto unbind(uint32_t slot = 0) const -> void override;
-		auto resize(uint32_t width, uint32_t height, uint32_t count) -> void override;
-		auto init() -> void override;
+		auto resize(uint32_t width, uint32_t height, uint32_t count, const CommandBuffer* commandBuffer = nullptr) -> void override;
+		auto init(const CommandBuffer* commandBuffer = nullptr) -> void override;
 
 		inline auto getHandle() const -> void * override
 		{

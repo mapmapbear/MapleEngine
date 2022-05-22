@@ -16,17 +16,15 @@ namespace maple
 	struct FrameData
 	{
 		std::shared_ptr<VulkanCommandPool>   commandPool;
-		VkSemaphore                          presentSemaphore = VK_NULL_HANDLE;
 		std::shared_ptr<VulkanCommandBuffer> commandBuffer;
 	};
 
-
 	struct ComputeData
 	{
-		VkQueue queue;										// Separate queue for compute commands (queue family may differ from the one used for graphics)
+		//VkQueue queue;										// Separate queue for compute commands (queue family may differ from the one used for graphics)
 		std::shared_ptr<VulkanCommandPool> commandPool;		// Use a separate command pool (queue family may differ from the one used for graphics)
 		std::shared_ptr<VulkanCommandBuffer> commandBuffer;	// Command buffer storing the dispatch commands and barriers
-		VkSemaphore semaphore;								// Execution dependency between compute & graphic submission
+		VkSemaphore semaphore = VK_NULL_HANDLE;				// Execution dependency between compute & graphic submission
 	};
 
 	class VulkanSwapChain final : public SwapChain
@@ -84,7 +82,7 @@ namespace maple
 
 		auto acquireNextImage() -> void;
 
-		auto present(VkSemaphore waitSemaphore) -> void;
+		auto present() -> void;
 
 		auto getFrameData()->FrameData&;
 
@@ -116,5 +114,11 @@ namespace maple
 		VkFormat        colorFormat;
 		VkColorSpaceKHR colorSpace;
 		ComputeData computeData;
+
+		// Execution dependency between compute & graphic submission
+		VkSemaphore graphicsSemaphore = nullptr;
+
+		VkSemaphore  presentSemaphore = VK_NULL_HANDLE;
+		VkSemaphore  rendererSemaphore = VK_NULL_HANDLE;
 	};
 };        // namespace maple

@@ -150,10 +150,10 @@ namespace maple
 #endif
 	}
 
-	auto CommandBuffer::create() -> std::shared_ptr<CommandBuffer>
+	auto CommandBuffer::create(CommandBufferType cmdType) -> std::shared_ptr<CommandBuffer>
 	{
 #ifdef MAPLE_VULKAN
-		return std::make_shared<VulkanCommandBuffer>();
+		return std::make_shared<VulkanCommandBuffer>(cmdType);
 #endif
 #ifdef MAPLE_OPENGL
 		return std::make_shared<GLCommandBuffer>();

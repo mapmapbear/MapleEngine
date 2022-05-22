@@ -331,8 +331,10 @@ namespace maple
 	{
 		auto registerShadowMap(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void
 		{
-			executePoint->registerGlobalComponent<component::ShadowMapData>([](component::ShadowMapData& data) {
-				data.shadowTexture = TextureDepthArray::create(SHADOWMAP_SiZE_MAX, SHADOWMAP_SiZE_MAX, data.shadowMapNum);
+			executePoint->registerGlobalComponent<component::ShadowMapData,component::RendererData>([](component::ShadowMapData& data, 
+				component::RendererData & renderData) {
+					
+				data.shadowTexture = TextureDepthArray::create(SHADOWMAP_SiZE_MAX, SHADOWMAP_SiZE_MAX, data.shadowMapNum, renderData.commandBuffer);
 				data.shader = Shader::create("shaders/Shadow.shader");
 				data.animShader = Shader::create("shaders/ShadowAnim.shader");
 

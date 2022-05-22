@@ -171,7 +171,7 @@ namespace maple
 				injection.descriptors[0]->setTexture("uVoxelRadiance", buffer.voxelVolume[VoxelBufferId::Radiance]);
 				injection.descriptors[0]->setTexture("uVoxelEmissive", buffer.voxelVolume[VoxelBufferId::Emissive]);
 
-				injection.descriptors[0]->update(rendererData.computeCommandBuffer, true);
+				injection.descriptors[0]->update(rendererData.computeCommandBuffer);
 			}
 		}
 
@@ -294,7 +294,7 @@ namespace maple
 						{ voxelBuffer.voxelTexMipmap.begin(),voxelBuffer.voxelTexMipmap.end() },
 						mipLvl + 1
 					);
-					volumePipline.descriptors[0]->update(renderData.computeCommandBuffer, true);
+					volumePipline.descriptors[0]->update(renderData.computeCommandBuffer);
 
 					PipelineInfo pipelineInfo;
 					pipelineInfo.shader = volumePipline.shader;
@@ -330,7 +330,7 @@ namespace maple
 				pipline.descriptors[0]->setUniform("UniformBufferObject", "mipDimension", &halfDimension);
 				pipline.descriptors[0]->setTexture("uVoxelMipmap", { buffer.voxelTexMipmap.begin(),buffer.voxelTexMipmap.end() });
 				pipline.descriptors[0]->setTexture("uVoxelBase", voxelRadiance);
-				pipline.descriptors[0]->update(renderData.computeCommandBuffer, true);
+				pipline.descriptors[0]->update(renderData.computeCommandBuffer);
 
 
 				PipelineInfo pipelineInfo;
@@ -414,7 +414,7 @@ namespace maple
 					propagation.descriptors[0]->setTexture("uVoxelAlbedo", buffer.voxelVolume[VoxelBufferId::Albedo]);
 					propagation.descriptors[0]->setTexture("uVoxelNormal", buffer.voxelVolume[VoxelBufferId::Normal]);
 					propagation.descriptors[0]->setTexture("uVoxelTexMipmap", { buffer.voxelTexMipmap.begin(), buffer.voxelTexMipmap.end() });
-					propagation.descriptors[0]->update(renderData.computeCommandBuffer, true);
+					propagation.descriptors[0]->update(renderData.computeCommandBuffer);
 
 					PipelineInfo pipelineInfo;
 					pipelineInfo.shader = propagation.shader;
@@ -633,7 +633,7 @@ namespace maple
 				pipeline.descriptors[0]->setTexture("uPositionSampler", rendererData.gbuffer->getBuffer(GBufferTextures::POSITION));
 				pipeline.descriptors[0]->setTexture("uNormalSampler", rendererData.gbuffer->getBuffer(GBufferTextures::NORMALS));
 				pipeline.descriptors[0]->setTexture("uPBRSampler", rendererData.gbuffer->getBuffer(GBufferTextures::PBR));
-				pipeline.descriptors[0]->update(rendererData.computeCommandBuffer, true);
+				pipeline.descriptors[0]->update(rendererData.computeCommandBuffer);
 			}
 		}
 

@@ -19,7 +19,7 @@ namespace maple
 		VulkanDescriptorSet(const DescriptorInfo &info);
 		~VulkanDescriptorSet();
 		NO_COPYABLE(VulkanDescriptorSet);
-		auto update(const CommandBuffer* commandBuffer, bool compute = false) -> void override;
+		auto update(const CommandBuffer* commandBuffer) -> void override;
 
 		inline auto setDynamicOffset(uint32_t offset) -> void override
 		{

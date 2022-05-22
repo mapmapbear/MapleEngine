@@ -36,7 +36,7 @@ namespace maple
 	class GBuffer
 	{
 	  public:
-		GBuffer(uint32_t width, uint32_t height);
+		GBuffer(uint32_t width, uint32_t height, const CommandBuffer* commandBuffer = nullptr);
 
 		inline auto getWidth() const
 		{
@@ -46,8 +46,8 @@ namespace maple
 		{
 			return height;
 		}
-		auto resize(uint32_t width, uint32_t height, CommandBuffer *commandBuffer = nullptr) -> void;
-		auto buildTexture(CommandBuffer *commandBuffer = nullptr) -> void;
+		auto resize(uint32_t width, uint32_t height, const CommandBuffer *commandBuffer = nullptr) -> void;
+		auto buildTexture(const CommandBuffer *commandBuffer = nullptr) -> void;
 
 		inline auto getDepthBuffer()
 		{

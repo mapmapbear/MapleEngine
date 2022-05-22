@@ -171,7 +171,7 @@ namespace maple
 				injectLight.descriptors[0]->setTexture("LPVGridB",lpv.lpvGridB);
 				injectLight.descriptors[0]->setTexture("uFluxSampler", rsm.fluxTexture);
 				injectLight.descriptors[0]->setTexture("uRSMWorldSampler", rsm.worldTexture);
-				injectLight.descriptors[0]->update(rendererData.computeCommandBuffer,true);
+				injectLight.descriptors[0]->update(rendererData.computeCommandBuffer);
 
 				PipelineInfo pipelineInfo;
 				pipelineInfo.shader = injectLight.shader;
@@ -227,7 +227,7 @@ namespace maple
 				geometry.descriptors[0]->setTexture("uRSMWorldSampler", rsm.worldTexture);
 				geometry.descriptors[0]->setTexture("uFluxSampler", rsm.fluxTexture);
 
-				geometry.descriptors[0]->update(cmdBuffer,true);
+				geometry.descriptors[0]->update(cmdBuffer);
 
 				PipelineInfo pipelineInfo;
 				pipelineInfo.shader = geometry.shader;
@@ -301,7 +301,7 @@ namespace maple
 					data.descriptors[0]->setTexture("LPVGridG_", lpv.lpvGs[i]);
 					data.descriptors[0]->setTexture("LPVGridB_", lpv.lpvBs[i]);  
 					data.descriptors[0]->setUniform("UniformObject", "step", &i );
-					data.descriptors[0]->update(rendererData.computeCommandBuffer,true);
+					data.descriptors[0]->update(rendererData.computeCommandBuffer);
 					Renderer::bindDescriptorSets(pipeline.get(), rendererData.computeCommandBuffer, 0, data.descriptors);
 					Renderer::dispatch(rendererData.computeCommandBuffer, pipelineInfo.groupCountX, pipelineInfo.groupCountY, pipelineInfo.groupCountZ);
 				}

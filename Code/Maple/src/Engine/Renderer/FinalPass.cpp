@@ -62,12 +62,12 @@ namespace maple
 
 			finalData.finalDescriptorSet->setTexture("uScreenSampler", renderData.gbuffer->getBuffer(GBufferTextures::SCREEN));
 			
-			if (reflectEnable) 
+			//if (reflectEnable) 
 			{
 				finalData.finalDescriptorSet->setTexture("uReflectionSampler", renderData.gbuffer->getBuffer(GBufferTextures::SSR_SCREEN));
 			}
 
-			if (bloomEnable) 
+			//if (bloomEnable) 
 			{
 				finalData.finalDescriptorSet->setTexture("uBloomSampler", renderData.gbuffer->getBuffer(GBufferTextures::BLOOM_SCREEN));
 			}
