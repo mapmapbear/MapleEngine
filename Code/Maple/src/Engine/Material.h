@@ -4,6 +4,7 @@
 #pragma once
 #include "Engine/Core.h"
 #include "FileSystem/IResource.h"
+#include <functional>
 #include <glm/glm.hpp>
 #include <memory>
 #include <string>

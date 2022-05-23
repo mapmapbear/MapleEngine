@@ -60,7 +60,11 @@ namespace maple
 				::Write<component::Transform>
 				::To<ecs::Entity>;
 
-			inline auto system(Entity entity, LightQuery lightQuery, MeshQuery meshQuery, ecs::World world)
+			inline auto system(Entity entity, 
+				LightQuery lightQuery, 
+				MeshQuery meshQuery, 
+				const component::RendererData & renderData,
+				ecs::World world)
 			{
 				auto [cameraView, rsm,aabb] = entity;
 				rsm.commandQueue.clear();
@@ -86,7 +90,8 @@ namespace maple
 
 					if (directionaLight)
 					{
-						rsm.descriptorSets[1]->setUniform("UBO", "light", &directionaLight->lightData);
+						rsm.descriptorSets[2]->setUniform("LightUBO", "light", &directionaLight->lightData);
+						rsm.descriptorSets[2]->update(renderData.commandBuffer);
 
 						if (directionaLight)
 						{
@@ -123,6 +128,20 @@ namespace maple
 									if (mesh.mesh->getSubMeshCount() <= 1) // at least two subMeshes.
 									{
 										cmd.material = !mesh.mesh->getMaterial().empty() ? mesh.mesh->getMaterial()[0].get() : nullptr;
+
+										if (cmd.material) 
+										{
+											cmd.material->setShader(rsm.shader);
+										}
+										cmd.material->bind(renderData.commandBuffer);
+									}
+									else 
+									{
+										cmd.material = nullptr;
+										for (auto material : mesh.mesh->getMaterial())
+										{
+											material->setShader(rsm.shader);
+										}
 									}
 								}
 							}
@@ -133,7 +152,7 @@ namespace maple
 		}
 
 		using Entity = ecs::Chain
-			::Read<component::ReflectiveShadowData>
+			::Write<component::ReflectiveShadowData>
 			::Read<component::RendererData>
 			::Write<capture_graph::component::RenderGraph>
 			::To<ecs::Entity>;
@@ -142,14 +161,12 @@ namespace maple
 		{
 			auto [rsm,renderData,renderGraph] = entity;
 
-			auto descriptorSet = rsm.descriptorSets[1];
 
 			rsm.descriptorSets[0]->setUniform("UniformBufferObject", "lightProjection", &rsm.projView);
 
 			auto commandBuffer = renderData.commandBuffer;
 
 			rsm.descriptorSets[0]->update(commandBuffer);
-			rsm.descriptorSets[1]->update(commandBuffer);
 
 			PipelineInfo pipeInfo;
 			pipeInfo.shader = rsm.shader;
@@ -190,15 +207,10 @@ namespace maple
 					{
 						auto & material = materials[i];
 						auto end = i == indices.size() ? command.mesh->getIndexBuffer()->getCount() : indices[i];
-
-						descriptorSet->setUniform("UBO", "albedoColor", &material->getProperties().albedoColor);
-						descriptorSet->setUniform("UBO", "usingAlbedoMap", &material->getProperties().usingAlbedoMap);
-						descriptorSet->setTexture("uDiffuseMap", material->getTextures().albedo);
-						descriptorSet->update(commandBuffer);
-
+						material->bind(renderData.commandBuffer);
+						rsm.descriptorSets[1] = material->getDescriptorSet();
 						Renderer::bindDescriptorSets(pipeline.get(), commandBuffer, 0, rsm.descriptorSets);
 						Renderer::drawIndexed(commandBuffer, DrawType::Triangle, end - start, start);
-
 						start = end;
 					}
 					mesh->getVertexBuffer()->unbind();
@@ -206,13 +218,7 @@ namespace maple
 				}
 				else 
 				{
-					if (command.material != nullptr)
-					{
-						descriptorSet->setUniform("UBO", "albedoColor", &command.material->getProperties().albedoColor);
-						descriptorSet->setUniform("UBO", "usingAlbedoMap", &command.material->getProperties().usingAlbedoMap);
-						descriptorSet->setTexture("uDiffuseMap", command.material->getTextures().albedo);
-						descriptorSet->update(commandBuffer);
-					}
+					rsm.descriptorSets[1] = command.material->getDescriptorSet();
 					Renderer::bindDescriptorSets(pipeline.get(), commandBuffer, 0, rsm.descriptorSets);
 					Renderer::drawMesh(commandBuffer, pipeline.get(), mesh);
 				}
@@ -231,10 +237,9 @@ namespace maple
 		{
 			executePoint->registerGlobalComponent<component::ReflectiveShadowData>([](component::ReflectiveShadowData& data) {
 				data.shader = Shader::create("shaders/LPV/ReflectiveShadowMap.shader");
-				data.descriptorSets.resize(2);
+				data.descriptorSets.resize(3);
 				data.descriptorSets[0] = DescriptorSet::create({ 0,data.shader.get() });
-				data.descriptorSets[1] = DescriptorSet::create({ 1,data.shader.get() });
-
+				data.descriptorSets[2] = DescriptorSet::create({ 2,data.shader.get() });
 				TextureParameters parameters;
 
 				parameters.format = TextureFormat::RGBA32;

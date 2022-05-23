@@ -106,6 +106,7 @@ namespace maple
 	auto Material::updateDescriptorSet() -> void
 	{
 		PROFILE_FUNCTION();
+
 		descriptorSet->setTexture("uAlbedoMap", pbrMaterialTextures.albedo);
 		descriptorSet->setTexture("uMetallicMap", pbrMaterialTextures.albedo);
 		descriptorSet->setTexture("uRoughnessMap", pbrMaterialTextures.albedo);
@@ -172,7 +173,6 @@ namespace maple
 			descriptorSet->setTexture("uEmissiveMap", Texture2D::create("emission", "textures/default/default_emission.png"));
 			materialProperties.usingEmissiveMap = 0.0f;
 		}
-
 		updateUniformBuffer();
 	}
 

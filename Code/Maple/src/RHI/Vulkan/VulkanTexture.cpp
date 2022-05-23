@@ -51,15 +51,10 @@ namespace maple
 			barrier.subresourceRange.layerCount = 1;
 			barrier.subresourceRange.levelCount = 1;
 
-			int32_t mipWidth = texWidth;
-			int32_t mipHeight = texHeight;
-			int32_t mipDepth = depth;
-
 			for (uint32_t i = 1; i < mipLevels; i++)
 			{
 				for (auto face = 0; face < faces; face++)
 				{
-					LOGI("Mips : {0}, face {1}", i, face);
 					barrier.subresourceRange.baseMipLevel = i - 1;
 					barrier.subresourceRange.baseArrayLayer = face;
 					barrier.oldLayout = initLayout;
@@ -79,15 +74,16 @@ namespace maple
 						&barrier);
 
 					VkImageBlit blit{};
-					blit.srcOffsets[0] = { 0, 0, 0 };
-					blit.srcOffsets[1] = { mipWidth, mipHeight, mipDepth };
+					blit.srcOffsets[0] = { 0,0,0 };
+					blit.srcOffsets[1] = { int32_t(texWidth >> (i - 1)), int32_t(texHeight >> (i - 1)), depth > 1 ? int32_t(depth >> (i - 1)) : 1};
 					blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 					blit.srcSubresource.mipLevel = i - 1;
 					blit.srcSubresource.baseArrayLayer = face;
 					blit.srcSubresource.layerCount = 1;
 
 					blit.dstOffsets[0] = { 0, 0, 0 };
-					blit.dstOffsets[1] = { mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, mipDepth > 1 ? mipDepth / 2 : 1 };
+					blit.dstOffsets[1] = { int32_t(texWidth >> i), int32_t(texHeight >> i ), depth > 1 ? int32_t(depth >> i) : 1 };
+
 					blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 					blit.dstSubresource.mipLevel = i;
 					blit.dstSubresource.baseArrayLayer = face;
@@ -118,16 +114,9 @@ namespace maple
 						1,
 						&barrier);
 				}
-
-				if (mipWidth > 1)
-					mipWidth /= 2;
-				if (mipHeight > 1)
-					mipHeight /= 2;
-				if (mipDepth > 1)
-					mipDepth /= 2;
 			}
 
-			for (auto face = 0; face < faces; face++)
+	/*		for (auto face = 0; face < faces; face++)
 			{
 				barrier.subresourceRange.baseMipLevel = mipLevels - 1;
 				barrier.subresourceRange.baseArrayLayer = face;
@@ -147,6 +136,7 @@ namespace maple
 					1,
 					&barrier);
 			}
+*/
 
 			if (singleTime)
 				VulkanHelper::endSingleTimeCommands(commandBuffer);
@@ -199,6 +189,7 @@ namespace maple
 
 		buildTexture(parameters.format, width, height, parameters.srgb, false, false, loadOptions.generateMipMaps, false, 0);
 		update(0, 0, width, height, data);
+
 	}
 
 	VulkanTexture2D::VulkanTexture2D(const std::string& name, const std::string& fileName, TextureParameters parameters, TextureLoadOptions loadOptions) :
@@ -259,6 +250,12 @@ namespace maple
 		auto oldLayout = imageLayout;
 		transitionImage(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 		VulkanHelper::copyBufferToImage(stagingBuffer->getVkBuffer(), textureImage, static_cast<uint32_t>(w), static_cast<uint32_t>(h), 1, x, y, 0);
+
+		if (loadOptions.generateMipMaps)
+		{
+			tools::generateMipmaps(textureImage, VkConverter::textureFormatToVK(parameters.format, parameters.srgb), width, height, 1, mipLevels);
+		}
+
 		transitionImage(oldLayout);
 	}
 
@@ -279,7 +276,7 @@ namespace maple
 		}
 		else if (fileName != "")
 		{
-			image = maple::ImageLoader::loadAsset(fileName);
+			image = maple::ImageLoader::loadAsset(fileName,true,false);
 			width = image->getWidth();
 			height = image->getHeight();
 			imageSize = image->getImageSize();
@@ -309,7 +306,7 @@ namespace maple
 		VulkanHelper::copyBufferToImage(stagingBuffer->getVkBuffer(), textureImage, static_cast<uint32_t>(width), static_cast<uint32_t>(height));
 
 		if (loadOptions.generateMipMaps && mipLevels > 1)
-			tools::generateMipmaps(textureImage, VkConverter::textureFormatToVK(parameters.format, parameters.srgb), width, height, 1, mipLevels);
+			tools::generateMipmaps(textureImage, VkConverter::textureFormatToVK(parameters.format, parameters.srgb), width, height, 0, mipLevels);
 
 		transitionImage(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
@@ -336,6 +333,11 @@ namespace maple
 		deleteImage = true;
 		mipLevels = 1;
 
+		if (loadOptions.generateMipMaps) 
+		{
+			mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(width, height)))) + 1;
+		}
+
 		constexpr uint32_t FLAGS = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
 		vkFormat = VkConverter::textureFormatToVK(internalformat, srgb);
@@ -358,6 +360,7 @@ namespace maple
 			VkConverter::textureWrapToVK(parameters.wrap),
 			VkConverter::textureWrapToVK(parameters.wrap),
 			VkConverter::textureWrapToVK(parameters.wrap));
+
 
 		imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 

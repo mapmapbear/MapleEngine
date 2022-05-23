@@ -38,6 +38,8 @@ namespace maple
 			return descriptorPool;
 		}
 
+		auto memoryBarrier(const CommandBuffer* commandBuffer, int32_t flag) -> void override;
+
 	  protected:
 		const std::string rendererName = "Vulkan-Renderer";
 

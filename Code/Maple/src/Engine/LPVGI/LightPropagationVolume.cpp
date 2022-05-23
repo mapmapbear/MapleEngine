@@ -293,6 +293,9 @@ namespace maple
 				pipeline->bind(rendererData.computeCommandBuffer);
 				for (auto i = 1; i <= lpv.propagateCount; i++)
 				{
+					//wait 
+
+
 					data.descriptors[0]->setTexture("LPVGridR", lpv.lpvRs[i - 1]);
 					data.descriptors[0]->setTexture("LPVGridG", lpv.lpvGs[i - 1]);
 					data.descriptors[0]->setTexture("LPVGridB", lpv.lpvBs[i - 1]);
@@ -304,6 +307,7 @@ namespace maple
 					data.descriptors[0]->update(rendererData.computeCommandBuffer);
 					Renderer::bindDescriptorSets(pipeline.get(), rendererData.computeCommandBuffer, 0, data.descriptors);
 					Renderer::dispatch(rendererData.computeCommandBuffer, pipelineInfo.groupCountX, pipelineInfo.groupCountY, pipelineInfo.groupCountZ);
+				
 				}
 				pipeline->end(rendererData.computeCommandBuffer);
 			}

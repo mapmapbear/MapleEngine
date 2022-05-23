@@ -25,10 +25,9 @@ namespace maple
 			}
 		}
 
-		{        // If texture hasn't been loaded already, load it
-			TextureLoadOptions options(false, true);
-			auto               texture = Texture2D::create(typeName, directory + "/" + name, format, {false,false,false});
-			texturesLoaded.push_back(texture);        // Store it as texture loaded for entire model, to ensure we won't unnecessary load duplicate textures.
+		{
+			auto texture = Texture2D::create(typeName, directory + "/" + name, format, { false,false,true });
+			texturesLoaded.emplace_back(texture);
 			return texture;
 		}
 	}
@@ -105,10 +104,10 @@ namespace maple
 
 				if (mp->diffuse_texname.length() > 0)
 				{
-					std::shared_ptr<Texture2D> texture = loadMaterialTextures("Albedo", 
-						texturesCache, 
+					std::shared_ptr<Texture2D> texture = loadMaterialTextures("Albedo",
+						texturesCache,
 						mp->diffuse_texname, directory, TextureParameters(
-							TextureFilter::Linear, 
+							TextureFilter::Linear,
 							TextureFilter::Linear, mp->diffuse_texopt.clamp ? TextureWrap::ClampToEdge : TextureWrap::Repeat));
 					if (texture)
 						textures.albedo = texture;
@@ -116,17 +115,17 @@ namespace maple
 
 				if (mp->normal_texname.length() > 0)
 				{
-					std::shared_ptr<Texture2D> texture = loadMaterialTextures("Normal", 
+					std::shared_ptr<Texture2D> texture = loadMaterialTextures("Normal",
 						texturesCache, mp->normal_texname, directory, TextureParameters(
 							TextureFilter::Linear,
 							TextureFilter::Linear, mp->normal_texopt.clamp ? TextureWrap::ClampToEdge : TextureWrap::Repeat));
 					if (texture)
-						textures.normal = texture; 
+						textures.normal = texture;
 				}
 
 				if (mp->roughness_texname.length() > 0)
 				{
-					std::shared_ptr<Texture2D> texture = loadMaterialTextures("Roughness", texturesCache, mp->roughness_texname.c_str(), directory, 
+					std::shared_ptr<Texture2D> texture = loadMaterialTextures("Roughness", texturesCache, mp->roughness_texname.c_str(), directory,
 						TextureParameters(
 							TextureFilter::Linear,
 							TextureFilter::Linear, mp->roughness_texopt.clamp ? TextureWrap::ClampToEdge : TextureWrap::Repeat));
@@ -136,7 +135,7 @@ namespace maple
 
 				if (mp->metallic_texname.length() > 0)
 				{
-					std::shared_ptr<Texture2D> texture = loadMaterialTextures("Metallic", texturesCache, mp->metallic_texname, directory, 
+					std::shared_ptr<Texture2D> texture = loadMaterialTextures("Metallic", texturesCache, mp->metallic_texname, directory,
 						TextureParameters(
 							TextureFilter::Linear,
 							TextureFilter::Linear, mp->metallic_texopt.clamp ? TextureWrap::ClampToEdge : TextureWrap::Repeat));
@@ -144,12 +143,12 @@ namespace maple
 						textures.metallic = texture;
 				}
 
-			/*	if (mp->specular_highlight_texname.length() > 0)
-				{
-					std::shared_ptr<Texture2D> texture = loadMaterialTextures("Metallic", texturesCache, mp->specular_highlight_texname, directory, TextureParameters(TextureFilter::Nearest, TextureFilter::Nearest, mp->specular_texopt.clamp ? TextureWrap::ClampToEdge : TextureWrap::Repeat));
-					if (texture)
-						textures.metallic = texture;
-				}*/
+				/*	if (mp->specular_highlight_texname.length() > 0)
+					{
+						std::shared_ptr<Texture2D> texture = loadMaterialTextures("Metallic", texturesCache, mp->specular_highlight_texname, directory, TextureParameters(TextureFilter::Nearest, TextureFilter::Nearest, mp->specular_texopt.clamp ? TextureWrap::ClampToEdge : TextureWrap::Repeat));
+						if (texture)
+							textures.metallic = texture;
+					}*/
 			}
 			pbrMaterial->setTextures(textures);
 			auto mesh = std::make_shared<Mesh>(indices, vertices);

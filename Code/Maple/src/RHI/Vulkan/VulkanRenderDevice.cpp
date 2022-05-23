@@ -164,4 +164,11 @@ namespace maple
 		PROFILE_FUNCTION();
 		vkCmdDispatch(((const VulkanCommandBuffer*)commandBuffer)->getCommandBuffer(), x,y,z);
 	}
+
+	auto VulkanRenderDevice::memoryBarrier(const CommandBuffer* commandBuffer, int32_t flag) -> void
+	{
+		PROFILE_FUNCTION();
+		//vkCmdSetEvent(((const VulkanCommandBuffer*)commandBuffer)->getCommandBuffer(), nullptr, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+	}
+
 }        // namespace maple
