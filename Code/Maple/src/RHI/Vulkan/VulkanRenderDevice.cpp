@@ -37,11 +37,11 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 		std::array<VkDescriptorPoolSize, 5> poolSizes = {
-		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_SAMPLER, 100},
-		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 100},
-		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 100},
-		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 100},
-		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 100}};
+		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_SAMPLER, 500},
+		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 500},
+		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 500},
+		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 500},
+		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 500}};
 
 		// Create info
 		VkDescriptorPoolCreateInfo poolCreateInfo = {};
@@ -168,7 +168,22 @@ namespace maple
 	auto VulkanRenderDevice::memoryBarrier(const CommandBuffer* commandBuffer, int32_t flag) -> void
 	{
 		PROFILE_FUNCTION();
-		//vkCmdSetEvent(((const VulkanCommandBuffer*)commandBuffer)->getCommandBuffer(), nullptr, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+
+		VkMemoryBarrier barrier{};
+		barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+		barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		barrier.dstAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+
+		vkCmdPipelineBarrier(((const VulkanCommandBuffer*)commandBuffer)->getCommandBuffer(),
+			VK_PIPELINE_STAGE_TRANSFER_BIT,
+			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+			0,
+			1,
+			&barrier,
+			0,
+			nullptr,
+			0,
+			nullptr);
 	}
 
 }        // namespace maple

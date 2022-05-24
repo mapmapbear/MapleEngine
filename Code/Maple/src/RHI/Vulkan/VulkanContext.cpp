@@ -57,9 +57,8 @@ namespace maple
 			}
 
 			extensions.emplace_back("VK_EXT_debug_report");
-			extensions.emplace_back("VK_EXT_debug_marker ");
 			extensions.emplace_back("VK_KHR_surface");
-
+			extensions.emplace_back("VK_EXT_descriptor_indexing");
 #if defined(TRACY_ENABLE) && defined(PLATFORM_WINDOWS)
 			//extensions.emplace_back("VK_EXT_calibrated_timestamps");
 #endif
@@ -153,7 +152,6 @@ namespace maple
 			if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)
 			{
 				LOGW("[VULKAN] - ERROR : [{0}] Code {1}  : {2}", pLayerPrefix, msgCode, pMsg);
-				int32_t i = 0;
 			};
 			if (flags & VK_DEBUG_REPORT_WARNING_BIT_EXT)
 			{
