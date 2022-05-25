@@ -131,7 +131,7 @@ namespace maple
 
 										if (cmd.material) 
 										{
-											cmd.material->setShader(rsm.shader);
+											cmd.material->setShader(rsm.shader,true);
 										}
 										cmd.material->bind(renderData.commandBuffer);
 									}
@@ -140,7 +140,7 @@ namespace maple
 										cmd.material = nullptr;
 										for (auto material : mesh.mesh->getMaterial())
 										{
-											material->setShader(rsm.shader);
+											material->setShader(rsm.shader, true);
 										}
 									}
 								}

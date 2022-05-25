@@ -107,72 +107,90 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 
-		descriptorSet->setTexture("uAlbedoMap", pbrMaterialTextures.albedo);
-		descriptorSet->setTexture("uMetallicMap", pbrMaterialTextures.albedo);
-		descriptorSet->setTexture("uRoughnessMap", pbrMaterialTextures.albedo);
-		descriptorSet->setTexture("uNormalMap", pbrMaterialTextures.albedo);
-		descriptorSet->setTexture("uAOMap", pbrMaterialTextures.albedo);
-		descriptorSet->setTexture("uEmissiveMap", pbrMaterialTextures.albedo);
-
-		if (pbrMaterialTextures.albedo != nullptr)
+		
+		if (!onlyAlbedoColor)
 		{
 			descriptorSet->setTexture("uAlbedoMap", pbrMaterialTextures.albedo);
-		}
-		else
-		{
-			descriptorSet->setTexture("uAlbedoMap", Texture2D::create("albedo", "textures/default/default_albedo.png"));
-			materialProperties.usingAlbedoMap = 0.0f;
-		}
+			descriptorSet->setTexture("uMetallicMap", pbrMaterialTextures.albedo);
+			descriptorSet->setTexture("uRoughnessMap", pbrMaterialTextures.albedo);
+			descriptorSet->setTexture("uNormalMap", pbrMaterialTextures.albedo);
+			descriptorSet->setTexture("uAOMap", pbrMaterialTextures.albedo);
+			descriptorSet->setTexture("uEmissiveMap", pbrMaterialTextures.albedo);
 
-		if (pbrMaterialTextures.metallic)
-		{
-			descriptorSet->setTexture("uMetallicMap", pbrMaterialTextures.metallic);
-		}
-		else
-		{
-			materialProperties.usingMetallicMap = 0.0f;
-			descriptorSet->setTexture("uMetallicMap", Texture2D::create("metallic", "textures/default/default_specular.png"));
-		}
+			if (pbrMaterialTextures.albedo != nullptr)
+			{
+				descriptorSet->setTexture("uAlbedoMap", pbrMaterialTextures.albedo);
+			}
+			else
+			{
+				descriptorSet->setTexture("uAlbedoMap", Texture2D::create("albedo", "textures/default/default_albedo.png"));
+				materialProperties.usingAlbedoMap = 0.0f;
+			}
 
-		if (pbrMaterialTextures.roughness)
-		{
-			descriptorSet->setTexture("uRoughnessMap", pbrMaterialTextures.roughness);
-		}
-		else
-		{
-			descriptorSet->setTexture("uRoughnessMap", Texture2D::create("roughness", "textures/default/default_roughness.png"));
-			materialProperties.usingRoughnessMap = 0.0f;
-		}
+			if (pbrMaterialTextures.metallic)
+			{
+				descriptorSet->setTexture("uMetallicMap", pbrMaterialTextures.metallic);
+			}
+			else
+			{
+				materialProperties.usingMetallicMap = 0.0f;
+				descriptorSet->setTexture("uMetallicMap", Texture2D::create("metallic", "textures/default/default_specular.png"));
+			}
 
-		if (pbrMaterialTextures.normal != nullptr)
-		{
-			descriptorSet->setTexture("uNormalMap", pbrMaterialTextures.normal);
-		}
-		else
-		{
-			descriptorSet->setTexture("uNormalMap", Texture2D::create("normal", "textures/default/default_normal.png"));
-			materialProperties.usingNormalMap = 0.0f;
-		}
+			if (pbrMaterialTextures.roughness)
+			{
+				descriptorSet->setTexture("uRoughnessMap", pbrMaterialTextures.roughness);
+			}
+			else
+			{
+				descriptorSet->setTexture("uRoughnessMap", Texture2D::create("roughness", "textures/default/default_roughness.png"));
+				materialProperties.usingRoughnessMap = 0.0f;
+			}
 
-		if (pbrMaterialTextures.ao != nullptr)
-		{
-			descriptorSet->setTexture("uAOMap", pbrMaterialTextures.ao);
-		}
-		else
-		{
-			descriptorSet->setTexture("uAOMap", Texture2D::create("ao", "textures/default/default_ao.png"));
-			materialProperties.usingAOMap = 0.0f;
-		}
+			if (pbrMaterialTextures.normal != nullptr)
+			{
+				descriptorSet->setTexture("uNormalMap", pbrMaterialTextures.normal);
+			}
+			else
+			{
+				descriptorSet->setTexture("uNormalMap", Texture2D::create("normal", "textures/default/default_normal.png"));
+				materialProperties.usingNormalMap = 0.0f;
+			}
 
-		if (pbrMaterialTextures.emissive != nullptr)
-		{
-			descriptorSet->setTexture("uEmissiveMap", pbrMaterialTextures.emissive);
+			if (pbrMaterialTextures.ao != nullptr)
+			{
+				descriptorSet->setTexture("uAOMap", pbrMaterialTextures.ao);
+			}
+			else
+			{
+				descriptorSet->setTexture("uAOMap", Texture2D::create("ao", "textures/default/default_ao.png"));
+				materialProperties.usingAOMap = 0.0f;
+			}
+
+			if (pbrMaterialTextures.emissive != nullptr)
+			{
+				descriptorSet->setTexture("uEmissiveMap", pbrMaterialTextures.emissive);
+			}
+			else
+			{
+				descriptorSet->setTexture("uEmissiveMap", Texture2D::create("emission", "textures/default/default_emission.png"));
+				materialProperties.usingEmissiveMap = 0.0f;
+			}
 		}
-		else
+		else 
 		{
-			descriptorSet->setTexture("uEmissiveMap", Texture2D::create("emission", "textures/default/default_emission.png"));
-			materialProperties.usingEmissiveMap = 0.0f;
+			if (pbrMaterialTextures.albedo != nullptr)
+			{
+				descriptorSet->setTexture("uAlbedoMap", pbrMaterialTextures.albedo);
+			}
+			else
+			{
+				descriptorSet->setTexture("uAlbedoMap", Texture2D::create("albedo", "textures/default/default_albedo.png"));
+				materialAlbedoProperties.usingAlbedoMap = materialProperties.usingAlbedoMap;
+			}
+			materialAlbedoProperties.albedoColor = materialProperties.albedoColor;
 		}
+		
 		updateUniformBuffer();
 	}
 
@@ -182,7 +200,14 @@ namespace maple
 		if (!descriptorSet)
 			return;
 
-		descriptorSet->setUniformBufferData("UniformMaterialData", &materialProperties);
+		if (onlyAlbedoColor)
+		{
+			descriptorSet->setUniformBufferData("UniformMaterialAlbedo", &materialAlbedoProperties);
+		}
+		else
+		{
+			descriptorSet->setUniformBufferData("UniformMaterialData", &materialProperties);
+		}
 	}
 
 	auto Material::setMaterialProperites(const MaterialProperties &properties) -> void
@@ -311,11 +336,12 @@ namespace maple
 		}
 	}
 
-	auto Material::setShader(const std::shared_ptr<Shader> &shader) -> void
+	auto Material::setShader(const std::shared_ptr<Shader> &shader, bool albedoColor) -> void
 	{
 		PROFILE_FUNCTION();
 		if (this->shader != shader) 
 		{
+			onlyAlbedoColor = albedoColor;
 			this->shader = shader;
 			createDescriptorSet();
 		}

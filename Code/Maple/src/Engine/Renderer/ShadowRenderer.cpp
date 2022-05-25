@@ -172,7 +172,7 @@ namespace maple
 						if (entity.hasComponent<component::ReflectiveShadowData>())
 						{
 							auto &rsm = entity.getComponent<component::ReflectiveShadowData>();
-							rsm.descriptorSets[1]->setUniform("UBO", "light", &directionaLight->lightData);
+							rsm.descriptorSets[2]->setUniform("LightUBO", "light", &directionaLight->lightData);
 						}
 
 						if (directionaLight)
