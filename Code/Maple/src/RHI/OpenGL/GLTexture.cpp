@@ -305,6 +305,7 @@ namespace maple
 		GLCall(glGenerateMipmap(GL_TEXTURE_2D));
 	}
 
+
 	GLTextureCube::GLTextureCube(uint32_t size)
 	{
 		PROFILE_FUNCTION();

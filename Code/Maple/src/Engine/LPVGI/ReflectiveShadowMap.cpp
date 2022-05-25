@@ -218,7 +218,7 @@ namespace maple
 				}
 				else 
 				{
-					rsm.descriptorSets[1] = command.material->getDescriptorSet();
+					rsm.descriptorSets[1] = command.material->getDescriptorSet(rsm.shader->getName());
 					Renderer::bindDescriptorSets(pipeline.get(), commandBuffer, 0, rsm.descriptorSets);
 					Renderer::drawMesh(commandBuffer, pipeline.get(), mesh);
 				}

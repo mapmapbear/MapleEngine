@@ -292,6 +292,16 @@ namespace maple
 		descriptorSet->update(cmdBuffer);
 	}
 
+	auto Material::getDescriptorSet(const std::string& name) ->std::shared_ptr<DescriptorSet>
+	{
+		if (auto iter = cachedDescriptorSet.find(name); iter != cachedDescriptorSet.end())
+		{
+			return iter->second;
+		}
+		MAPLE_ASSERT(false, "there is no cached descriptSet");
+		return nullptr;
+	}
+
 	auto Material::setShader(const std::string& path) -> void
 	{
 		PROFILE_FUNCTION();

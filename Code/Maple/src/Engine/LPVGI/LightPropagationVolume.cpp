@@ -237,7 +237,13 @@ namespace maple
 				pipeline->bind(cmdBuffer);
 				Renderer::bindDescriptorSets(pipeline.get(), cmdBuffer, 0, geometry.descriptors);
 				Renderer::dispatch(cmdBuffer, pipelineInfo.groupCountX, pipelineInfo.groupCountY, 1);
-				Renderer::memoryBarrier(cmdBuffer, MemoryBarrierFlags::Shader_Image_Access_Barrier);
+				
+
+				lpv.lpvGeometryVolumeR->memoryBarrier(cmdBuffer, MemoryBarrierFlags::Shader_Storage_Barrier);
+				lpv.lpvGeometryVolumeG->memoryBarrier(cmdBuffer, MemoryBarrierFlags::Shader_Storage_Barrier);
+				lpv.lpvGeometryVolumeB->memoryBarrier(cmdBuffer, MemoryBarrierFlags::Shader_Storage_Barrier);
+
+
 				pipeline->end(cmdBuffer);
 			}
 		};

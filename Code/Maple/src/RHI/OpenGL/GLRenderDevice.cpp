@@ -182,6 +182,11 @@ namespace maple
 			glFlag |= GL_TEXTURE_FETCH_BARRIER_BIT;
 		}
 
+		if (flag & MemoryBarrierFlags::Shader_Storage_Barrier) 
+		{
+			glFlag |= GL_SHADER_STORAGE_BARRIER_BIT;
+		}
+
 		GLCall(glMemoryBarrier(glFlag));
 	}
 

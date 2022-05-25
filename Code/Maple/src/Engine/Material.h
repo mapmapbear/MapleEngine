@@ -168,6 +168,9 @@ namespace maple
 			return descriptorSet;
 		}
 
+		auto getDescriptorSet(const std::string& name)->std::shared_ptr<DescriptorSet>;
+		
+
 		inline auto &getMaterialId() const
 		{
 			return materialId;

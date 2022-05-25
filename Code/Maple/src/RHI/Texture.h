@@ -23,6 +23,8 @@ namespace maple
 		virtual auto getHeight() const->uint32_t = 0;
 		virtual auto getType() const->TextureType = 0;
 		virtual auto getFormat() const->TextureFormat = 0;
+		
+		virtual auto memoryBarrier(const CommandBuffer* cmd, MemoryBarrierFlags flags) -> void;
 
 		virtual auto bindImageTexture(uint32_t unit, bool read = false, bool write = false, uint32_t level = 0, uint32_t layer = 0) -> void {};
 		virtual auto getSize() const -> uint32_t

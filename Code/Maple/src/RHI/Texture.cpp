@@ -17,6 +17,13 @@
 
 namespace maple
 {
+	auto Texture::memoryBarrier(const CommandBuffer* cmd, MemoryBarrierFlags flags) -> void
+	{
+#ifdef MAPLE_OPENGL
+		Renderer::memoryBarrier(cmd,flags);
+#endif
+	}
+
 	auto Texture::getStrideFromFormat(TextureFormat format) -> uint8_t
 	{
 		switch (format)
