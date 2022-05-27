@@ -395,6 +395,29 @@ namespace maple
 		return mipImageViews.at(mip);
 	}
 
+	auto VulkanTexture2D::memoryBarrier(const CommandBuffer* cmd, MemoryBarrierFlags flags) -> void
+	{
+		if (flags & MemoryBarrierFlags::Shader_Storage_Barrier)
+		{
+			VkImageSubresourceRange subresourceRange;
+
+			subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			subresourceRange.baseMipLevel = 0;
+			subresourceRange.baseArrayLayer = 0;
+			subresourceRange.layerCount = 1;
+			subresourceRange.levelCount = 1;
+
+			VulkanHelper::setImageLayout(
+				static_cast<const VulkanCommandBuffer*>(cmd)->getCommandBuffer(),
+				textureImage,
+				imageLayout,
+				VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+				subresourceRange
+			);
+			imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		}
+	}
+
 	auto VulkanTexture2D::createSampler() -> void
 	{
 		PROFILE_FUNCTION();

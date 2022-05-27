@@ -111,6 +111,8 @@ namespace maple
 
 		auto getMipImageView(uint32_t mip)->VkImageView;
 
+		auto memoryBarrier(const CommandBuffer* cmd, MemoryBarrierFlags flags) -> void override;
+
 	private:
 		auto createSampler() -> void;
 		auto deleteSampler() -> void;

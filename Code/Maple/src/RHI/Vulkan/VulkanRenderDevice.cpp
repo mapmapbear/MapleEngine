@@ -169,21 +169,7 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 
-		VkMemoryBarrier barrier{};
-		barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-		barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-		barrier.dstAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
-
-		vkCmdPipelineBarrier(((const VulkanCommandBuffer*)commandBuffer)->getCommandBuffer(),
-			VK_PIPELINE_STAGE_TRANSFER_BIT,
-			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-			0,
-			1,
-			&barrier,
-			0,
-			nullptr,
-			0,
-			nullptr);
+	
 	}
 
 }        // namespace maple
