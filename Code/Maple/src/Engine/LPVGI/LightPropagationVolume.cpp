@@ -5,13 +5,13 @@
 #include "LightPropagationVolume.h"
 #include "ReflectiveShadowMap.h"
 #include "Scene/Component/BoundingBox.h"
+#include "Scene/Component/Transform.h"
 #include "Math/BoundingBox.h"
 
 #include "Engine/Renderer/RendererData.h"
 #include "Engine/Renderer/ShadowRenderer.h"
 #include "Engine/Mesh.h"
 #include "Engine/GBuffer.h"
-
 
 #include "RHI/CommandBuffer.h"
 #include "RHI/Texture.h"
@@ -127,6 +127,7 @@ namespace maple
 				component::RendererData & render,
 				component::InjectLightData & injectLight,
 				component::BoundingBoxComponent & scenAABB,
+				const global::component::SceneTransformChanged & sceneChanged,
 				ecs::World world)
 			{
 				auto [lpv] = entity;
@@ -134,7 +135,7 @@ namespace maple
 				if (scenAABB.box == nullptr)
 					return;
 
-				if (injectLight.boundingBox != *scenAABB.box)
+				if (injectLight.boundingBox != *scenAABB.box || sceneChanged.dirty)
 				{
 					auto size = scenAABB.box->size();
 					auto maxValue = std::max(size.x, std::max(size.y, size.z));
@@ -158,6 +159,7 @@ namespace maple
 				component::ReflectiveShadowData& rsm,
 				component::RendererData& rendererData,
 				component::InjectLightData& injectLight,
+				const global::component::SceneTransformChanged& sceneChanged,
 				ecs::World world)
 			{
 				auto [lpv] = entity;
@@ -165,31 +167,34 @@ namespace maple
 				if (lpv.lpvGridR == nullptr)
 					return;
 
-				lpv.lpvGridR->clear(rendererData.computeCommandBuffer);
-				lpv.lpvGridG->clear(rendererData.computeCommandBuffer);
-				lpv.lpvGridB->clear(rendererData.computeCommandBuffer);
+				if (sceneChanged.dirty) 
+				{
+					lpv.lpvGridR->clear(rendererData.computeCommandBuffer);
+					lpv.lpvGridG->clear(rendererData.computeCommandBuffer);
+					lpv.lpvGridB->clear(rendererData.computeCommandBuffer);
 
-				injectLight.descriptors[0]->setTexture("LPVGridR",lpv.lpvGridR);
-				injectLight.descriptors[0]->setTexture("LPVGridG",lpv.lpvGridG);
-				injectLight.descriptors[0]->setTexture("LPVGridB",lpv.lpvGridB);
-				injectLight.descriptors[0]->setTexture("uFluxSampler", rsm.fluxTexture);
-				injectLight.descriptors[0]->setTexture("uRSMWorldSampler", rsm.worldTexture);
-				injectLight.descriptors[0]->update(rendererData.computeCommandBuffer);
+					injectLight.descriptors[0]->setTexture("LPVGridR", lpv.lpvGridR);
+					injectLight.descriptors[0]->setTexture("LPVGridG", lpv.lpvGridG);
+					injectLight.descriptors[0]->setTexture("LPVGridB", lpv.lpvGridB);
+					injectLight.descriptors[0]->setTexture("uFluxSampler", rsm.fluxTexture);
+					injectLight.descriptors[0]->setTexture("uRSMWorldSampler", rsm.worldTexture);
+					injectLight.descriptors[0]->update(rendererData.computeCommandBuffer);
 
-				PipelineInfo pipelineInfo;
-				pipelineInfo.shader = injectLight.shader;
-				pipelineInfo.groupCountX = rsm.normalTexture->getWidth() / injectLight.shader->getLocalSizeX();
-				pipelineInfo.groupCountY = rsm.normalTexture->getHeight() / injectLight.shader->getLocalSizeY();
-				auto pipeline = Pipeline::get(pipelineInfo);
-				pipeline->bind(rendererData.computeCommandBuffer);
-				Renderer::bindDescriptorSets(pipeline.get(), rendererData.computeCommandBuffer, 0, injectLight.descriptors);
-				Renderer::dispatch(rendererData.computeCommandBuffer,pipelineInfo.groupCountX,pipelineInfo.groupCountY,1);
+					PipelineInfo pipelineInfo;
+					pipelineInfo.shader = injectLight.shader;
+					pipelineInfo.groupCountX = rsm.normalTexture->getWidth() / injectLight.shader->getLocalSizeX();
+					pipelineInfo.groupCountY = rsm.normalTexture->getHeight() / injectLight.shader->getLocalSizeY();
+					auto pipeline = Pipeline::get(pipelineInfo);
+					pipeline->bind(rendererData.computeCommandBuffer);
+					Renderer::bindDescriptorSets(pipeline.get(), rendererData.computeCommandBuffer, 0, injectLight.descriptors);
+					Renderer::dispatch(rendererData.computeCommandBuffer, pipelineInfo.groupCountX, pipelineInfo.groupCountY, 1);
 
-				lpv.lpvGridR->memoryBarrier(rendererData.computeCommandBuffer, MemoryBarrierFlags::Shader_Storage_Barrier);
-				lpv.lpvGridG->memoryBarrier(rendererData.computeCommandBuffer, MemoryBarrierFlags::Shader_Storage_Barrier);
-				lpv.lpvGridB->memoryBarrier(rendererData.computeCommandBuffer, MemoryBarrierFlags::Shader_Storage_Barrier);
+					lpv.lpvGridR->memoryBarrier(rendererData.computeCommandBuffer, MemoryBarrierFlags::Shader_Storage_Barrier);
+					lpv.lpvGridG->memoryBarrier(rendererData.computeCommandBuffer, MemoryBarrierFlags::Shader_Storage_Barrier);
+					lpv.lpvGridB->memoryBarrier(rendererData.computeCommandBuffer, MemoryBarrierFlags::Shader_Storage_Barrier);
 
-				pipeline->end(rendererData.computeCommandBuffer);
+					pipeline->end(rendererData.computeCommandBuffer);
+				}
 			}
 		};
 
@@ -204,10 +209,12 @@ namespace maple
 				::Read<component::RendererData>
 				::To<ecs::Entity>;
 
-			inline auto beginScene(Entity entity, ecs::World world)
+			inline auto beginScene(Entity entity, 
+				const global::component::SceneTransformChanged& sceneChanged,
+				ecs::World world)
 			{
 				auto [lpv, geometry,aabb,shadowData,rsm, rendererData] = entity;
-				if (lpv.lpvGridR == nullptr)
+				if (lpv.lpvGridR == nullptr || !sceneChanged.dirty)
 					return;
 				geometry.descriptors[0]->setUniform("UniformBufferObject", "lightViewMat", glm::value_ptr(rsm.lightMatrix));
 				geometry.descriptors[0]->setUniform("UniformBufferObject", "minAABB", glm::value_ptr(aabb.box->min));
@@ -216,10 +223,12 @@ namespace maple
 				geometry.descriptors[0]->setUniform("UniformBufferObject", "rsmArea", &rsm.lightArea);
 			}
 
-			inline auto render(Entity entity, ecs::World world)
+			inline auto render(Entity entity, 
+				const global::component::SceneTransformChanged& sceneChanged,
+				ecs::World world)
 			{
 				auto [lpv, geometry, aabb, shadowData, rsm, rendererData] = entity;
-				if (lpv.lpvGridR == nullptr)
+				if (lpv.lpvGridR == nullptr || !sceneChanged.dirty)
 					return;
 
 				auto cmdBuffer = rendererData.computeCommandBuffer;
@@ -265,19 +274,23 @@ namespace maple
 				::Write<component::RendererData>
 				::To<ecs::Entity>;
 
-			inline auto beginScene(Entity entity, ecs::World world)
+			inline auto beginScene(Entity entity, 
+				const global::component::SceneTransformChanged& sceneChanged,
+				ecs::World world)
 			{
 				auto [lpv, data, aabb,renderData] = entity;
-				if (lpv.lpvGridR == nullptr)
+				if (lpv.lpvGridR == nullptr || !sceneChanged.dirty)
 					return;
 				data.descriptors[0]->setUniform("UniformObject", "gridDim", glm::value_ptr(aabb.box->size()));
 				data.descriptors[0]->setUniform("UniformObject", "occlusionAmplifier", &lpv.occlusionAmplifier);
 			}
 
-			inline auto render(Entity entity, ecs::World world)
+			inline auto render(Entity entity, 
+				const global::component::SceneTransformChanged& sceneChanged,
+				ecs::World world)
 			{
 				auto [lpv, data, aabb, rendererData] = entity;
-				if (lpv.lpvGridR == nullptr )
+				if (lpv.lpvGridR == nullptr || !sceneChanged.dirty)
 					return;
 
 				lpv.lpvAccumulatorR->clear(rendererData.computeCommandBuffer);

@@ -33,6 +33,29 @@ namespace maple
 		LENGTH
 	};
 
+	static constexpr char* GBufferNames[] =
+	{
+		"Color",
+		"Position",
+		"Normals",
+		"PBR",
+		"SSAOScreen",
+		"SSAOBlur",
+		"SSRScreen",
+		"BloomScreen",
+		"BloomBlur",
+		"Screen",
+		"IndirectLighting",
+		"PreviewDisplay",
+		"ViewPosition",
+		"ViewNormal",
+		"Velocity",
+		"VolumetricLight",
+		"PseudoSky",
+		nullptr
+	};
+
+
 	class GBuffer
 	{
 	  public:
@@ -66,7 +89,6 @@ namespace maple
 		{
 			return ssaoNoiseMap;
 		}
-		static auto getGBufferTextureName(GBufferTextures index) -> const char *;
 
 	  private:
 		std::array<std::shared_ptr<Texture2D>, GBufferTextures::LENGTH> screenTextures;

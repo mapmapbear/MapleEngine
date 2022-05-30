@@ -89,7 +89,7 @@ namespace maple
 			inline auto system(Entity entity, global::component::SceneTransformChanged *sceneChanged, ecs::World world)
 			{
 				auto [transform] = entity;
-				if (transform.isDirty())
+				if (transform.isDirty() && sceneChanged != nullptr)
 				{
 					sceneChanged->dirty = true;
 					transform.setWorldMatrix(glm::mat4(1.f));

@@ -23,7 +23,7 @@ namespace maple
 		virtual auto getHeight() const->uint32_t = 0;
 		virtual auto getType() const->TextureType = 0;
 		virtual auto getFormat() const->TextureFormat = 0;
-		
+
 		virtual auto memoryBarrier(const CommandBuffer* cmd, MemoryBarrierFlags flags) -> void;
 
 		virtual auto bindImageTexture(uint32_t unit, bool read = false, bool write = false, uint32_t level = 0, uint32_t layer = 0) -> void {};
@@ -76,6 +76,8 @@ namespace maple
 			return "";
 		}
 
+		virtual auto toIntID() const->const uint64_t { return 0; };
+
 	public:
 		static auto getStrideFromFormat(TextureFormat format)->uint8_t;
 		static auto bitsToTextureFormat(uint32_t bits)->TextureFormat;
@@ -96,7 +98,7 @@ namespace maple
 		static auto  create()->std::shared_ptr<Texture2D>;
 		static auto  create(uint32_t width, uint32_t height, void* data, TextureParameters parameters = TextureParameters(), TextureLoadOptions loadOptions = TextureLoadOptions())->std::shared_ptr<Texture2D>;
 		static auto  create(const std::string& name, const std::string& filePath, TextureParameters parameters = TextureParameters(), TextureLoadOptions loadOptions = TextureLoadOptions())->std::shared_ptr<Texture2D>;
-		virtual auto update(int32_t x, int32_t y, int32_t w, int32_t h, const void* buffer) -> void = 0;
+		virtual auto update(uint32_t x, uint32_t y, uint32_t w, uint32_t h, const void* buffer) -> void = 0;
 
 		virtual auto buildTexture(TextureFormat internalformat, uint32_t width, uint32_t height, bool srgb = false, bool depth = false, bool samplerShadow = false, bool mipmap = false, bool image = false, uint32_t accessFlag = 0) -> void = 0;
 
@@ -111,7 +113,7 @@ namespace maple
 	public:
 		static auto create(uint32_t width, uint32_t height, uint32_t depth, TextureParameters parameters = {}, TextureLoadOptions loadOptions = {})->std::shared_ptr<Texture3D>;
 
-		virtual auto update(int32_t x, int32_t y, int32_t w, int32_t h, const void* buffer) -> void
+		virtual auto update(uint32_t x, uint32_t y, uint32_t w, uint32_t h, const void* buffer) -> void override
 		{}
 
 		virtual auto buildTexture(TextureFormat internalformat, uint32_t width, uint32_t height, bool srgb = false, bool depth = false, bool samplerShadow = false, bool mipmap = false, bool image = false, uint32_t accessFlag = 0) -> void

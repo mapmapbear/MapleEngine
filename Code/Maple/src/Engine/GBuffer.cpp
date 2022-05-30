@@ -44,7 +44,7 @@ namespace maple
 			for (auto i = 0; i < GBufferTextures::LENGTH; i++)
 			{
 				screenTextures[i] = Texture2D::create();
-				screenTextures[i]->setName(getGBufferTextureName((GBufferTextures) i));
+				screenTextures[i]->setName(GBufferNames[i]);
 			}
 			depthBuffer = TextureDepth::create(width, height, true,commandBuffer);
 			depthBuffer->setName("GBuffer-Depth");
@@ -74,33 +74,5 @@ namespace maple
 			}
 		}
 		depthBuffer->resize(width, height, commandBuffer);
-	}
-
-	auto GBuffer::getGBufferTextureName(GBufferTextures index) -> const char *
-	{
-		switch (index)
-		{
-#define STR(r) \
-	case r:    \
-		return #r
-			STR(COLOR);
-			STR(POSITION);
-			STR(NORMALS);
-			STR(PBR);
-			STR(BLOOM_SCREEN);
-			STR(SSAO_SCREEN);
-			STR(SSAO_BLUR);
-			STR(SSR_SCREEN);
-			STR(SCREEN);
-			STR(VIEW_POSITION);
-			STR(VIEW_NORMALS);
-			STR(VELOCITY);
-			STR(INDIRECT_LIGHTING);
-			STR(PSEUDO_SKY);
-			STR(BLOOM_BLUR);
-#undef STR
-			default:
-				return "UNKNOWN_ERROR";
-		}
 	}
 }        // namespace maple

@@ -289,7 +289,7 @@ namespace maple
 		GLCall(glBindImageTexture(unit, handle, level, false, layer, flag, textureFormatToGL(format, false)));
 	}
 
-	auto GLTexture2D::update(int32_t x, int32_t y, int32_t w, int32_t h, const void *buffer) -> void
+	auto GLTexture2D::update(uint32_t x, uint32_t y, uint32_t w, uint32_t h, const void *buffer) -> void
 	{
 		PROFILE_FUNCTION();
 		GLCall(glTexSubImage2D(GL_TEXTURE_2D, 0, x, y, w, h, internalFormatToFormat(textureFormatToGL(parameters.format, parameters.srgb)), isHDR ? GL_FLOAT : GL_UNSIGNED_BYTE, buffer));

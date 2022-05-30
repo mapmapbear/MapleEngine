@@ -244,7 +244,7 @@ namespace maple
 		deleteSampler();
 	}
 
-	auto VulkanTexture2D::update(int32_t x, int32_t y, int32_t w, int32_t h, const void* buffer) -> void
+	auto VulkanTexture2D::update(uint32_t x, uint32_t y, uint32_t w, uint32_t h, const void* buffer) -> void
 	{
 		auto stagingBuffer = std::make_unique<VulkanBuffer>(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, w * h * tools::getFormatSize(parameters.format), buffer);
 		auto oldLayout = imageLayout;
@@ -397,7 +397,20 @@ namespace maple
 
 	auto VulkanTexture2D::memoryBarrier(const CommandBuffer* cmd, MemoryBarrierFlags flags) -> void
 	{
+		auto layout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+		if (flags & MemoryBarrierFlags::Shader_Image_Access_Barrier)
+		{
+			layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		}
+
+		//for vulkan, set it as read only after dispatch finished.
 		if (flags & MemoryBarrierFlags::Shader_Storage_Barrier)
+		{
+			layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		}
+
+		if (layout != imageLayout && layout != VK_IMAGE_LAYOUT_UNDEFINED) 
 		{
 			VkImageSubresourceRange subresourceRange;
 
@@ -411,10 +424,10 @@ namespace maple
 				static_cast<const VulkanCommandBuffer*>(cmd)->getCommandBuffer(),
 				textureImage,
 				imageLayout,
-				VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+				layout,
 				subresourceRange
 			);
-			imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			imageLayout = layout;
 		}
 	}
 

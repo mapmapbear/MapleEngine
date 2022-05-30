@@ -53,13 +53,12 @@ namespace maple
 
 			indirectLight.descriptorSets[0]->setUniform("UniformBufferObject", "minAABB", glm::value_ptr(aabb.box->min));
 			indirectLight.descriptorSets[0]->setUniform("UniformBufferObject", "cellSize", &lpv.cellSize);
-
 			indirectLight.descriptorSets[0]->setTexture("uRAccumulatorLPV", lpv.lpvAccumulatorR);
 			indirectLight.descriptorSets[0]->setTexture("uGAccumulatorLPV", lpv.lpvAccumulatorG);
 			indirectLight.descriptorSets[0]->setTexture("uBAccumulatorLPV", lpv.lpvAccumulatorB);
-			indirectLight.descriptorSets[0]->setTexture("uWorldNormalSampler", renderData.gbuffer->getBuffer(GBufferTextures::NORMALS));
+			indirectLight.descriptorSets[0]->setTexture("uWorldNormalSampler",   renderData.gbuffer->getBuffer(GBufferTextures::NORMALS));
 			indirectLight.descriptorSets[0]->setTexture("uWorldPositionSampler", renderData.gbuffer->getBuffer(GBufferTextures::POSITION));
-			indirectLight.descriptorSets[0]->setTexture("uIndirectLight", renderData.gbuffer->getBuffer(GBufferTextures::INDIRECT_LIGHTING));
+			indirectLight.descriptorSets[0]->setTexture("uIndirectLight",		 renderData.gbuffer->getBuffer(GBufferTextures::INDIRECT_LIGHTING));
 			indirectLight.descriptorSets[0]->update(commandBuffer);
 
 			PipelineInfo pipelineInfo;
@@ -70,6 +69,16 @@ namespace maple
 			pipeline->bind(commandBuffer);
 			Renderer::bindDescriptorSets(pipeline.get(), commandBuffer, 0, indirectLight.descriptorSets);
 			Renderer::dispatch(commandBuffer, pipelineInfo.groupCountX, pipelineInfo.groupCountY, 1);
+
+			/*lpv.lpvAccumulatorR->memoryBarrier(commandBuffer, MemoryBarrierFlags::Shader_Image_Access_Barrier);
+			lpv.lpvAccumulatorG->memoryBarrier(commandBuffer, MemoryBarrierFlags::Shader_Image_Access_Barrier);
+			lpv.lpvAccumulatorB->memoryBarrier(commandBuffer, MemoryBarrierFlags::Shader_Image_Access_Barrier);*/
+
+			//to read-only in vulkan
+			renderData.gbuffer->getBuffer(GBufferTextures::NORMALS)->memoryBarrier(commandBuffer, MemoryBarrierFlags::Shader_Image_Access_Barrier);
+			renderData.gbuffer->getBuffer(GBufferTextures::POSITION)->memoryBarrier(commandBuffer, MemoryBarrierFlags::Shader_Image_Access_Barrier);
+			//renderData.gbuffer->getBuffer(GBufferTextures::INDIRECT_LIGHTING)->memoryBarrier(commandBuffer, MemoryBarrierFlags::Shader_Storage_Barrier);
+
 			pipeline->end(commandBuffer);
 		}
 

@@ -16,7 +16,7 @@ namespace maple
 		auto unbind(uint32_t slot) const -> void override;
 		auto buildTexture(TextureFormat internalformat, uint32_t width, uint32_t height, bool srgb, bool depth, bool samplerShadow, bool mipmap, bool image, uint32_t accessFlag) -> void override;
 		auto bindImageTexture(uint32_t unit, bool read = false, bool write = false, uint32_t level = 0, uint32_t layer = 0) -> void override;
-		auto update(int32_t x, int32_t y, int32_t w, int32_t h, const void *buffer) -> void override;
+		auto update(uint32_t x, uint32_t y, uint32_t w, uint32_t h, const void *buffer) -> void override;
 
 		auto setData(const void *pixels) -> void;
 
@@ -54,6 +54,8 @@ namespace maple
 		{
 			return fileName;
 		}
+
+		auto toIntID() const -> const uint64_t override { return handle; };
 
 	  private:
 		auto               load(const void *data) -> void;
@@ -184,6 +186,8 @@ namespace maple
 
 		auto generateMipmap(const CommandBuffer *commandBuffer) -> void override;
 
+		auto toIntID() const -> const uint64_t override { return handle; };
+
 	  private:
 		static auto loadFromFile() -> uint32_t;
 		auto        loadFromFiles() -> uint32_t;
@@ -242,6 +246,7 @@ namespace maple
 		{
 			return format;
 		}
+		auto toIntID() const -> const uint64_t override { return handle; };
 
 	  protected:
 		auto init() -> void;
@@ -304,6 +309,8 @@ namespace maple
 		{
 			return count;
 		}
+
+		auto toIntID() const -> const uint64_t override { return handle; };
 
 	  private:
 		uint32_t      handle = 0;

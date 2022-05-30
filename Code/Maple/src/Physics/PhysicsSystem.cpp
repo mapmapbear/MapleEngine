@@ -33,7 +33,7 @@ namespace maple
 			{
 				auto [phyWorld] = entity;
 
-				if (appState->state == EditorState::Play)
+				if (appState && appState->state == EditorState::Play)
 				{
 					if (phyWorld.dynamicsWorld)
 					{

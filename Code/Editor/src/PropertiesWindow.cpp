@@ -971,16 +971,22 @@ namespace MM
 			ImGuiHelper::property("Radius", light.lightData.radius, 1.0f, 100.0f);
 
 		ImGuiHelper::property("Color", light.lightData.color, true, ImGuiHelper::PropertyFlag::ColorProperty);
-		ImGuiHelper::property("Intensity", light.lightData.intensity, 0.0f, 100.0f);
+
+		if (ImGuiHelper::property("Intensity", light.lightData.intensity, 0.0f, 100.0f)) 
+		{//update once
+			auto& transform = reg.get<component::Transform>(e);
+			transform.setLocalPosition(transform.getLocalPosition());
+		}
 
 		if (static_cast<component::LightType>(light.lightData.type) == component::LightType::SpotLight)
 			ImGuiHelper::property("Angle", light.lightData.angle, -1.0f, 1.0f);
 
 		ImGuiHelper::property("Show Frustum", light.showFrustum);
-		ImGuiHelper::property("Reflective Shadow Map", light.reflectiveShadowMap);
-		ImGuiHelper::property("Light Propagation Volume", light.enableLPV);
-		ImGuiHelper::property("Cast Shadow", light.castShadow);
-
+		if (ImGuiHelper::property("Cast Shadow", light.castShadow)) 
+		{
+			auto & transform = reg.get<component::Transform>(e);
+			transform.setLocalPosition(transform.getLocalPosition());
+		}
 
 		ImGui::AlignTextToFramePadding();
 		ImGui::TextUnformatted("Light Type");

@@ -31,8 +31,6 @@ namespace maple
 		{
 			LightData lightData;
 			bool      showFrustum = false;
-			bool      reflectiveShadowMap = false;
-			bool	  enableLPV = false;
 			bool	  castShadow = false;
 		};
 	}

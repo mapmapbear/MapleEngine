@@ -125,6 +125,7 @@ namespace maple
 					}
 					else if (r->getResourceType() == maple::FileType::Texture) 
 					{
+						auto texture = std::static_pointer_cast<Texture>(r);
 						ImGui::PushID(r.get());
 					
 						ImGui::Text(fileTypeToStr(r->getResourceType()));
@@ -132,7 +133,7 @@ namespace maple
 						ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(5, 5));
 						if (ImGui::IsItemHovered())
 						{
-							auto texture = std::static_pointer_cast<Texture>(r);
+							
 							ImGui::BeginTooltip();
 							ImGuiHelper::image(texture.get(), { 50,50 });
 							ImGui::EndTooltip();
@@ -140,6 +141,10 @@ namespace maple
 						ImGui::PopStyleVar();
 
 						ImGui::PopID();
+
+						ImGui::SameLine();
+
+						ImGui::Text(" TextureID : 0x%08hhx", texture->toIntID());
 					}
 					else if (r->getResourceType() == maple::FileType::Animation)
 					{

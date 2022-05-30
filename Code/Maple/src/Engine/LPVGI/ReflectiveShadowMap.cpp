@@ -161,7 +161,6 @@ namespace maple
 		{
 			auto [rsm,renderData,renderGraph] = entity;
 
-
 			rsm.descriptorSets[0]->setUniform("UniformBufferObject", "lightProjection", &rsm.projView);
 
 			auto commandBuffer = renderData.commandBuffer;

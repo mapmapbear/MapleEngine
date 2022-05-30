@@ -25,7 +25,7 @@ namespace maple
 		VulkanTexture2D();
 		~VulkanTexture2D();
 
-		auto update(int32_t x, int32_t y, int32_t w, int32_t h, const void* buffer) -> void override;
+		auto update(uint32_t x, uint32_t y, uint32_t w, uint32_t h, const void* buffer) -> void override;
 
 		inline auto bind(uint32_t slot = 0) const -> void override {};
 		inline auto unbind(uint32_t slot = 0) const -> void override {};
@@ -112,6 +112,10 @@ namespace maple
 		auto getMipImageView(uint32_t mip)->VkImageView;
 
 		auto memoryBarrier(const CommandBuffer* cmd, MemoryBarrierFlags flags) -> void override;
+
+			
+		auto toIntID() const->const uint64_t override { return (uint64_t) textureImage; };
+
 
 	private:
 		auto createSampler() -> void;
@@ -221,6 +225,9 @@ namespace maple
 		{
 			return vkFormat;
 		}
+
+		auto toIntID() const->const uint64_t override { return (uint64_t)textureImage; };
+
 
 	protected:
 		auto init(const CommandBuffer* commandBuffer = nullptr) -> void;
@@ -334,6 +341,8 @@ namespace maple
 			return vkFormat;
 		}
 
+		auto toIntID() const->const uint64_t override { return (uint64_t)textureImage; };
+
 	private:
 		auto init() -> void;
 
@@ -442,6 +451,9 @@ namespace maple
 
 		auto transitionImage(VkImageLayout newLayout, const VulkanCommandBuffer* commandBuffer) -> void override;
 
+		auto toIntID() const->const uint64_t override { return (uint64_t)textureImage; };
+
+
 	protected:
 		auto init(const CommandBuffer* commandBuffer) -> void override;
 		auto release() -> void;
@@ -518,6 +530,9 @@ namespace maple
 		auto transitionImage(VkImageLayout newLayout, const VulkanCommandBuffer* commandBuffer = nullptr) -> void override;
 		inline auto getImageLayout() const->VkImageLayout override { return imageLayout; };
 		inline auto getImage() const->VkImage override { return textureImage; };
+
+		auto toIntID() const->const uint64_t override { return (uint64_t)textureImage; };
+
 	private:
 
 		auto deleteSampler() -> void;

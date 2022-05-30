@@ -177,6 +177,8 @@ namespace maple
 							auto entity = scene->createEntity("VXGI");
 							entity.addComponent<vxgi::component::Voxelization>();
 							vxgi::registerGlobalComponent(Application::getExecutePoint());
+
+							Application::getExecutePoint()->getGlobalComponent<global::component::SceneTransformChanged>().dirty = true;
 						}
 
 						if (strcmp("LPV-GI", name) == 0)
@@ -184,6 +186,7 @@ namespace maple
 							light_propagation_volume::registerGlobalComponent(Application::getExecutePoint());
 							reflective_shadow_map::registerGlobalComponent(Application::getExecutePoint());
 							lpv_indirect_lighting::registerGlobalComponent(Application::getExecutePoint());
+							Application::getExecutePoint()->getGlobalComponent<global::component::SceneTransformChanged>().dirty = true;
 						}
 					}
 				}
