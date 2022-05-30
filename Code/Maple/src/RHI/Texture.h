@@ -130,7 +130,7 @@ namespace maple
 			return TextureType::Color3D;
 		};
 
-		virtual auto clear() -> void {};
+		virtual auto clear(const CommandBuffer* commandBuffer) -> void {};
 	};
 
 	class MAPLE_EXPORT TextureCube : public Texture

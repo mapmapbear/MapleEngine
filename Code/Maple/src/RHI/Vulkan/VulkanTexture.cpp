@@ -346,9 +346,9 @@ namespace maple
 		parameters.srgb = srgb;
 
 #ifdef USE_VMA_ALLOCATOR
-		VulkanHelper::createImage(width, height, mipLevels, vkFormat, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory, 1, 0, allocation);
+		VulkanHelper::createImage(width, height, mipLevels, vkFormat, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory, 1, 0, allocation);
 #else
-		VulkanHelper::createImage(width, height, mipLevels, vkFormat, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory, 1, 0);
+		VulkanHelper::createImage(width, height, mipLevels, vkFormat, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory, 1, 0);
 #endif
 
 		textureImageView = VulkanHelper::createImageView(textureImage, vkFormat, mipLevels, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, 1);
@@ -974,9 +974,20 @@ namespace maple
 		DEBUG_IMAGE_ADDRESS(textureImage);
 	}
 
-	auto VulkanTexture3D::clear() -> void
+	auto VulkanTexture3D::clear(const CommandBuffer * commandBuffer) -> void
 	{
-
+		VkImageSubresourceRange subresourceRange = {};
+		subresourceRange.baseMipLevel = 0;
+		subresourceRange.layerCount = 1;
+		subresourceRange.levelCount = 1;
+		subresourceRange.baseArrayLayer = 0;
+		subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		auto oldLayout = imageLayout;
+		transitionImage(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, (const VulkanCommandBuffer*)commandBuffer);
+		VkClearColorValue clearColourValue = VkClearColorValue({ {0,0,0,0} });
+		vkCmdClearColorImage(((const VulkanCommandBuffer*)commandBuffer)->getCommandBuffer(), textureImage, 
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearColourValue, 1, &subresourceRange);
+		transitionImage(oldLayout, (const VulkanCommandBuffer*)commandBuffer);
 	}
 
 	auto VulkanTexture3D::transitionImage(VkImageLayout newLayout, const VulkanCommandBuffer* commandBuffer /*= nullptr*/) -> void

@@ -20,7 +20,7 @@ namespace maple
 {
 	namespace
 	{
-		inline auto transitionImageLayout(const CommandBuffer* cmd, Texture* texture)
+		inline auto transitionImageLayout(const CommandBuffer* cmd, Texture* texture,bool sampler2d)
 		{
 			if (!texture)
 				return;
@@ -28,9 +28,16 @@ namespace maple
 			const VulkanCommandBuffer *commandBuffer = (VulkanCommandBuffer *)cmd;
 			if (texture->getType() == TextureType::Color)
 			{
-				if (((VulkanTexture2D *) texture)->getImageLayout() != VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+				if (sampler2d) 
 				{
-					((VulkanTexture2D *) texture)->transitionImage(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, commandBuffer);
+					if (((VulkanTexture2D*)texture)->getImageLayout() != VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+					{
+						((VulkanTexture2D*)texture)->transitionImage(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, commandBuffer);
+					}
+				}
+				else 
+				{
+					((VulkanTexture2D*)texture)->transitionImage(VK_IMAGE_LAYOUT_GENERAL, commandBuffer);
 				}
 			}
 			else if (texture->getType() == TextureType::Color3D)
@@ -158,7 +165,7 @@ namespace maple
 						{
 							if (imageInfo.textures[i])
 							{
-								transitionImageLayout(commandBuffer,imageInfo.textures[i].get());
+								transitionImageLayout(commandBuffer,imageInfo.textures[i].get(), imageInfo.type == DescriptorType::ImageSampler);
 
 								const auto &des               = *static_cast<VkDescriptorImageInfo *>(imageInfo.textures[i]->getDescriptorInfo());
 								imageInfoPool[i + imageIndex] = des;

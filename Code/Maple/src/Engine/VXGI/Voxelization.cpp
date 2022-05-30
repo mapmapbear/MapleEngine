@@ -376,7 +376,7 @@ namespace maple
 				if (!voxel.dirty && !hasUpdateRadiance)
 					return;
 
-				buffer.voxelVolume[VoxelBufferId::Radiance]->clear();
+				buffer.voxelVolume[VoxelBufferId::Radiance]->clear(renderData.computeCommandBuffer);
 
 				PipelineInfo pipelineInfo;
 				pipelineInfo.shader = injection.shader;
@@ -481,7 +481,7 @@ namespace maple
 
 				for (auto text : buffer.voxelVolume)
 				{
-					text->clear();
+					text->clear(renderData.computeCommandBuffer);
 				}
 				//voxelize the whole scene now. this would be optimize in the future.
 				//voxelization the inner room is a good choice.

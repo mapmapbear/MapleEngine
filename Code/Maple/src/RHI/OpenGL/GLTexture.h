@@ -115,7 +115,7 @@ namespace maple
 			return parameters.format;
 		}
 
-		auto clear() -> void override;
+		auto clear(const CommandBuffer* commandBuffer) -> void override;
 
 	  private:
 		uint32_t      handle = 0;

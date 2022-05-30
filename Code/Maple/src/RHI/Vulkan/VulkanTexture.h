@@ -513,7 +513,7 @@ namespace maple
 			return (void*)&descriptor;
 		}
 
-		auto clear() -> void override;
+		auto clear(const CommandBuffer* commandBuffer) -> void override;
 
 		auto transitionImage(VkImageLayout newLayout, const VulkanCommandBuffer* commandBuffer = nullptr) -> void override;
 		inline auto getImageLayout() const->VkImageLayout override { return imageLayout; };

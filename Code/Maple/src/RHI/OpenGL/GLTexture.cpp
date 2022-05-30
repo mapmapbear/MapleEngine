@@ -812,7 +812,7 @@ namespace maple
 		GLCall(glBindTexture(GL_TEXTURE_3D, 0));
 	}
 
-	auto GLTexture3D::clear() -> void
+	auto GLTexture3D::clear(const CommandBuffer* commandBuffer) -> void
 	{
 		PROFILE_FUNCTION();
 		std::vector<uint8_t> emptyData(width * height * depth * textureFormatSize(parameters.format), 0);//float and int is 4.

@@ -91,7 +91,10 @@ namespace maple
 			PropagationData()
 			{
 				shader = Shader::create("shaders/LPV/LightPropagation.shader");
-				descriptors.emplace_back(DescriptorSet::create({ 0,shader.get() }));
+				for (auto i = 0;i<LPVGrid::PROPAGATE_COUNT;i++)
+				{
+					descriptors.emplace_back(DescriptorSet::create({ 0,shader.get() }));
+				}
 			}
 		};
 
@@ -162,9 +165,9 @@ namespace maple
 				if (lpv.lpvGridR == nullptr)
 					return;
 
-				lpv.lpvGridR->clear();
-				lpv.lpvGridG->clear();
-				lpv.lpvGridB->clear();
+				lpv.lpvGridR->clear(rendererData.computeCommandBuffer);
+				lpv.lpvGridG->clear(rendererData.computeCommandBuffer);
+				lpv.lpvGridB->clear(rendererData.computeCommandBuffer);
 
 				injectLight.descriptors[0]->setTexture("LPVGridR",lpv.lpvGridR);
 				injectLight.descriptors[0]->setTexture("LPVGridG",lpv.lpvGridG);
@@ -181,6 +184,11 @@ namespace maple
 				pipeline->bind(rendererData.computeCommandBuffer);
 				Renderer::bindDescriptorSets(pipeline.get(), rendererData.computeCommandBuffer, 0, injectLight.descriptors);
 				Renderer::dispatch(rendererData.computeCommandBuffer,pipelineInfo.groupCountX,pipelineInfo.groupCountY,1);
+
+				lpv.lpvGridR->memoryBarrier(rendererData.computeCommandBuffer, MemoryBarrierFlags::Shader_Storage_Barrier);
+				lpv.lpvGridG->memoryBarrier(rendererData.computeCommandBuffer, MemoryBarrierFlags::Shader_Storage_Barrier);
+				lpv.lpvGridB->memoryBarrier(rendererData.computeCommandBuffer, MemoryBarrierFlags::Shader_Storage_Barrier);
+
 				pipeline->end(rendererData.computeCommandBuffer);
 			}
 		};
@@ -216,9 +224,9 @@ namespace maple
 
 				auto cmdBuffer = rendererData.computeCommandBuffer;
 
-				lpv.lpvGeometryVolumeR->clear();
-				lpv.lpvGeometryVolumeG->clear();
-				lpv.lpvGeometryVolumeB->clear();
+				lpv.lpvGeometryVolumeR->clear(rendererData.computeCommandBuffer);
+				lpv.lpvGeometryVolumeG->clear(rendererData.computeCommandBuffer);
+				lpv.lpvGeometryVolumeB->clear(rendererData.computeCommandBuffer);
 
 				geometry.descriptors[0]->setTexture("uGeometryVolumeR", lpv.lpvGeometryVolumeR);
 				geometry.descriptors[0]->setTexture("uGeometryVolumeG", lpv.lpvGeometryVolumeG);
@@ -271,24 +279,37 @@ namespace maple
 				auto [lpv, data, aabb, rendererData] = entity;
 				if (lpv.lpvGridR == nullptr )
 					return;
-				data.descriptors[0]->setTexture("uGeometryVolumeR", lpv.lpvGeometryVolumeR);
-				data.descriptors[0]->setTexture("uGeometryVolumeG", lpv.lpvGeometryVolumeG);
-				data.descriptors[0]->setTexture("uGeometryVolumeB", lpv.lpvGeometryVolumeB);
 
-				data.descriptors[0]->setTexture("RAccumulatorLPV_", lpv.lpvAccumulatorR);
-				data.descriptors[0]->setTexture("GAccumulatorLPV_", lpv.lpvAccumulatorG);
-				data.descriptors[0]->setTexture("BAccumulatorLPV_", lpv.lpvAccumulatorB);
+				lpv.lpvAccumulatorR->clear(rendererData.computeCommandBuffer);
+				lpv.lpvAccumulatorG->clear(rendererData.computeCommandBuffer);
+				lpv.lpvAccumulatorB->clear(rendererData.computeCommandBuffer);
+
+				for (auto i = 1; i <= lpv.propagateCount; i++)
+				{
+					lpv.lpvBs[i]->clear(rendererData.computeCommandBuffer);
+					lpv.lpvRs[i]->clear(rendererData.computeCommandBuffer);
+					lpv.lpvGs[i]->clear(rendererData.computeCommandBuffer);
+				}
 
 				for (auto i = 1;i<= lpv.propagateCount;i++)
 				{
-					lpv.lpvBs[i]->clear();
-					lpv.lpvRs[i]->clear();
-					lpv.lpvGs[i]->clear();
-				}
+					data.descriptors[i - 1]->setTexture("uGeometryVolumeR", lpv.lpvGeometryVolumeR);
+					data.descriptors[i - 1]->setTexture("uGeometryVolumeG", lpv.lpvGeometryVolumeG);
+					data.descriptors[i - 1]->setTexture("uGeometryVolumeB", lpv.lpvGeometryVolumeB);
+					data.descriptors[i - 1]->setTexture("RAccumulatorLPV_", lpv.lpvAccumulatorR);
+					data.descriptors[i - 1]->setTexture("GAccumulatorLPV_", lpv.lpvAccumulatorG);
+					data.descriptors[i - 1]->setTexture("BAccumulatorLPV_", lpv.lpvAccumulatorB);
 
-				lpv.lpvAccumulatorR->clear();
-				lpv.lpvAccumulatorG->clear();
-				lpv.lpvAccumulatorB->clear();
+
+					data.descriptors[i - 1]->setTexture("LPVGridR", lpv.lpvRs[i - 1]);
+					data.descriptors[i - 1]->setTexture("LPVGridG", lpv.lpvGs[i - 1]);
+					data.descriptors[i - 1]->setTexture("LPVGridB", lpv.lpvBs[i - 1]);
+					data.descriptors[i - 1]->setTexture("LPVGridR_", lpv.lpvRs[i]);
+					data.descriptors[i - 1]->setTexture("LPVGridG_", lpv.lpvGs[i]);
+					data.descriptors[i - 1]->setTexture("LPVGridB_", lpv.lpvBs[i]);
+					data.descriptors[i - 1]->setUniform("UniformObject", "step", &i);
+					data.descriptors[i - 1]->update(rendererData.computeCommandBuffer);
+				}
 
 				PipelineInfo pipelineInfo;
 				pipelineInfo.shader = data.shader;
@@ -300,19 +321,12 @@ namespace maple
 				for (auto i = 1; i <= lpv.propagateCount; i++)
 				{
 					//wait 
-					data.descriptors[0]->setTexture("LPVGridR", lpv.lpvRs[i - 1]);
-					data.descriptors[0]->setTexture("LPVGridG", lpv.lpvGs[i - 1]);
-					data.descriptors[0]->setTexture("LPVGridB", lpv.lpvBs[i - 1]);
-
-					data.descriptors[0]->setTexture("LPVGridR_", lpv.lpvRs[i]);
-					data.descriptors[0]->setTexture("LPVGridG_", lpv.lpvGs[i]);
-					data.descriptors[0]->setTexture("LPVGridB_", lpv.lpvBs[i]);  
-					data.descriptors[0]->setUniform("UniformObject", "step", &i );
-					data.descriptors[0]->update(rendererData.computeCommandBuffer);
-					Renderer::bindDescriptorSets(pipeline.get(), rendererData.computeCommandBuffer, 0, data.descriptors);
+					Renderer::bindDescriptorSets(pipeline.get(), rendererData.computeCommandBuffer, 0, { data.descriptors[i - 1] });
 					Renderer::dispatch(rendererData.computeCommandBuffer, pipelineInfo.groupCountX, pipelineInfo.groupCountY, pipelineInfo.groupCountZ);
-					Renderer::memoryBarrier(rendererData.computeCommandBuffer, MemoryBarrierFlags::Shader_Image_Access_Barrier);
-				
+
+					lpv.lpvAccumulatorR->memoryBarrier(rendererData.computeCommandBuffer, MemoryBarrierFlags::Shader_Image_Access_Barrier);
+					lpv.lpvAccumulatorG->memoryBarrier(rendererData.computeCommandBuffer, MemoryBarrierFlags::Shader_Image_Access_Barrier);
+					lpv.lpvAccumulatorB->memoryBarrier(rendererData.computeCommandBuffer, MemoryBarrierFlags::Shader_Image_Access_Barrier);
 				}
 				pipeline->end(rendererData.computeCommandBuffer);
 			}

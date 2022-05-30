@@ -15,6 +15,8 @@ namespace maple
 	{
 		struct LPVGrid
 		{
+			static constexpr int32_t PROPAGATE_COUNT = 8;
+
 			std::shared_ptr<Texture3D> lpvGridR;
 			std::shared_ptr<Texture3D> lpvGridG;
 			std::shared_ptr<Texture3D> lpvGridB;
@@ -32,7 +34,7 @@ namespace maple
 			std::vector<std::shared_ptr<Texture3D>> lpvBs;
 
 			float gridSize = 32;
-			int32_t propagateCount = 8;
+			int32_t propagateCount = PROPAGATE_COUNT;
 
 			glm::vec3 gridDimension = {};
 
