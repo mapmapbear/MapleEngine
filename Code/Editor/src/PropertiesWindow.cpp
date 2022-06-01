@@ -471,10 +471,17 @@ namespace MM
 		auto& shadowMap = reg.get<component::ShadowMapData>(e);
 		ImGui::Columns(2);
 		ImGui::Separator();
+
 		if (ImGuiHelper::property("Cascade Split Lambda", shadowMap.cascadeSplitLambda, 0, 1, ImGuiHelper::PropertyFlag::DragFloat, "%.4f", 0.001))
 		{
 			shadowMap.dirty = true;
 		}
+
+		if (ImGuiHelper::property("Initial Bias (z)", shadowMap.initialBias, 0, 1, ImGuiHelper::PropertyFlag::DragFloat, "%.4f", 0.001))
+		{
+			shadowMap.dirty = true;
+		}
+
 		if (auto id = ImGuiHelper::combox("ShadowMethod", ShadowingMethod::Names, ShadowingMethod::Length, shadowMap.shadowMethod); id != -1)
 		{
 			shadowMap.shadowMethod = static_cast<ShadowingMethod::Id>(id);

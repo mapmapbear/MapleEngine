@@ -87,7 +87,11 @@ namespace maple
 			descriptorAnimSet[0] = DescriptorSet::create({0, deferredColorAnimShader.get()});
 			descriptorAnimSet[2] = DescriptorSet::create({2, deferredColorAnimShader.get()});
 
-			preintegratedFG = Texture2D::create("preintegrated", "textures/ibl_brdf_lut.png", { TextureFormat::RG16F, TextureFilter::Linear, TextureFilter::Linear, TextureWrap::ClampToEdge });
+			preintegratedFG = Texture2D::create(
+				"preintegrated", 
+				"textures/ibl_brdf_lut.png", 
+				{ TextureFormat::RG16F, TextureFilter::Linear, TextureFilter::Linear, TextureWrap::ClampToEdge }
+			);
 
 			stencilDescriptorSet = DescriptorSet::create({0,stencilShader.get()});
 		}
@@ -203,6 +207,8 @@ namespace maple
 			//auto cubeMapMipLevels = envData->environmentMap ? envData->environmentMap->getMipMapLevels() - 1 : 0;
 			int32_t renderMode = 0;
 			auto cameraPos = glm::vec4{cameraView.cameraTransform->getWorldPosition(), 1.f};
+
+			
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "lights", lights, sizeof(component::LightData) * numLights, false);
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "shadowTransform", shadowTransforms);
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "viewMatrix", &cameraView.view);

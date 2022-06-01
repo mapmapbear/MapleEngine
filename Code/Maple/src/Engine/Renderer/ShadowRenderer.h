@@ -53,7 +53,6 @@ namespace maple
 			Frustum   cascadeFrustums[SHADOWMAP_MAX];
 
 			std::vector<std::shared_ptr<DescriptorSet>> descriptorSet;
-			std::vector<std::shared_ptr<DescriptorSet>> currentDescriptorSets;
 
 			std::vector<std::shared_ptr<DescriptorSet>> animDescriptorSet;
 

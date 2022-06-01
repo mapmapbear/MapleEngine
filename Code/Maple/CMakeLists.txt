@@ -153,7 +153,7 @@ if(MAPLE_OPENGL)
 endif()
 
 if(MAPLE_VULKAN)
-	add_definitions(-DGLM_FORCE_DEPTH_ZERO_TO_ONE)
+	#add_definitions(-DGLM_FORCE_DEPTH_ZERO_TO_ONE)
 	add_definitions(-DMAPLE_VULKAN -DUSE_VMA_ALLOCATOR)
 endif()
 

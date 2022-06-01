@@ -54,11 +54,11 @@ namespace maple
 				cascadeSplits[i] = (d - nearClip) / clipRange;
 			}
 
+			float lastSplitDist = 0.0;
 			for (uint32_t i = 0; i < shadowData.shadowMapNum; i++)
 			{
 				PROFILE_SCOPE("Create Cascade");
 				float splitDist = cascadeSplits[i];
-				float lastSplitDist = cascadeSplits[i];
 
 				auto frum = camera.frustum;
 
@@ -91,7 +91,7 @@ namespace maple
 
 				glm::vec3 lightDir = glm::normalize(glm::vec3(light->lightData.direction));
 				glm::mat4 lightViewMatrix = glm::lookAt(frustumCenter - lightDir * -minExtents.z, frustumCenter, maple::UP);
-				glm::mat4 lightOrthoMatrix = glm::ortho(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, 0.0f, maxExtents.z - minExtents.z);
+				glm::mat4 lightOrthoMatrix = glm::ortho(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, -(maxExtents.z - minExtents.z), maxExtents.z - minExtents.z);
 
 				shadowData.splitDepth[i] = glm::vec4(camera.nearPlane + splitDist * clipRange) * -1.f;
 				shadowData.shadowProjView[i] = lightOrthoMatrix * lightViewMatrix;
@@ -100,6 +100,8 @@ namespace maple
 					shadowData.lightMatrix = lightViewMatrix;
 					shadowData.lightDir = lightDir;
 				}
+
+				lastSplitDist = cascadeSplits[i];
 			}
 		}
 	}        // namespace
@@ -254,6 +256,8 @@ namespace maple
 				pipelineInfo.depthBiasEnabled    = false;
 				pipelineInfo.depthArrayTarget    = shadowData.shadowTexture;
 				pipelineInfo.clearTargets        = true;
+				pipelineInfo.depthTest			 = true;
+				pipelineInfo.clearColor			 = {0,0,0,0};
 
 				auto pipeline = Pipeline::get(pipelineInfo, shadowData.descriptorSet, renderGraph);
 
@@ -265,7 +269,6 @@ namespace maple
 					for (auto &command : shadowData.cascadeCommandQueue[i])
 					{
 						Mesh *mesh                          = command.mesh;
-						shadowData.currentDescriptorSets[0] = shadowData.descriptorSet[0];
 						const auto &trans                   = command.transform;
 						auto &      pushConstants           = shadowData.shader->getPushConstants()[0];
 
@@ -277,7 +280,6 @@ namespace maple
 						Renderer::bindDescriptorSets(pipeline.get(), rendererData.commandBuffer, 0, shadowData.descriptorSet);
 						Renderer::drawMesh(rendererData.commandBuffer, pipeline.get(), mesh);
 					}
-
 					pipeline->end(rendererData.commandBuffer);
 				}
 			}
@@ -343,8 +345,6 @@ namespace maple
 
 				data.descriptorSet[0] = DescriptorSet::create({ 0,data.shader.get() });
 				data.animDescriptorSet[0] = DescriptorSet::create({ 0,data.animShader.get() });
-
-				data.currentDescriptorSets.resize(1);
 
 				data.animationQueue.reserve(50);
 

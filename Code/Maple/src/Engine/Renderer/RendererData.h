@@ -65,5 +65,8 @@ namespace maple
 		0.0, 0.5, 0.0, 0.0,
 		0.0, 0.0, 1.0, 0.0,
 		0.5, 0.5, 0.0, 1.0 };
+
+	//Vulkan's NDC are [-1, 1] on x- and y-axes and [0, 1] on the z-axis
+
 #endif
 }        // namespace maple

@@ -38,7 +38,7 @@ namespace maple
 
 	constexpr uint16_t SHADOWMAP_SiZE_MAX = 4096;
 	constexpr uint8_t  MAX_RENDER_TARGETS = 8;
-	constexpr uint8_t  SHADOWMAP_MAX      = 16;
+	constexpr uint8_t  SHADOWMAP_MAX      = 4;
 	constexpr uint8_t  MAX_MIPS           = 32;
 	constexpr uint8_t  MAX_TEXTURES       = 16;
 
