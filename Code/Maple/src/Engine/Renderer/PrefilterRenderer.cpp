@@ -214,6 +214,13 @@ namespace maple
 
 		auto pipeline = Pipeline::get(pipeInfo,{ irradianceSet }, graph);
 
+
+		LOGI("{:x},{:x},{:x}",
+			irradianceCaptureColor->toIntID(), 
+			envComponent->irradianceMap->toIntID(),
+			skyboxCube->toIntID()
+		);
+
 		for (auto faceId = 0; faceId < 6; faceId++)
 		{
 			auto  fb        = pipeline->bind(cmd, 0, faceId);

@@ -19,7 +19,7 @@ namespace maple
 			env.width = env.equirectangularMap->getWidth();
 			env.height = env.equirectangularMap->getHeight();
 			env.numMips = env.equirectangularMap->getMipMapLevels();
-			env.irradianceMap = TextureCube::create(component::Environment::IrradianceMapSize, TextureFormat::RGBA32, 0);
+			env.irradianceMap = TextureCube::create(component::Environment::IrradianceMapSize, TextureFormat::RGBA32, 1);
 			env.prefilteredEnvironment = TextureCube::create(component::Environment::PrefilterMapSize, TextureFormat::RGBA32, 7);
 		}
 	}

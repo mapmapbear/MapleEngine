@@ -82,7 +82,12 @@ namespace maple
 					blit.srcSubresource.layerCount = 1;
 
 					blit.dstOffsets[0] = { 0, 0, 0 };
-					blit.dstOffsets[1] = { int32_t(texWidth >> i), int32_t(texHeight >> i ), depth > 1 ? int32_t(depth >> i) : 1 };
+
+					blit.dstOffsets[1] = { 
+						std::max(int32_t(texWidth >> i), 1), 
+						std::max(int32_t(texHeight >> i), 1), 
+						depth > 1 ? int32_t(depth >> i) : 1 
+					};
 
 					blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 					blit.dstSubresource.mipLevel = i;
@@ -306,7 +311,7 @@ namespace maple
 		VulkanHelper::copyBufferToImage(stagingBuffer->getVkBuffer(), textureImage, static_cast<uint32_t>(width), static_cast<uint32_t>(height));
 
 		if (loadOptions.generateMipMaps && mipLevels > 1)
-			tools::generateMipmaps(textureImage, VkConverter::textureFormatToVK(parameters.format, parameters.srgb), width, height, 0, mipLevels);
+			tools::generateMipmaps(textureImage, VkConverter::textureFormatToVK(parameters.format, parameters.srgb), width, height, 1, mipLevels);
 
 		transitionImage(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
@@ -657,6 +662,7 @@ namespace maple
 		auto vkCmd = static_cast<const VulkanCommandBuffer*>(commandBuffer);
 		transitionImage(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, vkCmd);
 		tools::generateMipmaps(textureImage, vkFormat, size, size, 1, numMips, 6, vkCmd->getCommandBuffer());
+		transitionImage(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, vkCmd);
 		imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		updateDescriptor();
 		DEBUG_IMAGE_ADDRESS(textureImage);

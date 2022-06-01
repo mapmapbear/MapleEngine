@@ -645,7 +645,7 @@ namespace maple
 		allocInfovma.memoryTypeBits = 0;
 		allocInfovma.pool = nullptr;
 		allocInfovma.pUserData = nullptr;
-		vmaCreateImage(VulkanDevice::get()->getAllocator(), &imageInfo, &allocInfovma, &image, &allocation, nullptr);
+		VK_CHECK_RESULT(vmaCreateImage(VulkanDevice::get()->getAllocator(), &imageInfo, &allocInfovma, &image, &allocation, nullptr));
 	}
 
 #else
