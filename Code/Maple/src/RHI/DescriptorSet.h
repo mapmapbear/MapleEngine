@@ -147,6 +147,7 @@ namespace maple
 		virtual auto setUniform(const std::string &bufferName, const std::string &uniformName, const void *data, uint32_t size, bool dynamic = false) -> void = 0;
 		virtual auto setUniformBufferData(const std::string &bufferName, const void *data) -> void                                                            = 0;
 		virtual auto getDescriptors() const -> const std::vector<Descriptor> & = 0;
+		virtual auto toIntID() const -> const uint64_t = 0;
 
 		static auto canUpdate()->bool;
 		static auto toggleUpdate(bool update)-> void;

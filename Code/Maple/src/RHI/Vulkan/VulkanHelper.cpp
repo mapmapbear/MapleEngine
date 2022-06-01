@@ -668,9 +668,9 @@ namespace maple
 #endif
 
 #ifdef USE_VMA_ALLOCATOR
-	auto VulkanHelper::createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkFormat format, VkImageType imageType, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory, uint32_t arrayLayers, VkImageCreateFlags flags, VmaAllocation& allocation, uint32_t depth, VkImageLayout initLayout ) -> void
+	auto VulkanHelper::createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkFormat format, VkImageType imageType, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory, uint32_t arrayLayers, VkImageCreateFlags flags, VmaAllocation& allocation, uint32_t depth, VkImageLayout initLayout, void* next ) -> void
 #else
-	auto VulkanHelper::createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkFormat format, VkImageType imageType, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory, uint32_t arrayLayers, VkImageCreateFlags flags, uint32_t depth, VkImageLayout initLayout ) -> void
+	auto VulkanHelper::createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkFormat format, VkImageType imageType, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory, uint32_t arrayLayers, VkImageCreateFlags flags, uint32_t depth, VkImageLayout initLayout, void* next ) -> void
 #endif
 	{
 		PROFILE_FUNCTION();
@@ -686,8 +686,8 @@ namespace maple
 		imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 		imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 		imageInfo.arrayLayers = arrayLayers;
-
 		imageInfo.flags = flags;
+		imageInfo.pNext = next;
 
 #ifdef USE_VMA_ALLOCATOR
 		VulkanHelper::createImageVma(imageInfo, image, allocation);
@@ -1010,7 +1010,7 @@ namespace maple
 
 	namespace VkConverter
 	{
-		auto textureFormatToVK(const TextureFormat& format, bool srgb) -> VkFormat
+		auto textureFormatToVK(const TextureFormat& format, bool srgb, bool ignoreAssert) -> VkFormat
 		{
 			if (srgb)
 			{
@@ -1037,8 +1037,8 @@ namespace maple
 				case TextureFormat::RGBA32:
 					return VK_FORMAT_R32G32B32A32_SFLOAT;
 				default:
-					MAPLE_ASSERT(false,"[Texture] Unsupported image bit-depth!");
-					return VK_FORMAT_R8G8B8A8_SRGB;
+					MAPLE_ASSERT(ignoreAssert,"[Texture] Unsupported image bit-depth!");
+					return VK_FORMAT_UNDEFINED;
 				}
 			}
 			else
@@ -1070,8 +1070,8 @@ namespace maple
 				case TextureFormat::R32I:
 					return VK_FORMAT_R32_SINT;
 				default:
-					MAPLE_ASSERT(false, "[Texture] Unsupported image bit-depth!");
-					return VK_FORMAT_R8G8B8A8_UNORM;
+					MAPLE_ASSERT(ignoreAssert, "[Texture] Unsupported image bit-depth!");
+					return VK_FORMAT_UNDEFINED;
 				}
 			}
 		}

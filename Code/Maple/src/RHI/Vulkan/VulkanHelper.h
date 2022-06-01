@@ -61,9 +61,9 @@ namespace maple
 		auto checkValidationLayerSupport(const std::vector<const char *> &layerNames) -> bool;
 
 #ifdef USE_VMA_ALLOCATOR
-		auto createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkFormat format, VkImageType imageType, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage &image, VkDeviceMemory &imageMemory, uint32_t arrayLayers, VkImageCreateFlags flags, VmaAllocation &allocation, uint32_t depth = 1, VkImageLayout initLayout = VK_IMAGE_LAYOUT_UNDEFINED) -> void;
+		auto createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkFormat format, VkImageType imageType, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage &image, VkDeviceMemory &imageMemory, uint32_t arrayLayers, VkImageCreateFlags flags, VmaAllocation &allocation, uint32_t depth = 1, VkImageLayout initLayout = VK_IMAGE_LAYOUT_UNDEFINED, void* next = nullptr) -> void;
 #else
-		auto createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkFormat format, VkImageType imageType, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage &image, VkDeviceMemory &imageMemory, uint32_t arrayLayers, VkImageCreateFlags flags, uint32_t depth = 1, VkImageLayout initLayout = VK_IMAGE_LAYOUT_UNDEFINED) -> void;
+		auto createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkFormat format, VkImageType imageType, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage &image, VkDeviceMemory &imageMemory, uint32_t arrayLayers, VkImageCreateFlags flags, uint32_t depth = 1, VkImageLayout initLayout = VK_IMAGE_LAYOUT_UNDEFINED, void* next = nullptr) -> void;
 #endif        // USE_VMA_ALLOCATOR
 
 		auto createImageView(VkImage image, VkFormat format, uint32_t mipLevels, VkImageViewType viewType, VkImageAspectFlags aspectMask, uint32_t layerCount, uint32_t baseArrayLayer = 0, uint32_t baseMipLevel = 0) -> VkImageView;
@@ -246,7 +246,7 @@ namespace maple
 
 	namespace VkConverter
 	{
-		auto textureFormatToVK(const TextureFormat &format, bool srgb = true) -> VkFormat;
+		auto textureFormatToVK(const TextureFormat &format, bool srgb = false, bool ignoreAssert = false) -> VkFormat;
 		auto textureFilterToVK(TextureFilter filter) -> VkFilter;
 		auto textureWrapToVK(TextureWrap wrap) -> VkSamplerAddressMode;
 		auto drawTypeToTopology(DrawType type) -> VkPrimitiveTopology;

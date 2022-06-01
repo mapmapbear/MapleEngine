@@ -528,6 +528,8 @@ namespace maple
 		auto clear(const CommandBuffer* commandBuffer) -> void override;
 
 		auto transitionImage(VkImageLayout newLayout, const VulkanCommandBuffer* commandBuffer = nullptr) -> void override;
+
+
 		inline auto getImageLayout() const->VkImageLayout override { return imageLayout; };
 		inline auto getImage() const->VkImage override { return textureImage; };
 
@@ -545,7 +547,8 @@ namespace maple
 		TextureParameters parameters;
 		TextureLoadOptions loadOptions;
 		std::string   filePath;
-		VkFormat 			  vkFormat = VK_FORMAT_R8G8B8A8_UNORM;
+		VkFormat 			  vkFormat		= VK_FORMAT_R8G8B8A8_UNORM;
+		VkFormat 			  currentFormat = VK_FORMAT_UNDEFINED;
 		VkImage               textureImage = nullptr;
 		VkImageLayout         imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		VkDeviceMemory        textureImageMemory = nullptr;

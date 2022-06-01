@@ -220,7 +220,7 @@ namespace maple
 		GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, textureWrapToGL(parameters.wrap)));
 		GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, textureWrapToGL(parameters.wrapT)));
 
-		uint32_t format = textureFormatToGL(parameters.format, parameters.srgb);
+		uint32_t format = textureFormatToGL(parameters.format, false);
 
 		auto floatData = parameters.format == TextureFormat::RGB16 || parameters.format == TextureFormat::RGB32 || parameters.format == TextureFormat::RGBA16 || parameters.format == TextureFormat::RGBA32;
 
@@ -292,7 +292,7 @@ namespace maple
 	auto GLTexture2D::update(uint32_t x, uint32_t y, uint32_t w, uint32_t h, const void *buffer) -> void
 	{
 		PROFILE_FUNCTION();
-		GLCall(glTexSubImage2D(GL_TEXTURE_2D, 0, x, y, w, h, internalFormatToFormat(textureFormatToGL(parameters.format, parameters.srgb)), isHDR ? GL_FLOAT : GL_UNSIGNED_BYTE, buffer));
+		GLCall(glTexSubImage2D(GL_TEXTURE_2D, 0, x, y, w, h, internalFormatToFormat(textureFormatToGL(parameters.format, false)), isHDR ? GL_FLOAT : GL_UNSIGNED_BYTE, buffer));
 	}
 
 	auto GLTexture2D::setData(const void *pixels) -> void
@@ -301,7 +301,7 @@ namespace maple
 		auto floatData = parameters.format == TextureFormat::RGB16 || parameters.format == TextureFormat::RGB32 || parameters.format == TextureFormat::RGBA16 || parameters.format == TextureFormat::RGBA32;
 
 		GLCall(glBindTexture(GL_TEXTURE_2D, handle));
-		GLCall(glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, internalFormatToFormat(textureFormatToGL(parameters.format, parameters.srgb)), (isHDR || floatData) ? GL_FLOAT : GL_UNSIGNED_BYTE, pixels));
+		GLCall(glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, internalFormatToFormat(textureFormatToGL(parameters.format, false)), (isHDR || floatData) ? GL_FLOAT : GL_UNSIGNED_BYTE, pixels));
 		GLCall(glGenerateMipmap(GL_TEXTURE_2D));
 	}
 
@@ -460,7 +460,7 @@ namespace maple
 		GLCall(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
 		GLCall(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
 
-		uint32_t internalFormat = textureFormatToGL(parameters.format, parameters.srgb);
+		uint32_t internalFormat = textureFormatToGL(parameters.format, false);
 		uint32_t format         = internalFormatToFormat(internalFormat);
 
 		GLCall(glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, internalFormat, width, height, 0, format, GL_UNSIGNED_BYTE, xp->getData()));
@@ -549,7 +549,7 @@ namespace maple
 		GLCall(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
 		GLCall(glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE));
 
-		uint32_t internalFormat = textureFormatToGL(parameters.format, parameters.srgb);
+		uint32_t internalFormat = textureFormatToGL(parameters.format, false);
 		uint32_t format         = internalFormatToFormat(internalFormat);
 		for (uint32_t m = 0; m < mips; m++)
 		{

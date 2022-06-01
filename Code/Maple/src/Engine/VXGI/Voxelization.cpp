@@ -95,7 +95,7 @@ namespace maple
 						component::Voxelization::voxelDimension,
 						component::Voxelization::voxelDimension,
 						{ TextureFormat::RGBA8, TextureFilter::Linear,TextureWrap::ClampToEdge },
-						{ false,false,false }
+						{ false,false,false,true }
 					);
 					buffer.voxelVolume[i]->setName(VoxelBufferId::Names[i]);
 				}

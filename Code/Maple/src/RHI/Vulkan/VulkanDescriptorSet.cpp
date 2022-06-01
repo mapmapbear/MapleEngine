@@ -20,7 +20,7 @@ namespace maple
 {
 	namespace
 	{
-		inline auto transitionImageLayout(const CommandBuffer* cmd, Texture* texture,bool sampler2d)
+		inline auto transitionImageLayout(const CommandBuffer* cmd, Texture* texture,bool sampler2d, VkFormat vkFormat)
 		{
 			if (!texture)
 				return;
@@ -42,10 +42,7 @@ namespace maple
 			}
 			else if (texture->getType() == TextureType::Color3D)
 			{
-				if (((VulkanTexture3D*)texture)->getImageLayout() != VK_IMAGE_LAYOUT_GENERAL)
-				{
-					((VulkanTexture3D*)texture)->transitionImage(VK_IMAGE_LAYOUT_GENERAL, commandBuffer);
-				}
+				((VulkanTexture3D*)texture)->transitionImage(VK_IMAGE_LAYOUT_GENERAL, commandBuffer);
 			}
 			else if (texture->getType() == TextureType::Cube)
 			{
@@ -165,8 +162,11 @@ namespace maple
 						{
 							if (imageInfo.textures[i])
 							{
-								transitionImageLayout(commandBuffer,imageInfo.textures[i].get(), imageInfo.type == DescriptorType::ImageSampler);
-
+								transitionImageLayout(
+									commandBuffer,imageInfo.textures[i].get(), 
+									imageInfo.type == DescriptorType::ImageSampler,
+									VkConverter::textureFormatToVK(imageInfo.format, false,true)
+								);
 								const auto &des               = *static_cast<VkDescriptorImageInfo *>(imageInfo.textures[i]->getDescriptorInfo());
 								imageInfoPool[i + imageIndex] = des;
 								validCount++;

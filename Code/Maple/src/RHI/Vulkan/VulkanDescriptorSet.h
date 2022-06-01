@@ -44,7 +44,9 @@ namespace maple
 		auto setUniform(const std::string &bufferName, const std::string &uniformName, const void *data, bool dynamic) -> void override;
 		auto setUniform(const std::string &bufferName, const std::string &uniformName, const void *data, uint32_t size, bool dynamic) -> void override;
 		auto setUniformBufferData(const std::string &bufferName, const void *data) -> void override;
-		auto getDescriptors() const -> const std::vector<Descriptor>& override { return descriptors; }
+		
+		inline auto getDescriptors() const -> const std::vector<Descriptor>& override { return descriptors; }
+		inline auto toIntID() const -> const uint64_t override { return (uint64_t)descriptorSet[currentFrame]; };
 
 	  private:
 		uint32_t dynamicOffset      = 0;

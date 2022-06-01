@@ -37,6 +37,8 @@ namespace maple
 
 		auto getDescriptors() const -> const std::vector<Descriptor> & override { return descriptors; }
 
+		auto toIntID() const -> const uint64_t override { return -1; };
+
 	  private:
 		uint32_t                dynamicOffset = 0;
 		GLShader *              shader        = nullptr;

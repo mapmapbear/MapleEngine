@@ -294,12 +294,17 @@ namespace maple
 	{
 		std::vector<std::vector<DescriptorLayoutInfo>> layouts;
 
+		auto it = std::max_element(
+			std::begin(descriptorLayoutInfo),
+			std::end(descriptorLayoutInfo), [](const auto& left, const auto& right) {
+				return left.setID < right.setID;
+			}
+		);
+
+		layouts.resize(it->setID + 1);
+
 		for (auto& descriptorLayout : descriptorLayoutInfo)
 		{
-			if (layouts.size() < descriptorLayout.setID + 1)
-			{
-				layouts.emplace_back();
-			}
 			layouts[descriptorLayout.setID].emplace_back(descriptorLayout);
 		}
 
@@ -434,7 +439,7 @@ namespace maple
 				uint32_t    set = comp.get_decoration(resource.id, spv::DecorationDescriptorSet);
 				uint32_t    binding = comp.get_decoration(resource.id, spv::DecorationBinding);
 
-				LOGV("VK -> Load Image, type {0}, set {1}, binding {2}, name {3}", fmt, set, binding, resource.name);
+				LOGI("Load Image, type {0}, set {1}, binding {2}, name {3}", fmt, set, binding, resource.name);
 				auto& type = comp.get_type(resource.type_id);
 				descriptorLayoutInfo.push_back({ DescriptorType::Image, shaderType, binding, set, type.array.size() ? uint32_t(type.array[0]) : 1 });
 
@@ -509,7 +514,7 @@ namespace maple
 			uint32_t size = 0;
 			for (auto& range : ranges)
 			{
-				LOGI("\tAccessing Member {0} offset {1}, size {2}", range.index, range.offset, range.range);
+				LOGI("Accessing Member {0} offset {1}, size {2}", range.index, range.offset, range.range);
 				size += uint32_t(range.range);
 			}
 
@@ -552,7 +557,7 @@ namespace maple
 			auto& descriptor = descriptorInfo.emplace_back();
 
 			auto& type = comp.get_type(u.type_id);
-			LOGI("Found Sampled Image {0} at set = {1}, binding = {2}", u.name.c_str(), set, binding);
+			LOGI("Found Sampled Texture {0} at set = {1}, binding = {2}", u.name.c_str(), set, binding);
 
 			descriptorLayoutInfo.push_back({ DescriptorType::ImageSampler, shaderType, binding, set, type.array.size() ? uint32_t(type.array[0]) : 1 });
 			descriptor.binding = binding;

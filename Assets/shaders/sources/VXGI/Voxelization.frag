@@ -13,7 +13,7 @@ layout(location = 0) in GeometryOut
 } In;
 
 layout (location = 0) out vec4 fragColor;
-layout (pixel_center_integer) in vec4 gl_FragCoord;
+//layout (pixel_center_integer) in vec4 gl_FragCoord;
 
 layout(set = 2, binding = 0, r32ui) uniform volatile coherent uimage3D uVoxelAlbedo;
 layout(set = 2, binding = 1, r32ui) uniform volatile coherent uimage3D uVoxelNormal;

@@ -134,8 +134,6 @@ namespace maple
 		TextureFilter magFilter;
 		TextureWrap   wrap;
 		TextureWrap   wrapT;
-		bool          srgb      = false;
-		uint16_t      msaaLevel = 1;
 
 		constexpr TextureParameters() :
 		    format(TextureFormat::RGBA8), minFilter(TextureFilter::Linear), magFilter(TextureFilter::Linear), wrap(TextureWrap::Repeat), wrapT(TextureWrap::Repeat)
@@ -193,14 +191,15 @@ namespace maple
 		bool flipX;
 		bool flipY;
 		bool generateMipMaps;
+		bool mutableFormat;// used in vulkan.
 
 		constexpr TextureLoadOptions() :
 		    TextureLoadOptions(false, true, false)
 		{
 		}
 
-		constexpr TextureLoadOptions(bool flipX, bool flipY, bool genMips = false) :
-		    flipX(flipX), flipY(flipY), generateMipMaps(genMips)
+		constexpr TextureLoadOptions(bool flipX, bool flipY, bool genMips = false, bool mutableFormat = false) :
+		    flipX(flipX), flipY(flipY), generateMipMaps(genMips), mutableFormat(mutableFormat)
 		{
 		}
 	};
@@ -350,7 +349,7 @@ namespace std
 		size_t operator()(const maple::TextureParameters &param) const
 		{
 			size_t seed = 0;
-			maple::HashCode::hashCode(seed, param.format, param.magFilter, param.minFilter, param.srgb, param.wrap);
+			maple::HashCode::hashCode(seed, param.format, param.magFilter, param.minFilter, param.wrap);
 			return seed;
 		}
 	};

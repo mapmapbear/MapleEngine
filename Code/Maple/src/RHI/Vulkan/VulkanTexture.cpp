@@ -190,9 +190,9 @@ namespace maple
 		width(width),
 		height(height)
 	{
-		vkFormat = VkConverter::textureFormatToVK(parameters.format, parameters.srgb);
+		vkFormat = VkConverter::textureFormatToVK(parameters.format, false);
 
-		buildTexture(parameters.format, width, height, parameters.srgb, false, false, loadOptions.generateMipMaps, false, 0);
+		buildTexture(parameters.format, width, height, false, false, false, loadOptions.generateMipMaps, false, 0);
 		update(0, 0, width, height, data);
 
 	}
@@ -258,7 +258,7 @@ namespace maple
 
 		if (loadOptions.generateMipMaps)
 		{
-			tools::generateMipmaps(textureImage, VkConverter::textureFormatToVK(parameters.format, parameters.srgb), width, height, 1, mipLevels);
+			tools::generateMipmaps(textureImage, VkConverter::textureFormatToVK(parameters.format, false), width, height, 1, mipLevels);
 		}
 
 		transitionImage(oldLayout);
@@ -287,7 +287,7 @@ namespace maple
 			imageSize = image->getImageSize();
 			pixel = reinterpret_cast<const uint8_t*>(image->getData());
 			parameters.format = image->getPixelFormat();
-			vkFormat = VkConverter::textureFormatToVK(parameters.format, parameters.srgb);
+			vkFormat = VkConverter::textureFormatToVK(parameters.format, false);
 		}
 
 		mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(width, height)))) + 1;
@@ -298,11 +298,11 @@ namespace maple
 		}
 
 #ifdef USE_VMA_ALLOCATOR
-		VulkanHelper::createImage(width, height, mipLevels, VkConverter::textureFormatToVK(parameters.format, parameters.srgb), VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory, 1, 0, allocation);
+		VulkanHelper::createImage(width, height, mipLevels, VkConverter::textureFormatToVK(parameters.format, false), VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory, 1, 0, allocation);
 #else
-		VulkanHelper::createImage(width, height, mipLevels, VkConverter::textureFormatToVK(parameters.format, parameters.srgb), VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory, 1, 0);
+		VulkanHelper::createImage(width, height, mipLevels, VkConverter::textureFormatToVK(parameters.format, false), VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory, 1, 0);
 #endif
-		VulkanHelper::transitionImageLayout(textureImage, VkConverter::textureFormatToVK(parameters.format, parameters.srgb),
+		VulkanHelper::transitionImageLayout(textureImage, VkConverter::textureFormatToVK(parameters.format, false),
 			VK_IMAGE_LAYOUT_UNDEFINED,
 			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 			mipLevels, 1, nullptr, false);
@@ -311,7 +311,7 @@ namespace maple
 		VulkanHelper::copyBufferToImage(stagingBuffer->getVkBuffer(), textureImage, static_cast<uint32_t>(width), static_cast<uint32_t>(height));
 
 		if (loadOptions.generateMipMaps && mipLevels > 1)
-			tools::generateMipmaps(textureImage, VkConverter::textureFormatToVK(parameters.format, parameters.srgb), width, height, 1, mipLevels);
+			tools::generateMipmaps(textureImage, VkConverter::textureFormatToVK(parameters.format, false), width, height, 1, mipLevels);
 
 		transitionImage(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
@@ -348,7 +348,6 @@ namespace maple
 		vkFormat = VkConverter::textureFormatToVK(internalformat, srgb);
 
 		parameters.format = internalformat;
-		parameters.srgb = srgb;
 
 #ifdef USE_VMA_ALLOCATOR
 		VulkanHelper::createImage(width, height, mipLevels, vkFormat, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory, 1, 0, allocation);
@@ -383,7 +382,7 @@ namespace maple
 
 		if (newLayout != imageLayout)
 		{
-			VulkanHelper::transitionImageLayout(textureImage, VkConverter::textureFormatToVK(parameters.format, parameters.srgb), imageLayout, newLayout, mipLevels, 1, commandBuffer , false);
+			VulkanHelper::transitionImageLayout(textureImage, VkConverter::textureFormatToVK(parameters.format, false), imageLayout, newLayout, mipLevels, 1, commandBuffer , false);
 		}
 		imageLayout = newLayout;
 		updateDescriptor();
@@ -394,7 +393,7 @@ namespace maple
 		PROFILE_FUNCTION();
 		if (auto iter = mipImageViews.find(mip); iter == mipImageViews.end())
 		{
-			mipImageViews[mip] = VulkanHelper::createImageView(textureImage, VkConverter::textureFormatToVK(parameters.format, parameters.srgb),
+			mipImageViews[mip] = VulkanHelper::createImageView(textureImage, VkConverter::textureFormatToVK(parameters.format, false),
 				mipLevels, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, 1, 0, mip);
 		}
 		return mipImageViews.at(mip);
@@ -440,7 +439,7 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 		textureImageView = VulkanHelper::createImageView(textureImage,
-			VkConverter::textureFormatToVK(parameters.format, parameters.srgb),
+			VkConverter::textureFormatToVK(parameters.format, false),
 			mipLevels, VK_IMAGE_VIEW_TYPE_2D, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 
 		auto phyDevice = VulkanDevice::get()->getPhysicalDevice();
@@ -932,7 +931,7 @@ namespace maple
 	{
 		if (loadOptions.generateMipMaps && mipLevels > 1)
 		{
-			tools::generateMipmaps(textureImage, VkConverter::textureFormatToVK(parameters.format, parameters.srgb), width, height, depth, mipLevels);
+			tools::generateMipmaps(textureImage, VkConverter::textureFormatToVK(parameters.format, false), width, height, depth, mipLevels);
 		}
 	}
 
@@ -954,20 +953,44 @@ namespace maple
 
 		deleteSampler();
 
-		constexpr uint32_t FLAGS = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-
 		vkFormat = VkConverter::textureFormatToVK(format, false);
 
 		parameters.format = format;
-		parameters.srgb = false;
+		
+		VkImageCreateFlags createFlags = 0;
+		/*VkImageFormatListCreateInfo imageFormatListInfo = {};
+		std::array<VkFormat, 3> formats = {
+			VK_FORMAT_R32_UINT,
+			VK_FORMAT_R32_SINT,
+			VK_FORMAT_R8G8B8A8_UNORM,
+		};*/
+
+		if (loadOptions.mutableFormat)
+		{
+			createFlags = VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT;
+			/*imageFormatListInfo.sType = VK_STRUCTURE_TYPE_IMAGE_FORMAT_LIST_CREATE_INFO;
+			imageFormatListInfo.pViewFormats = formats.data();
+			imageFormatListInfo.viewFormatCount = formats.size();*/
+
+			VkFormatProperties formatProperties;
+			vkGetPhysicalDeviceFormatProperties(*VulkanDevice::get()->getPhysicalDevice(), vkFormat, &formatProperties);
+/**
+* Vulkan specification guarantees that atomic operations 
+* must be supported for storage images (VK_FORMAT_FEATURE_STORAGE_IMAGE_ATOMIC_BIT) with only R32_UINT and R32_SINT formats.
+* which means R32 can be converted to R8, but R8 can not be converted R32.
+*/
+			if (!(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_STORAGE_IMAGE_ATOMIC_BIT)) {
+				MAPLE_ASSERT(false, "Provided format is not supported for atomic operations on storage images");
+			}
+		}
 
 		VulkanHelper::createImage(width, height, mipLevels, vkFormat,
 			VK_IMAGE_TYPE_3D, VK_IMAGE_TILING_OPTIMAL,
 			VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 #ifdef USE_VMA_ALLOCATOR
-			textureImage, textureImageMemory, 1, 0, allocation, depth);
+			textureImage, textureImageMemory, 1, createFlags, allocation, depth, VK_IMAGE_LAYOUT_UNDEFINED, nullptr);
 #else
-			textureImage, textureImageMemory, 1, 0, depth);
+			textureImage, textureImageMemory, 1, createFlags, depth, VK_IMAGE_LAYOUT_UNDEFINED, nullptr);
 #endif
 
 		textureImageView = VulkanHelper::createImageView(textureImage, vkFormat, mipLevels, VK_IMAGE_VIEW_TYPE_3D, VK_IMAGE_ASPECT_COLOR_BIT, 1);
@@ -986,7 +1009,7 @@ namespace maple
 		transitionImage(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 		if (loadOptions.generateMipMaps && mipLevels > 1)
-			tools::generateMipmaps(textureImage, VkConverter::textureFormatToVK(parameters.format, parameters.srgb), width, height, depth, mipLevels);
+			tools::generateMipmaps(textureImage, vkFormat, width, height, depth, mipLevels);
 
 		transitionImage(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 		updateDescriptor();
@@ -1017,17 +1040,17 @@ namespace maple
 
 		if (newLayout != imageLayout)
 		{
-			VulkanHelper::transitionImageLayout(textureImage,
-				VkConverter::textureFormatToVK(parameters.format, parameters.srgb),
-				imageLayout, newLayout, mipLevels, 1,
-				commandBuffer, false);
+			VulkanHelper::transitionImageLayout(textureImage, vkFormat, imageLayout, newLayout, mipLevels, 1,commandBuffer, false);
 		}
 		imageLayout = newLayout;
 		updateDescriptor();
 	}
 
+
 	auto VulkanTexture3D::deleteSampler() -> void
 	{
+		PROFILE_FUNCTION();
+
 		auto& deletionQueue = VulkanContext::getDeletionQueue();
 
 		if (textureSampler)
