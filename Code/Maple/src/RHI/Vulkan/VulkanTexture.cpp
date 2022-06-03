@@ -980,7 +980,7 @@ namespace maple
 * which means R32 can be converted to R8, but R8 can not be converted R32.
 */
 			if (!(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_STORAGE_IMAGE_ATOMIC_BIT)) {
-				MAPLE_ASSERT(false, "Provided format is not supported for atomic operations on storage images");
+				MAPLE_ASSERT(false, "Provided format is not supported for atomic operations on storage images. the supported should be R32_UINT or R32_SINT");
 			}
 		}
 

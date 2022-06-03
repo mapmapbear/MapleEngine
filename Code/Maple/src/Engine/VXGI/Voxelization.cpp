@@ -94,9 +94,10 @@ namespace maple
 						component::Voxelization::voxelDimension,
 						component::Voxelization::voxelDimension,
 						component::Voxelization::voxelDimension,
-						{ TextureFormat::RGBA8, TextureFilter::Linear,TextureWrap::ClampToEdge },
+						{ TextureFormat::R32UI, TextureFilter::Linear,TextureWrap::ClampToEdge },
 						{ false,false,false,true }
 					);
+
 					buffer.voxelVolume[i]->setName(VoxelBufferId::Names[i]);
 				}
 
@@ -396,11 +397,10 @@ namespace maple
 				);
 				Renderer::memoryBarrier(renderData.computeCommandBuffer,
 					MemoryBarrierFlags::Shader_Image_Access_Barrier |
+					MemoryBarrierFlags::Shader_Storage_Barrier |
 					MemoryBarrierFlags::Texture_Fetch_Barrier);
 
 				pipeline->end(renderData.computeCommandBuffer);
-
-				voxel.dirty = false;
 
 				generateMipmapMipmap(buffer.voxelVolume[VoxelBufferId::Radiance], renderData, buffer, basePipeline);
 				generateMipmapVolume(buffer, volumePipline, box, renderData);
@@ -445,6 +445,8 @@ namespace maple
 
 				if (hasUpdateRadiance)
 					world.removeComponent<component::UpdateRadiance>(entity);
+
+				voxel.dirty = false;
 			}
 		}
 
@@ -522,7 +524,9 @@ namespace maple
 
 				Renderer::memoryBarrier(renderData.commandBuffer,
 					MemoryBarrierFlags::Shader_Image_Access_Barrier |
-					MemoryBarrierFlags::Texture_Fetch_Barrier);
+					MemoryBarrierFlags::Texture_Fetch_Barrier |
+					MemoryBarrierFlags::Shader_Storage_Barrier
+				);
 
 				pipeline->end(renderData.commandBuffer);
 
