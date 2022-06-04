@@ -166,7 +166,7 @@ namespace maple
 		GLCall(glDispatchCompute(x,y,z));
 	}
 
-	auto GLRenderDevice::memoryBarrier(const CommandBuffer* commandBuffer, int32_t flag) -> void
+	auto GLRenderDevice::memoryBarrier(const CommandBuffer* commandBuffer, uint32_t flag) -> void
 	{
 		PROFILE_FUNCTION();
 		

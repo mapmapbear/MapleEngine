@@ -27,7 +27,7 @@ namespace maple
 		Application::getRenderDevice()->dispatch(commandBuffer, x, y, z);
 	}
 
-	auto Renderer::memoryBarrier(const CommandBuffer* commandBuffer, int32_t flags) -> void
+	auto Renderer::memoryBarrier(const CommandBuffer* commandBuffer, uint32_t flags) -> void
 	{
 		Application::getRenderDevice()->memoryBarrier(commandBuffer,flags);
 	}

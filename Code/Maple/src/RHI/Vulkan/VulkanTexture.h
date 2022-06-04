@@ -111,7 +111,7 @@ namespace maple
 
 		auto getMipImageView(uint32_t mip)->VkImageView;
 
-		auto memoryBarrier(const CommandBuffer* cmd, MemoryBarrierFlags flags) -> void override;
+		auto memoryBarrier(const CommandBuffer* cmd, uint32_t flags) -> void override;
 
 			
 		auto toIntID() const->const uint64_t override { return (uint64_t) textureImage; };

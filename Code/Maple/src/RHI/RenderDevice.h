@@ -34,7 +34,7 @@ namespace maple
 		virtual auto presentInternal(const CommandBuffer *commandBuffer) -> void{};
 
 		virtual auto dispatch(const CommandBuffer *commandBuffer,uint32_t x,uint32_t y,uint32_t z) -> void{};
-		virtual auto memoryBarrier(const CommandBuffer* commandBuffer, int32_t flag) -> void {};
+		virtual auto memoryBarrier(const CommandBuffer* commandBuffer, uint32_t flag) -> void {};
 
 		virtual auto drawArraysInternal(const CommandBuffer* commandBuffer, DrawType type, uint32_t count, uint32_t start = 0) const -> void {};
 		virtual auto drawIndexedInternal(const CommandBuffer *commandBuffer, DrawType type, uint32_t count, uint32_t start = 0) const -> void{};

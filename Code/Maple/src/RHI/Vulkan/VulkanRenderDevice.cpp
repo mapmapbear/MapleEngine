@@ -165,7 +165,7 @@ namespace maple
 		vkCmdDispatch(((const VulkanCommandBuffer*)commandBuffer)->getCommandBuffer(), x,y,z);
 	}
 
-	auto VulkanRenderDevice::memoryBarrier(const CommandBuffer* commandBuffer, int32_t flag) -> void
+	auto VulkanRenderDevice::memoryBarrier(const CommandBuffer* commandBuffer, uint32_t flag) -> void
 	{
 		PROFILE_FUNCTION();
 

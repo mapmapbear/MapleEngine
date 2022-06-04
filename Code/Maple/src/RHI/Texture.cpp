@@ -17,7 +17,7 @@
 
 namespace maple
 {
-	auto Texture::memoryBarrier(const CommandBuffer* cmd, MemoryBarrierFlags flags) -> void
+	auto Texture::memoryBarrier(const CommandBuffer* cmd, uint32_t flags) -> void
 	{
 #ifdef MAPLE_OPENGL
 		Renderer::memoryBarrier(cmd,flags);

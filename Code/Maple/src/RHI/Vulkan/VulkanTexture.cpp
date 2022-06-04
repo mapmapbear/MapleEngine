@@ -399,7 +399,7 @@ namespace maple
 		return mipImageViews.at(mip);
 	}
 
-	auto VulkanTexture2D::memoryBarrier(const CommandBuffer* cmd, MemoryBarrierFlags flags) -> void
+	auto VulkanTexture2D::memoryBarrier(const CommandBuffer* cmd, uint32_t flags) -> void
 	{
 		auto layout = VK_IMAGE_LAYOUT_UNDEFINED;
 

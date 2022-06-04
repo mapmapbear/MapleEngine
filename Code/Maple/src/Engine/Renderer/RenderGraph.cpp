@@ -101,12 +101,9 @@ namespace maple
 		executePoint->registerQueue(renderQ);
 		executePoint->registerWithinQueue<on_begin_renderer::system>(renderQ);
 
-
 		shadow_map::registerShadowMap(beginQ, renderQ, executePoint);
 		reflective_shadow_map::registerShadowMap(beginQ, renderQ, executePoint);
-		vxgi::registerVoxelizer(beginQ, renderQ, executePoint);
 		deferred_offscreen::registerDeferredOffScreenRenderer(beginQ, renderQ, executePoint);
-		vxgi::registerVXGIIndirectLighting(beginQ, executePoint);
 		post_process::registerSSAOPass(beginQ, renderQ, executePoint);
 		deferred_lighting::registerDeferredLighting(beginQ, renderQ, executePoint);
 		atmosphere_pass::registerAtmosphere(beginQ,renderQ, executePoint);
@@ -116,10 +113,12 @@ namespace maple
 		post_process::registerSSR(renderQ, executePoint);
 		grid_renderer::registerGridRenderer(beginQ, renderQ, executePoint);
 		geometry_renderer::registerGeometryRenderer(beginQ, renderQ, executePoint);
-		vxgi_debug::registerVXGIVisualization(beginQ, renderQ, executePoint);
 		post_process::registerBloom(renderQ, executePoint);
 		final_screen_pass::registerFinalPass(renderQ, executePoint);
 
+		vxgi::registerVoxelizer(beginQ, renderQ, executePoint);
+		vxgi::registerVXGIIndirectLighting(beginQ, executePoint);
+		vxgi_debug::registerVXGIVisualization(beginQ, renderQ, executePoint);
 
 		light_propagation_volume::registerLPV(beginQ, renderQ, executePoint);
 		lpv_indirect_lighting::registerLPVIndirectLight(renderQ, executePoint);

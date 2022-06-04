@@ -313,9 +313,12 @@ namespace maple
 						pipelineInfo.groupCountZ
 					);
 
-					Renderer::memoryBarrier(renderData.computeCommandBuffer,
-						MemoryBarrierFlags::Shader_Image_Access_Barrier |
-						MemoryBarrierFlags::Texture_Fetch_Barrier);
+					for (auto& map : voxelBuffer.voxelTexMipmap)
+					{
+						map->memoryBarrier(renderData.computeCommandBuffer,
+							MemoryBarrierFlags::Shader_Image_Access_Barrier
+						);
+					}
 
 					pipeline->end(renderData.computeCommandBuffer);
 				}
@@ -350,9 +353,17 @@ namespace maple
 					pipelineInfo.groupCountY,
 					pipelineInfo.groupCountZ
 				);
-				Renderer::memoryBarrier(renderData.computeCommandBuffer,
-					MemoryBarrierFlags::Shader_Image_Access_Barrier |
-					MemoryBarrierFlags::Texture_Fetch_Barrier);
+	
+				voxelRadiance->memoryBarrier(renderData.computeCommandBuffer,
+					MemoryBarrierFlags::Shader_Image_Access_Barrier
+				);
+
+				for (auto & map : buffer.voxelTexMipmap)
+				{
+					map->memoryBarrier(renderData.computeCommandBuffer,
+						MemoryBarrierFlags::Shader_Image_Access_Barrier
+					);
+				}
 
 				pipeline->end(renderData.computeCommandBuffer);
 			}
@@ -395,10 +406,11 @@ namespace maple
 					pipelineInfo.groupCountY,
 					pipelineInfo.groupCountZ
 				);
-				Renderer::memoryBarrier(renderData.computeCommandBuffer,
-					MemoryBarrierFlags::Shader_Image_Access_Barrier |
-					MemoryBarrierFlags::Shader_Storage_Barrier |
-					MemoryBarrierFlags::Texture_Fetch_Barrier);
+
+				buffer.voxelVolume[VoxelBufferId::Radiance]->memoryBarrier(renderData.computeCommandBuffer, MemoryBarrierFlags::Shader_Storage_Barrier);
+				buffer.voxelVolume[VoxelBufferId::Emissive]->memoryBarrier(renderData.computeCommandBuffer, MemoryBarrierFlags::Shader_Image_Access_Barrier);
+				buffer.voxelVolume[VoxelBufferId::Albedo]->memoryBarrier(renderData.computeCommandBuffer, MemoryBarrierFlags::Texture_Fetch_Barrier);
+				buffer.voxelVolume[VoxelBufferId::Normal]->memoryBarrier(renderData.computeCommandBuffer, MemoryBarrierFlags::Shader_Storage_Barrier);
 
 				pipeline->end(renderData.computeCommandBuffer);
 
@@ -431,9 +443,16 @@ namespace maple
 						pipelineInfo.groupCountY,
 						pipelineInfo.groupCountZ
 					);
-					Renderer::memoryBarrier(renderData.computeCommandBuffer,
-						MemoryBarrierFlags::Shader_Image_Access_Barrier |
-						MemoryBarrierFlags::Texture_Fetch_Barrier);
+				
+
+					buffer.voxelVolume[VoxelBufferId::Radiance]->memoryBarrier(renderData.computeCommandBuffer, 
+						MemoryBarrierFlags::Shader_Storage_Barrier | 
+						MemoryBarrierFlags::Shader_Image_Access_Barrier
+					);
+					buffer.voxelVolume[VoxelBufferId::Albedo]->memoryBarrier(renderData.computeCommandBuffer, MemoryBarrierFlags::Texture_Fetch_Barrier);
+					buffer.voxelVolume[VoxelBufferId::Normal]->memoryBarrier(renderData.computeCommandBuffer, MemoryBarrierFlags::Texture_Fetch_Barrier);
+
+				
 
 					pipeline->end(renderData.computeCommandBuffer);
 
@@ -522,11 +541,10 @@ namespace maple
 					Renderer::drawMesh(renderData.commandBuffer, pipeline.get(), cmd.mesh);
 				}
 
-				Renderer::memoryBarrier(renderData.commandBuffer,
-					MemoryBarrierFlags::Shader_Image_Access_Barrier |
-					MemoryBarrierFlags::Texture_Fetch_Barrier |
-					MemoryBarrierFlags::Shader_Storage_Barrier
-				);
+				buffer.voxelVolume[VoxelBufferId::Albedo]->memoryBarrier(renderData.computeCommandBuffer, MemoryBarrierFlags::Shader_Storage_Barrier);
+				buffer.voxelVolume[VoxelBufferId::Normal]->memoryBarrier(renderData.computeCommandBuffer, MemoryBarrierFlags::Shader_Storage_Barrier);
+				buffer.voxelVolume[VoxelBufferId::Emissive]->memoryBarrier(renderData.computeCommandBuffer, MemoryBarrierFlags::Shader_Storage_Barrier);
+				buffer.staticFlag->memoryBarrier(renderData.computeCommandBuffer, MemoryBarrierFlags::Shader_Storage_Barrier);
 
 				pipeline->end(renderData.commandBuffer);
 
@@ -671,13 +689,9 @@ namespace maple
 					pipelineInfo.groupCountY,
 					1
 				);
-				Renderer::memoryBarrier(rendererData.computeCommandBuffer,
-					MemoryBarrierFlags::Shader_Image_Access_Barrier |
-					MemoryBarrierFlags::Texture_Fetch_Barrier);
 				pipeline->end(rendererData.computeCommandBuffer);
 			}
 		}
-
 
 		auto registerGlobalComponent(std::shared_ptr<ExecutePoint> point) -> void
 		{
