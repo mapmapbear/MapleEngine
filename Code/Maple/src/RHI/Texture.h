@@ -18,7 +18,7 @@ namespace maple
 		virtual auto bind(uint32_t slot = 0) const -> void = 0;
 		virtual auto unbind(uint32_t slot = 0) const -> void = 0;
 		virtual auto getFilePath() const -> const std::string & = 0;
-		virtual auto getHandle() const -> void* = 0;
+		virtual auto getHandle() -> void* = 0;
 		virtual auto getWidth() const->uint32_t = 0;
 		virtual auto getHeight() const->uint32_t = 0;
 		virtual auto getType() const->TextureType = 0;
@@ -36,7 +36,7 @@ namespace maple
 			return 0;
 		}
 
-		virtual auto getDescriptorInfo() const -> void*
+		virtual auto getDescriptorInfo(uint32_t mipLvl = 0) -> void*
 		{
 			return getHandle();
 		}

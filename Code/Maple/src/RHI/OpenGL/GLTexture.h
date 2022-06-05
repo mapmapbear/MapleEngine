@@ -20,7 +20,7 @@ namespace maple
 
 		auto setData(const void *pixels) -> void;
 
-		auto getHandle() const -> void * override
+		auto getHandle() -> void * override
 		{
 			return (void *) (size_t) handle;
 		}
@@ -93,7 +93,7 @@ namespace maple
 			return filePath;
 		};
 
-		auto getHandle() const -> void * override
+		auto getHandle() -> void * override
 		{
 			return (void *) (size_t) handle;
 		}
@@ -139,7 +139,7 @@ namespace maple
 		GLTextureCube(const std::vector<std::string> &files, uint32_t mips, const TextureParameters &params, const TextureLoadOptions &loadOptions, const InputFormat &format);
 		~GLTextureCube();
 
-		inline auto getHandle() const -> void * override
+		inline auto getHandle() -> void * override
 		{
 			return (void *) (size_t) handle;
 		}
@@ -217,7 +217,7 @@ namespace maple
 		auto unbind(uint32_t slot = 0) const -> void override;
 		auto resize(uint32_t width, uint32_t height, const CommandBuffer *commandBuffer) -> void override;
 
-		inline auto getHandle() const -> void * override
+		inline auto getHandle() -> void * override
 		{
 			return (void *) (size_t) handle;
 		}
@@ -270,7 +270,7 @@ namespace maple
 		auto resize(uint32_t width, uint32_t height, uint32_t count, const CommandBuffer* commandBuffer = nullptr) -> void override;
 		auto init(const CommandBuffer* commandBuffer = nullptr) -> void override;
 
-		inline auto getHandle() const -> void * override
+		inline auto getHandle() -> void * override
 		{
 			return (void *) (size_t) handle;
 		}

@@ -50,7 +50,7 @@ namespace maple
 		MAPLE_EXPORT auto property(const std::string &name, glm::vec4 &value, float min = -1.0f, float max = 1.0f, bool exposeW = false, PropertyFlag flags = PropertyFlag::None) -> bool;
 
 		MAPLE_EXPORT auto inputFloat(const std::string &name, float &value, float min = -1.0f, float max = 1.0f) -> bool;
-		MAPLE_EXPORT auto image(const Texture *texture, const glm::vec2 &size) -> void;
+		MAPLE_EXPORT auto image(Texture *texture, const glm::vec2 &size) -> void;
 		MAPLE_EXPORT auto imageButton(const Quad2D * texture,const glm::vec2 & scale) -> bool;
 
 		MAPLE_EXPORT auto acceptFile(const std::function<void(const std::string& )>& callback) -> void;

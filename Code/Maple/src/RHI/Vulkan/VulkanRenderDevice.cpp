@@ -97,7 +97,13 @@ namespace maple
 		vkCmdDraw(static_cast<const VulkanCommandBuffer *>(commandBuffer)->getCommandBuffer(), count, 1, 0, 0);
 	}
 
-	auto VulkanRenderDevice::drawIndexedInternal(const CommandBuffer *commandBuffer, const DrawType type, uint32_t count, uint32_t start) const -> void
+	auto VulkanRenderDevice::drawArraysInternal(const CommandBuffer* commandBuffer, DrawType type, uint32_t count, uint32_t start /*= 0*/) const -> void
+	{
+		PROFILE_FUNCTION();
+		vkCmdDraw(static_cast<const VulkanCommandBuffer*>(commandBuffer)->getCommandBuffer(), count, 1, 0, 0);
+	}
+
+	auto VulkanRenderDevice::drawIndexedInternal(const CommandBuffer* commandBuffer, const DrawType type, uint32_t count, uint32_t start) const -> void
 	{
 		PROFILE_FUNCTION();
 		vkCmdDrawIndexed(static_cast<const VulkanCommandBuffer *>(commandBuffer)->getCommandBuffer(), count, 1, 0, 0, 0);

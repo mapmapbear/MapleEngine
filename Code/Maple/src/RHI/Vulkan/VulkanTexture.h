@@ -5,6 +5,7 @@
 #pragma once
 #include "RHI/Texture.h"
 #include "VulkanHelper.h"
+#include "../lib/uthash.h"
 
 namespace maple
 {
@@ -31,7 +32,7 @@ namespace maple
 		inline auto unbind(uint32_t slot = 0) const -> void override {};
 		inline auto setData(const void* pixels) -> void override {};
 
-		inline auto getHandle() const -> void* override
+		inline auto getHandle() -> void* override
 		{
 			return (void*)this;
 		};
@@ -70,7 +71,7 @@ namespace maple
 			return &descriptor;
 		}
 
-		inline auto getDescriptorInfo() const -> void* override
+		inline auto getDescriptorInfo(uint32_t mipLvl = 0)  -> void* override
 		{
 			return (void*)getDescriptor();
 		}
@@ -113,8 +114,8 @@ namespace maple
 
 		auto memoryBarrier(const CommandBuffer* cmd, uint32_t flags) -> void override;
 
-			
-		auto toIntID() const->const uint64_t override { return (uint64_t) textureImage; };
+
+		auto toIntID() const->const uint64_t override { return (uint64_t)textureImage; };
 
 
 	private:
@@ -155,7 +156,7 @@ namespace maple
 	class VulkanTextureDepth : public TextureDepth, public VkTexture
 	{
 	public:
-		VulkanTextureDepth(uint32_t width, uint32_t height, bool stencil, const CommandBuffer* commandBuffer );
+		VulkanTextureDepth(uint32_t width, uint32_t height, bool stencil, const CommandBuffer* commandBuffer);
 		~VulkanTextureDepth();
 
 		auto bind(uint32_t slot = 0) const -> void override {};
@@ -164,11 +165,11 @@ namespace maple
 
 		auto transitionImage(VkImageLayout newLayout, const VulkanCommandBuffer* commandBuffer = nullptr) -> void override;
 
-		inline auto getDescriptorInfo() const -> void* override
+		inline auto getDescriptorInfo(uint32_t mipLvl = 0)  -> void* override
 		{
 			return (void*)&descriptor;
 		}
-		virtual auto getHandle() const -> void*
+		virtual auto getHandle() -> void*
 		{
 			return (void*)this;
 		}
@@ -263,7 +264,7 @@ namespace maple
 		auto bind(uint32_t slot = 0) const -> void override {};
 		auto unbind(uint32_t slot = 0) const -> void override {};
 
-		inline auto getHandle() const -> void* override
+		inline auto getHandle() -> void* override
 		{
 			return (void*)this;
 		}
@@ -331,7 +332,7 @@ namespace maple
 			return size;
 		}
 
-		inline auto getDescriptorInfo() const -> void* override
+		inline auto getDescriptorInfo(uint32_t mipLvl = 0)  -> void* override
 		{
 			return (void*)&descriptor;
 		}
@@ -385,7 +386,7 @@ namespace maple
 		auto unbind(uint32_t slot = 0) const -> void override {};
 		auto resize(uint32_t width, uint32_t height, uint32_t count, const CommandBuffer* commandBuffer) -> void override;
 
-		auto getHandle() const -> void* override
+		auto getHandle() -> void* override
 		{
 			return (void*)this;
 		}
@@ -403,7 +404,7 @@ namespace maple
 			return &descriptor;
 		}
 
-		inline auto getDescriptorInfo() const -> void* override
+		inline auto getDescriptorInfo(uint32_t mipLvl = 0)  -> void* override
 		{
 			return (void*)&descriptor;
 		}
@@ -487,7 +488,7 @@ namespace maple
 		auto init(uint32_t width, uint32_t height, uint32_t depth) -> void;
 		auto bind(uint32_t slot = 0) const -> void override;
 		auto unbind(uint32_t slot = 0) const -> void override;
-		auto generateMipmaps(const CommandBuffer * cmd) -> void override;
+		auto generateMipmaps(const CommandBuffer* cmd) -> void override;
 		auto bindImageTexture(uint32_t unit, bool read, bool write, uint32_t level, uint32_t layer) -> void override;
 		auto buildTexture3D(TextureFormat format, uint32_t width, uint32_t height, uint32_t depth) -> void override;
 
@@ -496,7 +497,7 @@ namespace maple
 			return filePath;
 		};
 
-		inline auto getHandle() const -> void* override
+		inline auto getHandle() -> void* override
 		{
 			return (void*)this;
 		}
@@ -520,17 +521,15 @@ namespace maple
 			return parameters.format;
 		}
 
-		virtual auto getDescriptorInfo() const -> void*
-		{
-			return (void*)&descriptor;
-		}
+		auto getDescriptorInfo(uint32_t mipLvl = 0) -> void* override;
 
 		auto clear(const CommandBuffer* commandBuffer) -> void override;
 
 		auto transitionImage(VkImageLayout newLayout, const VulkanCommandBuffer* commandBuffer = nullptr) -> void override;
+		auto transitionImage2(VkImageLayout newLayout, const VulkanCommandBuffer* commandBuffer = nullptr, uint32_t mipLevel = 0) -> void ;
 
 
-		inline auto getImageLayout() const->VkImageLayout override { return imageLayout; };
+		inline auto getImageLayout() const->VkImageLayout override { return imageLayouts[0]; };
 		inline auto getImage() const->VkImage override { return textureImage; };
 
 		auto toIntID() const->const uint64_t override { return (uint64_t)textureImage; };
@@ -547,14 +546,14 @@ namespace maple
 		TextureParameters parameters;
 		TextureLoadOptions loadOptions;
 		std::string   filePath;
-		VkFormat 			  vkFormat		= VK_FORMAT_R8G8B8A8_UNORM;
+		VkFormat 			  vkFormat = VK_FORMAT_R8G8B8A8_UNORM;
 		VkFormat 			  currentFormat = VK_FORMAT_UNDEFINED;
 		VkImage               textureImage = nullptr;
-		VkImageLayout         imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		VkDeviceMemory        textureImageMemory = nullptr;
-		VkImageView           textureImageView = nullptr;
 		VkSampler             textureSampler = nullptr;
 		VkDescriptorImageInfo descriptor;
+		std::vector< VkImageView > mipmapVies;
+		std::vector< VkImageLayout > imageLayouts;
 
 #ifdef USE_VMA_ALLOCATOR
 		VmaAllocation allocation{};

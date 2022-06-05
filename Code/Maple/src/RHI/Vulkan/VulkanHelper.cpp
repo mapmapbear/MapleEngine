@@ -696,7 +696,8 @@ namespace maple
 #endif
 	}
 
-	auto VulkanHelper::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels, uint32_t layerCount, const VulkanCommandBuffer* cmd, bool depth, uint32_t baseArrayLayer) -> void
+	auto VulkanHelper::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels, uint32_t layerCount, 
+		const VulkanCommandBuffer* cmd, bool depth, uint32_t baseArrayLayer, uint32_t baseMipLevel) -> void
 	{
 		PROFILE_FUNCTION();
 
@@ -716,7 +717,7 @@ namespace maple
 		if (isStencilFormat(format))
 			subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
 
-		subresourceRange.baseMipLevel = 0;
+		subresourceRange.baseMipLevel = baseMipLevel;
 		subresourceRange.baseArrayLayer = baseArrayLayer;
 		subresourceRange.levelCount = mipLevels;
 		subresourceRange.layerCount = layerCount;

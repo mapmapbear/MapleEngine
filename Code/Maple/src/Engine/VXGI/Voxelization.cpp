@@ -94,7 +94,7 @@ namespace maple
 						component::Voxelization::voxelDimension,
 						component::Voxelization::voxelDimension,
 						component::Voxelization::voxelDimension,
-						{ TextureFormat::R32UI, TextureFilter::Linear,TextureWrap::ClampToEdge },
+						{ TextureFormat::R32UI, TextureFilter::Nearest,TextureWrap::ClampToEdge},
 						{ false,false,false,true }
 					);
 
@@ -286,16 +286,16 @@ namespace maple
 				{
 					auto volumeSize = glm::vec3(mipmapDim, mipmapDim, mipmapDim);
 
-					volumePipline.descriptors[0]->setUniform("UniformBufferObject", "mipDimension", &volumeSize);
-					volumePipline.descriptors[0]->setUniform("UniformBufferObject", "mipLevel", &mipLvl);
-					volumePipline.descriptors[0]->setTexture("uVoxelMipmapIn",
+					volumePipline.descriptors[mipLvl]->setUniform("UniformBufferObject", "mipDimension", &volumeSize);
+					volumePipline.descriptors[mipLvl]->setUniform("UniformBufferObject", "mipLevel", &mipLvl);
+					volumePipline.descriptors[mipLvl]->setTexture("uVoxelMipmapIn",
 						{ voxelBuffer.voxelTexMipmap.begin(), voxelBuffer.voxelTexMipmap.end() }
 					);
-					volumePipline.descriptors[0]->setTexture("uVoxelMipmapOut",
+					volumePipline.descriptors[mipLvl]->setTexture("uVoxelMipmapOut",
 						{ voxelBuffer.voxelTexMipmap.begin(),voxelBuffer.voxelTexMipmap.end() },
 						mipLvl + 1
 					);
-					volumePipline.descriptors[0]->update(renderData.computeCommandBuffer);
+					volumePipline.descriptors[mipLvl]->update(renderData.computeCommandBuffer);
 
 					PipelineInfo pipelineInfo;
 					pipelineInfo.shader = volumePipline.shader;
@@ -305,7 +305,7 @@ namespace maple
 
 					auto pipeline = Pipeline::get(pipelineInfo);
 					pipeline->bind(renderData.computeCommandBuffer);
-					Renderer::bindDescriptorSets(pipeline.get(), renderData.computeCommandBuffer, 0, volumePipline.descriptors);
+					Renderer::bindDescriptorSets(pipeline.get(), renderData.computeCommandBuffer, 0, { volumePipline.descriptors[mipLvl] });
 					Renderer::dispatch(
 						renderData.computeCommandBuffer,
 						pipelineInfo.groupCountX,
@@ -502,7 +502,7 @@ namespace maple
 
 				for (auto text : buffer.voxelVolume)
 				{
-					text->clear(renderData.computeCommandBuffer);
+					text->clear(renderData.commandBuffer);
 				}
 				//voxelize the whole scene now. this would be optimize in the future.
 				//voxelization the inner room is a good choice.
@@ -515,6 +515,11 @@ namespace maple
 				buffer.descriptors[DescriptorID::FragmentUniform]->setTexture("uStaticVoxelFlag", buffer.staticFlag);
 				buffer.descriptors[DescriptorID::FragmentUniform]->update(renderData.commandBuffer);
 
+
+				for (auto texture : buffer.voxelVolume)
+				{
+					LOGI("{:x}", texture->toIntID());
+				}
 
 				PipelineInfo pipeInfo;
 				pipeInfo.shader = buffer.voxelShader;
@@ -541,12 +546,16 @@ namespace maple
 					Renderer::drawMesh(renderData.commandBuffer, pipeline.get(), cmd.mesh);
 				}
 
-				buffer.voxelVolume[VoxelBufferId::Albedo]->memoryBarrier(renderData.computeCommandBuffer, MemoryBarrierFlags::Shader_Storage_Barrier);
-				buffer.voxelVolume[VoxelBufferId::Normal]->memoryBarrier(renderData.computeCommandBuffer, MemoryBarrierFlags::Shader_Storage_Barrier);
-				buffer.voxelVolume[VoxelBufferId::Emissive]->memoryBarrier(renderData.computeCommandBuffer, MemoryBarrierFlags::Shader_Storage_Barrier);
-				buffer.staticFlag->memoryBarrier(renderData.computeCommandBuffer, MemoryBarrierFlags::Shader_Storage_Barrier);
+				buffer.voxelVolume[VoxelBufferId::Albedo]->memoryBarrier(renderData.commandBuffer, MemoryBarrierFlags::Shader_Storage_Barrier);
+				buffer.voxelVolume[VoxelBufferId::Normal]->memoryBarrier(renderData.commandBuffer, MemoryBarrierFlags::Shader_Storage_Barrier);
+				buffer.voxelVolume[VoxelBufferId::Emissive]->memoryBarrier(renderData.commandBuffer, MemoryBarrierFlags::Shader_Storage_Barrier);
+				buffer.staticFlag->memoryBarrier(renderData.commandBuffer, MemoryBarrierFlags::Shader_Storage_Barrier);
 
 				pipeline->end(renderData.commandBuffer);
+				voxel.dirty = false;
+
+				Application::getRenderDoc().endCapture();
+
 
 			}//next is dynamic
 		}
@@ -706,10 +715,16 @@ namespace maple
 
 			point->registerGlobalComponent<global::component::VoxelMipmapVolumePipline>([](auto& pipline) {
 				pipline.shader = Shader::create("shaders/VXGI/AnisoMipmapVolume.shader");
-				pipline.descriptors.emplace_back(
-					DescriptorSet::create({ 0, pipline.shader.get() })
-				);
-				});
+				
+				auto mipmapDim = vxgi::component::Voxelization::voxelDimension / 4;
+
+				for (auto mipLvl = 0; mipmapDim >= 1; mipmapDim /= 2, mipLvl++)
+				{
+					pipline.descriptors.emplace_back(
+						DescriptorSet::create({ 0, pipline.shader.get() })
+					);
+				}
+			});
 
 			point->registerGlobalComponent<global::component::VoxelMipmapBasePipline>([](auto& pipline) {
 				pipline.shader = Shader::create("shaders/VXGI/AnisoMipmapBase.shader");
@@ -741,13 +756,13 @@ namespace maple
 			point->registerWithinQueue<listen_light_change::system>(begin);
 
 			point->registerWithinQueue<voxelize_static_scene::system>(renderer);
-			point->registerWithinQueue<voxelize_dynamic_scene::system>(renderer);
-			point->registerWithinQueue<update_radiance::system>(renderer);
+			//point->registerWithinQueue<voxelize_dynamic_scene::system>(renderer);
+			//point->registerWithinQueue<update_radiance::system>(renderer);
 		}
 
 		auto registerVXGIIndirectLighting(ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> point) -> void
 		{
-			point->registerWithinQueue<compute_indirect_light::system>(renderer);
+			//point->registerWithinQueue<compute_indirect_light::system>(renderer);
 		}
 	}
 };

@@ -984,6 +984,7 @@ namespace maple
 			}
 		}
 
+
 		VulkanHelper::createImage(width, height, mipLevels, vkFormat,
 			VK_IMAGE_TYPE_3D, VK_IMAGE_TILING_OPTIMAL,
 			VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
@@ -993,7 +994,9 @@ namespace maple
 			textureImage, textureImageMemory, 1, createFlags, depth, VK_IMAGE_LAYOUT_UNDEFINED, nullptr);
 #endif
 
-		textureImageView = VulkanHelper::createImageView(textureImage, vkFormat, mipLevels, VK_IMAGE_VIEW_TYPE_3D, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+		auto textureImageView = VulkanHelper::createImageView(textureImage, vkFormat, 1, VK_IMAGE_VIEW_TYPE_3D, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+		mipmapVies.emplace_back(textureImageView);
+		
 		textureSampler = VulkanHelper::createTextureSampler(
 			VkConverter::textureFilterToVK(parameters.magFilter),
 			VkConverter::textureFilterToVK(parameters.minFilter),
@@ -1004,27 +1007,52 @@ namespace maple
 			VkConverter::textureWrapToVK(parameters.wrap)
 		);
 
-		imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
+		imageLayouts.resize(mipLevels, VK_IMAGE_LAYOUT_UNDEFINED);
+		
 		transitionImage(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 		if (loadOptions.generateMipMaps && mipLevels > 1)
+		{
 			tools::generateMipmaps(textureImage, vkFormat, width, height, depth, mipLevels);
+			for (auto i = 0;i<mipLevels - 1;i++)
+			{
+				mipmapVies.emplace_back(
+					VulkanHelper::createImageView(textureImage, vkFormat, 1, VK_IMAGE_VIEW_TYPE_3D, VK_IMAGE_ASPECT_COLOR_BIT, 1, 0, i + 1)
+				);
+			}
+		}
 
 		transitionImage(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 		updateDescriptor();
 		DEBUG_IMAGE_ADDRESS(textureImage);
 	}
 
+
+	auto VulkanTexture3D::transitionImage2(VkImageLayout newLayout, const VulkanCommandBuffer* commandBuffer /*= nullptr*/, uint32_t mipLevel /*= 0*/) -> void
+	{
+		PROFILE_FUNCTION();
+		if (commandBuffer)
+			MAPLE_ASSERT(commandBuffer->isRecording(), "must recording");
+
+		if (newLayout != imageLayouts[mipLevel])
+		{
+			VulkanHelper::transitionImageLayout(textureImage, vkFormat, imageLayouts[mipLevel], newLayout, 1, 1, commandBuffer, false,0,mipLevel);
+		}
+		imageLayouts[mipLevel] = newLayout;
+		updateDescriptor();
+	}
+
 	auto VulkanTexture3D::clear(const CommandBuffer * commandBuffer) -> void
 	{
+		PROFILE_FUNCTION();
 		VkImageSubresourceRange subresourceRange = {};
 		subresourceRange.baseMipLevel = 0;
 		subresourceRange.layerCount = 1;
-		subresourceRange.levelCount = 1;
+		subresourceRange.levelCount = mipLevels;
 		subresourceRange.baseArrayLayer = 0;
 		subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		auto oldLayout = imageLayout;
+		auto oldLayout = imageLayouts[0];
 		transitionImage(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, (const VulkanCommandBuffer*)commandBuffer);
 		VkClearColorValue clearColourValue = VkClearColorValue({ {0,0,0,0} });
 		vkCmdClearColorImage(((const VulkanCommandBuffer*)commandBuffer)->getCommandBuffer(), textureImage, 
@@ -1038,11 +1066,11 @@ namespace maple
 		if (commandBuffer)
 			MAPLE_ASSERT(commandBuffer->isRecording(), "must recording");
 
-		if (newLayout != imageLayout)
+		if (newLayout != imageLayouts[0])
 		{
-			VulkanHelper::transitionImageLayout(textureImage, vkFormat, imageLayout, newLayout, mipLevels, 1,commandBuffer, false);
+			VulkanHelper::transitionImageLayout(textureImage, vkFormat, imageLayouts[0], newLayout, mipLevels, 1,commandBuffer, false);
 		}
-		imageLayout = newLayout;
+		imageLayouts[0] = newLayout;
 		updateDescriptor();
 	}
 
@@ -1059,12 +1087,12 @@ namespace maple
 			deletionQueue.emplace([sampler] { vkDestroySampler(*VulkanDevice::get(), sampler, nullptr); });
 		}
 
-		if (textureImageView)
+		for (auto textureImageView : mipmapVies)
 		{
 			auto imageView = textureImageView;
 			deletionQueue.emplace([imageView] { vkDestroyImageView(*VulkanDevice::get(), imageView, nullptr); });
 		}
-
+		
 		auto image = textureImage;
 
 #ifdef USE_VMA_ALLOCATOR
@@ -1083,7 +1111,15 @@ namespace maple
 	auto VulkanTexture3D::updateDescriptor() -> void
 	{
 		descriptor.sampler = textureSampler;
-		descriptor.imageView = textureImageView;
-		descriptor.imageLayout = imageLayout;
+		descriptor.imageView = mipmapVies[0];
+		descriptor.imageLayout = imageLayouts[0];
+	}
+
+	auto VulkanTexture3D::getDescriptorInfo(uint32_t mipLvl /*= 0*/) -> void*
+	{
+		descriptor.sampler = textureSampler;
+		descriptor.imageView = mipmapVies[mipLvl];
+		descriptor.imageLayout = imageLayouts[mipLvl];
+		return (void*)&descriptor;
 	}
 };        // namespace maple

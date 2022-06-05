@@ -114,11 +114,11 @@ namespace maple
 		grid_renderer::registerGridRenderer(beginQ, renderQ, executePoint);
 		geometry_renderer::registerGeometryRenderer(beginQ, renderQ, executePoint);
 		post_process::registerBloom(renderQ, executePoint);
+		vxgi_debug::registerVXGIVisualization(beginQ, renderQ, executePoint);
+		vxgi::registerVoxelizer(beginQ, renderQ, executePoint);
 		final_screen_pass::registerFinalPass(renderQ, executePoint);
 
-		vxgi::registerVoxelizer(beginQ, renderQ, executePoint);
 		vxgi::registerVXGIIndirectLighting(beginQ, executePoint);
-		vxgi_debug::registerVXGIVisualization(beginQ, renderQ, executePoint);
 
 		light_propagation_volume::registerLPV(beginQ, renderQ, executePoint);
 		lpv_indirect_lighting::registerLPVIndirectLight(renderQ, executePoint);

@@ -81,7 +81,7 @@ namespace maple
 					PipelineInfo pipelineInfo;
 					pipelineInfo.shader = pipline.shader;
 					pipelineInfo.polygonMode = PolygonMode::Fill;
-					pipelineInfo.cullMode = CullMode::Back;
+					pipelineInfo.cullMode = CullMode::None;
 					pipelineInfo.blendMode = BlendMode::SrcAlphaOneMinusSrcAlpha;
 					pipelineInfo.clearTargets = true;
 					pipelineInfo.colorTargets[0] = rendererData.gbuffer->getBuffer(GBufferTextures::SCREEN);
