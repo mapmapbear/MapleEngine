@@ -414,7 +414,7 @@ namespace maple
 			layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		}
 
-		if (layout != imageLayout && layout != VK_IMAGE_LAYOUT_UNDEFINED) 
+		if (layout != VK_IMAGE_LAYOUT_UNDEFINED) 
 		{
 			VkImageSubresourceRange subresourceRange;
 
@@ -1023,7 +1023,9 @@ namespace maple
 			}
 		}
 
-		transitionImage(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+		//transitionImage(VK_IMAGE_LAYOUT_GENERAL);
+
+		//transitionImage(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 		updateDescriptor();
 		DEBUG_IMAGE_ADDRESS(textureImage);
 	}
@@ -1037,10 +1039,9 @@ namespace maple
 
 		if (newLayout != imageLayouts[mipLevel])
 		{
-			VulkanHelper::transitionImageLayout(textureImage, vkFormat, imageLayouts[mipLevel], newLayout, 1, 1, commandBuffer, false,0,mipLevel);
+			VulkanHelper::transitionImageLayout(textureImage, vkFormat, imageLayouts[mipLevel], newLayout, mipLevels, 1, commandBuffer, false,0,mipLevel);
 		}
 		imageLayouts[mipLevel] = newLayout;
-		updateDescriptor();
 	}
 
 	auto VulkanTexture3D::clear(const CommandBuffer * commandBuffer) -> void
@@ -1053,11 +1054,8 @@ namespace maple
 		subresourceRange.baseArrayLayer = 0;
 		subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		auto oldLayout = imageLayouts[0];
-		transitionImage(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, (const VulkanCommandBuffer*)commandBuffer);
 		VkClearColorValue clearColourValue = VkClearColorValue({ {0,0,0,0} });
-		vkCmdClearColorImage(((const VulkanCommandBuffer*)commandBuffer)->getCommandBuffer(), textureImage, 
-			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clearColourValue, 1, &subresourceRange);
-		transitionImage(oldLayout, (const VulkanCommandBuffer*)commandBuffer);
+		vkCmdClearColorImage(((const VulkanCommandBuffer*)commandBuffer)->getCommandBuffer(), textureImage, oldLayout, &clearColourValue, 1, &subresourceRange);
 	}
 
 	auto VulkanTexture3D::transitionImage(VkImageLayout newLayout, const VulkanCommandBuffer* commandBuffer /*= nullptr*/) -> void
@@ -1071,7 +1069,6 @@ namespace maple
 			VulkanHelper::transitionImageLayout(textureImage, vkFormat, imageLayouts[0], newLayout, mipLevels, 1,commandBuffer, false);
 		}
 		imageLayouts[0] = newLayout;
-		updateDescriptor();
 	}
 
 

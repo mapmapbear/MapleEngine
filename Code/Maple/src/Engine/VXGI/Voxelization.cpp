@@ -172,7 +172,6 @@ namespace maple
 				injection.descriptors[0]->setTexture("uVoxelRadiance", buffer.voxelVolume[VoxelBufferId::Radiance]);
 				injection.descriptors[0]->setTexture("uVoxelEmissive", buffer.voxelVolume[VoxelBufferId::Emissive]);
 
-				injection.descriptors[0]->update(rendererData.computeCommandBuffer);
 			}
 		}
 
@@ -388,6 +387,8 @@ namespace maple
 				if (!voxel.dirty && !hasUpdateRadiance)
 					return;
 
+				injection.descriptors[0]->update(renderData.computeCommandBuffer);
+
 				buffer.voxelVolume[VoxelBufferId::Radiance]->clear(renderData.computeCommandBuffer);
 
 				PipelineInfo pipelineInfo;
@@ -515,23 +516,18 @@ namespace maple
 				buffer.descriptors[DescriptorID::FragmentUniform]->setTexture("uStaticVoxelFlag", buffer.staticFlag);
 				buffer.descriptors[DescriptorID::FragmentUniform]->update(renderData.commandBuffer);
 
-
-				for (auto texture : buffer.voxelVolume)
-				{
-					LOGI("{:x}", texture->toIntID());
-				}
-
 				PipelineInfo pipeInfo;
 				pipeInfo.shader = buffer.voxelShader;
 				pipeInfo.cullMode = CullMode::None;
 				pipeInfo.depthTest = false;
 				pipeInfo.clearTargets = true;
 				pipeInfo.colorTargets[0] = buffer.colorBuffer;
+				pipeInfo.blendMode = BlendMode::SrcAlphaOneMinusSrcAlpha;
 
 				auto pipeline = Pipeline::get(pipeInfo, buffer.descriptors, graph);
 				pipeline->bind(renderData.commandBuffer);
 
-				for (auto& cmd : deferredData.commandQueue)
+				for (auto& cmd : buffer.commandQueue)
 				{
 					cmd.material->setShader(buffer.voxelShader);
 					cmd.material->bind(renderData.commandBuffer);
@@ -546,17 +542,10 @@ namespace maple
 					Renderer::drawMesh(renderData.commandBuffer, pipeline.get(), cmd.mesh);
 				}
 
-				buffer.voxelVolume[VoxelBufferId::Albedo]->memoryBarrier(renderData.commandBuffer, MemoryBarrierFlags::Shader_Storage_Barrier);
-				buffer.voxelVolume[VoxelBufferId::Normal]->memoryBarrier(renderData.commandBuffer, MemoryBarrierFlags::Shader_Storage_Barrier);
-				buffer.voxelVolume[VoxelBufferId::Emissive]->memoryBarrier(renderData.commandBuffer, MemoryBarrierFlags::Shader_Storage_Barrier);
-				buffer.staticFlag->memoryBarrier(renderData.commandBuffer, MemoryBarrierFlags::Shader_Storage_Barrier);
-
 				pipeline->end(renderData.commandBuffer);
 				voxel.dirty = false;
 
 				Application::getRenderDoc().endCapture();
-
-
 			}//next is dynamic
 		}
 
@@ -594,7 +583,7 @@ namespace maple
 
 						auto halfSize = voxelization.volumeGridSize / 2.0f;
 						// projection matrix
-						auto projection = glm::ortho(-halfSize, halfSize, -halfSize, halfSize, 0.0f, voxelization.volumeGridSize);
+						auto projection = glm::ortho(-halfSize, halfSize, -halfSize, halfSize, -voxelization.volumeGridSize, voxelization.volumeGridSize);
 						// view matrices
 						voxelBuffer.viewProj[0] = lookAt(center + glm::vec3(halfSize, 0.0f, 0.0f),
 							center, glm::vec3(0.0f, 1.0f, 0.0f));
@@ -657,14 +646,7 @@ namespace maple
 				pipeline.descriptors[0]->setUniform("UniformBufferVXGI", "samplingFactor", &vxgi.samplingFactor);
 				pipeline.descriptors[0]->setUniform("UniformBufferVXGI", "worldMinPoint", &vxgiBuffer.box.min);
 				pipeline.descriptors[0]->setUniform("UniformBufferVXGI", "worldMaxPoint", &vxgiBuffer.box.max);
-				pipeline.descriptors[0]->setTexture("uVoxelTex", vxgiBuffer.voxelVolume[VoxelBufferId::Radiance]);
-				pipeline.descriptors[0]->setTexture("uVoxelTexMipmap", { vxgiBuffer.voxelTexMipmap.begin(), vxgiBuffer.voxelTexMipmap.end() });
-				pipeline.descriptors[0]->setTexture("uIndirectLight", rendererData.gbuffer->getBuffer(GBufferTextures::INDIRECT_LIGHTING));
-				pipeline.descriptors[0]->setTexture("uColorSampler", rendererData.gbuffer->getBuffer(GBufferTextures::COLOR));
-				pipeline.descriptors[0]->setTexture("uPositionSampler", rendererData.gbuffer->getBuffer(GBufferTextures::POSITION));
-				pipeline.descriptors[0]->setTexture("uNormalSampler", rendererData.gbuffer->getBuffer(GBufferTextures::NORMALS));
-				pipeline.descriptors[0]->setTexture("uPBRSampler", rendererData.gbuffer->getBuffer(GBufferTextures::PBR));
-				pipeline.descriptors[0]->update(rendererData.computeCommandBuffer);
+
 			}
 		}
 
@@ -683,6 +665,15 @@ namespace maple
 				ecs::World world)
 			{
 				auto [voxelization] = entity;
+
+				indirectPipeline.descriptors[0]->setTexture("uVoxelTex", voxelBuffer.voxelVolume[VoxelBufferId::Radiance]);
+				indirectPipeline.descriptors[0]->setTexture("uVoxelTexMipmap", { voxelBuffer.voxelTexMipmap.begin(), voxelBuffer.voxelTexMipmap.end() });
+				indirectPipeline.descriptors[0]->setTexture("uIndirectLight", rendererData.gbuffer->getBuffer(GBufferTextures::INDIRECT_LIGHTING));
+				indirectPipeline.descriptors[0]->setTexture("uColorSampler", rendererData.gbuffer->getBuffer(GBufferTextures::COLOR));
+				indirectPipeline.descriptors[0]->setTexture("uPositionSampler", rendererData.gbuffer->getBuffer(GBufferTextures::POSITION));
+				indirectPipeline.descriptors[0]->setTexture("uNormalSampler", rendererData.gbuffer->getBuffer(GBufferTextures::NORMALS));
+				indirectPipeline.descriptors[0]->setTexture("uPBRSampler", rendererData.gbuffer->getBuffer(GBufferTextures::PBR));
+				indirectPipeline.descriptors[0]->update(rendererData.computeCommandBuffer);
 
 				PipelineInfo pipelineInfo;
 				pipelineInfo.shader = indirectPipeline.shader;
