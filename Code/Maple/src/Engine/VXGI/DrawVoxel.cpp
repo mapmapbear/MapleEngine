@@ -81,12 +81,16 @@ namespace maple
 					PipelineInfo pipelineInfo;
 					pipelineInfo.shader = pipline.shader;
 					pipelineInfo.polygonMode = PolygonMode::Fill;
+					//very important for vulkan.. actually opengl ignored.
+					//the final drawType is determined by geometry shader in opengl side.
+					//but determined by pipeline info in vulkan side.
+					pipelineInfo.drawType = DrawType::TriangleStrip;
 					pipelineInfo.cullMode = CullMode::None;
 					pipelineInfo.blendMode = BlendMode::SrcAlphaOneMinusSrcAlpha;
 					pipelineInfo.clearTargets = true;
 					pipelineInfo.colorTargets[0] = rendererData.gbuffer->getBuffer(GBufferTextures::SCREEN);
 					pipelineInfo.depthTarget = rendererData.gbuffer->getDepthBuffer();
-					pipelineInfo.clearColor = {	0,0,0,1.f };
+					//pipelineInfo.clearColor = {	0,0,0,1.f };
 					pipelineInfo.depthTest = true;
 
 					auto pipeline = Pipeline::get(pipelineInfo);

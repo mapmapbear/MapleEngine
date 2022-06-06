@@ -12,7 +12,7 @@ namespace maple
 	}
 
 	Camera::Camera(float aspectRatio, float scale) :
-	    aspectRatio(aspectRatio), scale(scale), projectionDirty(true), fov(0), near_(1.0), far_(3200000.0f), orthographic(true)
+	    aspectRatio(aspectRatio), scale(scale), projectionDirty(true), fov(0), near_(0.1), far_(3200000.0f), orthographic(true)
 	{
 	}
 
