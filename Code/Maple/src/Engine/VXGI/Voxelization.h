@@ -60,6 +60,7 @@ namespace maple
 
 		auto MAPLE_EXPORT registerGlobalComponent(std::shared_ptr<ExecutePoint> point) -> void;
 		auto registerVoxelizer(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> point) -> void;
+		auto registerUpdateRadiace(ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> point) -> void;
 		auto registerVXGIIndirectLighting(ExecuteQueue& begin, std::shared_ptr<ExecutePoint> point) -> void;
 	}
 };

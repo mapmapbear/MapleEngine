@@ -13,7 +13,7 @@ const float SQRT_3 = 1.73205080f;
 layout(set = 0, binding = 0) uniform usampler3D uVoxelAlbedo;
 layout(set = 0, binding = 1, r32ui) uniform uimage3D uVoxelNormal;
 layout(set = 0, binding = 2, r32ui) uniform writeonly uimage3D uVoxelRadiance;
-layout(set = 0, binding = 3, rgba8) uniform readonly image3D uVoxelEmissive;
+layout(set = 0, binding = 3, r32ui) uniform readonly uimage3D uVoxelEmissive;
 layout(set = 0, binding = 4) uniform UniformBufferLight
 {
 	Light lights[MAX_LIGHTS];
@@ -207,7 +207,7 @@ void main()
     // normal is stored in 0-1 range, restore to -1-1
     vec3 normal = decodeNormal(baseNormal);
     // emission from voxel
-    vec3 emissive = imageLoad(uVoxelEmissive, writePos).rgb;
+    vec3 emissive = unpackUnorm4x8(imageLoad(uVoxelEmissive, writePos).x).rgb;
 
     if(any(greaterThan(albedo.rgb, vec3(0.0f))))
     {

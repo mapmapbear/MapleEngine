@@ -1023,9 +1023,6 @@ namespace maple
 			}
 		}
 
-		//transitionImage(VK_IMAGE_LAYOUT_GENERAL);
-
-		//transitionImage(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 		updateDescriptor();
 		DEBUG_IMAGE_ADDRESS(textureImage);
 	}
@@ -1039,7 +1036,7 @@ namespace maple
 
 		if (newLayout != imageLayouts[mipLevel])
 		{
-			VulkanHelper::transitionImageLayout(textureImage, vkFormat, imageLayouts[mipLevel], newLayout, mipLevels, 1, commandBuffer, false,0,mipLevel);
+			VulkanHelper::transitionImageLayout(textureImage, vkFormat, imageLayouts[mipLevel], newLayout, 1, 1, commandBuffer, false,0,mipLevel);
 		}
 		imageLayouts[mipLevel] = newLayout;
 	}

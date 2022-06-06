@@ -1,5 +1,6 @@
 #version 450
 #extension GL_ARB_shader_image_load_store : require
+#extension GL_ARB_separate_shader_objects : enable
 
 #include "VXGI.glsl"
 

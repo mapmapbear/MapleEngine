@@ -461,6 +461,7 @@ namespace maple
 					generateMipmapVolume(buffer, volumePipline, box, renderData);
 				}
 
+
 				Application::getRenderDoc().endCapture();
 
 				if (hasUpdateRadiance)
@@ -543,9 +544,9 @@ namespace maple
 				}
 
 				pipeline->end(renderData.commandBuffer);
-				voxel.dirty = false;
+				//voxel.dirty = false;
 
-				Application::getRenderDoc().endCapture();
+				//Application::getRenderDoc().endCapture();
 			}//next is dynamic
 		}
 
@@ -748,12 +749,17 @@ namespace maple
 
 			point->registerWithinQueue<voxelize_static_scene::system>(renderer);
 			//point->registerWithinQueue<voxelize_dynamic_scene::system>(renderer);
-			//point->registerWithinQueue<update_radiance::system>(renderer);
+			
+		}
+
+		auto registerUpdateRadiace(ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> point) -> void
+		{
+			point->registerWithinQueue<update_radiance::system>(renderer);
 		}
 
 		auto registerVXGIIndirectLighting(ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> point) -> void
 		{
-			//point->registerWithinQueue<compute_indirect_light::system>(renderer);
+			point->registerWithinQueue<compute_indirect_light::system>(renderer);
 		}
 	}
 };

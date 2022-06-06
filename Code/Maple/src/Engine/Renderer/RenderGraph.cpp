@@ -118,6 +118,7 @@ namespace maple
 		vxgi::registerVoxelizer(beginQ, renderQ, executePoint);
 		final_screen_pass::registerFinalPass(renderQ, executePoint);
 
+		vxgi::registerUpdateRadiace(renderQ, executePoint);
 		vxgi::registerVXGIIndirectLighting(beginQ, executePoint);
 
 		light_propagation_volume::registerLPV(beginQ, renderQ, executePoint);
