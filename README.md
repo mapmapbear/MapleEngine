@@ -52,7 +52,8 @@ Feature     					 	| Completion 	| Notes
 :-          					 	| :-         	| :-
 Reflective Shadow Map				| 100%		  	| High priority
 Light propagation volumes		 	| 90%       	    | High priority (No cascade)
-Voxel Global Illumintaion     | 10%             | High priority 
+Voxel Global Illumintaion     | 70%             | High priority 
+Dynamic Diffus Global Illumintaion (DDGI)     | 0%             | High priority 
 C# scripting                     	| 80%			| Using Mono (no engine API exposed yet)
 Vulkan porting 	 				    | 90%	  		| support Compute and Tessellation shader
 Skinned Mesh                | 70%       | High priority
@@ -60,6 +61,7 @@ Precomputed Light Field Probes 	| 0%		  	| High priority
 Screen space global illumination 	| 0%		  	| High priority
 Animation and State Machine       	| 30%			| Apply Animation successfully
 Precomputed Atmospheric Scattering 	| -          	| Low priority
+Spherical Harmonics Lighting | -          | Medium priority
 Subsurface Scattering 			| -          	| Low priority
 Ray traced shadows				 	| -          	| -
 Ray traced reflections			| -          	| -
