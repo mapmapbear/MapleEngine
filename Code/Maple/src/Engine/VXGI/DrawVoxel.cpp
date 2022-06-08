@@ -52,14 +52,14 @@ namespace maple
 
 				if (render.enable && box.box)
 				{
-					auto drawMipLevel = 0;
+					int32_t type = render.drawMipmap ? 1 : 0;
 
-					auto vDimension = static_cast<uint32_t>(
-						vxgi::component::Voxelization::voxelDimension / std::pow(2.0f, drawMipLevel)
+					uint32_t vDimension = static_cast<uint32_t>(
+						vxgi::component::Voxelization::voxelDimension / std::pow(2.0f, render.drawMipmap ? render.mipLevel + 1 : 0)
 					);
 
 					auto vSize = voxel.volumeGridSize / vDimension;
-					auto model = glm::scale(glm::translate(glm::mat4(1.f), box.box->min), glm::vec3(vSize));
+					auto model = glm::translate(glm::mat4(1.f), box.box->min) * glm::scale(glm::mat4(1), glm::vec3(vSize));
 					pipline.ubo.mvp = cameraView.projView * model;
 					pipline.ubo.voxelSize = voxel.voxelSize;
 					pipline.ubo.worldMinPoint = box.box->min;
@@ -68,10 +68,14 @@ namespace maple
 					{
 						pipline.ubo.frustumPlanes[i] = cameraView.frustum.getPlane(i);
 					}
-					
+
 					pipline.descriptors[0]->setTexture("uVoxelBuffer", voxelBuffer.voxelVolume[render.id]);
+					pipline.descriptors[0]->setTexture("uVoxelBuffer2", voxelBuffer.voxelTexMipmap[render.direction], render.mipLevel);
+
 					pipline.descriptors[0]->setUniform("UniformBufferObjectVert", "colorChannels", &render.colorChannels);
 					pipline.descriptors[0]->setUniform("UniformBufferObjectVert", "volumeDimension", &vDimension);
+					pipline.descriptors[0]->setUniform("UniformBufferObjectVert", "type", &type);
+
 					pipline.descriptors[0]->update(rendererData.commandBuffer);
 					pipline.descriptors[1]->setUniformBufferData("UniformBufferObjectGemo", &pipline.ubo);
 					pipline.descriptors[1]->update(rendererData.commandBuffer);

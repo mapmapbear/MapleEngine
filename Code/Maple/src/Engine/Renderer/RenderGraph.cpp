@@ -105,6 +105,7 @@ namespace maple
 		reflective_shadow_map::registerShadowMap(beginQ, renderQ, executePoint);
 		deferred_offscreen::registerDeferredOffScreenRenderer(beginQ, renderQ, executePoint);
 		post_process::registerSSAOPass(beginQ, renderQ, executePoint);
+		vxgi::registerVXGIIndirectLighting(renderQ, executePoint);
 		deferred_lighting::registerDeferredLighting(beginQ, renderQ, executePoint);
 		atmosphere_pass::registerAtmosphere(beginQ,renderQ, executePoint);
 		skybox_renderer::registerSkyboxRenderer(beginQ, renderQ, executePoint);
@@ -119,7 +120,6 @@ namespace maple
 		final_screen_pass::registerFinalPass(renderQ, executePoint);
 
 		vxgi::registerUpdateRadiace(renderQ, executePoint);
-		vxgi::registerVXGIIndirectLighting(beginQ, executePoint);
 
 		light_propagation_volume::registerLPV(beginQ, renderQ, executePoint);
 		lpv_indirect_lighting::registerLPVIndirectLight(renderQ, executePoint);

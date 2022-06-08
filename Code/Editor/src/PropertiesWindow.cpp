@@ -125,9 +125,18 @@ namespace MM
 
 		ImGuiHelper::property("Enable", voxel.enable);
 			
-		if (auto id = ImGuiHelper::combox("Voxel BufferId", VoxelBufferId::Names, VoxelBufferId::Length, voxel.id); id != -1) 
+		ImGuiHelper::property("Visualize Mipmap", voxel.drawMipmap);
+
+		if (auto id = ImGuiHelper::combox("Voxel BufferId", VoxelBufferId::Names, VoxelBufferId::Length, voxel.id); id != -1)
 		{
 			voxel.id = static_cast<VoxelBufferId::Id>(id);
+		}
+
+		if (voxel.drawMipmap) 
+		{
+			voxel.id = VoxelBufferId::Id::Radiance;
+			ImGuiHelper::property("Direction", voxel.direction, 0, 5);
+			ImGuiHelper::property("Mipmap", voxel.mipLevel, 0, 7);
 		}
 
 		ImGuiHelper::property("Color Channels", voxel.colorChannels,0.f,1.f,true);

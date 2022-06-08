@@ -604,18 +604,13 @@ namespace maple
 			pipeInfo.depthBiasEnabled = false;
 			pipeInfo.clearTargets = false;
 			pipeInfo.colorTargets[0] = rendererData.gbuffer->getBuffer(GBufferTextures::SCREEN);
-/*
-
-			for (auto id = 0; id < (int32_t)GBufferTextures::LENGTH; id++)
-			{
-				LOGI("GBuffer : {}, Address : {:x}",GBufferNames[id], rendererData.gbuffer->getBuffer(id)->toIntID());
-			}*/
 
 			auto deferredLightPipeline = Pipeline::get(pipeInfo,data.descriptorLightSet, graph);
 			deferredLightPipeline->bind(rendererData.commandBuffer);
 
 			Renderer::bindDescriptorSets(deferredLightPipeline.get(), rendererData.commandBuffer, 0, data.descriptorLightSet);
 			Renderer::drawMesh(rendererData.commandBuffer, deferredLightPipeline.get(), data.screenQuad.get());
+
 			deferredLightPipeline->end(rendererData.commandBuffer);
 		}
 

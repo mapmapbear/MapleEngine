@@ -121,28 +121,6 @@ namespace maple
 				}
 			}
 
-	/*		for (auto face = 0; face < faces; face++)
-			{
-				barrier.subresourceRange.baseMipLevel = mipLevels - 1;
-				barrier.subresourceRange.baseArrayLayer = face;
-				barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-				barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-				barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-				barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-				vkCmdPipelineBarrier(commandBuffer,
-					VK_PIPELINE_STAGE_TRANSFER_BIT,
-					VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-					0,
-					0,
-					nullptr,
-					0,
-					nullptr,
-					1,
-					&barrier);
-			}
-*/
-
 			if (singleTime)
 				VulkanHelper::endSingleTimeCommands(commandBuffer);
 		}
@@ -412,6 +390,11 @@ namespace maple
 		if (flags & MemoryBarrierFlags::Shader_Storage_Barrier)
 		{
 			layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		}
+
+		if (flags & MemoryBarrierFlags::General)
+		{
+			layout = VK_IMAGE_LAYOUT_GENERAL;
 		}
 
 		if (layout != VK_IMAGE_LAYOUT_UNDEFINED) 
@@ -1014,13 +997,13 @@ namespace maple
 
 		if (loadOptions.generateMipMaps && mipLevels > 1)
 		{
-			tools::generateMipmaps(textureImage, vkFormat, width, height, depth, mipLevels);
-			for (auto i = 0;i<mipLevels - 1;i++)
+			for (auto i = 0; i < mipLevels - 1; i++)
 			{
 				mipmapVies.emplace_back(
 					VulkanHelper::createImageView(textureImage, vkFormat, 1, VK_IMAGE_VIEW_TYPE_3D, VK_IMAGE_ASPECT_COLOR_BIT, 1, 0, i + 1)
 				);
 			}
+			tools::generateMipmaps(textureImage, vkFormat, width, height, depth, mipLevels);
 		}
 
 		updateDescriptor();

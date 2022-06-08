@@ -337,7 +337,8 @@ namespace maple
 		None						= BIT(0),
 		Shader_Image_Access_Barrier = BIT(1),
 		Shader_Storage_Barrier		= BIT(2),
-		Texture_Fetch_Barrier		= BIT(3)
+		Texture_Fetch_Barrier		= BIT(3),
+		General						= BIT(4) // mainly for Vulkan
 	};
 }        // namespace maple
 
