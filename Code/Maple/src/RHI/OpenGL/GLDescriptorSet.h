@@ -17,8 +17,8 @@ namespace maple
 		~GLDescriptorSet(){};
 
 		auto update(const CommandBuffer* cmd) -> void override;
-		auto setTexture(const std::string &name, const std::vector<std::shared_ptr<Texture>> &textures, uint32_t mipLevel = 0) -> void override;
-		auto setTexture(const std::string &name, const std::shared_ptr<Texture> &textures, uint32_t mipLevel = 0) -> void override;
+		auto setTexture(const std::string &name, const std::vector<std::shared_ptr<Texture>> &textures, int32_t mipLevel = -1) -> void override;
+		auto setTexture(const std::string &name, const std::shared_ptr<Texture> &textures, int32_t mipLevel = -1) -> void override;
 		auto setBuffer(const std::string &name, const std::shared_ptr<UniformBuffer> &buffer) -> void override;
 		auto setUniform(const std::string &bufferName, const std::string &uniformName, const void *data, bool dynamic) -> void override;
 		auto setUniform(const std::string &bufferName, const std::string &uniformName, const void *data, uint32_t size, bool dynamic) -> void override;

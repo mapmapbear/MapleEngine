@@ -579,7 +579,7 @@ namespace maple
 		options.version                              = 450;
 		options.es                                   = false;
 		options.vulkan_semantics                     = false;
-		options.separate_shader_objects              = false;
+		options.separate_shader_objects              = true;
 		options.enable_420pack_extension             = false;
 		options.emit_push_constant_as_uniform_buffer = false;
 		glsl->set_common_options(options);

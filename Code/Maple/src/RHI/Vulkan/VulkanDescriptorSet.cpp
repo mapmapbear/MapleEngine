@@ -20,7 +20,7 @@ namespace maple
 {
 	namespace
 	{
-		inline auto transitionImageLayout(const CommandBuffer* cmd, Texture* texture,bool sampler2d, VkFormat vkFormat, uint32_t mipLevel)
+		inline auto transitionImageLayout(const CommandBuffer* cmd, Texture* texture,bool sampler2d, VkFormat vkFormat, int32_t mipLevel)
 		{
 			if (!texture)
 				return;
@@ -42,7 +42,7 @@ namespace maple
 			}
 			else if (texture->getType() == TextureType::Color3D)
 			{
-				((VulkanTexture3D*)texture)->transitionImage2(VK_IMAGE_LAYOUT_GENERAL, commandBuffer, mipLevel);
+				((VulkanTexture3D*)texture)->transitionImage2( VK_IMAGE_LAYOUT_GENERAL, commandBuffer, mipLevel);
 			}
 			else if (texture->getType() == TextureType::Cube)
 			{
@@ -169,7 +169,7 @@ namespace maple
 									imageInfo.mipmapLevel
 								);
 
-								const auto &des               = *static_cast<VkDescriptorImageInfo *>(imageInfo.textures[i]->getDescriptorInfo(imageInfo.mipmapLevel));
+								const auto &des = *static_cast<VkDescriptorImageInfo *>(imageInfo.textures[i]->getDescriptorInfo(imageInfo.mipmapLevel));
 								imageInfoPool[i + imageIndex] = des;
 								validCount++;
 							}
@@ -228,7 +228,7 @@ namespace maple
 		return descriptorSet[currentFrame];
 	}
 
-	auto VulkanDescriptorSet::setTexture(const std::string &name, const std::vector<std::shared_ptr<Texture>> &textures, uint32_t mipLevel) -> void
+	auto VulkanDescriptorSet::setTexture(const std::string &name, const std::vector<std::shared_ptr<Texture>> &textures, int32_t mipLevel) -> void
 	{
 		for (auto &descriptor : descriptors)
 		{
@@ -244,7 +244,7 @@ namespace maple
 		}
 	}
 
-	auto VulkanDescriptorSet::setTexture(const std::string &name, const std::shared_ptr<Texture> &texture, uint32_t mipLevel) -> void
+	auto VulkanDescriptorSet::setTexture(const std::string &name, const std::shared_ptr<Texture> &texture, int32_t mipLevel) -> void
 	{
 		PROFILE_FUNCTION();
 		setTexture(name, std::vector<std::shared_ptr<Texture>>{texture},mipLevel);

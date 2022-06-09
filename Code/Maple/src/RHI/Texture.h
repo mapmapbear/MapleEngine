@@ -36,7 +36,7 @@ namespace maple
 			return 0;
 		}
 
-		virtual auto getDescriptorInfo(uint32_t mipLvl = 0) -> void*
+		virtual auto getDescriptorInfo(int32_t mipLvl = 0) -> void*
 		{
 			return getHandle();
 		}

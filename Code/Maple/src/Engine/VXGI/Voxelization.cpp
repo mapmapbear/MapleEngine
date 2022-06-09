@@ -279,8 +279,10 @@ namespace maple
 				maple::component::BoundingBoxComponent& box,
 				const maple::component::RendererData& renderData, bool updateDescriptor = true)
 			{
-				auto mipmapDim = vxgi::component::Voxelization::voxelDimension / 4;
-
+				auto mipmapDim = vxgi::component::Voxelization::voxelDimension / 4; //64
+				//256
+				//128
+				// 
 				for (auto mipLvl = 0; mipmapDim >= 1; mipmapDim /= 2, mipLvl++)
 				{
 					auto volumeSize = glm::vec3(mipmapDim, mipmapDim, mipmapDim);
@@ -291,7 +293,8 @@ namespace maple
 						volumePipline.descriptors[mipLvl]->setUniform("UniformBufferObject", "mipLevel", &mipLvl);
 						volumePipline.descriptors[mipLvl]->setTexture("uVoxelMipmapIn",
 							{ voxelBuffer.voxelTexMipmap.begin(), voxelBuffer.voxelTexMipmap.end() }
-						);
+						);//todo still bugs in vulkan
+
 						volumePipline.descriptors[mipLvl]->setTexture("uVoxelMipmapOut",
 							{ voxelBuffer.voxelTexMipmap.begin(),voxelBuffer.voxelTexMipmap.end() },
 							mipLvl + 1
@@ -333,8 +336,8 @@ namespace maple
 				if (updateDescriptor) 
 				{
 					pipline.descriptors[0]->setUniform("UniformBufferObject", "mipDimension", &halfDimension);
-					pipline.descriptors[0]->setTexture("uVoxelMipmap", { buffer.voxelTexMipmap.begin(),buffer.voxelTexMipmap.end() });
 					pipline.descriptors[0]->setTexture("uVoxelBase", voxelRadiance);
+					pipline.descriptors[0]->setTexture("uVoxelMipmap", { buffer.voxelTexMipmap.begin(),buffer.voxelTexMipmap.end() }, -1);
 					pipline.descriptors[0]->update(renderData.computeCommandBuffer);
 				}
 
@@ -407,8 +410,8 @@ namespace maple
 
 				generateMipmapMipmap(buffer.voxelVolume[VoxelBufferId::Radiance], renderData, buffer, basePipeline);
 				generateMipmapVolume(buffer, volumePipline, box, renderData);
-
-				if (!voxel.injectFirstBounce)
+			
+				if (voxel.injectFirstBounce)
 				{
 					//propagation .............
 					propagation.descriptors[0]->setUniform("UniformBufferObject", "maxTracingDistanceGlobal", &voxel.maxTracingDistance);
@@ -445,7 +448,6 @@ namespace maple
 					generateMipmapMipmap(buffer.voxelVolume[VoxelBufferId::Radiance], renderData, buffer, basePipeline, false);
 					generateMipmapVolume(buffer, volumePipline, box, renderData, false);
 				}
-
 
 				Application::getRenderDoc().endCapture();
 

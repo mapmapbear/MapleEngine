@@ -71,7 +71,7 @@ namespace maple
 			return &descriptor;
 		}
 
-		inline auto getDescriptorInfo(uint32_t mipLvl = 0)  -> void* override
+		inline auto getDescriptorInfo(int32_t mipLvl = 0)  -> void* override
 		{
 			return (void*)getDescriptor();
 		}
@@ -165,7 +165,7 @@ namespace maple
 
 		auto transitionImage(VkImageLayout newLayout, const VulkanCommandBuffer* commandBuffer = nullptr) -> void override;
 
-		inline auto getDescriptorInfo(uint32_t mipLvl = 0)  -> void* override
+		inline auto getDescriptorInfo(int32_t mipLvl = 0)  -> void* override
 		{
 			return (void*)&descriptor;
 		}
@@ -332,7 +332,7 @@ namespace maple
 			return size;
 		}
 
-		inline auto getDescriptorInfo(uint32_t mipLvl = 0)  -> void* override
+		inline auto getDescriptorInfo(int32_t mipLvl = 0)  -> void* override
 		{
 			return (void*)&descriptor;
 		}
@@ -404,7 +404,7 @@ namespace maple
 			return &descriptor;
 		}
 
-		inline auto getDescriptorInfo(uint32_t mipLvl = 0)  -> void* override
+		inline auto getDescriptorInfo(int32_t mipLvl = 0)  -> void* override
 		{
 			return (void*)&descriptor;
 		}
@@ -521,15 +521,15 @@ namespace maple
 			return parameters.format;
 		}
 
-		auto getDescriptorInfo(uint32_t mipLvl = 0) -> void* override;
+		auto getDescriptorInfo(int32_t mipLvl = 0) -> void* override;
 
 		auto clear(const CommandBuffer* commandBuffer) -> void override;
 
 		auto transitionImage(VkImageLayout newLayout, const VulkanCommandBuffer* commandBuffer = nullptr) -> void override;
-		auto transitionImage2(VkImageLayout newLayout, const VulkanCommandBuffer* commandBuffer = nullptr, uint32_t mipLevel = 0) -> void ;
+		auto transitionImage2(VkImageLayout newLayout, const VulkanCommandBuffer* commandBuffer = nullptr, int32_t mipLevel = -1) -> void ;
 
 
-		inline auto getImageLayout() const->VkImageLayout override { return imageLayouts[0]; };
+		inline auto getImageLayout() const->VkImageLayout override { return imageLayouts[ 0]; };
 		inline auto getImage() const->VkImage override { return textureImage; };
 
 		auto toIntID() const->const uint64_t override { return (uint64_t)textureImage; };
@@ -554,6 +554,9 @@ namespace maple
 		VkDescriptorImageInfo descriptor;
 		std::vector< VkImageView > mipmapVies;
 		std::vector< VkImageLayout > imageLayouts;
+
+		VkImageView textureImageView = nullptr;
+		VkImageLayout imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
 #ifdef USE_VMA_ALLOCATOR
 		VmaAllocation allocation{};
