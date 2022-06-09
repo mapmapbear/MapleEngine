@@ -180,7 +180,7 @@ namespace maple
 						{
 							auto read  = descriptor.accessFlag == 0 || descriptor.accessFlag == 2;
 							auto write = descriptor.accessFlag == 1 || descriptor.accessFlag == 2;
-							descriptor.textures[0]->bindImageTexture(descriptor.binding, read, write, descriptor.mipmapLevel, 0);
+							descriptor.textures[0]->bindImageTexture(descriptor.binding, read, write, descriptor.mipmapLevel, 0, descriptor.format);
 						}
 						shader->setUniform1i(descriptor.name, descriptor.binding);
 					}

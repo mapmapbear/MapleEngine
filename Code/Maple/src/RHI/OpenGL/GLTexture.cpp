@@ -275,14 +275,14 @@ namespace maple
 
 		if (image)
 		{
-			bindImageTexture(0, accessFlag == 0 || accessFlag == 2, accessFlag == 1 || accessFlag == 2, 0, 0);        //should use mask
+			bindImageTexture(0, accessFlag == 0 || accessFlag == 2, accessFlag == 1 || accessFlag == 2, 0, 0,internalformat);        //should use mask
 		}
 
 		if (mipmap)
 			GLCall(glGenerateMipmap(GL_TEXTURE_2D));
 	}
 
-	auto GLTexture2D::bindImageTexture(uint32_t unit, bool read /*= false*/, bool write /*= false*/, uint32_t level /*= 0*/, uint32_t layer /*= 0*/) -> void
+	auto GLTexture2D::bindImageTexture(uint32_t unit, bool read /*= false*/, bool write /*= false*/, uint32_t level /*= 0*/, uint32_t layer /*= 0*/, TextureFormat targetFormat) -> void
 	{
 		PROFILE_FUNCTION();
 		auto flag = read && write ? GL_READ_WRITE :
@@ -773,7 +773,7 @@ namespace maple
 		GLCall(glBindTexture(GL_TEXTURE_3D, 0));
 	}
 
-	auto GLTexture3D::bindImageTexture(uint32_t unit, bool read, bool write, uint32_t level, uint32_t layer) -> void
+	auto GLTexture3D::bindImageTexture(uint32_t unit, bool read, bool write, uint32_t level, uint32_t layer, TextureFormat tagetFormat) -> void
 	{
 		PROFILE_FUNCTION();
 		auto flag = read && write ? GL_READ_WRITE :

@@ -656,6 +656,7 @@ namespace maple
 				maple::component::BoundingBoxComponent& box,
 				const maple::component::RendererData& rendererData,
 				const maple::component::WindowSize & winSize,
+				const maple::component::CameraView& cameraView,
 				ecs::World world)
 			{
 				auto [voxelization] = entity;

@@ -15,7 +15,7 @@ namespace maple
 		auto bind(uint32_t slot) const -> void override;
 		auto unbind(uint32_t slot) const -> void override;
 		auto buildTexture(TextureFormat internalformat, uint32_t width, uint32_t height, bool srgb, bool depth, bool samplerShadow, bool mipmap, bool image, uint32_t accessFlag) -> void override;
-		auto bindImageTexture(uint32_t unit, bool read = false, bool write = false, uint32_t level = 0, uint32_t layer = 0) -> void override;
+		auto bindImageTexture(uint32_t unit, bool read = false, bool write = false, uint32_t level = 0, uint32_t layer = 0, TextureFormat format = TextureFormat::NONE) -> void override;
 		auto update(uint32_t x, uint32_t y, uint32_t w, uint32_t h, const void *buffer) -> void override;
 
 		auto setData(const void *pixels) -> void;
@@ -84,7 +84,7 @@ namespace maple
 
 		auto generateMipmaps(const CommandBuffer* cmd) -> void override;
 
-		auto bindImageTexture(uint32_t unit, bool read, bool write, uint32_t level, uint32_t layer) -> void override;
+		auto bindImageTexture(uint32_t unit, bool read, bool write, uint32_t level, uint32_t layer, TextureFormat format) -> void override;
 
 		auto buildTexture3D(TextureFormat format, uint32_t width, uint32_t height, uint32_t depth) -> void override;
 

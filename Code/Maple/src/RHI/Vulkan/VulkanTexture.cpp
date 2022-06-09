@@ -918,7 +918,7 @@ namespace maple
 		}
 	}
 
-	auto VulkanTexture3D::bindImageTexture(uint32_t unit, bool read, bool write, uint32_t level, uint32_t layer) -> void
+	auto VulkanTexture3D::bindImageTexture(uint32_t unit, bool read, bool write, uint32_t level, uint32_t layer, TextureFormat format) -> void
 	{
 
 	}
@@ -982,7 +982,7 @@ namespace maple
 		linearTextureSampler = VulkanHelper::createTextureSampler(
 			VK_FILTER_LINEAR,
 			VK_FILTER_LINEAR,
-			0.0f, 0.0f, true,
+			0.0f, static_cast<float>(mipLevels), true,
 			VulkanDevice::get()->getPhysicalDevice()->getProperties().limits.maxSamplerAnisotropy,
 			VkConverter::textureWrapToVK(parameters.wrap),
 			VkConverter::textureWrapToVK(parameters.wrap),
@@ -992,7 +992,7 @@ namespace maple
 		textureSampler = VulkanHelper::createTextureSampler(
 			VkConverter::textureFilterToVK(parameters.magFilter),
 			VkConverter::textureFilterToVK(parameters.minFilter),
-			0.0f, 0.0f, true,
+			0.0f, static_cast<float>(mipLevels), true,
 			VulkanDevice::get()->getPhysicalDevice()->getProperties().limits.maxSamplerAnisotropy,
 			VkConverter::textureWrapToVK(parameters.wrap),
 			VkConverter::textureWrapToVK(parameters.wrap),
@@ -1110,7 +1110,7 @@ namespace maple
 
 		descriptor.sampler = textureSampler;
 		descriptor.imageView = mipLevels > 1 && mipLvl >= 0 ? mipmapVies[mipLvl] : textureImageView;
-
+		descriptor.imageLayout = mipLevels > 1 && mipLvl >= 0 ? imageLayouts[mipLvl] : imageLayout;
 		//sampler.  convert is as RGBA8 imageView
 
 		if (format != parameters.format) 
@@ -1144,7 +1144,7 @@ namespace maple
 			}
 		}
 
-		descriptor.imageLayout  = mipLevels > 1 && mipLvl >= 0 ? imageLayouts[mipLvl] : imageLayout;
+	
 		return (void*)&descriptor;
 	}
 };        // namespace maple
