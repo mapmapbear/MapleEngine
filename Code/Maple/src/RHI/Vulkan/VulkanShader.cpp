@@ -565,6 +565,7 @@ namespace maple
 			descriptor.offset = 0;
 			descriptor.size = 0;
 			descriptor.shaderType = shaderType;
+			descriptor.format = TextureFormat::NONE;
 		}
 
 		shaderStages[currentShaderStage].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;

@@ -69,12 +69,12 @@ namespace maple
 						pipline.ubo.frustumPlanes[i] = cameraView.frustum.getPlane(i);
 					}
 
-					pipline.descriptors[0]->setTexture("uVoxelBuffer", voxelBuffer.voxelVolume[render.id]);
-					pipline.descriptors[0]->setTexture("uVoxelBuffer2", voxelBuffer.voxelTexMipmap[render.direction], render.mipLevel);
+					pipline.descriptors[0]->setTexture("uVoxelBuffer", 
+						render.drawMipmap ? voxelBuffer.voxelTexMipmap[render.direction] : voxelBuffer.voxelVolume[render.id]
+						, render.drawMipmap ? render.mipLevel : -1);
 
 					pipline.descriptors[0]->setUniform("UniformBufferObjectVert", "colorChannels", &render.colorChannels);
 					pipline.descriptors[0]->setUniform("UniformBufferObjectVert", "volumeDimension", &vDimension);
-					pipline.descriptors[0]->setUniform("UniformBufferObjectVert", "type", &type);
 
 					pipline.descriptors[0]->update(rendererData.commandBuffer);
 					pipline.descriptors[1]->setUniformBufferData("UniformBufferObjectGemo", &pipline.ubo);

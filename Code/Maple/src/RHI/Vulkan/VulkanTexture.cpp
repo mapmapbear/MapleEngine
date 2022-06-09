@@ -970,7 +970,7 @@ namespace maple
 
 		VulkanHelper::createImage(width, height, mipLevels, vkFormat,
 			VK_IMAGE_TYPE_3D, VK_IMAGE_TILING_OPTIMAL,
-			VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+			VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 #ifdef USE_VMA_ALLOCATOR
 			textureImage, textureImageMemory, 1, createFlags, allocation, depth, VK_IMAGE_LAYOUT_UNDEFINED, nullptr);
 #else
@@ -979,6 +979,16 @@ namespace maple
 
 		textureImageView = VulkanHelper::createImageView(textureImage, vkFormat, mipLevels, VK_IMAGE_VIEW_TYPE_3D, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 		
+		linearTextureSampler = VulkanHelper::createTextureSampler(
+			VK_FILTER_LINEAR,
+			VK_FILTER_LINEAR,
+			0.0f, 0.0f, true,
+			VulkanDevice::get()->getPhysicalDevice()->getProperties().limits.maxSamplerAnisotropy,
+			VkConverter::textureWrapToVK(parameters.wrap),
+			VkConverter::textureWrapToVK(parameters.wrap),
+			VkConverter::textureWrapToVK(parameters.wrap)
+		);
+
 		textureSampler = VulkanHelper::createTextureSampler(
 			VkConverter::textureFilterToVK(parameters.magFilter),
 			VkConverter::textureFilterToVK(parameters.minFilter),
@@ -1091,14 +1101,49 @@ namespace maple
 	auto VulkanTexture3D::updateDescriptor() -> void
 	{
 		descriptor.sampler	   = textureSampler;
-		descriptor.imageView   = mipLevels > 1 ? mipmapVies[0] : textureImageView;
-		descriptor.imageLayout = mipLevels > 1 ? imageLayouts[0] : imageLayout ;
+		descriptor.imageView   = textureImageView;
+		descriptor.imageLayout = imageLayout;
 	}
 
-	auto VulkanTexture3D::getDescriptorInfo(int32_t mipLvl /*= 0*/) -> void*
+	auto VulkanTexture3D::getDescriptorInfo(int32_t mipLvl, TextureFormat format) -> void*
 	{
+
 		descriptor.sampler = textureSampler;
-		descriptor.imageView	= mipLevels > 1 && mipLvl >= 0 ? mipmapVies[mipLvl]   : textureImageView;
+		descriptor.imageView = mipLevels > 1 && mipLvl >= 0 ? mipmapVies[mipLvl] : textureImageView;
+
+		//sampler.  convert is as RGBA8 imageView
+
+		if (format != parameters.format) 
+		{
+			if (parameters.format == TextureFormat::R32I || parameters.format == TextureFormat::R32UI)
+			{
+				if(format == TextureFormat::NONE)
+					format = TextureFormat::RGBA8;
+
+				size_t id = 0;
+				HashCode::hashCode(id, mipLvl, format);
+
+				descriptor.sampler = linearTextureSampler;
+
+				auto iter = formatToLayout.find(id);
+				if (iter == formatToLayout.end())
+				{
+					auto imageView = mipLvl >= 0 ? VulkanHelper::createImageView(textureImage,
+						VkConverter::textureFormatToVK(format, false),
+						1, VK_IMAGE_VIEW_TYPE_3D, VK_IMAGE_ASPECT_COLOR_BIT, 1, 0, mipLvl)
+
+						:
+
+						VulkanHelper::createImageView(textureImage,
+							VkConverter::textureFormatToVK(format, false),
+							mipLevels, VK_IMAGE_VIEW_TYPE_3D, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+
+					iter = formatToLayout.emplace(id, imageView).first;
+				}
+				descriptor.imageView = iter->second;
+			}
+		}
+
 		descriptor.imageLayout  = mipLevels > 1 && mipLvl >= 0 ? imageLayouts[mipLvl] : imageLayout;
 		return (void*)&descriptor;
 	}

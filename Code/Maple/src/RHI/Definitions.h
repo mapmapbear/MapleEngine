@@ -101,7 +101,8 @@ namespace maple
 		DEPTH,
 		STENCIL,
 		DEPTH_STENCIL,
-		SCREEN
+		SCREEN,
+		LENGTH
 	};
 
 	enum class TextureType : int32_t

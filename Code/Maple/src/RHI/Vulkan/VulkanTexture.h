@@ -71,7 +71,7 @@ namespace maple
 			return &descriptor;
 		}
 
-		inline auto getDescriptorInfo(int32_t mipLvl = 0)  -> void* override
+		inline auto getDescriptorInfo(int32_t mipLvl = 0, TextureFormat format = TextureFormat::RGBA8)  -> void* override
 		{
 			return (void*)getDescriptor();
 		}
@@ -165,7 +165,7 @@ namespace maple
 
 		auto transitionImage(VkImageLayout newLayout, const VulkanCommandBuffer* commandBuffer = nullptr) -> void override;
 
-		inline auto getDescriptorInfo(int32_t mipLvl = 0)  -> void* override
+		inline auto getDescriptorInfo(int32_t mipLvl = 0, TextureFormat format = TextureFormat::RGBA8)  -> void* override
 		{
 			return (void*)&descriptor;
 		}
@@ -332,7 +332,7 @@ namespace maple
 			return size;
 		}
 
-		inline auto getDescriptorInfo(int32_t mipLvl = 0)  -> void* override
+		inline auto getDescriptorInfo(int32_t mipLvl = 0, TextureFormat format = TextureFormat::RGBA8)  -> void* override
 		{
 			return (void*)&descriptor;
 		}
@@ -404,7 +404,7 @@ namespace maple
 			return &descriptor;
 		}
 
-		inline auto getDescriptorInfo(int32_t mipLvl = 0)  -> void* override
+		inline auto getDescriptorInfo(int32_t mipLvl = 0, TextureFormat format = TextureFormat::RGBA8)  -> void* override
 		{
 			return (void*)&descriptor;
 		}
@@ -521,7 +521,7 @@ namespace maple
 			return parameters.format;
 		}
 
-		auto getDescriptorInfo(int32_t mipLvl = 0) -> void* override;
+		auto getDescriptorInfo(int32_t mipLvl = 0, TextureFormat format = TextureFormat::RGBA8) -> void* override;
 
 		auto clear(const CommandBuffer* commandBuffer) -> void override;
 
@@ -551,12 +551,17 @@ namespace maple
 		VkImage               textureImage = nullptr;
 		VkDeviceMemory        textureImageMemory = nullptr;
 		VkSampler             textureSampler = nullptr;
+		VkSampler             linearTextureSampler = nullptr;
+
 		VkDescriptorImageInfo descriptor;
 		std::vector< VkImageView > mipmapVies;
 		std::vector< VkImageLayout > imageLayouts;
 
 		VkImageView textureImageView = nullptr;
 		VkImageLayout imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+		//TextureFormat * 100 + mipLevel
+		std::unordered_map<size_t, VkImageView> formatToLayout;
 
 #ifdef USE_VMA_ALLOCATOR
 		VmaAllocation allocation{};

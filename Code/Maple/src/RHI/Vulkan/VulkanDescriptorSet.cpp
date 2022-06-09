@@ -20,7 +20,7 @@ namespace maple
 {
 	namespace
 	{
-		inline auto transitionImageLayout(const CommandBuffer* cmd, Texture* texture,bool sampler2d, VkFormat vkFormat, int32_t mipLevel)
+		inline auto transitionImageLayout(const CommandBuffer* cmd, Texture* texture,bool sampler2d, int32_t mipLevel)
 		{
 			if (!texture)
 				return;
@@ -165,11 +165,12 @@ namespace maple
 								transitionImageLayout(
 									commandBuffer,imageInfo.textures[i].get(), 
 									imageInfo.type == DescriptorType::ImageSampler,
-									VkConverter::textureFormatToVK(imageInfo.format, false,true),
 									imageInfo.mipmapLevel
 								);
 
-								const auto &des = *static_cast<VkDescriptorImageInfo *>(imageInfo.textures[i]->getDescriptorInfo(imageInfo.mipmapLevel));
+								const auto &des = *static_cast<VkDescriptorImageInfo *>(imageInfo.textures[i]->getDescriptorInfo(
+									imageInfo.mipmapLevel, imageInfo.format
+								));
 								imageInfoPool[i + imageIndex] = des;
 								validCount++;
 							}

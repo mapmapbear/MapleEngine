@@ -992,7 +992,7 @@ namespace maple
 		samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 		samplerInfo.magFilter = magFilter;
 		samplerInfo.minFilter = minFilter;
-		samplerInfo.mipmapMode = minFilter == VK_FILTER_LINEAR ? VK_SAMPLER_MIPMAP_MODE_LINEAR : VK_SAMPLER_MIPMAP_MODE_NEAREST;
+		samplerInfo.mipmapMode =  VK_SAMPLER_MIPMAP_MODE_LINEAR;
 		samplerInfo.addressModeU = modeU;
 		samplerInfo.addressModeV = modeV;
 		samplerInfo.addressModeW = modeW;

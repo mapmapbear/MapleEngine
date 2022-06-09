@@ -292,7 +292,8 @@ namespace maple
 						volumePipline.descriptors[mipLvl]->setUniform("UniformBufferObject", "mipDimension", &volumeSize);
 						volumePipline.descriptors[mipLvl]->setUniform("UniformBufferObject", "mipLevel", &mipLvl);
 						volumePipline.descriptors[mipLvl]->setTexture("uVoxelMipmapIn",
-							{ voxelBuffer.voxelTexMipmap.begin(), voxelBuffer.voxelTexMipmap.end() }
+							{ voxelBuffer.voxelTexMipmap.begin(), voxelBuffer.voxelTexMipmap.end() },
+							mipLvl
 						);//todo still bugs in vulkan
 
 						volumePipline.descriptors[mipLvl]->setTexture("uVoxelMipmapOut",
@@ -337,7 +338,7 @@ namespace maple
 				{
 					pipline.descriptors[0]->setUniform("UniformBufferObject", "mipDimension", &halfDimension);
 					pipline.descriptors[0]->setTexture("uVoxelBase", voxelRadiance);
-					pipline.descriptors[0]->setTexture("uVoxelMipmap", { buffer.voxelTexMipmap.begin(),buffer.voxelTexMipmap.end() }, -1);
+					pipline.descriptors[0]->setTexture("uVoxelMipmap", { buffer.voxelTexMipmap.begin(),buffer.voxelTexMipmap.end() });
 					pipline.descriptors[0]->update(renderData.computeCommandBuffer);
 				}
 
@@ -405,7 +406,12 @@ namespace maple
 					pipelineInfo.groupCountZ
 				);
 
-				Renderer::memoryBarrier(renderData.computeCommandBuffer, MemoryBarrierFlags::Texture_Fetch_Barrier | MemoryBarrierFlags::Shader_Storage_Barrier);
+				Renderer::memoryBarrier(renderData.computeCommandBuffer, 
+					MemoryBarrierFlags::Texture_Fetch_Barrier 
+					| MemoryBarrierFlags::Shader_Storage_Barrier 
+					| MemoryBarrierFlags::Shader_Image_Access_Barrier
+				);
+
 				pipeline->end(renderData.computeCommandBuffer);
 
 				generateMipmapMipmap(buffer.voxelVolume[VoxelBufferId::Radiance], renderData, buffer, basePipeline);
