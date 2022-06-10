@@ -979,15 +979,18 @@ namespace maple
 
 		textureImageView = VulkanHelper::createImageView(textureImage, vkFormat, mipLevels, VK_IMAGE_VIEW_TYPE_3D, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 		
-		linearTextureSampler = VulkanHelper::createTextureSampler(
-			VK_FILTER_LINEAR,
-			VK_FILTER_LINEAR,
-			0.0f, static_cast<float>(mipLevels), true,
-			VulkanDevice::get()->getPhysicalDevice()->getProperties().limits.maxSamplerAnisotropy,
-			VkConverter::textureWrapToVK(parameters.wrap),
-			VkConverter::textureWrapToVK(parameters.wrap),
-			VkConverter::textureWrapToVK(parameters.wrap)
-		);
+		if (loadOptions.mutableFormat) 
+		{
+			linearTextureSampler = VulkanHelper::createTextureSampler(
+				VK_FILTER_LINEAR,
+				VK_FILTER_LINEAR,
+				0.0f, static_cast<float>(mipLevels), true,
+				VulkanDevice::get()->getPhysicalDevice()->getProperties().limits.maxSamplerAnisotropy,
+				VkConverter::textureWrapToVK(parameters.wrap),
+				VkConverter::textureWrapToVK(parameters.wrap),
+				VkConverter::textureWrapToVK(parameters.wrap)
+			);
+		}
 
 		textureSampler = VulkanHelper::createTextureSampler(
 			VkConverter::textureFilterToVK(parameters.magFilter),

@@ -94,7 +94,12 @@ namespace maple
 						component::Voxelization::voxelDimension,
 						component::Voxelization::voxelDimension,
 						component::Voxelization::voxelDimension,
-						{ TextureFormat::R32UI, TextureFilter::Nearest,TextureWrap::ClampToEdge},
+#ifdef MAPLE_OPENGL
+						//TODO I did not find a good way to sampler R32UI as float sampler. using RGBA8 instead..
+						{ TextureFormat::RGBA8, TextureFilter::Linear,TextureWrap::ClampToEdge },
+#else
+						{ TextureFormat::R32UI, TextureFilter::Nearest,TextureWrap::ClampToEdge },
+#endif // MAPLE_OPENGL
 						{ false,false,false,true }
 					);
 
@@ -110,6 +115,7 @@ namespace maple
 						{ TextureFormat::RGBA8, TextureFilter::Linear,TextureWrap::ClampToEdge },
 						{ false,false,true }
 					);
+					buffer.voxelTexMipmap[i]->setName("Direction:" + std::to_string(i));
 				}
 
 				buffer.staticFlag = Texture3D::create(
@@ -291,9 +297,9 @@ namespace maple
 					{
 						volumePipline.descriptors[mipLvl]->setUniform("UniformBufferObject", "mipDimension", &volumeSize);
 						volumePipline.descriptors[mipLvl]->setUniform("UniformBufferObject", "mipLevel", &mipLvl);
+
 						volumePipline.descriptors[mipLvl]->setTexture("uVoxelMipmapIn",
-							{ voxelBuffer.voxelTexMipmap.begin(), voxelBuffer.voxelTexMipmap.end() },
-							mipLvl
+							{ voxelBuffer.voxelTexMipmap.begin(), voxelBuffer.voxelTexMipmap.end() }
 						);//todo still bugs in vulkan
 
 						volumePipline.descriptors[mipLvl]->setTexture("uVoxelMipmapOut",
@@ -516,6 +522,7 @@ namespace maple
 				pipeInfo.depthTest = false;
 				pipeInfo.clearTargets = true;
 				pipeInfo.colorTargets[0] = buffer.colorBuffer;
+
 				pipeInfo.blendMode = BlendMode::SrcAlphaOneMinusSrcAlpha;
 
 				auto pipeline = Pipeline::get(pipeInfo, buffer.descriptors, graph);

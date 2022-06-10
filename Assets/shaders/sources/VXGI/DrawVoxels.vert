@@ -1,14 +1,13 @@
 #version 450
-#extension GL_ARB_shader_image_load_store : require
-#extension GL_ARB_separate_shader_objects : enable
+//#extension GL_ARB_shader_image_load_store : require
+//#extension GL_ARB_separate_shader_objects : enable
 
-layout(set = 0, binding = 0, r32ui) uniform readonly uimage3D uVoxelBuffer;
-
+layout(set = 0, binding = 0,rgba8) uniform image3D uVoxelBuffer;
 layout(set = 0, binding = 1) uniform UniformBufferObjectVert 
 {    
 	vec4 colorChannels;
     int volumeDimension;
-	int padd;
+	int type;
 	int padd1;
 	int padd2;
 } ubo;
@@ -26,7 +25,7 @@ void main()
 
 	ivec3 texPos = ivec3(position);
 	
-	albedo = unpackUnorm4x8(imageLoad(uVoxelBuffer, texPos).r);
+	albedo = imageLoad(uVoxelBuffer, texPos);
 
 	uvec4 channels = uvec4(floor(ubo.colorChannels));
 

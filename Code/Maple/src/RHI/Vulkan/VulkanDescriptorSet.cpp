@@ -189,7 +189,7 @@ namespace maple
 							MAPLE_ASSERT(writeDescriptorSet.descriptorCount != 0, "writeDescriptorSet.descriptorCount should be greater than zero");
 
 							writeDescriptorSetPool[descriptorWritesCount] = writeDescriptorSet;
-							imageIndex++;
+							imageIndex += validCount;
 							descriptorWritesCount++;
 						}
 					}
