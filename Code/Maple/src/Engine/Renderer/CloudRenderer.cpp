@@ -234,7 +234,6 @@ namespace maple
 			{
 				auto [cloud, light, transform] = query.convert(entity);
 
-				
 				data.uniformObject.invProj = glm::inverse(camera.proj);
 				data.uniformObject.invView = camera.cameraTransform->getWorldMatrix();
 				data.uniformObject.lightDirection = light.lightData.direction;
@@ -279,9 +278,38 @@ namespace maple
 
 				if (cloud.weathDirty)
 				{
-					weather.execute(render.commandBuffer, graph);
+					weather.execute(render.computeCommandBuffer, graph);
 				}
 				break;
+			}
+		}
+	}
+
+	namespace compute_cloud 
+	{
+		using Entity = ecs::Chain
+			::Write<component::CloudRenderData>
+			::Read<component::CameraView>
+			::Read<component::RendererData>
+			::Read<component::WeatherPass>
+			::Write<capture_graph::component::RenderGraph>
+			::To<ecs::Entity>;
+
+		inline auto system(Entity entity, ecs::World world)
+		{
+			auto [data, camera, render, weather, graph] = entity;
+
+			if (data.pipeline)
+			{
+				auto groupCountX = static_cast<uint32_t>(glm::ceil(render.gbuffer->getWidth() / (float)data.cloudShader->getLocalSizeX()));
+				auto groupCountY = static_cast<uint32_t>(glm::ceil(render.gbuffer->getHeight() / (float)data.cloudShader->getLocalSizeY()));
+				data.uniformObject.frames++;
+				data.descriptorSet->setUniformBufferData("UniformBufferObject", &data.uniformObject);
+				data.descriptorSet->update(render.computeCommandBuffer);
+				data.pipeline->bind(render.computeCommandBuffer);
+				Renderer::bindDescriptorSets(data.pipeline.get(), render.computeCommandBuffer, 0, { data.descriptorSet });
+				Renderer::dispatch(render.computeCommandBuffer,groupCountX,groupCountY,1);
+				data.pipeline->end(render.computeCommandBuffer);
 			}
 		}
 	}
@@ -302,39 +330,25 @@ namespace maple
 
 			if (data.pipeline)
 			{
-				{
-					data.uniformObject.frames++;
-					data.descriptorSet->setUniformBufferData("UniformBufferObject", &data.uniformObject);
-					data.descriptorSet->update(render.commandBuffer);
-					data.pipeline->bind(render.commandBuffer);
-					Renderer::bindDescriptorSets(data.pipeline.get(), render.commandBuffer, 0, { data.descriptorSet });
-					Renderer::dispatch(render.commandBuffer,
-						render.gbuffer->getWidth() / data.cloudShader->getLocalSizeX(),
-						render.gbuffer->getHeight() / data.cloudShader->getLocalSizeY(),
-						1);
-					data.pipeline->end(render.commandBuffer);
-				}
+				data.screenDescriptorSet->update(render.commandBuffer);
+				PipelineInfo info;
+				info.shader = data.screenCloudShader;
+				info.cullMode = CullMode::None;
+				info.colorTargets[0] = render.gbuffer->getBuffer(GBufferTextures::SCREEN);
+				info.clearTargets = false;
+				info.transparencyEnabled = false;
+				info.depthTest = true;
+				info.depthTarget = render.gbuffer->getDepthBuffer();
 
-				{
-					data.screenDescriptorSet->update(render.commandBuffer);
-					PipelineInfo info;
-					info.shader = data.screenCloudShader;
-					info.colorTargets[0] = render.gbuffer->getBuffer(GBufferTextures::SCREEN);
-					info.polygonMode = PolygonMode::Fill;
-					info.clearTargets = false;
-					info.transparencyEnabled = false;
-					info.depthTarget = render.gbuffer->getDepthBuffer();
+				auto pipeline = Pipeline::get(info, { data.screenDescriptorSet }, graph);
 
-					auto pipeline = Pipeline::get(info, { data.screenDescriptorSet }, graph);
+				data.screenDescriptorSet->setTexture("uCloudSampler", data.computeInputs[0]);
+				data.screenDescriptorSet->update(render.commandBuffer);
 
-					data.screenDescriptorSet->setTexture("uCloudSampler", data.computeInputs[0]);
-					data.screenDescriptorSet->update(render.commandBuffer);
-
-					pipeline->bind(render.commandBuffer);
-					Renderer::bindDescriptorSets(pipeline.get(), render.commandBuffer, 0, { data.screenDescriptorSet });
-					Renderer::drawMesh(render.commandBuffer, pipeline.get(), render.screenQuad.get());
-					pipeline->end(render.commandBuffer);
-				}
+				pipeline->bind(render.commandBuffer);
+				Renderer::bindDescriptorSets(pipeline.get(), render.commandBuffer, 0, { data.screenDescriptorSet });
+				Renderer::drawMesh(render.commandBuffer, pipeline.get(), render.screenQuad.get());
+				pipeline->end(render.commandBuffer);
 			}
 		}
 	}
@@ -349,6 +363,11 @@ namespace maple
 
 			executePoint->registerWithinQueue<begin_scene::system>(begin);
 			executePoint->registerWithinQueue<on_render::system>(renderer);
+		}
+
+		auto registerComputeCloud(ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void
+		{
+			executePoint->registerWithinQueue<compute_cloud::system>(renderer);
 		}
 	}
 };        // namespace maple

@@ -214,13 +214,7 @@ namespace maple
 
 		auto pipeline = Pipeline::get(pipeInfo,{ irradianceSet }, graph);
 
-
-		LOGI("{:x},{:x},{:x}",
-			irradianceCaptureColor->toIntID(), 
-			envComponent->irradianceMap->toIntID(),
-			skyboxCube->toIntID()
-		);
-
+	
 		for (auto faceId = 0; faceId < 6; faceId++)
 		{
 			auto  fb        = pipeline->bind(cmd, 0, faceId);
@@ -235,6 +229,7 @@ namespace maple
 			pipeline->end(cmd);
 			envComponent->irradianceMap->update(cmd, fb, faceId);
 		}
+		envComponent->irradianceMap->generateMipmap(cmd);
 	}
 
 	auto PrefilterRenderer::generatePrefilterMap(const CommandBuffer* cmd,capture_graph::component::RenderGraph & graph) -> void
