@@ -18,6 +18,8 @@ elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
     set(GLSL_VALIDATOR "$ENV{VULKAN_SDK}/Bin32/glslangValidator.exe")
 endif()
 
+
+
 FILE (STRINGS "lib/bullet3/VERSION" BULLET_VERSION)
 
 add_subdirectory(lib/spdlog)
@@ -83,6 +85,8 @@ file(GLOB VK_APP_SRC
 	src/Engine/LPVGI/*.h
 	src/Engine/VXGI/*.cpp
 	src/Engine/VXGI/*.h
+	src/Engine/DDGI/*.cpp
+	src/Engine/DDGI/*.h
 	src/RHI/*.h
 	src/RHI/*.cpp
 	src/RHI/Vulkan/*.h
@@ -180,6 +184,18 @@ endif()
 
 	set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 
+	
+if(MAPLE_VULKAN)
+	find_package(Vulkan REQUIRED)
+	IF (NOT Vulkan_FOUND)
+		message(FATAL_ERROR "Could not find Vulkan library!")
+	ELSE()
+	    message(STATUS ${Vulkan_LIBRARY})
+	ENDIF()
+
+ 	target_link_libraries(MapleEngine ${Vulkan_LIBRARY})
+endif()
+
 	target_include_directories(MapleEngine PUBLIC
 		src
 		${ENGINE_LIB_SRC_DIR}/opengl/include
@@ -211,13 +227,13 @@ endif()
 		${ENGINE_LIB_SRC_DIR}/IconFontCppHeaders
 		${ENGINE_LIB_SRC_DIR}/bullet3/src
 		${ENGINE_LIB_SRC_DIR}/renderDoc
+		${ENGINE_LIB_SRC_DIR}/vulkan-mem
+		${Vulkan_INCLUDE_DIRS}
 	)
 
 	target_link_libraries(MapleEngine 
 		${ENGINE_LIB_SRC_DIR}/opengl/lib/${Arch}/glfw3.lib
 		${ENGINE_LIB_SRC_DIR}/opengl/lib/${Arch}/opengl32.lib
-		${ENGINE_LIB_SRC_DIR}/vulkan/lib/${Arch}/vulkan-1.lib
-		${ENGINE_LIB_SRC_DIR}/vulkan/lib/${Arch}/VkLayer_utils.lib
 		${ENGINE_LIB_SRC_DIR}/libmono/6.13.0/windows/${Arch}/libmono-static-sgen.lib
 		tinyobjloader
 		#imgui
@@ -243,12 +259,18 @@ endif()
 		LinearMath
 	)
 
+
 	find_package(OpenMP)
 if(OpenMP_CXX_FOUND)
     target_link_libraries(MapleEngine OpenMP::OpenMP_CXX)
 endif()
 
-	set_target_properties(OpenFBX lua zlib tinyobjloader tellenc spirvCross ktx spdlog_headers_for_ide stb_image glad TracyClient filedlg imgui-node-editor iconv Bullet3Common BulletDynamics BulletCollision LinearMath BulletInverseDynamics BulletSoftBody PROPERTIES FOLDER Library)
+	set_target_properties(
+	OpenFBX lua zlib tinyobjloader 
+	tellenc spirvCross ktx 
+	spdlog_headers_for_ide 
+	stb_image glad TracyClient filedlg imgui-node-editor 
+	iconv Bullet3Common BulletDynamics BulletCollision LinearMath BulletInverseDynamics BulletSoftBody PROPERTIES FOLDER Library)
 	
 
 foreach(GLSL ${SHADERS_GLSL})
@@ -258,6 +280,10 @@ foreach(GLSL ${SHADERS_GLSL})
 	string(REPLACE ${CMAKE_CURRENT_LIST_DIR}/src/Shaders "" DIR_NAME ${GLSL})
 
     set(SPIRV "${LIBRARY_OUTPUT_PATH}/../../Assets/shaders/spv${DIR_NAME}.spv")
+
+	get_filename_component(FILE_NAME ${GLSL} NAME)
+
+	string(REPLACE ${FILE_NAME} "" DIR_NAME ${DIR_NAME})
 
     add_custom_command(
         OUTPUT ${SPIRV}

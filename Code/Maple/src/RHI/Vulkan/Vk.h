@@ -5,7 +5,7 @@
 #pragma once
 #include <vulkan/vulkan.h>
 #ifdef USE_VMA_ALLOCATOR
-#	include <vulkan/vk_mem_alloc.h>
+#	include <vk_mem_alloc.h>
 #endif        // USE_VMA_ALLOCATOR
 
 namespace maple
@@ -32,4 +32,8 @@ namespace maple
 	class VulkanShader;
 	class VulkanCommandPool;
 	class VulkanCommandBuffer;
+
+
+	auto loadVKRayTracingPipelineKHR(VkInstance instance, PFN_vkGetInstanceProcAddr getInstanceProcAddr, VkDevice device, PFN_vkGetDeviceProcAddr getDeviceProcAddr)->int32_t;
+	auto loadVKAccelerationStructureKHR(VkInstance instance, PFN_vkGetInstanceProcAddr getInstanceProcAddr, VkDevice device, PFN_vkGetDeviceProcAddr getDeviceProcAddr)->int32_t;
 }        // namespace maple

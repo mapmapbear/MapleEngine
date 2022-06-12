@@ -56,9 +56,7 @@ namespace maple
 				extensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 			}
 
-			extensions.emplace_back("VK_EXT_debug_report");
 			extensions.emplace_back("VK_KHR_surface");
-			extensions.emplace_back("VK_EXT_descriptor_indexing");
 #if defined(TRACY_ENABLE) && defined(PLATFORM_WINDOWS)
 			//extensions.emplace_back("VK_EXT_calibrated_timestamps");
 #endif
@@ -274,12 +272,14 @@ namespace maple
 			LOGC("[VULKAN] Extensions requested are not available!");
 		}
 
+		instanceExtensionNames.emplace_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+
 		VkApplicationInfo appInfo  = {};
 		appInfo.pApplicationName   = "Game";
 		appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
 		appInfo.pEngineName        = "MapleEngine";
 		appInfo.engineVersion      = VK_MAKE_VERSION(1, 0, 0);
-		appInfo.apiVersion         = VK_API_VERSION_1_1;
+		appInfo.apiVersion         = VK_API_VERSION_1_2;
 
 		VkInstanceCreateInfo createInfo    = {};
 		createInfo.pApplicationInfo        = &appInfo;

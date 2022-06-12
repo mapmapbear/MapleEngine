@@ -145,6 +145,7 @@ namespace maple
 			}
 		}
 
+
 		static const float defaultQueuePriority(0.0f);
 
 		int32_t requestedQueueTypes = VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT;        // | VK_QUEUE_COMPUTE_BIT | VK_QUEUE_TRANSFER_BIT;
@@ -207,6 +208,28 @@ namespace maple
 		return -1;
 	}
 
+	auto VulkanPhysicalDevice::getRaytracingProperties() -> void
+	{
+		if (raytracingSupport)
+		{
+
+			memset(&rayTracingPipelineProperties, 0, sizeof(VkPhysicalDeviceRayTracingPipelinePropertiesKHR));
+			memset(&accelerationStructureProperties, 0, sizeof(VkPhysicalDeviceAccelerationStructurePropertiesKHR));
+
+			rayTracingPipelineProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;
+			VkPhysicalDeviceProperties2 prop{};
+			prop.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+			prop.pNext = &rayTracingPipelineProperties;
+			vkGetPhysicalDeviceProperties2(physicalDevice, &prop);
+
+			accelerationStructureProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
+			VkPhysicalDeviceFeatures2 features2{};
+			features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+			features2.pNext = &accelerationStructureProperties;
+			vkGetPhysicalDeviceFeatures2(physicalDevice, &features2);
+		}
+	}
+
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	VulkanDevice::VulkanDevice()
@@ -254,9 +277,26 @@ namespace maple
 
 		std::vector<const char*> deviceExtensions = {
 			VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-			VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME,
-			VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME
+			VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME
 		};
+
+		if (physicalDevice->isExtensionSupported(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME))
+		{
+			deviceExtensions.emplace_back(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME);
+			deviceExtensions.emplace_back(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
+			deviceExtensions.emplace_back(VK_KHR_RAY_QUERY_EXTENSION_NAME);
+			deviceExtensions.emplace_back(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
+			deviceExtensions.emplace_back(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
+			deviceExtensions.emplace_back(VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME);
+			deviceExtensions.emplace_back(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME);
+			deviceExtensions.emplace_back(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
+			physicalDevice->raytracingSupport = true;
+		}
+		deviceExtensions.emplace_back(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
+		deviceExtensions.emplace_back(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
+		deviceExtensions.emplace_back(VK_KHR_MAINTENANCE3_EXTENSION_NAME);
+		deviceExtensions.emplace_back(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
+		deviceExtensions.emplace_back(VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME);
 
 		if (physicalDevice->isExtensionSupported(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
 		{
@@ -342,6 +382,17 @@ namespace maple
 
 		createTracyContext();
 		createPipelineCache();
+
+		physicalDevice->getRaytracingProperties();
+
+		maple::loadVKRayTracingPipelineKHR(
+			VulkanContext::get()->getVkInstance(), vkGetInstanceProcAddr, device, vkGetDeviceProcAddr
+		);
+
+		maple::loadVKAccelerationStructureKHR(
+			VulkanContext::get()->getVkInstance(), vkGetInstanceProcAddr, device, vkGetDeviceProcAddr
+		);
+
 		return true;
 	}
 

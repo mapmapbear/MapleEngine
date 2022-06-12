@@ -478,7 +478,6 @@ namespace maple
 #endif
 	};
 
-
 	class VulkanTexture3D : public Texture3D, public VkTexture
 	{
 	public:
@@ -567,4 +566,105 @@ namespace maple
 		VmaAllocation allocation{};
 #endif
 	};
+
+	class VulkanTexture2DArray : public Texture2DArray, public VkTexture
+	{
+	public:
+		VulkanTexture2DArray(uint32_t width, uint32_t height, uint32_t count, TextureFormat format, TextureParameters parameters, const CommandBuffer* commandBuffer);
+		~VulkanTexture2DArray();
+
+		auto bind(uint32_t slot = 0) const -> void override {};
+		auto unbind(uint32_t slot = 0) const -> void override {};
+		auto resize(uint32_t width, uint32_t height, uint32_t count, const CommandBuffer* commandBuffer) -> void override;
+
+		auto getHandle() -> void* override
+		{
+			return (void*)this;
+		}
+
+		inline auto getImageView(int32_t index) const
+		{
+			return imageViews[index];
+		}
+		inline auto getSampler() const
+		{
+			return textureSampler;
+		}
+		inline auto getDescriptor() const
+		{
+			return &descriptor;
+		}
+
+		inline auto getDescriptorInfo(int32_t mipLvl = 0, TextureFormat format = TextureFormat::RGBA8)  -> void* override
+		{
+			return (void*)&descriptor;
+		}
+
+		inline auto getWidth() const -> uint32_t override
+		{
+			return width;
+		}
+	
+		inline auto getHeight() const -> uint32_t override
+		{
+			return height;
+		}
+
+		inline auto getFilePath() const -> const std::string & override
+		{
+			return name;
+		}
+
+		inline auto getFormat() const -> TextureFormat override
+		{
+			return format;
+		}
+
+		inline auto getCount() const
+		{
+			return count;
+		}
+
+		inline auto getImage() const -> VkImage override
+		{
+			return textureImage;
+		}
+
+		inline auto getImageLayout() const -> VkImageLayout override
+		{
+			return imageLayout;
+		}
+
+		auto getHandleArray(uint32_t index) -> void* override;
+		auto updateDescriptor() -> void;
+
+		auto transitionImage(VkImageLayout newLayout, const VulkanCommandBuffer* commandBuffer) -> void override;
+
+		auto toIntID() const->const uint64_t override { return (uint64_t)textureImage; };
+
+
+	protected:
+		auto init(const CommandBuffer* commandBuffer) -> void override;
+		auto release() -> void;
+
+	private:
+		uint32_t      handle{};
+		uint32_t      width = 0;
+		uint32_t      height = 0;
+		uint32_t      count = 0;
+		TextureFormat format;
+		TextureParameters parameters;
+
+		VkImageLayout            imageLayout;
+		VkImage                  textureImage{};
+		VkDeviceMemory           textureImageMemory{};
+		VkImageView              textureImageView{};
+		VkSampler                textureSampler{};
+		VkDescriptorImageInfo    descriptor{};
+		std::vector<VkImageView> imageViews;
+#ifdef USE_VMA_ALLOCATOR
+		VmaAllocation allocation{};
+#endif
+	};
+
 };        // namespace maple

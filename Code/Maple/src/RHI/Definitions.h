@@ -112,6 +112,7 @@ namespace maple
 		Depth,
 		DepthArray,
 		Cube,
+		Color2DArray,
 		Other
 	};
 

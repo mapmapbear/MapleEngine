@@ -187,4 +187,22 @@ namespace maple
 			return TextureType::DepthArray;
 		};
 	};
+
+	class MAPLE_EXPORT Texture2DArray : public Texture
+	{
+	public:
+		static auto create(uint32_t width, uint32_t height, uint32_t count, 
+			TextureFormat format = TextureFormat::RGBA8, TextureParameters parameters = {}, const CommandBuffer* commandBuffer = nullptr)->std::shared_ptr<Texture2DArray>;
+
+		virtual auto init(const CommandBuffer* commandBuffer = nullptr) -> void = 0;
+		virtual auto resize(uint32_t width, uint32_t height, uint32_t count, const CommandBuffer* commandBuffer = nullptr) -> void = 0;
+		virtual auto getHandleArray(uint32_t index) -> void*
+		{
+			return getHandle();
+		};
+		inline auto getType() const -> TextureType override
+		{
+			return TextureType::Color2DArray;
+		};
+	};
 }        // namespace maple

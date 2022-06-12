@@ -97,6 +97,11 @@ namespace maple
 			return shaderStages;
 		}
 
+		inline auto& getShaderGroups() const
+		{
+			return shaderGroups;
+		}
+
 	  private:
 		auto loadShader(const std::vector<uint32_t> &spvCode, ShaderType type, int32_t currentShaderStage) -> void;
 		auto init() -> void;
@@ -106,6 +111,7 @@ namespace maple
 		VkPipelineLayout pipelineLayout;
 
 		std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
+		std::vector<VkRayTracingShaderGroupCreateInfoKHR> shaderGroups;
 
 		uint32_t vertexInputStride = 0;
 

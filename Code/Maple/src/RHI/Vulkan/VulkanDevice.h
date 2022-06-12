@@ -48,6 +48,11 @@ namespace maple
 			return memoryProperties;
 		}
 
+		auto getRaytracingProperties() -> void;
+
+		inline auto& getRayTracingPipelineProperties() const { return rayTracingPipelineProperties; }
+		inline auto& getAccelerationStructureProperties() const { return accelerationStructureProperties; }
+
 	private:
 		std::vector<VkQueueFamilyProperties> queueFamilyProperties;
 		std::unordered_set<std::string>      supportedExtensions;
@@ -56,9 +61,12 @@ namespace maple
 		VkPhysicalDevice                 physicalDevice;
 		VkPhysicalDeviceProperties       physicalDeviceProperties;
 		VkPhysicalDeviceMemoryProperties memoryProperties;
+		VkPhysicalDeviceRayTracingPipelinePropertiesKHR rayTracingPipelineProperties;
+		VkPhysicalDeviceAccelerationStructurePropertiesKHR accelerationStructureProperties;
 
 		friend class VulkanDevice;
 		QueueFamilyIndices indices;
+		bool raytracingSupport = false;
 	};
 
 	class VulkanDevice final
@@ -151,5 +159,7 @@ namespace maple
 #endif
 
 		bool enableDebugMarkers = false;
+
+
 };
 };        // namespace maple

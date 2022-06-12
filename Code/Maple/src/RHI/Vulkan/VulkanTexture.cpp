@@ -1146,8 +1146,110 @@ namespace maple
 				descriptor.imageView = iter->second;
 			}
 		}
-
-	
 		return (void*)&descriptor;
+	}
+
+
+	VulkanTexture2DArray::VulkanTexture2DArray(uint32_t width, uint32_t height, uint32_t count, TextureFormat format, TextureParameters parameters, const CommandBuffer* commandBuffer) :
+		width(width), height(height), count(count),format(format),parameters(parameters)
+	{
+		init(commandBuffer);
+	}
+
+	VulkanTexture2DArray::~VulkanTexture2DArray()
+	{
+		release();
+	}
+
+	auto VulkanTexture2DArray::resize(uint32_t width, uint32_t height, uint32_t count, const CommandBuffer* commandBuffer) -> void
+	{
+		this->width = width;
+		this->height = height;
+		this->count = count;
+		release();
+		init(commandBuffer);
+	}
+
+	auto VulkanTexture2DArray::getHandleArray(uint32_t index) -> void* 
+	{
+		descriptor.imageView = getImageView(index);
+		return (void*)&descriptor;
+	}
+
+	auto VulkanTexture2DArray::updateDescriptor() -> void
+	{
+		descriptor.sampler = textureSampler;
+		descriptor.imageView = textureImageView;
+		descriptor.imageLayout = imageLayout;
+	}
+
+	auto VulkanTexture2DArray::transitionImage(VkImageLayout newLayout, const VulkanCommandBuffer* commandBuffer) -> void 
+	{
+		PROFILE_FUNCTION();
+		if (newLayout != imageLayout)
+		{
+			VulkanHelper::transitionImageLayout(textureImage, VkConverter::textureFormatToVK(format), imageLayout, newLayout, 1, count, commandBuffer);
+		}
+		imageLayout = newLayout;
+		updateDescriptor();
+	}
+
+	auto VulkanTexture2DArray::init(const CommandBuffer* commandBuffer) -> void 
+	{
+		auto vkFormat = VkConverter::textureFormatToVK(format);
+
+#ifdef USE_VMA_ALLOCATOR
+		VulkanHelper::createImage(width, height, 1, vkFormat, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory, count, 1, allocation);
+#else
+		VulkanHelper::createImage(width, height, 1, vkFormat, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory, count, 1);
+#endif
+		textureImageView = VulkanHelper::createImageView(textureImage, vkFormat, 1, VK_IMAGE_VIEW_TYPE_2D_ARRAY, VK_IMAGE_ASPECT_COLOR_BIT, count);
+		for (uint32_t i = 0; i < count; i++)
+		{
+			imageViews.emplace_back(VulkanHelper::createImageView(textureImage, vkFormat, 1, VK_IMAGE_VIEW_TYPE_2D_ARRAY, VK_IMAGE_ASPECT_COLOR_BIT, 1, i));
+		}
+
+		auto vkCmd = static_cast<const VulkanCommandBuffer*>(commandBuffer);
+
+		VulkanHelper::transitionImageLayout(textureImage, vkFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, 1, count, vkCmd, true);
+
+		imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+		textureSampler = VulkanHelper::createTextureSampler();
+		updateDescriptor();
+		DEBUG_IMAGE_ADDRESS(textureImage);
+	}
+
+	auto VulkanTexture2DArray::release() -> void
+	{
+		auto& queue = VulkanContext::getDeletionQueue();
+
+		auto textureImageView = this->textureImageView;
+		auto textureImage = this->textureImage;
+		auto textureImageMemory = this->textureImageMemory;
+		auto textureSampler = this->textureSampler;
+		auto imageViews = this->imageViews;
+		auto size = count;
+
+		queue.emplace([textureImageView, textureSampler, imageViews, size]() {
+			vkDestroyImageView(*VulkanDevice::get(), textureImageView, nullptr);
+
+			if (textureSampler)
+				vkDestroySampler(*VulkanDevice::get(), textureSampler, nullptr);
+
+			for (uint32_t i = 0; i < size; i++)
+			{
+				vkDestroyImageView(*VulkanDevice::get(), imageViews[i], nullptr);
+			}
+			});
+
+#ifdef USE_VMA_ALLOCATOR
+		auto alloc = allocation;
+		queue.emplace([textureImage, alloc] { vmaDestroyImage(VulkanDevice::get()->getAllocator(), textureImage, alloc); });
+#else
+		queue.emplace([textureImage, textureImageMemory]() {
+			vkDestroyImage(*VulkanDevice::get(), textureImage, nullptr);
+			vkFreeMemory(*VulkanDevice::get(), textureImageMemory, nullptr);
+			});
+#endif
 	}
 };        // namespace maple

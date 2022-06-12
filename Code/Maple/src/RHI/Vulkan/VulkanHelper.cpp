@@ -336,7 +336,7 @@ namespace maple
 		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 		appInfo.pApplicationName = name.c_str();
 		appInfo.pEngineName = name.c_str();
-		appInfo.apiVersion = VK_API_VERSION_1_0;
+		appInfo.apiVersion = VK_API_VERSION_1_2;
 		appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
 		return appInfo;
 	}

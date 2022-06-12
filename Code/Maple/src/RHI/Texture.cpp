@@ -196,4 +196,14 @@ namespace maple
 		return std::make_shared <VulkanTexture3D>(width, height, depth, parameters, loadOptions);
 #endif        // MAPLE_VULKAN
 	}
+
+	auto Texture2DArray::create(uint32_t width, uint32_t height, uint32_t count, TextureFormat format , TextureParameters parameters , const CommandBuffer* commandBuffer ) ->std::shared_ptr<Texture2DArray>
+	{
+#ifdef MAPLE_OPENGL
+		return std::make_shared<GLTexture2DArray>(width, height, count,format, parameters);
+#endif        // MAPLE_OPENGL
+#ifdef MAPLE_VULKAN
+		return std::make_shared<VulkanTexture2DArray>(width, height, count, format ,parameters, commandBuffer);
+#endif        // MAPLE_VULKAN
+	}
 }        // namespace maple
