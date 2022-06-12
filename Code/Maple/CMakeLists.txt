@@ -6,24 +6,19 @@ get_filename_component(ENGINE_LIB_SRC_DIR
                        ${CMAKE_CURRENT_LIST_DIR}/lib
                        ABSOLUTE)
 
-
-get_filename_component(ENGINE_ASSET_DIR
-						${CMAKE_CURRENT_LIST_DIR}/../../Assets
-                      ABSOLUTE)					   
-					   
-get_filename_component(TOOL_CHAIN_DIR
-					  ${CMAKE_SOURCE_DIR}/Toolchains
-                      ABSOLUTE)					   
-					   					  
-get_filename_component(ASSET_SHADER_DIR
-					   ${CMAKE_CURRENT_LIST_DIR}/../../Assets/shaders
-					   ABSOLUTE)		
-
 set(BULLET_PHYSICS_SOURCE_DIR "${ENGINE_LIB_SRC_DIR}/bullet3/")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 
-FILE (STRINGS "lib/bullet3/VERSION" BULLET_VERSION)#Bullet3
+if(CMAKE_SIZEOF_VOID_P EQUAL 8) 
+    message("Using 64-bit glslangValidator")
+    set(GLSL_VALIDATOR "$ENV{VULKAN_SDK}/Bin/glslangValidator.exe")
+elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
+    message("Using 32-bit glslangValidator")
+    set(GLSL_VALIDATOR "$ENV{VULKAN_SDK}/Bin32/glslangValidator.exe")
+endif()
+
+FILE (STRINGS "lib/bullet3/VERSION" BULLET_VERSION)
 
 add_subdirectory(lib/spdlog)
 add_subdirectory(lib/stb_image)
@@ -43,22 +38,6 @@ add_subdirectory(lib/mio)
 add_subdirectory(lib/bullet3/src)
 
 
-file(GLOB_RECURSE SHADERS_GLSL 
-	${ASSET_SHADER_DIR}/*.vert 
-	${ASSET_SHADER_DIR}/*.frag 
-	${ASSET_SHADER_DIR}/*.comp 
-	${ASSET_SHADER_DIR}/*.geom 
-	${ASSET_SHADER_DIR}/*.tesc 
-	${ASSET_SHADER_DIR}/*.tese 
-	${ASSET_SHADER_DIR}/*.mesh 
-	${ASSET_SHADER_DIR}/*.task 
-	${ASSET_SHADER_DIR}/*.rgen
-	${ASSET_SHADER_DIR}/*.rchit 
-	${ASSET_SHADER_DIR}/*.rmiss
-	${ASSET_SHADER_DIR}/*.shader
-)
-
-
 file(GLOB IMGUI_SRC 
 	${ENGINE_LIB_SRC_DIR}/imgui/src/imgui_tables.cpp
 	${ENGINE_LIB_SRC_DIR}/imgui/src/imgui_draw.cpp
@@ -76,6 +55,21 @@ file(GLOB IMGUI_SRC
 	${ENGINE_LIB_SRC_DIR}/imgui/src/implot_items.cpp
 	${ENGINE_LIB_SRC_DIR}/imgui/src/implot.cpp
 	${ENGINE_LIB_SRC_DIR}/imGuIZMOquat/imGuIZMOquat.cpp
+)
+
+file(GLOB_RECURSE SHADERS_GLSL 
+	src/Shaders/*.vert 
+	src/Shaders/*.frag 
+	src/Shaders/*.comp 
+	src/Shaders/*.geom 
+	src/Shaders/*.tesc 
+	src/Shaders/*.tese 
+	src/Shaders/*.mesh 
+	src/Shaders/*.task 
+	src/Shaders/*.rgen
+	src/Shaders/*.rchit 
+	src/Shaders/*.rmiss
+	src/Shaders/*.shader
 )
 
 file(GLOB VK_APP_SRC
@@ -176,7 +170,7 @@ if (${Target} MATCHES "Windows")
 
 	source_group(TREE ${CMAKE_CURRENT_LIST_DIR} FILES ${VK_APP_SRC})
 
-	source_group(TREE ${ENGINE_ASSET_DIR} FILES ${SHADERS_GLSL})
+	source_group(TREE ${CMAKE_CURRENT_LIST_DIR} FILES ${SHADERS_GLSL})
 
 if(ENGINE_AS_LIBRARY)
 	add_library(MapleEngine SHARED ${VK_APP_SRC} ${KTX_SOURCES} ${SHADERS_GLSL} ${IMGUI_SRC})
@@ -249,12 +243,33 @@ endif()
 		LinearMath
 	)
 
-find_package(OpenMP)
+	find_package(OpenMP)
 if(OpenMP_CXX_FOUND)
     target_link_libraries(MapleEngine OpenMP::OpenMP_CXX)
 endif()
 
 	set_target_properties(OpenFBX lua zlib tinyobjloader tellenc spirvCross ktx spdlog_headers_for_ide stb_image glad TracyClient filedlg imgui-node-editor iconv Bullet3Common BulletDynamics BulletCollision LinearMath BulletInverseDynamics BulletSoftBody PROPERTIES FOLDER Library)
+	
+
+foreach(GLSL ${SHADERS_GLSL})
+
+	set(DIR_NAME "")
+
+	string(REPLACE ${CMAKE_CURRENT_LIST_DIR}/src/Shaders "" DIR_NAME ${GLSL})
+
+    set(SPIRV "${LIBRARY_OUTPUT_PATH}/../../Assets/shaders/spv${DIR_NAME}.spv")
+
+    add_custom_command(
+        OUTPUT ${SPIRV}
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${LIBRARY_OUTPUT_PATH}/../../Assets/shaders/spv${DIR_NAME}"
+        COMMAND ${GLSL_VALIDATOR} --target-env vulkan1.2 -V ${GLSL} -o ${SPIRV}
+        DEPENDS ${GLSL})
+    list(APPEND SPIRV_BINARY_FILES ${SPIRV})
+endforeach(GLSL)
+
+add_custom_target(MapleShader DEPENDS ${SPIRV_BINARY_FILES})
+
+add_dependencies(MapleEngine MapleShader)
 	
 endif()
 

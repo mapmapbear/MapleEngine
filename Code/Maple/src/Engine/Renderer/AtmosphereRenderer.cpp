@@ -93,6 +93,7 @@ namespace maple
 					info.polygonMode = PolygonMode::Fill;
 					info.clearTargets = !atmosphere.renderToScreen;
 					info.transparencyEnabled = false;
+					info.cullMode = CullMode::None;
 
 					data.uniformObject.projView = glm::inverse(camera.proj * inverseCamerm);
 					data.uniformObject.sunDirection = { glm::vec3(-light.lightData.direction), light.lightData.intensity };

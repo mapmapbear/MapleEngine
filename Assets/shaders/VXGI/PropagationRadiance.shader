@@ -1,1 +1,0 @@
-#Compute shaders/spv/VXGI/PropagationRadiance.comp.spv
