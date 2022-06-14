@@ -11,7 +11,7 @@ namespace maple
 {
 	namespace
 	{
-		auto getShaderTypeByName(const std::string &name) -> ShaderType
+		inline auto getShaderTypeByName(const std::string &name) -> ShaderType
 		{
 			if (StringUtils::contains(name, "Vertex"))
 			{
@@ -27,10 +27,28 @@ namespace maple
 			{
 				return ShaderType::Geometry;
 			}
+
 			if (StringUtils::contains(name, "Compute"))
 			{
 				return ShaderType::Compute;
 			}
+
+			if (StringUtils::contains(name, "RayMiss"))
+			{
+				return ShaderType::RayMiss;
+			}
+
+			if (StringUtils::contains(name, "RayCHit"))
+			{
+				return ShaderType::RayHit;
+			}
+
+			if (StringUtils::contains(name, "RayGen"))
+			{
+				return ShaderType::RayGen;
+			}
+
+			MAPLE_ASSERT(false, "Unknow shader type");
 			return ShaderType::Unknown;
 		}
 	}        // namespace

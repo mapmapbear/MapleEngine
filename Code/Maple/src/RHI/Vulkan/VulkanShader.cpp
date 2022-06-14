@@ -287,6 +287,14 @@ namespace maple
 			currentShaderStage++;
 		}
 
+		for (auto & type : shaderTypes)
+		{
+			if (type == ShaderType::RayGen) 
+			{
+				
+			}
+		}
+
 		createPipelineLayout();
 	}
 
@@ -427,7 +435,6 @@ namespace maple
 			//todo...reflect the image
 		}
 
-
 		for (auto& resource : resources.storage_images)
 		{
 			auto& glslType = comp.get_type(resource.base_type_id);
@@ -457,7 +464,6 @@ namespace maple
 				descriptor.format = spirvTypeToTextureType(glslType.image.format);
 			}
 		}
-
 
 		//Descriptor Layout
 		for (auto& u : resources.uniform_buffers)
@@ -574,6 +580,7 @@ namespace maple
 		shaderStages[currentShaderStage].pNext = VK_NULL_HANDLE;
 
 		VK_CHECK_RESULT(vkCreateShaderModule(*VulkanDevice::get(), &shaderCreateInfo, nullptr, &shaderStages[currentShaderStage].module));
+
 	}
 
 };        // namespace maple

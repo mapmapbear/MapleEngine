@@ -10,6 +10,13 @@ namespace maple
 {
 	namespace ddgi 
 	{
+		enum class RaytracingScale
+		{
+			Full,
+			Half,
+			Quarter
+		};
+
 		auto registerDDGI(ExecuteQueue& begin, std::shared_ptr<ExecutePoint> point) -> void;
 	}
 }

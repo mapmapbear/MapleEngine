@@ -130,7 +130,16 @@ namespace maple
 		unmap();
 	}
 
-	auto VulkanBuffer::resize(uint32_t size, const void *data) -> void
+	auto VulkanBuffer::getDeviceAddress() const->VkDeviceAddress
+	{
+		VkBufferDeviceAddressInfo info = {};
+		info.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
+		info.pNext = nullptr;
+		info.buffer = buffer;
+		return vkGetBufferDeviceAddress(*VulkanDevice::get(), &info);
+	}
+
+	auto VulkanBuffer::resize(uint32_t size, const void* data) -> void
 	{
 		PROFILE_FUNCTION();
 		release();

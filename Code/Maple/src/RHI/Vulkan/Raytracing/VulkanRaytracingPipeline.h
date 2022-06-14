@@ -3,8 +3,8 @@
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-#include "VulkanPipeline.h"
-#include "VulkanHelper.h"
+#include "RHI/Vulkan/VulkanPipeline.h"
+#include "RHI/Vulkan/VulkanHelper.h"
 #include "Engine/Core.h"
 
 #include <functional>
@@ -28,8 +28,6 @@ namespace maple
 		auto end(const CommandBuffer* commandBuffer) -> void override {};
 		auto clearRenderTargets(const CommandBuffer* commandBuffer) -> void override {};
 
-		auto getPipelineBindPoint() const->VkPipelineBindPoint override{
-			return VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR;
-		}
+		inline auto getPipelineBindPoint() const -> VkPipelineBindPoint override {	return VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR;	}
 	};
 };        // namespace maple

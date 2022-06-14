@@ -26,6 +26,9 @@ namespace maple
 		TessellationControl,
 		TessellationEvaluation,
 		Compute,
+		RayMiss,
+		RayHit,
+		RayGen,
 		Unknown,
 		Length
 	};

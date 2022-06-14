@@ -91,6 +91,8 @@ file(GLOB VK_APP_SRC
 	src/RHI/*.cpp
 	src/RHI/Vulkan/*.h
 	src/RHI/Vulkan/*.cpp
+	src/RHI/Vulkan/Raytracing/*.h
+	src/RHI/Vulkan/Raytracing/*.cpp
 	src/RHI/OpenGL/*.h
 	src/RHI/OpenGL/*.inl
 	src/RHI/OpenGL/*.cpp
