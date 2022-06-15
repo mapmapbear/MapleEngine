@@ -11,114 +11,95 @@ namespace maple
 {
 	namespace
 	{
-		inline auto getShaderTypeByName(const std::string &name) -> ShaderType
+		inline auto getShaderTypeByName(const std::string& name) -> ShaderType
 		{
-			if (StringUtils::contains(name, "Vertex"))
+			const std::unordered_map<std::string, ShaderType> types =
 			{
-				return ShaderType::Vertex;
-			}
+				{"Vertex",		ShaderType::Vertex},
+				{"Fragment",	ShaderType::Fragment},
+				{"Geometry",	ShaderType::Geometry},
+				{"Compute",		ShaderType::Compute},
+				{"RayMiss",		ShaderType::RayMiss},
+				{"RayCloseHit",	ShaderType::RayCloseHit},
+				{"RayAnyHit",	ShaderType::RayAnyHit},
+				{"RayGen",		ShaderType::RayGen},
+				{"RayIntersect",ShaderType::RayIntersect}
+			};
 
-			if (StringUtils::contains(name, "Fragment"))
-			{
-				return ShaderType::Fragment;
-			}
-
-			if (StringUtils::contains(name, "Geometry"))
-			{
-				return ShaderType::Geometry;
-			}
-
-			if (StringUtils::contains(name, "Compute"))
-			{
-				return ShaderType::Compute;
-			}
-
-			if (StringUtils::contains(name, "RayMiss"))
-			{
-				return ShaderType::RayMiss;
-			}
-
-			if (StringUtils::contains(name, "RayCHit"))
-			{
-				return ShaderType::RayHit;
-			}
-
-			if (StringUtils::contains(name, "RayGen"))
-			{
-				return ShaderType::RayGen;
-			}
+			if (auto iter = types.find(name); iter != types.end()) 
+				return iter->second;
 
 			MAPLE_ASSERT(false, "Unknow shader type");
 			return ShaderType::Unknown;
 		}
 	}        // namespace
 
-	auto Shader::spirvTypeToDataType(const spirv_cross::SPIRType &type, uint32_t size) -> ShaderDataType
+	auto Shader::spirvTypeToDataType(const spirv_cross::SPIRType& type, uint32_t size) -> ShaderDataType
 	{
 		switch (type.basetype)
 		{
-			case spirv_cross::SPIRType::Boolean:
-				return ShaderDataType::Bool;
-			case spirv_cross::SPIRType::Int:
-				if (type.vecsize == 1)
-					return ShaderDataType::Int;
-				if (type.vecsize == 2)
-					return ShaderDataType::IVec2;
-				if (type.vecsize == 3)
-					return ShaderDataType::IVec3;
-				if (type.vecsize == 4)
-					return ShaderDataType::IVec4;
+		case spirv_cross::SPIRType::Boolean:
+			return ShaderDataType::Bool;
+		case spirv_cross::SPIRType::Int:
+			if (type.vecsize == 1)
+				return ShaderDataType::Int;
+			if (type.vecsize == 2)
+				return ShaderDataType::IVec2;
+			if (type.vecsize == 3)
+				return ShaderDataType::IVec3;
+			if (type.vecsize == 4)
+				return ShaderDataType::IVec4;
 
-			case spirv_cross::SPIRType::UInt:
-				return ShaderDataType::UInt;
-			case spirv_cross::SPIRType::Float:
-				if (type.columns == 3)
-					return ShaderDataType::Mat3;
-				if (type.columns == 4) {
-					if (size > sizeof(glm::mat4)) 
-					{
-						return ShaderDataType::Mat4Array;
-					}
-					return ShaderDataType::Mat4;
+		case spirv_cross::SPIRType::UInt:
+			return ShaderDataType::UInt;
+		case spirv_cross::SPIRType::Float:
+			if (type.columns == 3)
+				return ShaderDataType::Mat3;
+			if (type.columns == 4) {
+				if (size > sizeof(glm::mat4))
+				{
+					return ShaderDataType::Mat4Array;
 				}
+				return ShaderDataType::Mat4;
+			}
 
-				if (type.vecsize == 1)
-					return ShaderDataType::Float32;
-				if (type.vecsize == 2)
-					return ShaderDataType::Vec2;
-				if (type.vecsize == 3)
-					return ShaderDataType::Vec3;
-				if (type.vecsize == 4)
-					return ShaderDataType::Vec4;
-				break;
-			case spirv_cross::SPIRType::Struct:
-				return ShaderDataType::Struct;
+			if (type.vecsize == 1)
+				return ShaderDataType::Float32;
+			if (type.vecsize == 2)
+				return ShaderDataType::Vec2;
+			if (type.vecsize == 3)
+				return ShaderDataType::Vec3;
+			if (type.vecsize == 4)
+				return ShaderDataType::Vec4;
+			break;
+		case spirv_cross::SPIRType::Struct:
+			return ShaderDataType::Struct;
 		}
 		return ShaderDataType::None;
 	}
 
-	auto Shader::spirvTypeToTextureType(const spv::ImageFormat &format) -> TextureFormat
+	auto Shader::spirvTypeToTextureType(const spv::ImageFormat& format) -> TextureFormat
 	{
 		switch (format)
 		{
-			case spv::ImageFormatRgba32f:
-				return TextureFormat::RGBA32;
-			case spv::ImageFormatRgba16f:
-				return TextureFormat::RGBA16;
-			case spv::ImageFormatRgba8:
-				return TextureFormat::RGBA8;
-			case spv::ImageFormatR32i:
-				return TextureFormat::R32I;
-			case spv::ImageFormatR32ui:
-				return TextureFormat::R32UI;
-			case spv::ImageFormatR8:
-				return TextureFormat::R8;
+		case spv::ImageFormatRgba32f:
+			return TextureFormat::RGBA32;
+		case spv::ImageFormatRgba16f:
+			return TextureFormat::RGBA16;
+		case spv::ImageFormatRgba8:
+			return TextureFormat::RGBA8;
+		case spv::ImageFormatR32i:
+			return TextureFormat::R32I;
+		case spv::ImageFormatR32ui:
+			return TextureFormat::R32UI;
+		case spv::ImageFormatR8:
+			return TextureFormat::R8;
 		}
 
 		MAPLE_ASSERT(false, "unsupported spv::ImageFormat");
 	}
 
-	auto Shader::parseSource(const std::vector<std::string> &lines, std::unordered_map<ShaderType, std::string> &shaders) -> void
+	auto Shader::parseSource(const std::vector<std::string>& lines, std::unordered_map<ShaderType, std::string>& shaders) -> void
 	{
 		for (uint32_t i = 0; i < lines.size(); i++)
 		{
@@ -126,7 +107,7 @@ namespace maple
 			if (StringUtils::startWith(str, "#"))
 			{
 				auto path = StringUtils::split(str, " ");
-				auto type = getShaderTypeByName(path[0]);
+				auto type = getShaderTypeByName(path[0].substr(1, path[0].length()));
 				if (type != ShaderType::Unknown)
 				{
 					StringUtils::trim(path[1], "\r");

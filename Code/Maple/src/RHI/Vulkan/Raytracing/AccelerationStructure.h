@@ -41,7 +41,6 @@ namespace maple
 		const RayTracingProperties& rayTracingProperties;
 	};
 
-
 	class BottomLevelAccelerationStructure final : public AccelerationStructure
 	{
 	public:

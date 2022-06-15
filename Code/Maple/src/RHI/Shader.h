@@ -18,6 +18,7 @@ namespace spirv_cross
 
 namespace maple
 {
+	//Keep Order....
 	enum class ShaderType : int32_t
 	{
 		Vertex,
@@ -27,8 +28,10 @@ namespace maple
 		TessellationEvaluation,
 		Compute,
 		RayMiss,
-		RayHit,
+		RayCloseHit,
+		RayAnyHit,
 		RayGen,
+		RayIntersect,
 		Unknown,
 		Length
 	};
@@ -45,7 +48,11 @@ namespace maple
 			STR(Geometry);
 			STR(TessellationControl);
 			STR(TessellationEvaluation);
-			STR(Compute);
+			STR(RayMiss);
+			STR(RayCloseHit);
+			STR(RayAnyHit);
+			STR(RayGen);
+			STR(RayIntersect);
 #undef STR
 		}
 		return "Unknown";
