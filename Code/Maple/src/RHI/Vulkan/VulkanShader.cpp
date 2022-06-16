@@ -8,6 +8,7 @@
 #include "VulkanCommandBuffer.h"
 #include "VulkanDevice.h"
 #include "VulkanPipeline.h"
+#include "RHI/Vulkan/Raytracing/RayTracingProperties.h"
 #include <spirv_cross.hpp>
 
 namespace maple
@@ -281,18 +282,75 @@ namespace maple
 
 		for (auto& source : sources)
 		{
-			auto buffer = File::read(source.second);
-			auto size = buffer->size() / sizeof(uint32_t);
-			loadShader({ reinterpret_cast<uint32_t*>(buffer->data()), reinterpret_cast<uint32_t*>(buffer->data()) + size }, source.first, currentShaderStage);
+			if (source.second == "null") 
+			{
+				shaderStages[currentShaderStage] = {};
+				shaderStages[currentShaderStage].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+				shaderStages[currentShaderStage].stage = VkConverter::shaderTypeToVK(source.first);
+				shaderStages[currentShaderStage].pName = "main";
+				shaderStages[currentShaderStage].pNext = VK_NULL_HANDLE;
+				shaderStages[currentShaderStage].module= VK_NULL_HANDLE;
+			}
+			else 
+			{
+				auto buffer = File::read(source.second);
+				auto size = buffer->size() / sizeof(uint32_t);
+				loadShader({ reinterpret_cast<uint32_t*>(buffer->data()), reinterpret_cast<uint32_t*>(buffer->data()) + size }, source.first, currentShaderStage);
+			}
 			currentShaderStage++;
 		}
 
-		for (auto & type : shaderTypes)
+		std::vector<VkShaderModule> rayGens;
+		std::vector<VkShaderModule> missGens;
+		std::vector<std::tuple<VkShaderModule, VkShaderModule, VkShaderModule>> hits;
+
+		int32_t idx = 0;
+
+		for (auto& stage : shaderStages)
 		{
-			if (type == ShaderType::RayGen) 
+			switch (stage.stage)
 			{
-				
+			case VK_SHADER_STAGE_MISS_BIT_KHR:
+				missGens.emplace_back(stage.module);
+				break;
+			case VK_SHADER_STAGE_RAYGEN_BIT_KHR:
+				rayGens.emplace_back(stage.module);
+				break;
+			case VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR:
+			{
+				if (idx++ == 0)
+					hits.emplace_back();
+
+				std::get<0>(hits.back()) = stage.module;
+			}break;
+
+			case VK_SHADER_STAGE_ANY_HIT_BIT_KHR:
+			{
+				if (idx++ == 0)
+					hits.emplace_back();
+
+				std::get<1>(hits.back()) = stage.module;
+			}break;
+
+			case VK_SHADER_STAGE_INTERSECTION_BIT_KHR:
+			{
+				if (idx++ == 0)
+					hits.emplace_back();
+				std::get<2>(hits.back()) = stage.module;
+			}break;
 			}
+
+			if (idx == 3)
+			{
+				idx = 0;
+			}
+		}
+
+		if (!rayGens.empty() || !missGens.empty() || !hits.empty()) 
+		{
+			rayTracingProperties = std::make_shared<RayTracingProperties>();
+			sbt = std::make_shared<ShaderBindingTable>(rayTracingProperties);
+			sbt->addShader(rayGens, missGens, hits);
 		}
 
 		createPipelineLayout();
@@ -379,7 +437,8 @@ namespace maple
 		PROFILE_FUNCTION();
 		for (auto& stage : shaderStages)
 		{
-			vkDestroyShaderModule(*VulkanDevice::get(), stage.module, nullptr);
+			if (stage.module != nullptr)
+				vkDestroyShaderModule(*VulkanDevice::get(), stage.module, nullptr);
 		}
 
 		for (auto& descriptorLayout : descriptorSetLayouts)
@@ -406,11 +465,11 @@ namespace maple
 
 			auto copyInput = resources.stage_inputs;
 
-			std::sort(copyInput.begin(), copyInput.end(), [&](const auto & left, const auto & right) {
+			std::sort(copyInput.begin(), copyInput.end(), [&](const auto& left, const auto& right) {
 				auto location = comp.get_decoration(left.id, spv::DecorationLocation);
 				auto location1 = comp.get_decoration(right.id, spv::DecorationLocation);
 				return location < location1;
-			});
+				});
 
 			for (const spirv_cross::Resource& resource : copyInput)
 			{

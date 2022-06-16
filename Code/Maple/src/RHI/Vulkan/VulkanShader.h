@@ -7,6 +7,7 @@
 #include "Others/Console.h"
 #include "RHI/DescriptorSet.h"
 #include "RHI/Shader.h"
+#include "RHI/Vulkan/Raytracing/ShaderBindingTable.h"
 #include "VulkanHelper.h"
 #include <string>
 #include <unordered_map>
@@ -14,6 +15,8 @@
 
 namespace maple
 {
+	class RayTracingProperties;
+
 	class MAPLE_EXPORT VulkanShader : public Shader
 	{
 	  public:
@@ -97,10 +100,9 @@ namespace maple
 			return shaderStages;
 		}
 
-		inline auto& getShaderGroups() const
-		{
-			return shaderGroups;
-		}
+		inline auto getRayTracingProperties() const { return rayTracingProperties; }
+
+		inline auto getShaderBindingTable() const { return sbt; }
 
 	  private:
 		auto loadShader(const std::vector<uint32_t> &spvCode, ShaderType type, int32_t currentShaderStage) -> void;
@@ -111,7 +113,6 @@ namespace maple
 		VkPipelineLayout pipelineLayout;
 
 		std::vector<VkPipelineShaderStageCreateInfo> shaderStages;
-		std::vector<VkRayTracingShaderGroupCreateInfoKHR> shaderGroups;
 
 		uint32_t vertexInputStride = 0;
 
@@ -119,6 +120,9 @@ namespace maple
 		std::string filePath;
 		std::string source;
 
+		ShaderBindingTable::Ptr sbt;
+
+		std::shared_ptr<RayTracingProperties>			rayTracingProperties;
 		std::vector<ShaderType>                         shaderTypes;
 		std::vector<PushConstant>                       pushConstants;
 		std::vector<DescriptorLayoutInfo>               descriptorLayoutInfo;

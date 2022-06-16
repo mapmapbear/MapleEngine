@@ -41,10 +41,10 @@ namespace maple
 		pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_KHR;
 		pipelineCreateInfo.layout = pipelineLayout;
 		pipelineCreateInfo.flags = 0;
-		pipelineCreateInfo.pStages = vkShader->getShaderStages().data();
-		pipelineCreateInfo.stageCount = vkShader->getShaderStages().size();
-		pipelineCreateInfo.pGroups = vkShader->getShaderGroups().data();
-		pipelineCreateInfo.groupCount = vkShader->getShaderGroups().size();
+		pipelineCreateInfo.pStages = vkShader->getShaderBindingTable()->getStages().data();
+		pipelineCreateInfo.stageCount = vkShader->getShaderBindingTable()->getStages().size();
+		pipelineCreateInfo.pGroups = vkShader->getShaderBindingTable()->getGroups().data();
+		pipelineCreateInfo.groupCount = vkShader->getShaderBindingTable()->getGroups().size();
 
 		VK_CHECK_RESULT(vkCreateRayTracingPipelinesKHR(*VulkanDevice::get(), VK_NULL_HANDLE, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &pipeline));
 

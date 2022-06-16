@@ -18,7 +18,7 @@ namespace maple
 		}
 	}
 
-	AccelerationStructure::AccelerationStructure(const RayTracingProperties& rayTracingProperties) :
+	AccelerationStructure::AccelerationStructure(const std::shared_ptr<RayTracingProperties>& rayTracingProperties) :
 		rayTracingProperties(rayTracingProperties)
 	{
 
@@ -48,7 +48,7 @@ namespace maple
 
 		// AccelerationStructure offset needs to be 256 bytes aligned (official Vulkan specs, don't ask me why).
 		constexpr uint64_t accelerationStructureAlignment = 256;
-		const uint64_t scratchAlignment = rayTracingProperties.getMinAccelerationStructureScratchOffsetAlignment();
+		const uint64_t scratchAlignment = rayTracingProperties->getMinAccelerationStructureScratchOffsetAlignment();
 
 		sizeInfo.accelerationStructureSize = roundUp(sizeInfo.accelerationStructureSize, accelerationStructureAlignment);
 		sizeInfo.buildScratchSize = roundUp(sizeInfo.buildScratchSize, scratchAlignment);
@@ -87,7 +87,7 @@ namespace maple
 		VK_CHECK_RESULT(vkCreateAccelerationStructureKHR(*VulkanDevice::get(), &createInfo, nullptr, &accelerationStructure));
 	}
 
-	BottomLevelAccelerationStructure::BottomLevelAccelerationStructure(const RayTracingProperties& rayTracingProperties, const BottomLevelGeometry& geometries)
+	BottomLevelAccelerationStructure::BottomLevelAccelerationStructure(const std::shared_ptr<RayTracingProperties>& rayTracingProperties, const BottomLevelGeometry& geometries)
 		:AccelerationStructure(rayTracingProperties), geometries(geometries)
 	{
 	}
@@ -111,7 +111,7 @@ namespace maple
 	}
 
 
-	TopLevelAccelerationStructure::TopLevelAccelerationStructure(const RayTracingProperties& rayTracingProperties, VkDeviceAddress instanceAddress, uint32_t instancesCount)
+	TopLevelAccelerationStructure::TopLevelAccelerationStructure(const std::shared_ptr<RayTracingProperties>& rayTracingProperties, VkDeviceAddress instanceAddress, uint32_t instancesCount)
 		:AccelerationStructure(rayTracingProperties),instancesCount(instancesCount)
 	{
 		// Create VkAccelerationStructureGeometryInstancesDataKHR. This wraps a device pointer to the above uploaded instances.

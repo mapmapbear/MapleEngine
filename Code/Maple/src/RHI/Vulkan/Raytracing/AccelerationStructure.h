@@ -29,7 +29,7 @@ namespace maple
 
 	protected:
 
-		explicit AccelerationStructure(const RayTracingProperties& rayTracingProperties);
+		explicit AccelerationStructure(const std::shared_ptr<RayTracingProperties> & rayTracingProperties);
 		auto getBuildSizes(const uint32_t* maxPrimitiveCounts) const ->const VkAccelerationStructureBuildSizesInfoKHR;
 		auto createAccelerationStructure(const VulkanBuffer::Ptr& buffer, VkDeviceSize resultOffset) -> void;
 
@@ -38,7 +38,7 @@ namespace maple
 		VkAccelerationStructureBuildSizesInfoKHR buildSizesInfo{};
 
 		VkAccelerationStructureKHR accelerationStructure = nullptr;
-		const RayTracingProperties& rayTracingProperties;
+		std::shared_ptr<RayTracingProperties> rayTracingProperties;
 	};
 
 	class BottomLevelAccelerationStructure final : public AccelerationStructure
@@ -46,7 +46,7 @@ namespace maple
 	public:
 		NO_COPYABLE(BottomLevelAccelerationStructure);
 
-		BottomLevelAccelerationStructure(const class RayTracingProperties& rayTracingProperties, const BottomLevelGeometry& geometries);
+		BottomLevelAccelerationStructure(const std::shared_ptr<RayTracingProperties> &properties, const BottomLevelGeometry& geometries);
 
 		~BottomLevelAccelerationStructure();
 
@@ -67,7 +67,7 @@ namespace maple
 	public:
 		NO_COPYABLE(TopLevelAccelerationStructure);
 
-		TopLevelAccelerationStructure(const RayTracingProperties& rayTracingProperties,VkDeviceAddress instanceAddress,uint32_t instancesCount);
+		TopLevelAccelerationStructure(const std::shared_ptr<RayTracingProperties>& rayTracingProperties,VkDeviceAddress instanceAddress,uint32_t instancesCount);
 		virtual ~TopLevelAccelerationStructure();
 
 		auto generate(
