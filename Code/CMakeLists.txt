@@ -131,6 +131,7 @@ target_include_directories(Editor PUBLIC
 	${LIB_SRC_DIR}/ecs
 	${LIB_SRC_DIR}/mio
 	${LIB_SRC_DIR}/OpenFBX
+	${LIB_SRC_DIR}/imGuIZMOquat
 )
 
 
