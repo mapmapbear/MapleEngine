@@ -13,6 +13,7 @@ namespace maple
 	class Shader;
 	class Texture;
 	class UniformBuffer;
+	class StorageBuffer;
 	class CommandBuffer;
 
 	enum class TextureType : int32_t;
@@ -24,7 +25,8 @@ namespace maple
 		UniformBuffer,
 		UniformBufferDynamic,
 		ImageSampler,
-		Image
+		Image,
+		Buffer
 	};
 
 	enum class Format
@@ -113,6 +115,7 @@ namespace maple
 	{
 		std::vector<std::shared_ptr<Texture>> textures;
 		std::shared_ptr<UniformBuffer>        buffer;
+		std::shared_ptr<StorageBuffer>        ssbo;
 
 		uint32_t    offset;
 		uint32_t    size;
@@ -136,7 +139,7 @@ namespace maple
 		virtual ~DescriptorSet() = default;
 		static auto create(const DescriptorInfo &desc) -> std::shared_ptr<DescriptorSet>;
 
-		virtual auto update(const CommandBuffer * commandBuffer) -> void																  = 0;
+		virtual auto update(const CommandBuffer * commandBuffer) -> void																					  = 0;
 		virtual auto setDynamicOffset(uint32_t offset) -> void                                                                                                = 0;
 		virtual auto getDynamicOffset() const -> uint32_t                                                                                                     = 0;
 		virtual auto setTexture(const std::string &name, const std::vector<std::shared_ptr<Texture>> &textures, int32_t mipLevel = -1) -> void                = 0;
@@ -146,6 +149,7 @@ namespace maple
 		virtual auto setUniform(const std::string &bufferName, const std::string &uniformName, const void *data, bool dynamic = false) -> void                = 0;
 		virtual auto setUniform(const std::string &bufferName, const std::string &uniformName, const void *data, uint32_t size, bool dynamic = false) -> void = 0;
 		virtual auto setUniformBufferData(const std::string &bufferName, const void *data) -> void                                                            = 0;
+		virtual auto setSSBO(const std::string& name, uint32_t size, const void* data) -> void															      = 0;
 		virtual auto getDescriptors() const -> const std::vector<Descriptor> & = 0;
 		virtual auto toIntID() const -> const uint64_t = 0;
 

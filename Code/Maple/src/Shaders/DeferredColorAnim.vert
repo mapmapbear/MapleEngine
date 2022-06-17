@@ -4,7 +4,6 @@
 
 const int MAX_BONES = 100;
 
-
 layout(set = 0,binding = 0) uniform UniformBufferObject 
 {    
 	mat4 projView;

@@ -30,18 +30,21 @@ namespace maple
 
 	VulkanRenderDevice::~VulkanRenderDevice()
 	{
+		PROFILE_FUNCTION();
 		vkDestroyDescriptorPool(*VulkanDevice::get(), descriptorPool, VK_NULL_HANDLE);
 	}
 
 	auto VulkanRenderDevice::init() -> void
 	{
 		PROFILE_FUNCTION();
-		std::array<VkDescriptorPoolSize, 5> poolSizes = {
+		std::array<VkDescriptorPoolSize, 6> poolSizes = {
 		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_SAMPLER, 500},
 		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 500},
 		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 500},
 		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 500},
-		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 500}};
+			VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 500},
+		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 500}
+		};
 
 		// Create info
 		VkDescriptorPoolCreateInfo poolCreateInfo = {};
@@ -174,8 +177,6 @@ namespace maple
 	auto VulkanRenderDevice::memoryBarrier(const CommandBuffer* commandBuffer, uint32_t flag) -> void
 	{
 		PROFILE_FUNCTION();
-
-	
 	}
 
 }        // namespace maple

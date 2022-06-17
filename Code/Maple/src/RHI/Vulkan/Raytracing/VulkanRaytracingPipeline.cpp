@@ -28,6 +28,7 @@ namespace maple
 		init(info);
 	}
 
+
 	auto VulkanRaytracingPipeline::init(const PipelineInfo& info) -> bool
 	{
 		PROFILE_FUNCTION();
@@ -36,15 +37,21 @@ namespace maple
 		description = info;
 		pipelineLayout = vkShader->getPipelineLayout();
 
-		VkRayTracingPipelineCreateInfoKHR pipelineCreateInfo{};
 
+		VkRayTracingPipelineCreateInfoKHR pipelineCreateInfo = {};
 		pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_KHR;
-		pipelineCreateInfo.layout = pipelineLayout;
+		pipelineCreateInfo.pNext = nullptr;
 		pipelineCreateInfo.flags = 0;
+		
 		pipelineCreateInfo.pStages = vkShader->getShaderBindingTable()->getStages().data();
 		pipelineCreateInfo.stageCount = vkShader->getShaderBindingTable()->getStages().size();
 		pipelineCreateInfo.pGroups = vkShader->getShaderBindingTable()->getGroups().data();
 		pipelineCreateInfo.groupCount = vkShader->getShaderBindingTable()->getGroups().size();
+
+		pipelineCreateInfo.maxPipelineRayRecursionDepth = 1;
+		pipelineCreateInfo.layout = pipelineLayout;
+		pipelineCreateInfo.basePipelineHandle = nullptr;
+		pipelineCreateInfo.basePipelineIndex = 0;
 
 		VK_CHECK_RESULT(vkCreateRayTracingPipelinesKHR(*VulkanDevice::get(), VK_NULL_HANDLE, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &pipeline));
 

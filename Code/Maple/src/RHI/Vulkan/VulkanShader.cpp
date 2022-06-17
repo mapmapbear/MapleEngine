@@ -523,7 +523,6 @@ namespace maple
 				descriptor.format = spirvTypeToTextureType(glslType.image.format);
 			}
 		}
-
 		//Descriptor Layout
 		for (auto& u : resources.uniform_buffers)
 		{
@@ -631,6 +630,25 @@ namespace maple
 			descriptor.size = 0;
 			descriptor.shaderType = shaderType;
 			descriptor.format = TextureFormat::NONE;
+		}
+		//ssbos
+		for (auto& u : resources.storage_buffers) 
+		{
+			uint32_t set = comp.get_decoration(u.id, spv::DecorationDescriptorSet);
+			uint32_t binding = comp.get_decoration(u.id, spv::DecorationBinding);
+
+			LOGI("Buffer {0} at set = {1}, binding = {2}", u.name, set, binding);
+			descriptorLayoutInfo.push_back({ DescriptorType::Buffer, shaderType, binding, set, 1 });
+
+			auto& descriptorInfo = descriptorInfos[set];
+			auto& descriptor = descriptorInfo.emplace_back();
+
+			descriptor.binding = binding;
+			descriptor.name = u.name;
+			descriptor.offset = 0;
+			descriptor.shaderType = shaderType;
+			descriptor.type = DescriptorType::Buffer;
+			descriptor.buffer = nullptr;
 		}
 
 		shaderStages[currentShaderStage].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;

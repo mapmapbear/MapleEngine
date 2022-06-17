@@ -1177,8 +1177,10 @@ namespace maple
 				return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			case DescriptorType::Image:
 				return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+			case DescriptorType::Buffer:
+				return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 			}
-
+			MAPLE_ASSERT(false, "Unknown DescriptorType");
 			return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		}
 

@@ -2,12 +2,14 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 
+#include "GL.h"
 #include "GLDescriptorSet.h"
+#include "GLUniformBuffer.h"
+#include "GLStorageBuffer.h"
+#include "GLShader.h"
+
 #include "Engine/Core.h"
 #include "Engine/Profiler.h"
-#include "GL.h"
-#include "GLUniformBuffer.h"
-#include "RHI/OpenGL/GLShader.h"
 #include "RHI/Texture.h"
 #include "RHI/UniformBuffer.h"
 
@@ -37,6 +39,20 @@ namespace maple
 				info.members       = descriptor.members;
 				uniformBuffers.emplace(descriptor.name, info);
 			}
+			else if (descriptor.type == DescriptorType::Buffer)
+			{
+				descriptor.ssbo = StorageBuffer::create();
+
+				Buffer localStorage;
+				localStorage.allocate(descriptor.size);
+				localStorage.initializeEmpty();
+
+				SSBOInfo info;
+				info.ssbo = descriptor.ssbo;
+				info.localStorage = localStorage;
+				info.dirty = false;
+				ssboBuffers.emplace(descriptor.name, info);
+			}
 		}
 	}
 
@@ -49,6 +65,15 @@ namespace maple
 			if (bufferInfo.second.dirty)
 			{
 				bufferInfo.second.uniformBuffer->setData(bufferInfo.second.localStorage.data);
+				bufferInfo.second.dirty = false;
+			}
+		}
+
+		for (auto& bufferInfo : ssboBuffers)
+		{
+			if (bufferInfo.second.dirty)
+			{
+				bufferInfo.second.ssbo->setData(bufferInfo.second.localStorage.size, bufferInfo.second.localStorage.data);
 				bufferInfo.second.dirty = false;
 			}
 		}
@@ -128,6 +153,24 @@ namespace maple
 			}
 		}
 		LOGW("Uniform not found {0}.{1}", bufferName, uniformName);
+	}
+
+	auto GLDescriptorSet::setSSBO(const std::string& bufferName, uint32_t size, const void* data) -> void
+	{
+		PROFILE_FUNCTION();
+
+		if (auto iter = ssboBuffers.find(bufferName); iter != ssboBuffers.end())
+		{
+			if (iter->second.localStorage.getSize() == 0) 
+			{
+				iter->second.localStorage.allocate(size);
+				iter->second.localStorage.initializeEmpty();
+			}
+			iter->second.localStorage.write(data, size);
+			iter->second.dirty = true;
+		}
+
+		LOGW("SSBO not found {0}", bufferName);
 	}
 
 	auto GLDescriptorSet::setUniformBufferData(const std::string &bufferName, const void *data) -> void
@@ -213,7 +256,7 @@ namespace maple
 					shader->setUniform1iv(descriptor.name, samplers, descriptor.textures.size());
 				}
 			}
-			else
+			else if(descriptor.type == DescriptorType::UniformBuffer)
 			{
 				auto buffer = std::static_pointer_cast<GLUniformBuffer>(descriptor.buffer);
 
@@ -263,6 +306,19 @@ namespace maple
 						}
 					}
 				}
+			}
+			else if (descriptor.type == DescriptorType::Buffer) 
+			{
+				auto buffer = std::static_pointer_cast<GLStorageBuffer>(descriptor.ssbo);
+
+				if (!buffer)
+					break;
+
+				buffer->bind(descriptor.binding);
+			}
+			else
+			{
+				LOGE("Unknown DescriptorType");
 			}
 		}
 	}

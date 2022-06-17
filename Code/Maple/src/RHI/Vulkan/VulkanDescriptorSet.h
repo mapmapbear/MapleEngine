@@ -13,6 +13,8 @@ namespace maple
 	constexpr int32_t MAX_IMAGE_INFOS       = 32;
 	constexpr int32_t MAX_WRITE_DESCTIPTORS = 32;
 
+	class StorageBuffer;
+
 	class VulkanDescriptorSet final : public DescriptorSet
 	{
 	  public:
@@ -48,6 +50,8 @@ namespace maple
 		inline auto getDescriptors() const -> const std::vector<Descriptor>& override { return descriptors; }
 		inline auto toIntID() const -> const uint64_t override { return (uint64_t)descriptorSet[currentFrame]; };
 
+		auto setSSBO(const std::string& name, uint32_t size, const void* data) -> void override;
+
 	  private:
 		uint32_t dynamicOffset      = 0;
 		Shader * shader             = nullptr;
@@ -70,10 +74,19 @@ namespace maple
 			bool                          hasUpdated[10] = {};
 		};
 
+		struct SSBOInfo
+		{
+			Buffer                        localStorage;
+			bool                          dynamic = false;
+			bool                          hasUpdated[10] = {};
+		};
+
 		std::vector<VkDescriptorSet>                                                 descriptorSet;
 		std::vector<std::unordered_map<std::string, std::shared_ptr<UniformBuffer>>> uniformBuffers;
-		std::unordered_map<std::string, UniformBufferInfo>                           uniformBuffersData;
+		std::vector<std::unordered_map<std::string, std::shared_ptr<StorageBuffer>>> ssbos;
 
+		std::unordered_map<std::string, UniformBufferInfo> uniformBuffersData;
+		std::unordered_map<std::string, SSBOInfo> ssboData;
 
 		uint32_t currentFrame = 0;
 	};

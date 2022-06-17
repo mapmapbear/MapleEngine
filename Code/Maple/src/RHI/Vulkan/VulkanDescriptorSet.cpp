@@ -13,6 +13,7 @@
 #include "VulkanTexture.h"
 #include "VulkanUniformBuffer.h"
 #include "VulkanCommandBuffer.h"
+#include "VulkanStorageBuffer.h"
 
 #include "Application.h"
 
@@ -77,6 +78,8 @@ namespace maple
 		shader      = info.shader;
 		descriptors = shader->getDescriptorInfo(info.layoutIndex);
 		uniformBuffers.resize(framesInFlight);
+		ssbos.resize(framesInFlight);
+
 		for (auto &descriptor : descriptors)
 		{
 			if (descriptor.type == DescriptorType::UniformBuffer)
@@ -100,6 +103,21 @@ namespace maple
 
 				info.members                        = descriptor.members;
 				uniformBuffersData[descriptor.name] = info;
+			}
+			else if (descriptor.type == DescriptorType::Buffer) 
+			{
+				for (uint32_t frame = 0; frame < framesInFlight; frame++)
+				{
+					ssbos[frame][descriptor.name] = StorageBuffer::create();
+				}
+
+				SSBOInfo info;
+				info.localStorage = {};
+				info.hasUpdated[0] = false;
+				info.hasUpdated[1] = false;
+				info.hasUpdated[2] = false;
+
+				ssboData[descriptor.name] = info;
 			}
 		}
 
@@ -213,9 +231,27 @@ namespace maple
 					writeDescriptorSetPool[descriptorWritesCount] = writeDescriptorSet;
 					index++;
 					descriptorWritesCount++;
+				
+				}
+				else if (imageInfo.type == DescriptorType::Buffer)
+				{
+					auto buffer = std::static_pointer_cast<VulkanStorageBuffer>(ssbos[currentFrame][imageInfo.name]);
 
-					if (imageInfo.type == DescriptorType::UniformBufferDynamic)
-						dynamic = true;
+					bufferInfoPool[index].buffer = buffer->getHandle();
+					bufferInfoPool[index].offset = imageInfo.offset;
+					bufferInfoPool[index].range = imageInfo.size;
+
+					VkWriteDescriptorSet writeDescriptorSet{};
+					writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+					writeDescriptorSet.dstSet = descriptorSet[currentFrame];
+					writeDescriptorSet.descriptorType = VkConverter::descriptorTypeToVK(imageInfo.type);
+					writeDescriptorSet.dstBinding = imageInfo.binding;
+					writeDescriptorSet.pBufferInfo = &bufferInfoPool[index];
+					writeDescriptorSet.descriptorCount = 1;
+
+					writeDescriptorSetPool[descriptorWritesCount] = writeDescriptorSet;
+					index++;
+					descriptorWritesCount++;
 				}
 			}
 
@@ -314,6 +350,27 @@ namespace maple
 			return;
 		}
 		LOGW("Uniform not found {0}.{1}", bufferName);
+	}
+
+	auto VulkanDescriptorSet::setSSBO(const std::string& name, uint32_t size, const void* data) -> void
+	{
+		PROFILE_FUNCTION();
+
+		if (auto iter = ssboData.find(name); iter != ssboData.end())
+		{
+			if (iter->second.localStorage.getSize() == 0)
+			{
+				iter->second.localStorage.allocate(size);
+				iter->second.localStorage.initializeEmpty();
+			}
+			iter->second.localStorage.write(data, size);
+			iter->second.hasUpdated[0] = true;
+			iter->second.hasUpdated[1] = true;
+			iter->second.hasUpdated[2] = true;
+			return;
+		}
+
+		LOGW("SSBO not found {0}", name);
 	}
 
 };        // namespace maple

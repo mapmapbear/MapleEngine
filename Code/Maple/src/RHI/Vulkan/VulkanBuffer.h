@@ -44,6 +44,8 @@ namespace maple
 
 		auto getDeviceAddress() const->VkDeviceAddress;
 
+		inline auto getSize() const { return size; }
+
 	protected:
 		auto release() -> void;
 
