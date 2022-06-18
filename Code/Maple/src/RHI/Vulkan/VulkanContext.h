@@ -87,6 +87,8 @@ namespace maple
 		std::vector<VkExtensionProperties> instanceExtensions;
 
 		auto createInstance() -> void;
+
+		VkDebugUtilsMessengerEXT debugMessenger;
 	};
 
 };        // namespace maple

@@ -222,6 +222,11 @@ namespace maple
 			{
 				LOGC("[VULKAN] Failed to set up debug callback!");
 			}
+
+			VkDebugUtilsMessengerCreateInfoEXT createInfo2 = {};
+			VulkanHelper::populateDebugMessengerCreateInfo(createInfo2);
+			auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(vkInstance, "vkCreateDebugUtilsMessengerEXT");
+			func(vkInstance, &createInfo2, nullptr, &debugMessenger);
 		}
 	}
 	/**
