@@ -5,6 +5,7 @@
 #include "ShaderBindingTable.h"
 #include "RayTracingProperties.h"
 #include "Others/Console.h"
+#include "RHI/Vulkan/VulkanDevice.h"
 
 namespace maple
 {
@@ -22,11 +23,9 @@ namespace maple
 
 	}
 
-	auto ShaderBindingTable::addShader(
-		const std::vector<VkShaderModule>& rayGens, 
+	auto ShaderBindingTable::addShader(	const std::vector<VkShaderModule>& rayGens, 
 		const std::vector<VkShaderModule>& missGens, 
-		const std::vector<std::tuple<VkShaderModule, VkShaderModule, VkShaderModule>>& hits
-	) -> void
+		const std::vector<std::tuple<VkShaderModule, VkShaderModule, VkShaderModule>>& hits) -> void
 	{
 		auto alignSize = alignedSize(rayTracingProperties->getShaderGroupHandleSize(), rayTracingProperties->getShaderGroupBaseAlignment());
 
@@ -83,7 +82,6 @@ namespace maple
 			groupInfo.anyHitShader = VK_SHADER_UNUSED_KHR;
 			groupInfo.intersectionShader = VK_SHADER_UNUSED_KHR;
 
-
 			if (cloestHit != nullptr)
 			{
 				int32_t id = stages.size();
@@ -125,6 +123,7 @@ namespace maple
 
 			hitGroupSize += alignSize;
 		}
+	
 	}
 }
 

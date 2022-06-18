@@ -100,10 +100,6 @@ namespace maple
 			return shaderStages;
 		}
 
-		inline auto getRayTracingProperties() const { return rayTracingProperties; }
-
-		inline auto getShaderBindingTable() const { return sbt; }
-
 	  private:
 		auto loadShader(const std::vector<uint32_t> &spvCode, ShaderType type, int32_t currentShaderStage) -> void;
 		auto init() -> void;
@@ -120,9 +116,7 @@ namespace maple
 		std::string filePath;
 		std::string source;
 
-		ShaderBindingTable::Ptr sbt;
 
-		std::shared_ptr<RayTracingProperties>			rayTracingProperties;
 		std::vector<ShaderType>                         shaderTypes;
 		std::vector<PushConstant>                       pushConstants;
 		std::vector<DescriptorLayoutInfo>               descriptorLayoutInfo;

@@ -18,6 +18,7 @@
 #	include "RHI/Vulkan/VulkanUniformBuffer.h"
 #	include "RHI/Vulkan/VulkanVertexBuffer.h"
 #	include "RHI/Vulkan/VulkanStorageBuffer.h"
+#	include "RHI/Vulkan/Raytracing/VulkanRaytracingPipeline.h"
 #endif        // MAPLE_VULKAN
 
 #ifdef MAPLE_OPENGL
@@ -254,6 +255,10 @@ namespace maple
 		{
 			pipeline = std::make_shared<VulkanComputePipeline>(desc);
 		}
+		else if (desc.shader->isRaytracingShader())
+		{
+			pipeline = std::make_shared<VulkanRaytracingPipeline>(desc);
+		}
 		else
 		{
 			pipeline = std::make_shared<VulkanPipeline>(desc);
@@ -298,7 +303,7 @@ namespace maple
 #ifdef MAPLE_OPENGL
 		return std::make_shared<GLRenderPass>(desc);
 #endif
-	}
+}
 
 	auto UniformBuffer::create() -> std::shared_ptr<UniformBuffer>
 	{
@@ -345,10 +350,10 @@ namespace maple
 	auto StorageBuffer::create(uint32_t size, const void* data)->std::shared_ptr<StorageBuffer>
 	{
 #ifdef MAPLE_VULKAN
-		return std::make_shared<VulkanStorageBuffer>(size,data);
+		return std::make_shared<VulkanStorageBuffer>(size, data);
 #endif
 #ifdef MAPLE_OPENGL
-		return std::make_shared<GLStorageBuffer>(size,data);
+		return std::make_shared<GLStorageBuffer>(size, data);
 #endif
 	}
 }        // namespace maple

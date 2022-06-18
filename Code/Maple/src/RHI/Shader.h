@@ -150,6 +150,12 @@ namespace maple
 			return computeShader;
 		}
 
+
+		inline auto isRaytracingShader() const
+		{
+			return raytracingShader;
+		}
+
 	  protected:
 		auto parseSource(const std::vector<std::string> &lines, std::unordered_map<ShaderType, std::string> &shaders) -> void;
 
@@ -159,6 +165,7 @@ namespace maple
 
 	  protected:
 		bool     computeShader = false;
+		bool	 raytracingShader = false;
 		uint32_t localSizeX    = 1;
 		uint32_t localSizeY    = 1;
 		uint32_t localSizeZ    = 1;

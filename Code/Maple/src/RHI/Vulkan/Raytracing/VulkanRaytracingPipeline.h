@@ -12,6 +12,9 @@
 
 namespace maple
 {
+	class ShaderBindingTable;
+	class RayTracingProperties;
+
 	class VulkanRaytracingPipeline : public VulkanPipeline
 	{
 	public:
@@ -28,6 +31,17 @@ namespace maple
 		auto end(const CommandBuffer* commandBuffer) -> void override {};
 		auto clearRenderTargets(const CommandBuffer* commandBuffer) -> void override {};
 
-		inline auto getPipelineBindPoint() const -> VkPipelineBindPoint override {	return VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR;	}
+		inline auto getPipelineBindPoint() const -> VkPipelineBindPoint override { return VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR; }
+
+		inline auto getRayTracingProperties() const { return rayTracingProperties; }
+
+		inline auto getShaderBindingTable() const { return sbt; }
+
+		inline auto getSbtBuffer() const { return buffer; }
+
+	private:
+		std::shared_ptr<ShaderBindingTable> sbt;
+		std::shared_ptr<RayTracingProperties> rayTracingProperties;
+		std::shared_ptr<VulkanBuffer> buffer;
 	};
 };        // namespace maple
