@@ -49,7 +49,7 @@ namespace maple
 			if (lpv.lpvAccumulatorR == nullptr) 
 				return;
 
-			auto commandBuffer = renderData.computeCommandBuffer;
+			auto commandBuffer = renderData.commandBuffer;
 
 			indirectLight.descriptorSets[0]->setUniform("UniformBufferObject", "minAABB", glm::value_ptr(aabb.box->min));
 			indirectLight.descriptorSets[0]->setUniform("UniformBufferObject", "cellSize", &lpv.cellSize);

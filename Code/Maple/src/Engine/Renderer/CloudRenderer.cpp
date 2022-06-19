@@ -205,8 +205,8 @@ namespace maple
 
 			if (!weather.generatedNoise)
 			{
-				weather.executePerlin3D(render.computeCommandBuffer,graph);
-				weather.executeWorley3D(render.computeCommandBuffer,graph);
+				weather.executePerlin3D(render.commandBuffer,graph);
+				weather.executeWorley3D(render.commandBuffer,graph);
 				weather.generatedNoise = true;
 			}
 
@@ -278,7 +278,7 @@ namespace maple
 
 				if (cloud.weathDirty)
 				{
-					weather.execute(render.computeCommandBuffer, graph);
+					weather.execute(render.commandBuffer, graph);
 				}
 				break;
 			}
@@ -305,11 +305,11 @@ namespace maple
 				auto groupCountY = static_cast<uint32_t>(glm::ceil(render.gbuffer->getHeight() / (float)data.cloudShader->getLocalSizeY()));
 				data.uniformObject.frames++;
 				data.descriptorSet->setUniformBufferData("UniformBufferObject", &data.uniformObject);
-				data.descriptorSet->update(render.computeCommandBuffer);
-				data.pipeline->bind(render.computeCommandBuffer);
-				Renderer::bindDescriptorSets(data.pipeline.get(), render.computeCommandBuffer, 0, { data.descriptorSet });
-				Renderer::dispatch(render.computeCommandBuffer,groupCountX,groupCountY,1);
-				data.pipeline->end(render.computeCommandBuffer);
+				data.descriptorSet->update(render.commandBuffer);
+				data.pipeline->bind(render.commandBuffer);
+				Renderer::bindDescriptorSets(data.pipeline.get(), render.commandBuffer, 0, { data.descriptorSet });
+				Renderer::dispatch(render.commandBuffer,groupCountX,groupCountY,1);
+				data.pipeline->end(render.commandBuffer);
 			}
 		}
 	}

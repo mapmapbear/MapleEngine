@@ -39,7 +39,6 @@ namespace maple
 		struct RendererData
 		{
 			CommandBuffer* commandBuffer = nullptr;
-			CommandBuffer* computeCommandBuffer = nullptr;
 			GBuffer* gbuffer = nullptr;
 			std::shared_ptr<Mesh> screenQuad;
 			std::shared_ptr<TextureCube> unitCube;//1

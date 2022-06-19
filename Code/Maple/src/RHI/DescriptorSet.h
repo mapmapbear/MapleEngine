@@ -136,6 +136,9 @@ namespace maple
 	class DescriptorSet
 	{
 	  public:
+		
+		using Ptr = std::shared_ptr<DescriptorSet>;
+		
 		virtual ~DescriptorSet() = default;
 		static auto create(const DescriptorInfo &desc) -> std::shared_ptr<DescriptorSet>;
 

@@ -306,7 +306,7 @@ namespace maple
 							{ voxelBuffer.voxelTexMipmap.begin(),voxelBuffer.voxelTexMipmap.end() },
 							mipLvl + 1
 						);
-						volumePipline.descriptors[mipLvl]->update(renderData.computeCommandBuffer);
+						volumePipline.descriptors[mipLvl]->update(renderData.commandBuffer);
 					}
 
 
@@ -317,18 +317,18 @@ namespace maple
 					pipelineInfo.groupCountZ = static_cast<uint32_t>(glm::ceil(mipmapDim / (float)volumePipline.shader->getLocalSizeZ()));
 
 					auto pipeline = Pipeline::get(pipelineInfo);
-					pipeline->bind(renderData.computeCommandBuffer);
-					Renderer::bindDescriptorSets(pipeline.get(), renderData.computeCommandBuffer, 0, { volumePipline.descriptors[mipLvl] });
+					pipeline->bind(renderData.commandBuffer);
+					Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, { volumePipline.descriptors[mipLvl] });
 					Renderer::dispatch(
-						renderData.computeCommandBuffer,
+						renderData.commandBuffer,
 						pipelineInfo.groupCountX,
 						pipelineInfo.groupCountY,
 						pipelineInfo.groupCountZ
 					);
 
-					Renderer::memoryBarrier(renderData.computeCommandBuffer, MemoryBarrierFlags::Shader_Image_Access_Barrier);
+					Renderer::memoryBarrier(renderData.commandBuffer, MemoryBarrierFlags::Shader_Image_Access_Barrier);
 
-					pipeline->end(renderData.computeCommandBuffer);
+					pipeline->end(renderData.commandBuffer);
 				}
 			}
 
@@ -345,7 +345,7 @@ namespace maple
 					pipline.descriptors[0]->setUniform("UniformBufferObject", "mipDimension", &halfDimension);
 					pipline.descriptors[0]->setTexture("uVoxelBase", voxelRadiance);
 					pipline.descriptors[0]->setTexture("uVoxelMipmap", { buffer.voxelTexMipmap.begin(),buffer.voxelTexMipmap.end() });
-					pipline.descriptors[0]->update(renderData.computeCommandBuffer);
+					pipline.descriptors[0]->update(renderData.commandBuffer);
 				}
 
 
@@ -357,18 +357,18 @@ namespace maple
 				pipelineInfo.groupCountZ = halfDimension / pipline.shader->getLocalSizeZ();
 
 				auto pipeline = Pipeline::get(pipelineInfo);
-				pipeline->bind(renderData.computeCommandBuffer);
-				Renderer::bindDescriptorSets(pipeline.get(), renderData.computeCommandBuffer, 0, pipline.descriptors);
+				pipeline->bind(renderData.commandBuffer);
+				Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, pipline.descriptors);
 				Renderer::dispatch(
-					renderData.computeCommandBuffer,
+					renderData.commandBuffer,
 					pipelineInfo.groupCountX,
 					pipelineInfo.groupCountY,
 					pipelineInfo.groupCountZ
 				);
 	
-				Renderer::memoryBarrier(renderData.computeCommandBuffer, MemoryBarrierFlags::Shader_Image_Access_Barrier);
+				Renderer::memoryBarrier(renderData.commandBuffer, MemoryBarrierFlags::Shader_Image_Access_Barrier);
 			
-				pipeline->end(renderData.computeCommandBuffer);
+				pipeline->end(renderData.commandBuffer);
 			}
 
 			inline auto system(
@@ -391,9 +391,9 @@ namespace maple
 				if (!voxel.dirty && !hasUpdateRadiance)
 					return;
 
-				injection.descriptors[0]->update(renderData.computeCommandBuffer);
+				injection.descriptors[0]->update(renderData.commandBuffer);
 
-				buffer.voxelVolume[VoxelBufferId::Radiance]->clear(renderData.computeCommandBuffer);
+				buffer.voxelVolume[VoxelBufferId::Radiance]->clear(renderData.commandBuffer);
 
 				PipelineInfo pipelineInfo;
 				pipelineInfo.shader = injection.shader;
@@ -403,22 +403,22 @@ namespace maple
 				pipelineInfo.groupCountZ = component::Voxelization::voxelDimension / injection.shader->getLocalSizeZ();
 
 				auto pipeline = Pipeline::get(pipelineInfo);
-				pipeline->bind(renderData.computeCommandBuffer);
-				Renderer::bindDescriptorSets(pipeline.get(), renderData.computeCommandBuffer, 0, injection.descriptors);
+				pipeline->bind(renderData.commandBuffer);
+				Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, injection.descriptors);
 				Renderer::dispatch(
-					renderData.computeCommandBuffer,
+					renderData.commandBuffer,
 					pipelineInfo.groupCountX,
 					pipelineInfo.groupCountY,
 					pipelineInfo.groupCountZ
 				);
 
-				Renderer::memoryBarrier(renderData.computeCommandBuffer, 
+				Renderer::memoryBarrier(renderData.commandBuffer, 
 					MemoryBarrierFlags::Texture_Fetch_Barrier 
 					| MemoryBarrierFlags::Shader_Storage_Barrier 
 					| MemoryBarrierFlags::Shader_Image_Access_Barrier
 				);
 
-				pipeline->end(renderData.computeCommandBuffer);
+				pipeline->end(renderData.commandBuffer);
 
 				generateMipmapMipmap(buffer.voxelVolume[VoxelBufferId::Radiance], renderData, buffer, basePipeline);
 				generateMipmapVolume(buffer, volumePipline, box, renderData);
@@ -432,7 +432,7 @@ namespace maple
 					propagation.descriptors[0]->setTexture("uVoxelAlbedo", buffer.voxelVolume[VoxelBufferId::Albedo]);
 					propagation.descriptors[0]->setTexture("uVoxelNormal", buffer.voxelVolume[VoxelBufferId::Normal]);
 					propagation.descriptors[0]->setTexture("uVoxelTexMipmap", { buffer.voxelTexMipmap.begin(), buffer.voxelTexMipmap.end() });
-					propagation.descriptors[0]->update(renderData.computeCommandBuffer);
+					propagation.descriptors[0]->update(renderData.commandBuffer);
 
 					PipelineInfo pipelineInfo;
 					pipelineInfo.shader = propagation.shader;
@@ -441,21 +441,21 @@ namespace maple
 					pipelineInfo.groupCountZ = component::Voxelization::voxelDimension / propagation.shader->getLocalSizeZ();
 
 					auto pipeline = Pipeline::get(pipelineInfo);
-					pipeline->bind(renderData.computeCommandBuffer);
-					Renderer::bindDescriptorSets(pipeline.get(), renderData.computeCommandBuffer, 0, propagation.descriptors);
+					pipeline->bind(renderData.commandBuffer);
+					Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, propagation.descriptors);
 					Renderer::dispatch(
-						renderData.computeCommandBuffer,
+						renderData.commandBuffer,
 						pipelineInfo.groupCountX,
 						pipelineInfo.groupCountY,
 						pipelineInfo.groupCountZ
 					);
 				
-					Renderer::memoryBarrier(renderData.computeCommandBuffer,
+					Renderer::memoryBarrier(renderData.commandBuffer,
 						MemoryBarrierFlags::Texture_Fetch_Barrier 
 						| MemoryBarrierFlags::Shader_Storage_Barrier 
 						| MemoryBarrierFlags::Shader_Image_Access_Barrier);
 
-					pipeline->end(renderData.computeCommandBuffer);
+					pipeline->end(renderData.commandBuffer);
 
 					generateMipmapMipmap(buffer.voxelVolume[VoxelBufferId::Radiance], renderData, buffer, basePipeline, false);
 					generateMipmapVolume(buffer, volumePipline, box, renderData, false);

@@ -294,7 +294,7 @@ namespace maple
 		winSize.height = screenBufferHeight;
 		winSize.width = screenBufferWidth;
 		renderData.commandBuffer = Application::getGraphicsContext()->getSwapChain()->getCurrentCommandBuffer();
-		renderData.computeCommandBuffer = Application::getGraphicsContext()->getSwapChain()->getComputeCmdBuffer();
+		//renderData.commandBuffer = Application::getGraphicsContext()->getSwapChain()->getComputeCmdBuffer();
 		renderData.renderDevice = Application::getRenderDevice().get();
 	}
 

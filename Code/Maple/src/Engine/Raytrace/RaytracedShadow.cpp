@@ -6,6 +6,8 @@
 #include "RHI/Texture.h"
 #include "RHI/RenderDevice.h"
 #include "RHI/StorageBuffer.h"
+#include "RHI/DescriptorSet.h"
+
 #include "Engine/Renderer/RendererData.h"
 
 namespace maple
@@ -35,6 +37,9 @@ namespace maple
 
 			StorageBuffer::Ptr shadowTileCoordsBuffer;
 			StorageBuffer::Ptr shadowDispatchBuffer;// indirect?
+
+			DescriptorSet::Ptr writeDescriptorSet;//Shadows Ray Trace Write
+			DescriptorSet::Ptr readDescriptorSet;//Shadows Ray Trace Read
 		};
 	}
 

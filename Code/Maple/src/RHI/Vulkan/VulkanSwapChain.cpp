@@ -208,7 +208,7 @@ namespace maple
 
 		delete[] pSwapChainImages;
 		createFrameData();
-		createComputeData();
+		//createComputeData();
 		
 		if (graphicsSemaphore == nullptr)
 		{
@@ -218,12 +218,12 @@ namespace maple
 		}
 
 		// Signal the semaphore
-		VkSubmitInfo submitInfo{};
+	/*	VkSubmitInfo submitInfo{};
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		submitInfo.signalSemaphoreCount = 1;
 		submitInfo.pSignalSemaphores = &computeData.semaphore;
 		VK_CHECK_RESULT(vkQueueSubmit(VulkanDevice::get()->getGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE));
-		VK_CHECK_RESULT(vkQueueWaitIdle(VulkanDevice::get()->getGraphicsQueue()));
+		VK_CHECK_RESULT(vkQueueWaitIdle(VulkanDevice::get()->getGraphicsQueue()));*/
 
 		return true;
 	}
@@ -355,8 +355,8 @@ namespace maple
 		auto& frameData = getFrameData();
 		frameData.commandBuffer->executeInternal(
 			{ VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT },
-			{ presentSemaphore, computeData.semaphore },
-			{ graphicsSemaphore, rendererSemaphore },
+			{ presentSemaphore/*, computeData.semaphore*/ },
+			{ /*graphicsSemaphore, */rendererSemaphore },
 			true);
 	}
 
@@ -372,6 +372,7 @@ namespace maple
 		VulkanContext::getDeletionQueue(currentBuffer).flush();
 		commandBuffer->beginRecording();
 
+/*
 
 		vkQueueWaitIdle(VulkanDevice::get()->getComputeQueue());
 		auto cmd = computeData.commandBuffer;
@@ -380,14 +381,14 @@ namespace maple
 			cmd->wait();
 		}
 		cmd->reset();
-		cmd->beginRecording();
+		cmd->beginRecording();*/
 	}
 
 	auto VulkanSwapChain::end() -> void
 	{
 		PROFILE_FUNCTION();
 		getCurrentCommandBuffer()->endRecording();
-		computeData.commandBuffer->endRecording();
+		//computeData.commandBuffer->endRecording();
 	}
 
 	auto VulkanSwapChain::getCurrentCommandBuffer() -> CommandBuffer*
@@ -426,13 +427,15 @@ namespace maple
 		}
 
 		VK_CHECK_RESULT(vkQueueWaitIdle(VulkanDevice::get()->getGraphicsQueue()));
+
+/*
 		VulkanContext::get()->waitIdle();
 
 		computeData.commandBuffer->executeInternal(
 			{ VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT },
 			{ graphicsSemaphore },
 			{ computeData.semaphore },
-			true);
+			true);*/
 
 		VulkanContext::getDeletionQueue(currentBuffer).flush();
 	}
