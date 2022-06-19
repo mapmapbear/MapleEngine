@@ -13,12 +13,12 @@ namespace maple
 		using Ptr = std::shared_ptr<VulkanBuffer>;
 
 		VulkanBuffer();
-		VulkanBuffer(VkBufferUsageFlags usage, uint32_t size, const void* data);
+		VulkanBuffer(VkBufferUsageFlags usage, uint32_t size, const void* data, bool gpuOnly = false);
 		virtual ~VulkanBuffer();
 		NO_COPYABLE(VulkanBuffer);
 
 		auto resize(uint32_t size, const void* data) -> void;
-		auto init(VkBufferUsageFlags usage, uint32_t size, const void* data) -> void;
+		auto init(VkBufferUsageFlags usage, uint32_t size, const void* data, bool gpuOnly = false) -> void;
 		auto map(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0) -> void;
 		auto unmap() -> void;
 		auto flush(VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0) -> void;
@@ -56,7 +56,6 @@ namespace maple
 		VkDeviceSize           alignment = 0;
 		void* mapped = nullptr;
 		VkBufferUsageFlags     usage;
-
 #ifdef USE_VMA_ALLOCATOR
 		VmaAllocation allocation{};
 		VmaAllocation mappedAllocation{};

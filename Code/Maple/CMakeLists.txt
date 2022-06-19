@@ -87,6 +87,8 @@ file(GLOB VK_APP_SRC
 	src/Engine/VXGI/*.h
 	src/Engine/DDGI/*.cpp
 	src/Engine/DDGI/*.h
+	src/Engine/Raytrace/*.cpp
+	src/Engine/Raytrace/*.h
 	src/RHI/*.h
 	src/RHI/*.cpp
 	src/RHI/Vulkan/*.h

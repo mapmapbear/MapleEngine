@@ -337,20 +337,20 @@ namespace maple
 #endif
 	}
 
-	auto StorageBuffer::create()->std::shared_ptr<StorageBuffer>
+	auto StorageBuffer::create(const BufferOptions& options)->std::shared_ptr<StorageBuffer>
 	{
 #ifdef MAPLE_VULKAN
-		return std::make_shared<VulkanStorageBuffer>();
+		return std::make_shared<VulkanStorageBuffer>(options);
 #endif
 #ifdef MAPLE_OPENGL
 		return std::make_shared<GLStorageBuffer>();
 #endif
 	}
 
-	auto StorageBuffer::create(uint32_t size, const void* data)->std::shared_ptr<StorageBuffer>
+	auto StorageBuffer::create(uint32_t size, const void* data, const BufferOptions& options)->std::shared_ptr<StorageBuffer>
 	{
 #ifdef MAPLE_VULKAN
-		return std::make_shared<VulkanStorageBuffer>(size, data);
+		return std::make_shared<VulkanStorageBuffer>(size, data, options);
 #endif
 #ifdef MAPLE_OPENGL
 		return std::make_shared<GLStorageBuffer>(size, data);

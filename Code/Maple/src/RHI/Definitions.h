@@ -89,6 +89,7 @@ namespace maple
 		R32I,
 		R32UI,
 		RG8,
+		R16,
 		RG16F,
 		RGB8,
 		RGBA8,

@@ -134,12 +134,14 @@ namespace maple
 			case TextureFormat::R8:
 				return 1;
 			case TextureFormat::RG8:
+			case TextureFormat::R16:
 				return 2;
 			case TextureFormat::RGB8:
 			case TextureFormat::RGB:
 				return 3;
 			case TextureFormat::RGBA8:
 			case TextureFormat::RGBA:
+			case TextureFormat::RG16F:
 				return 4;
 			case TextureFormat::RGB16:
 				return 6;
@@ -158,6 +160,7 @@ namespace maple
 			case TextureFormat::SCREEN:
 				return 0;
 			}
+			MAPLE_ASSERT(false, "Unknown TextureFormat");
 		}
 	}        // namespace
 

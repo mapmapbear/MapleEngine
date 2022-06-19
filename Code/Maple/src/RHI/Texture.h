@@ -15,6 +15,8 @@ namespace maple
 		{
 		}
 
+		using Ptr = std::shared_ptr<Texture>;
+
 		virtual auto bind(uint32_t slot = 0) const -> void = 0;
 		virtual auto unbind(uint32_t slot = 0) const -> void = 0;
 		virtual auto getFilePath() const -> const std::string & = 0;
@@ -92,6 +94,8 @@ namespace maple
 	{
 	public:
 		virtual auto setData(const void* data) -> void = 0;
+
+		using Ptr = std::shared_ptr<Texture2D>;
 
 	public:
 		static auto  getDefaultTexture()->std::shared_ptr<Texture2D>;

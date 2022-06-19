@@ -2,14 +2,14 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
-
-#include "Scene/System/ExecutePoint.h"
-#include "Engine/Core.h"
+#include <stdint.h>
 
 namespace maple
 {
-	namespace ddgi 
+	enum class RaytraceScale : int32_t 
 	{
-		auto registerDDGI(ExecuteQueue& begin, std::shared_ptr<ExecutePoint> point) -> void;
-	}
-}
+		Full,
+		Half,
+		Quarter
+	};
+};

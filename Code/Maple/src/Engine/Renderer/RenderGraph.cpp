@@ -295,6 +295,7 @@ namespace maple
 		winSize.width = screenBufferWidth;
 		renderData.commandBuffer = Application::getGraphicsContext()->getSwapChain()->getCurrentCommandBuffer();
 		renderData.computeCommandBuffer = Application::getGraphicsContext()->getSwapChain()->getComputeCmdBuffer();
+		renderData.renderDevice = Application::getRenderDevice().get();
 	}
 
 	auto RenderGraph::onResize(uint32_t width, uint32_t height) -> void

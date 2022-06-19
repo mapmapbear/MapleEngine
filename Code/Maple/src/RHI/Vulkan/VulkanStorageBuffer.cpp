@@ -7,13 +7,21 @@
 
 namespace maple
 {
-
-	VulkanStorageBuffer::VulkanStorageBuffer(uint32_t size, const void* data)
+	VulkanStorageBuffer::VulkanStorageBuffer(uint32_t size, const void* data, const BufferOptions& options)
+		:options(options)
 	{
-		vulkanBuffer = std::make_shared<VulkanBuffer>(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, size, data);
+		VkBufferUsageFlags flags = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+
+		if (options.indirect) 
+		{
+			flags |= VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT;
+		}
+
+		vulkanBuffer = std::make_shared<VulkanBuffer>(flags, size, data, options.gpuOnly);
 	}
 
-	VulkanStorageBuffer::VulkanStorageBuffer()
+	VulkanStorageBuffer::VulkanStorageBuffer(const BufferOptions& options)
+		: options(options)
 	{
 		vulkanBuffer = std::make_shared<VulkanBuffer>();
 	}
@@ -22,7 +30,14 @@ namespace maple
 	{
 		if (vulkanBuffer->getSize() == 0) 
 		{
-			vulkanBuffer->init(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, size, data);
+			VkBufferUsageFlags flags = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+
+			if (options.indirect)
+			{
+				flags |= VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT;
+			}
+
+			vulkanBuffer->init(flags, size, data);
 		}
 		vulkanBuffer->setVkData(size, data);
 	}

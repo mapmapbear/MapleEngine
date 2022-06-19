@@ -10,6 +10,7 @@ namespace maple
 	class CommandBuffer;
 	class Mesh;
 	class Texture;
+	class RenderDevice;
 
 	namespace component
 	{
@@ -42,6 +43,7 @@ namespace maple
 			GBuffer* gbuffer = nullptr;
 			std::shared_ptr<Mesh> screenQuad;
 			std::shared_ptr<TextureCube> unitCube;//1
+			RenderDevice* renderDevice = nullptr;
 		};
 
 		struct WindowSize

@@ -5,6 +5,7 @@
 #include "DDGIRenderer.h"
 #include "IrradianceVolume.h"
 #include "RHI/Texture.h"
+#include "Engine/Raytrace/RaytraceScale.h"
 
 namespace maple
 {
@@ -16,8 +17,7 @@ namespace maple
 			{
 				float width;
 				float height;
-				RaytracingScale scale;
-
+				RaytraceScale scale;
 			};
 
 			struct ProbeGrid
