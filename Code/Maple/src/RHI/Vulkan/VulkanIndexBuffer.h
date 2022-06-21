@@ -2,13 +2,11 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
+#include "Engine/Core.h"
 #include "RHI/IndexBuffer.h"
 #include "VulkanBuffer.h"
-#include "Engine/Core.h"
 
 #include <memory>
-
-
 
 namespace maple
 {
@@ -32,7 +30,7 @@ namespace maple
 		auto releasePointer() -> void override;
 
 		auto getPointerInternal() -> void * override;
-	
+
 		inline auto getSize() const -> uint32_t override
 		{
 			return size;

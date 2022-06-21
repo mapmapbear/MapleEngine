@@ -9,33 +9,33 @@
 
 namespace maple
 {
-	auto MapleMonoProperty::get(MonoObject* instance) const -> MonoObject*
+	auto MapleMonoProperty::get(MonoObject *instance) const -> MonoObject *
 	{
 		if (getMethod == nullptr)
 			return nullptr;
 		return mono_runtime_invoke(getMethod, instance, nullptr, nullptr);
 	}
 
-	auto MapleMonoProperty::set(MonoObject* instance, void* value) const -> void
+	auto MapleMonoProperty::set(MonoObject *instance, void *value) const -> void
 	{
 		if (setMethod == nullptr)
 			return;
 
-		void* args[1];
+		void *args[1];
 		args[0] = value;
 		mono_runtime_invoke(setMethod, instance, args, nullptr);
 	}
 
-	auto MapleMonoProperty::getIndexed(MonoObject* instance, uint32_t index) const -> MonoObject*
+	auto MapleMonoProperty::getIndexed(MonoObject *instance, uint32_t index) const -> MonoObject *
 	{
-		void* args[1];
+		void *args[1];
 		args[0] = &index;
 		return mono_runtime_invoke(getMethod, instance, args, nullptr);
 	}
 
-	auto MapleMonoProperty::setIndexed(MonoObject* instance, uint32_t index, void* value) const -> void
+	auto MapleMonoProperty::setIndexed(MonoObject *instance, uint32_t index, void *value) const -> void
 	{
-		void* args[2];
+		void *args[2];
 		args[0] = &index;
 		args[1] = value;
 		mono_runtime_invoke(setMethod, instance, args, nullptr);
@@ -48,17 +48,16 @@ namespace maple
 		return indexed;
 	}
 
-	auto MapleMonoProperty::getReturnType() const ->std::shared_ptr<MapleMonoClass>
+	auto MapleMonoProperty::getReturnType() const -> std::shared_ptr<MapleMonoClass>
 	{
 		if (!fullyInitialized)
 			initializeDeferred();
 		return returnType;
 	}
-	auto MapleMonoProperty::hasAttribute(MapleMonoClass* monoClass) -> bool
+	auto MapleMonoProperty::hasAttribute(MapleMonoClass *monoClass) -> bool
 	{
-
-		MonoClass* parentClass = mono_property_get_parent(monoProperty);
-		MonoCustomAttrInfo* attrInfo = mono_custom_attrs_from_property(parentClass, monoProperty);
+		MonoClass *         parentClass = mono_property_get_parent(monoProperty);
+		MonoCustomAttrInfo *attrInfo    = mono_custom_attrs_from_property(parentClass, monoProperty);
 		if (attrInfo == nullptr)
 			return false;
 
@@ -68,14 +67,14 @@ namespace maple
 
 		return hasAttr;
 	}
-	auto MapleMonoProperty::getAttribute(MapleMonoClass* monoClass) -> MonoObject*
+	auto MapleMonoProperty::getAttribute(MapleMonoClass *monoClass) -> MonoObject *
 	{
-		MonoClass* parentClass = mono_property_get_parent(monoProperty);
-		MonoCustomAttrInfo* attrInfo = mono_custom_attrs_from_property(parentClass, monoProperty);
+		MonoClass *         parentClass = mono_property_get_parent(monoProperty);
+		MonoCustomAttrInfo *attrInfo    = mono_custom_attrs_from_property(parentClass, monoProperty);
 		if (attrInfo == nullptr)
 			return nullptr;
 
-		MonoObject* foundAttr = nullptr;
+		MonoObject *foundAttr = nullptr;
 		if (mono_custom_attrs_has_attr(attrInfo, monoClass->getInternalClass()))
 			foundAttr = mono_custom_attrs_get_attr(attrInfo, monoClass->getInternalClass());
 
@@ -104,21 +103,21 @@ namespace maple
 		return setterVisibility;
 	}
 
-	MapleMonoProperty::MapleMonoProperty(MonoProperty* monoProp)
-		:monoProperty(monoProp)
+	MapleMonoProperty::MapleMonoProperty(MonoProperty *monoProp) :
+	    monoProperty(monoProp)
 	{
 		getMethod = mono_property_get_get_method(monoProp);
 		setMethod = mono_property_get_set_method(monoProp);
-		name = mono_property_get_name(monoProp);
+		name      = mono_property_get_name(monoProp);
 	}
 
 	auto MapleMonoProperty::initializeDeferred() const -> void
 	{
 		if (getMethod != nullptr)
 		{
-			MonoMethodSignature* signature = mono_method_signature(getMethod);
+			MonoMethodSignature *signature = mono_method_signature(getMethod);
 
-			MonoType* returnType = mono_signature_get_return_type(signature);
+			MonoType *returnType = mono_signature_get_return_type(signature);
 			if (returnType != nullptr)
 			{
 				auto returnClass = mono_class_from_mono_type(returnType);
@@ -127,13 +126,13 @@ namespace maple
 			}
 
 			uint32_t numParams = mono_signature_get_param_count(signature);
-			indexed = numParams == 1;
+			indexed            = numParams == 1;
 		}
 		else if (setMethod != nullptr)
 		{
-			MonoMethodSignature* signature = mono_method_signature(setMethod);
+			MonoMethodSignature *signature = mono_method_signature(setMethod);
 
-			MonoType* returnType = mono_signature_get_return_type(signature);
+			MonoType *returnType = mono_signature_get_return_type(signature);
 			if (returnType != nullptr)
 			{
 				auto returnClass = mono_class_from_mono_type(returnType);
@@ -142,9 +141,9 @@ namespace maple
 			}
 
 			uint32_t numParams = mono_signature_get_param_count(signature);
-			indexed = numParams == 2;
+			indexed            = numParams == 2;
 		}
 
 		fullyInitialized = true;
 	}
-};
+};        // namespace maple

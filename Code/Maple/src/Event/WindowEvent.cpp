@@ -6,11 +6,10 @@
 
 namespace maple
 {
-	
-	WindowResizeEvent::WindowResizeEvent(int32_t initWidth, int32_t initHeight)
-		:width(initWidth),height(initHeight)
+	WindowResizeEvent::WindowResizeEvent(int32_t initWidth, int32_t initHeight) :
+	    width(initWidth),
+	    height(initHeight)
 	{
-
 	}
 
-};
+};        // namespace maple

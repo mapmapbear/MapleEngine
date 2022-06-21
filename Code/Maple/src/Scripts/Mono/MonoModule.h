@@ -14,9 +14,9 @@ namespace maple
 		struct MonoComponent;
 	}
 
-	namespace mono 
+	namespace mono
 	{
-		auto MAPLE_EXPORT addScript(component::MonoComponent & comp, const std::string& name,int32_t entity) -> void;
-		auto MAPLE_EXPORT remove(component::MonoComponent& comp,const std::string& script) -> void;
-	}
-};        // namespace maple
+		auto MAPLE_EXPORT addScript(component::MonoComponent &comp, const std::string &name, int32_t entity) -> void;
+		auto MAPLE_EXPORT remove(component::MonoComponent &comp, const std::string &script) -> void;
+	}        // namespace mono
+};           // namespace maple

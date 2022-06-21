@@ -33,7 +33,7 @@ namespace maple
 		virtual auto isVSync() const -> bool        = 0;
 		virtual auto getNativeInterface() -> void * = 0;
 		virtual auto init() -> void                 = 0;
-		virtual auto isClose() const -> bool		= 0;
+		virtual auto isClose() const -> bool        = 0;
 
 		virtual auto setTitle(const std::string &title) -> void;
 
@@ -55,7 +55,7 @@ namespace maple
 		static auto create(const WindowInitData &data) -> std::unique_ptr<NativeWindow>;
 
 	  protected:
-		std::vector<const char *>  extensions;
-		float                      scale = 1.f;
+		std::vector<const char *> extensions;
+		float                     scale = 1.f;
 	};
 };        // namespace maple

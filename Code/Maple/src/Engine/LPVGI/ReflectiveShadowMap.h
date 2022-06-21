@@ -3,8 +3,8 @@
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-#include "Engine/Renderer/Renderer.h"
 #include "Engine/Core.h"
+#include "Engine/Renderer/Renderer.h"
 #include "Math/Frustum.h"
 #include "RHI/Shader.h"
 #include "Scene/System/ExecutePoint.h"
@@ -24,17 +24,17 @@ namespace maple
 			std::shared_ptr<Texture2D>                  worldTexture;
 			std::shared_ptr<Texture2D>                  normalTexture;
 			std::shared_ptr<TextureDepth>               fluxDepth;
-			std::vector<RenderCommand>				    commandQueue;
-			Frustum										frustum;
-			glm::mat4									projView;
-			glm::mat4									lightMatrix;
-			float										lightArea = 1.0f;
+			std::vector<RenderCommand>                  commandQueue;
+			Frustum                                     frustum;
+			glm::mat4                                   projView;
+			glm::mat4                                   lightMatrix;
+			float                                       lightArea = 1.0f;
 		};
 	}        // namespace component
 
 	namespace reflective_shadow_map
 	{
 		auto MAPLE_EXPORT registerGlobalComponent(std::shared_ptr<ExecutePoint> executePoint) -> void;
-		auto registerShadowMap(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void;
-	};
-};        // namespace maple
+		auto              registerShadowMap(ExecuteQueue &begin, ExecuteQueue &renderer, std::shared_ptr<ExecutePoint> executePoint) -> void;
+	};        // namespace reflective_shadow_map
+};            // namespace maple

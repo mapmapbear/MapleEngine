@@ -3,22 +3,22 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #include "Ray.h"
-#include "MathUtils.h"
 #include "BoundingBox.h"
+#include "MathUtils.h"
 
-namespace maple 
+namespace maple
 {
-	auto Ray::getClosestPoint(const Ray& ray) const ->glm::vec3
+	auto Ray::getClosestPoint(const Ray &ray) const -> glm::vec3
 	{
 		glm::vec3 p13 = origin - ray.origin;
 		glm::vec3 p43 = ray.direction;
 		glm::vec3 p21 = direction;
 
-		float d1343 = glm::dot(p13,p43);
-		float d4321 = glm::dot(p43,p21);
-		float d1321 = glm::dot(p13,p21);
-		float d4343 = glm::dot(p43,p43);
-		float d2121 = glm::dot(p21,p21);
+		float d1343 = glm::dot(p13, p43);
+		float d4321 = glm::dot(p43, p21);
+		float d1321 = glm::dot(p13, p21);
+		float d4343 = glm::dot(p43, p43);
+		float d2121 = glm::dot(p21, p21);
 
 		float d = d2121 * d4343 - d4321 * d4321;
 		if (std::abs(d) < MathUtils::EPS)
@@ -29,8 +29,7 @@ namespace maple
 		return origin + a * direction;
 	}
 
-
-	auto Ray::hit(const BoundingBox& box) const -> float
+	auto Ray::hit(const BoundingBox &box) const -> float
 	{
 		if (!box.isDefined())
 			return INFINITY;
@@ -82,7 +81,6 @@ namespace maple
 			}
 		}
 
-
 		if (origin.z < box.min.z && direction.z > 0.0f)
 		{
 			float x = (box.min.z - origin.z) / direction.z;
@@ -108,5 +106,4 @@ namespace maple
 		return dist;
 	}
 
-};
-
+};        // namespace maple

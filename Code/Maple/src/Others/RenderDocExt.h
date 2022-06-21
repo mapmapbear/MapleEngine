@@ -2,19 +2,19 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <string>
-#include <vector>
-#include <stdarg.h>
+#include "Engine/Core.h"
 #include <functional>
 #include <memory>
-#include "Engine/Core.h"
 #include <renderdoc_app.h>
+#include <stdarg.h>
+#include <string>
+#include <vector>
 
-namespace maple 
+namespace maple
 {
 	class MAPLE_EXPORT RenderDocExt
 	{
-	public:
+	  public:
 		RenderDocExt() = default;
 
 		NO_COPYABLE(RenderDocExt);
@@ -25,13 +25,18 @@ namespace maple
 
 		auto endCapture() -> void;
 
-		inline auto isEnabled() const { return enable; }
+		inline auto isEnabled() const
+		{
+			return enable;
+		}
 
-		inline auto toggleEnable() { enable = !enable; }
+		inline auto toggleEnable()
+		{
+			enable = !enable;
+		}
 
-	private:
-		bool enable = false;
-		RENDERDOC_API_1_5_0* doc = nullptr;
-	}; // namespace StringUtils
-};
-
+	  private:
+		bool                 enable = false;
+		RENDERDOC_API_1_5_0 *doc    = nullptr;
+	};        // namespace StringUtils
+};            // namespace maple

@@ -4,18 +4,18 @@
 #include "OBJLoader.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
-#include <tiny_obj_loader.h>
 #include "Engine/Material.h"
 #include "Engine/Profiler.h"
+#include "FileSystem/MeshResource.h"
 #include "Others/StringUtils.h"
 #include "RHI/Texture.h"
-#include "FileSystem/MeshResource.h"
+#include <tiny_obj_loader.h>
 
 namespace maple
 {
 	std::vector<std::shared_ptr<Texture2D>> texturesCache;
 
-	std::shared_ptr<Texture2D> loadMaterialTextures(const std::string& typeName, std::vector<std::shared_ptr<Texture2D>>& texturesLoaded, const std::string& name, const std::string& directory, TextureParameters format)
+	std::shared_ptr<Texture2D> loadMaterialTextures(const std::string &typeName, std::vector<std::shared_ptr<Texture2D>> &texturesLoaded, const std::string &name, const std::string &directory, TextureParameters format)
 	{
 		for (uint32_t j = 0; j < texturesLoaded.size(); j++)
 		{
@@ -26,19 +26,18 @@ namespace maple
 		}
 
 		{
-			auto texture = Texture2D::create(typeName, directory + "/" + name, format, { false,false,true });
+			auto texture = Texture2D::create(typeName, directory + "/" + name, format, {false, false, true});
 			texturesLoaded.emplace_back(texture);
 			return texture;
 		}
 	}
 
-
-	auto OBJLoader::load(const std::string& fileName, const std::string& extension, std::vector<std::shared_ptr<IResource>>& out) const -> void
+	auto OBJLoader::load(const std::string &fileName, const std::string &extension, std::vector<std::shared_ptr<IResource>> &out) const -> void
 	{
 		PROFILE_FUNCTION();
 		std::string resolvedPath = fileName;
-		auto        directory = resolvedPath.substr(0, resolvedPath.find_last_of(StringUtils::delimiter));
-		std::string name = directory.substr(directory.find_last_of(StringUtils::delimiter) + 1);
+		auto        directory    = resolvedPath.substr(0, resolvedPath.find_last_of(StringUtils::delimiter));
+		std::string name         = directory.substr(directory.find_last_of(StringUtils::delimiter) + 1);
 
 		tinyobj::attrib_t                attrib;
 		std::vector<tinyobj::shape_t>    shapes;
@@ -52,33 +51,33 @@ namespace maple
 
 		auto meshes = std::make_shared<MeshResource>(fileName);
 
-		for (const auto& shape : shapes)
+		for (const auto &shape : shapes)
 		{
 			std::vector<Vertex>                  vertices;
 			std::vector<uint32_t>                indices;
 			std::unordered_map<Vertex, uint32_t> uniqueVertices{};
 
-			for (const auto& index : shape.mesh.indices)
+			for (const auto &index : shape.mesh.indices)
 			{
 				Vertex vertex{};
 
 				vertex.pos = {
-					attrib.vertices[3 * index.vertex_index + 0],
-					attrib.vertices[3 * index.vertex_index + 1],
-					attrib.vertices[3 * index.vertex_index + 2] };
+				    attrib.vertices[3 * index.vertex_index + 0],
+				    attrib.vertices[3 * index.vertex_index + 1],
+				    attrib.vertices[3 * index.vertex_index + 2]};
 
 				if (index.normal_index >= 0)
 					vertex.normal = {
-						attrib.normals[3 * index.normal_index + 0],
-						attrib.normals[3 * index.normal_index + 1],
-						attrib.normals[3 * index.normal_index + 2] };
+					    attrib.normals[3 * index.normal_index + 0],
+					    attrib.normals[3 * index.normal_index + 1],
+					    attrib.normals[3 * index.normal_index + 2]};
 
 				if (index.texcoord_index >= 0)
 					vertex.texCoord = {
-						attrib.texcoords[2 * index.texcoord_index + 0],
-						1.0f - attrib.texcoords[2 * index.texcoord_index + 1] };
+					    attrib.texcoords[2 * index.texcoord_index + 0],
+					    1.0f - attrib.texcoords[2 * index.texcoord_index + 1]};
 
-				vertex.color = { 1.0f, 1.0f, 1.0f, 1.f };
+				vertex.color = {1.0f, 1.0f, 1.0f, 1.f};
 
 				if (uniqueVertices.count(vertex) == 0)
 				{
@@ -100,15 +99,13 @@ namespace maple
 
 			if (shape.mesh.material_ids[0] >= 0)
 			{
-				tinyobj::material_t* mp = &materials[shape.mesh.material_ids[0]];
+				tinyobj::material_t *mp = &materials[shape.mesh.material_ids[0]];
 
 				if (mp->diffuse_texname.length() > 0)
 				{
 					std::shared_ptr<Texture2D> texture = loadMaterialTextures("Albedo",
-						texturesCache,
-						mp->diffuse_texname, directory, TextureParameters(
-							TextureFilter::Linear,
-							TextureFilter::Linear, mp->diffuse_texopt.clamp ? TextureWrap::ClampToEdge : TextureWrap::Repeat));
+					                                                          texturesCache,
+					                                                          mp->diffuse_texname, directory, TextureParameters(TextureFilter::Linear, TextureFilter::Linear, mp->diffuse_texopt.clamp ? TextureWrap::ClampToEdge : TextureWrap::Repeat));
 					if (texture)
 						textures.albedo = texture;
 				}
@@ -116,9 +113,7 @@ namespace maple
 				if (mp->normal_texname.length() > 0)
 				{
 					std::shared_ptr<Texture2D> texture = loadMaterialTextures("Normal",
-						texturesCache, mp->normal_texname, directory, TextureParameters(
-							TextureFilter::Linear,
-							TextureFilter::Linear, mp->normal_texopt.clamp ? TextureWrap::ClampToEdge : TextureWrap::Repeat));
+					                                                          texturesCache, mp->normal_texname, directory, TextureParameters(TextureFilter::Linear, TextureFilter::Linear, mp->normal_texopt.clamp ? TextureWrap::ClampToEdge : TextureWrap::Repeat));
 					if (texture)
 						textures.normal = texture;
 				}
@@ -126,9 +121,9 @@ namespace maple
 				if (mp->roughness_texname.length() > 0)
 				{
 					std::shared_ptr<Texture2D> texture = loadMaterialTextures("Roughness", texturesCache, mp->roughness_texname.c_str(), directory,
-						TextureParameters(
-							TextureFilter::Linear,
-							TextureFilter::Linear, mp->roughness_texopt.clamp ? TextureWrap::ClampToEdge : TextureWrap::Repeat));
+					                                                          TextureParameters(
+					                                                              TextureFilter::Linear,
+					                                                              TextureFilter::Linear, mp->roughness_texopt.clamp ? TextureWrap::ClampToEdge : TextureWrap::Repeat));
 					if (texture)
 						textures.roughness = texture;
 				}
@@ -136,9 +131,9 @@ namespace maple
 				if (mp->metallic_texname.length() > 0)
 				{
 					std::shared_ptr<Texture2D> texture = loadMaterialTextures("Metallic", texturesCache, mp->metallic_texname, directory,
-						TextureParameters(
-							TextureFilter::Linear,
-							TextureFilter::Linear, mp->metallic_texopt.clamp ? TextureWrap::ClampToEdge : TextureWrap::Repeat));
+					                                                          TextureParameters(
+					                                                              TextureFilter::Linear,
+					                                                              TextureFilter::Linear, mp->metallic_texopt.clamp ? TextureWrap::ClampToEdge : TextureWrap::Repeat));
 					if (texture)
 						textures.metallic = texture;
 				}
@@ -159,4 +154,4 @@ namespace maple
 
 		out.emplace_back(meshes);
 	}
-};            // namespace maple
+};        // namespace maple

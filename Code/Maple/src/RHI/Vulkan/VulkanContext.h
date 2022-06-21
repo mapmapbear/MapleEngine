@@ -9,7 +9,6 @@
 #include <vector>
 #include <vulkan/vulkan.h>
 
-
 namespace maple
 {
 	class MAPLE_EXPORT VulkanContext : public GraphicsContext

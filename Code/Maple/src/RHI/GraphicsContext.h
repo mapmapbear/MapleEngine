@@ -21,7 +21,8 @@ namespace maple
 	struct CacheAsset
 	{
 		CacheAsset(std::shared_ptr<T> asset, uint64_t lastTimestamp) :
-		    asset(asset), lastTimestamp(lastTimestamp){};
+		    asset(asset),
+		    lastTimestamp(lastTimestamp){};
 		std::shared_ptr<T> asset;
 		uint64_t           lastTimestamp;
 	};

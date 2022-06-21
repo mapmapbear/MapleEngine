@@ -19,6 +19,6 @@ namespace maple
 		};
 
 		auto MAPLE_EXPORT onImGui() -> void;
-		auto MAPLE_EXPORT makeNotification(const std::string& title, const std::string& str, const Type type) -> void;
-	};
-};        // namespace maple
+		auto MAPLE_EXPORT makeNotification(const std::string &title, const std::string &str, const Type type) -> void;
+	};        // namespace ImNotification
+};            // namespace maple

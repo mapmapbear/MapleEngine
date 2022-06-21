@@ -6,9 +6,9 @@
 
 namespace maple
 {
-	namespace component 
+	namespace component
 	{
-		struct  NameComponent
+		struct NameComponent
 		{
 			std::string name;
 		};
@@ -17,17 +17,17 @@ namespace maple
 		{
 		};
 
-		struct  ActiveComponent
+		struct ActiveComponent
 		{
 			bool active = true;
 		};
-	}
+	}        // namespace component
 
-	namespace global::component 
+	namespace global::component
 	{
 		struct DeltaTime
 		{
 			float dt;
 		};
-	}
-};        // namespace maple
+	}        // namespace global::component
+};           // namespace maple

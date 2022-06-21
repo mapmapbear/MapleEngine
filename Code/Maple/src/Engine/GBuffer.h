@@ -33,33 +33,31 @@ namespace maple
 		LENGTH
 	};
 
-	static constexpr char* GBufferNames[] =
-	{
-		"Color",
-		"Position",
-		"Normals",
-		"PBR",
-		"SSAOScreen",
-		"SSAOBlur",
-		"SSRScreen",
-		"BloomScreen",
-		"BloomBlur",
-		"Screen",
-		"IndirectLighting",
-		"PreviewDisplay",
-		"ViewPosition",
-		"ViewNormal",
-		"Velocity",
-		"VolumetricLight",
-		"PseudoSky",
-		nullptr
-	};
-
+	static constexpr char *GBufferNames[] =
+	    {
+	        "Color",
+	        "Position",
+	        "Normals",
+	        "PBR",
+	        "SSAOScreen",
+	        "SSAOBlur",
+	        "SSRScreen",
+	        "BloomScreen",
+	        "BloomBlur",
+	        "Screen",
+	        "IndirectLighting",
+	        "PreviewDisplay",
+	        "ViewPosition",
+	        "ViewNormal",
+	        "Velocity",
+	        "VolumetricLight",
+	        "PseudoSky",
+	        nullptr};
 
 	class GBuffer
 	{
 	  public:
-		GBuffer(uint32_t width, uint32_t height, const CommandBuffer* commandBuffer = nullptr);
+		GBuffer(uint32_t width, uint32_t height, const CommandBuffer *commandBuffer = nullptr);
 
 		inline auto getWidth() const
 		{

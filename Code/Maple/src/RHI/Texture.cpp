@@ -12,15 +12,15 @@
 #	include "RHI/Vulkan/VulkanTexture.h"
 #endif        // MAPLE_OPENGL
 
-#include "Loaders/Loader.h"
 #include "Application.h"
+#include "Loaders/Loader.h"
 
 namespace maple
 {
-	auto Texture::memoryBarrier(const CommandBuffer* cmd, uint32_t flags) -> void
+	auto Texture::memoryBarrier(const CommandBuffer *cmd, uint32_t flags) -> void
 	{
 #ifdef MAPLE_OPENGL
-		Renderer::memoryBarrier(cmd,flags);
+		Renderer::memoryBarrier(cmd, flags);
 #endif
 	}
 
@@ -116,7 +116,7 @@ namespace maple
 	}
 	//###################################################
 
-	auto TextureDepth::create(uint32_t width, uint32_t height, bool stencil,const CommandBuffer * commandBuffer) -> std::shared_ptr<TextureDepth>
+	auto TextureDepth::create(uint32_t width, uint32_t height, bool stencil, const CommandBuffer *commandBuffer) -> std::shared_ptr<TextureDepth>
 	{
 #ifdef MAPLE_OPENGL
 		return std::make_shared<GLTextureDepth>(width, height, stencil);
@@ -177,7 +177,7 @@ namespace maple
 	}
 
 	///#####################################################################################
-	auto TextureDepthArray::create(uint32_t width, uint32_t height, uint32_t count, const CommandBuffer* commandBuffer) -> std::shared_ptr<TextureDepthArray>
+	auto TextureDepthArray::create(uint32_t width, uint32_t height, uint32_t count, const CommandBuffer *commandBuffer) -> std::shared_ptr<TextureDepthArray>
 	{
 #ifdef MAPLE_OPENGL
 		return std::make_shared<GLTextureDepthArray>(width, height, count);
@@ -190,20 +190,20 @@ namespace maple
 	auto Texture3D::create(uint32_t width, uint32_t height, uint32_t depth, TextureParameters parameters, TextureLoadOptions loadOptions) -> std::shared_ptr<Texture3D>
 	{
 #ifdef MAPLE_OPENGL
-		return std::make_shared <GLTexture3D>(width, height, depth, parameters, loadOptions);
+		return std::make_shared<GLTexture3D>(width, height, depth, parameters, loadOptions);
 #endif        // MAPLE_OPENGL
 #ifdef MAPLE_VULKAN
-		return std::make_shared <VulkanTexture3D>(width, height, depth, parameters, loadOptions);
+		return std::make_shared<VulkanTexture3D>(width, height, depth, parameters, loadOptions);
 #endif        // MAPLE_VULKAN
 	}
 
-	auto Texture2DArray::create(uint32_t width, uint32_t height, uint32_t count, TextureFormat format , TextureParameters parameters , const CommandBuffer* commandBuffer ) ->std::shared_ptr<Texture2DArray>
+	auto Texture2DArray::create(uint32_t width, uint32_t height, uint32_t count, TextureFormat format, TextureParameters parameters, const CommandBuffer *commandBuffer) -> std::shared_ptr<Texture2DArray>
 	{
 #ifdef MAPLE_OPENGL
-		return std::make_shared<GLTexture2DArray>(width, height, count,format, parameters);
+		return std::make_shared<GLTexture2DArray>(width, height, count, format, parameters);
 #endif        // MAPLE_OPENGL
 #ifdef MAPLE_VULKAN
-		return std::make_shared<VulkanTexture2DArray>(width, height, count, format ,parameters, commandBuffer);
+		return std::make_shared<VulkanTexture2DArray>(width, height, count, format, parameters, commandBuffer);
 #endif        // MAPLE_VULKAN
 	}
 }        // namespace maple

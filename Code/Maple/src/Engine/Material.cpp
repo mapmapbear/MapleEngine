@@ -17,11 +17,11 @@
 
 #include "Application.h"
 
-
 namespace maple
 {
 	Material::Material(const std::shared_ptr<Shader> &shader, const MaterialProperties &properties, const PBRMataterialTextures &textures) :
-	    pbrMaterialTextures(textures), shader(shader)
+	    pbrMaterialTextures(textures),
+	    shader(shader)
 	{
 		PROFILE_FUNCTION();
 
@@ -87,18 +87,18 @@ namespace maple
 			}
 		}
 
-		if (auto iter = cachedDescriptorSet.find(shader->getName()); iter != cachedDescriptorSet.end()) 
+		if (auto iter = cachedDescriptorSet.find(shader->getName()); iter != cachedDescriptorSet.end())
 		{
 			descriptorSet = iter->second;
 		}
-		else 
+		else
 		{
 			DescriptorInfo descriptorDesc;
 			descriptorDesc.layoutIndex = layoutID;
-			descriptorDesc.shader = shader.get();
-			descriptorSet = cachedDescriptorSet.emplace(
-				shader->getName(), DescriptorSet::create(descriptorDesc)
-			).first->second;
+			descriptorDesc.shader      = shader.get();
+			descriptorSet              = cachedDescriptorSet.emplace(
+                                                   shader->getName(), DescriptorSet::create(descriptorDesc))
+			                    .first->second;
 		}
 		updateDescriptorSet();
 	}
@@ -107,7 +107,6 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 
-		
 		if (!onlyAlbedoColor)
 		{
 			descriptorSet->setTexture("uAlbedoMap", pbrMaterialTextures.albedo);
@@ -177,7 +176,7 @@ namespace maple
 				materialProperties.usingEmissiveMap = 0.0f;
 			}
 		}
-		else 
+		else
 		{
 			if (pbrMaterialTextures.albedo != nullptr)
 			{
@@ -190,7 +189,7 @@ namespace maple
 			}
 			materialAlbedoProperties.albedoColor = materialProperties.albedoColor;
 		}
-		
+
 		updateUniformBuffer();
 	}
 
@@ -301,7 +300,7 @@ namespace maple
 		}
 	}
 
-	auto Material::bind(const CommandBuffer* cmdBuffer) -> void
+	auto Material::bind(const CommandBuffer *cmdBuffer) -> void
 	{
 		PROFILE_FUNCTION();
 
@@ -317,7 +316,7 @@ namespace maple
 		descriptorSet->update(cmdBuffer);
 	}
 
-	auto Material::getDescriptorSet(const std::string& name) ->std::shared_ptr<DescriptorSet>
+	auto Material::getDescriptorSet(const std::string &name) -> std::shared_ptr<DescriptorSet>
 	{
 		if (auto iter = cachedDescriptorSet.find(name); iter != cachedDescriptorSet.end())
 		{
@@ -327,7 +326,7 @@ namespace maple
 		return nullptr;
 	}
 
-	auto Material::setShader(const std::string& path) -> void
+	auto Material::setShader(const std::string &path) -> void
 	{
 		PROFILE_FUNCTION();
 		if (!StringUtils::endWith(path, "ForwardPreview.shader"))
@@ -339,10 +338,10 @@ namespace maple
 	auto Material::setShader(const std::shared_ptr<Shader> &shader, bool albedoColor) -> void
 	{
 		PROFILE_FUNCTION();
-		if (this->shader != shader) 
+		if (this->shader != shader)
 		{
 			onlyAlbedoColor = albedoColor;
-			this->shader = shader;
+			this->shader    = shader;
 			createDescriptorSet();
 		}
 	}

@@ -6,7 +6,6 @@
 #include "Engine/Core.h"
 #include "FileSystem/IResource.h"
 
-
 namespace spv
 {
 	enum ImageFormat;
@@ -99,18 +98,17 @@ namespace maple
 	class Pipeline;
 	class DescriptorSet;
 
-
 	class MAPLE_EXPORT Shader : public IResource
 	{
 	  public:
-		  using Ptr = std::shared_ptr<Shader>;
-		virtual ~Shader()                                                                        = default;
-		virtual auto bind() const -> void                                                        = 0;
-		virtual auto unbind() const -> void                                                      = 0;
-		virtual auto getName() const -> const std::string &                                      = 0;
-		virtual auto getFilePath() const -> const std::string &                                  = 0;
-		virtual auto getHandle() const -> void *                                                 = 0;
-		virtual auto getPushConstants() -> std::vector<PushConstant> &                           = 0;
+		using Ptr                                                                                      = std::shared_ptr<Shader>;
+		virtual ~Shader()                                                                              = default;
+		virtual auto bind() const -> void                                                              = 0;
+		virtual auto unbind() const -> void                                                            = 0;
+		virtual auto getName() const -> const std::string &                                            = 0;
+		virtual auto getFilePath() const -> const std::string &                                        = 0;
+		virtual auto getHandle() const -> void *                                                       = 0;
+		virtual auto getPushConstants() -> std::vector<PushConstant> &                                 = 0;
 		virtual auto bindPushConstants(const CommandBuffer *commandBuffer, Pipeline *pipeline) -> void = 0;
 		virtual auto getPushConstant(uint32_t index) -> PushConstant *
 		{
@@ -119,7 +117,7 @@ namespace maple
 
 		virtual auto getDescriptorInfo(uint32_t index) -> const std::vector<Descriptor>
 		{
-			return  std::vector<Descriptor>{};
+			return std::vector<Descriptor>{};
 		}
 
 		virtual auto getResourceType() const -> FileType
@@ -127,7 +125,7 @@ namespace maple
 			return FileType::Shader;
 		}
 
-		auto spirvTypeToDataType(const spirv_cross::SPIRType &type,uint32_t size) -> ShaderDataType;
+		auto        spirvTypeToDataType(const spirv_cross::SPIRType &type, uint32_t size) -> ShaderDataType;
 		static auto spirvTypeToTextureType(const spv::ImageFormat &format) -> TextureFormat;
 
 		virtual auto reload() -> void{};
@@ -151,7 +149,6 @@ namespace maple
 			return computeShader;
 		}
 
-
 		inline auto isRaytracingShader() const
 		{
 			return raytracingShader;
@@ -165,10 +162,10 @@ namespace maple
 		static auto create(const std::vector<uint32_t> &vertData, const std::vector<uint32_t> &fragData) -> std::shared_ptr<Shader>;
 
 	  protected:
-		bool     computeShader = false;
-		bool	 raytracingShader = false;
-		uint32_t localSizeX    = 1;
-		uint32_t localSizeY    = 1;
-		uint32_t localSizeZ    = 1;
+		bool     computeShader    = false;
+		bool     raytracingShader = false;
+		uint32_t localSizeX       = 1;
+		uint32_t localSizeY       = 1;
+		uint32_t localSizeZ       = 1;
 	};
 }        // namespace maple

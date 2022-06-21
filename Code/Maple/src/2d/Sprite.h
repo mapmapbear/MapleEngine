@@ -3,8 +3,8 @@
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-#include "Scene/Component/Component.h"
 #include "Engine/Quad2D.h"
+#include "Scene/Component/Component.h"
 #include <cereal/cereal.hpp>
 #include <glm/glm.hpp>
 
@@ -15,34 +15,33 @@ namespace maple
 	{
 		class MAPLE_EXPORT Sprite
 		{
-		public:
-
+		  public:
 			Sprite();
-			Sprite(const std::string& uniqueName, const std::vector<uint8_t>& data, uint32_t width, uint32_t height);
+			Sprite(const std::string &uniqueName, const std::vector<uint8_t> &data, uint32_t width, uint32_t height);
 			virtual ~Sprite();
 
-			auto setTextureFromFile(const std::string& filePath) -> void;
-			auto loadQuad(const std::string& path) -> void;
+			auto setTextureFromFile(const std::string &filePath) -> void;
+			auto loadQuad(const std::string &path) -> void;
 
-			virtual auto getQuad() -> const Quad2D&
+			virtual auto getQuad() -> const Quad2D &
 			{
 				return quad;
 			}
 
 			template <typename Archive>
-			auto save(Archive& archive) const -> void
+			auto save(Archive &archive) const -> void
 			{
 				std::string newPath = "";
 				archive(
-					cereal::make_nvp("TexturePath", getTexturePath()), );
+				    cereal::make_nvp("TexturePath", getTexturePath()), );
 			}
 
 			template <typename Archive>
-			auto load(Archive& archive) -> void
+			auto load(Archive &archive) -> void
 			{
 				std::string textureFilePath;
 				archive(
-					cereal::make_nvp("TexturePath", textureFilePath));
+				    cereal::make_nvp("TexturePath", textureFilePath));
 
 				if (!textureFilePath.empty())
 					loadQuad(textureFilePath);
@@ -57,16 +56,15 @@ namespace maple
 				return quad.getHeight();
 			}
 
-			auto getTexturePath() const -> const std::string&;
+			auto getTexturePath() const -> const std::string &;
 
-		protected:
+		  protected:
 			Quad2D quad;
 		};
 
 		class MAPLE_EXPORT AnimatedSprite : public Sprite
 		{
-		public:
-
+		  public:
 			struct AnimationFrame
 			{
 				uint32_t    width;
@@ -79,12 +77,12 @@ namespace maple
 			AnimatedSprite();
 			virtual ~AnimatedSprite() = default;
 
-			auto addFrame(const std::vector<uint8_t>& data, uint32_t width, uint32_t height, float delay, const std::string& uniqueKey, float xOffset, float yOffset, bool flipY = false, uint32_t color = UINT32_MAX) -> void;
+			auto addFrame(const std::vector<uint8_t> &data, uint32_t width, uint32_t height, float delay, const std::string &uniqueKey, float xOffset, float yOffset, bool flipY = false, uint32_t color = UINT32_MAX) -> void;
 			auto onUpdate(float dt) -> void;
-			auto getAnimatedUVs() -> const std::array<glm::vec2, 4>&;
+			auto getAnimatedUVs() -> const std::array<glm::vec2, 4> &;
 			auto getQuad() -> const Quad2D & override;
 
-			inline auto getCurrentFrame() const -> const AnimationFrame*
+			inline auto getCurrentFrame() const -> const AnimationFrame *
 			{
 				if (currentFrame < animationFrames.size())
 				{
@@ -103,7 +101,7 @@ namespace maple
 			{
 				return animationFrames.size();
 			};
-		
+
 			inline auto getWidth() const
 			{
 				auto frame = getCurrentFrame();
@@ -116,10 +114,10 @@ namespace maple
 				return frame ? frame->height : 0;
 			}
 
-			float                       frameTimer = 0.0f;
+			float                       frameTimer   = 0.0f;
 			uint32_t                    currentFrame = 0;
-			bool                        loop = true;
+			bool                        loop         = true;
 			std::vector<AnimationFrame> animationFrames;
 		};
-	};
+	};        // namespace component
 }        // namespace maple

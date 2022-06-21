@@ -2,11 +2,11 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 
-#include "GL.h"
 #include "GLDescriptorSet.h"
-#include "GLUniformBuffer.h"
-#include "GLStorageBuffer.h"
+#include "GL.h"
 #include "GLShader.h"
+#include "GLStorageBuffer.h"
+#include "GLUniformBuffer.h"
 
 #include "Engine/Core.h"
 #include "Engine/Profiler.h"
@@ -48,15 +48,15 @@ namespace maple
 				localStorage.initializeEmpty();
 
 				SSBOInfo info;
-				info.ssbo = descriptor.ssbo;
+				info.ssbo         = descriptor.ssbo;
 				info.localStorage = localStorage;
-				info.dirty = false;
+				info.dirty        = false;
 				ssboBuffers.emplace(descriptor.name, info);
 			}
 		}
 	}
 
-	auto GLDescriptorSet::update(const CommandBuffer* cmd) -> void
+	auto GLDescriptorSet::update(const CommandBuffer *cmd) -> void
 	{
 		PROFILE_FUNCTION();
 
@@ -69,7 +69,7 @@ namespace maple
 			}
 		}
 
-		for (auto& bufferInfo : ssboBuffers)
+		for (auto &bufferInfo : ssboBuffers)
 		{
 			if (bufferInfo.second.dirty)
 			{
@@ -88,8 +88,8 @@ namespace maple
 			     descriptor.type == DescriptorType::Image) &&
 			    descriptor.name == name)
 			{
-				descriptor.textures = textures;
-				descriptor.mipmapLevel = std::max(mipLevel,0);
+				descriptor.textures    = textures;
+				descriptor.mipmapLevel = std::max(mipLevel, 0);
 				return;
 			}
 		}
@@ -98,7 +98,7 @@ namespace maple
 
 	auto GLDescriptorSet::setTexture(const std::string &name, const std::shared_ptr<Texture> &texture, int32_t mipLevel) -> void
 	{
-		setTexture(name, std::vector<std::shared_ptr<Texture>>{texture},mipLevel);
+		setTexture(name, std::vector<std::shared_ptr<Texture>>{texture}, mipLevel);
 	}
 
 	auto GLDescriptorSet::setBuffer(const std::string &name, const std::shared_ptr<UniformBuffer> &buffer) -> void
@@ -155,13 +155,13 @@ namespace maple
 		LOGW("Uniform not found {0}.{1}", bufferName, uniformName);
 	}
 
-	auto GLDescriptorSet::setSSBO(const std::string& bufferName, uint32_t size, const void* data) -> void
+	auto GLDescriptorSet::setSSBO(const std::string &bufferName, uint32_t size, const void *data) -> void
 	{
 		PROFILE_FUNCTION();
 
 		if (auto iter = ssboBuffers.find(bufferName); iter != ssboBuffers.end())
 		{
-			if (iter->second.localStorage.getSize() == 0) 
+			if (iter->second.localStorage.getSize() == 0)
 			{
 				iter->second.localStorage.allocate(size);
 				iter->second.localStorage.initializeEmpty();
@@ -242,11 +242,10 @@ namespace maple
 							if (descriptor.type == DescriptorType::ImageSampler)
 							{
 								descriptor.textures[i]->bind(descriptor.binding + i);
-								
 							}
-							else 
+							else
 							{
-								auto read = descriptor.accessFlag == 0 || descriptor.accessFlag == 2;
+								auto read  = descriptor.accessFlag == 0 || descriptor.accessFlag == 2;
 								auto write = descriptor.accessFlag == 1 || descriptor.accessFlag == 2;
 								descriptor.textures[i]->bindImageTexture(descriptor.binding + i, read, write, descriptor.mipmapLevel, 0);
 							}
@@ -256,7 +255,7 @@ namespace maple
 					shader->setUniform1iv(descriptor.name, samplers, descriptor.textures.size());
 				}
 			}
-			else if(descriptor.type == DescriptorType::UniformBuffer)
+			else if (descriptor.type == DescriptorType::UniformBuffer)
 			{
 				auto buffer = std::static_pointer_cast<GLUniformBuffer>(descriptor.buffer);
 
@@ -307,7 +306,7 @@ namespace maple
 					}
 				}
 			}
-			else if (descriptor.type == DescriptorType::Buffer) 
+			else if (descriptor.type == DescriptorType::Buffer)
 			{
 				auto buffer = std::static_pointer_cast<GLStorageBuffer>(descriptor.ssbo);
 

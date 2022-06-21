@@ -2,11 +2,11 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 
-#include <stdlib.h>
-#include <algorithm>
 #include "EventDispatcher.h"
 #include "Application.h"
 #include "Engine/Profiler.h"
+#include <algorithm>
+#include <stdlib.h>
 
 namespace maple
 {
@@ -22,10 +22,10 @@ namespace maple
 		for (EventHandler *eventHandler : eventHandlers)
 		{
 			auto i = std::find(eventHandlerDeleteSet.begin(), eventHandlerDeleteSet.end(), eventHandler);
-			if (i == eventHandlerDeleteSet.end()) {
+			if (i == eventHandlerDeleteSet.end())
+			{
 				eventHandler->eventDispatcher = nullptr;
 			}
-			
 		}
 	}
 
@@ -74,48 +74,54 @@ namespace maple
 			{
 				switch (event->getType())
 				{
-				case	EventType::WindowClose:break;
-				case	EventType::WindowResize:break;
-				case	EventType::WindowFocus:break;
-				case	EventType::WindowLostFocus:break;
+					case EventType::WindowClose:
+						break;
+					case EventType::WindowResize:
+						break;
+					case EventType::WindowFocus:
+						break;
+					case EventType::WindowLostFocus:
+						break;
 
-				case	EventType::KeyPressed:
-					if (eventHandler->keyPressedHandler) {
-						handled = eventHandler->keyPressedHandler(static_cast<KeyPressedEvent*>(event.get()));
-					}
-					break;
-				case	EventType::KeyReleased:
-					if (eventHandler->keyReleasedHandler) {
-						handled = eventHandler->keyReleasedHandler(static_cast<KeyReleasedEvent*>(event.get()));
-					}
-					break;
-				case	EventType::MouseClicked:
-					if (eventHandler->mouseClickHandler)
-						handled = eventHandler->mouseClickHandler(static_cast<MouseClickEvent*>(event.get()));
-					break;
-				case	EventType::MouseReleased:
-					if (eventHandler->mouseRelaseHandler)
-						handled = eventHandler->mouseRelaseHandler(static_cast<MouseReleaseEvent*>(event.get()));
-					break;
-				case	EventType::MouseMove:
-					if (eventHandler->mouseMoveHandler)
-						handled = eventHandler->mouseMoveHandler(static_cast<MouseMoveEvent*>(event.get()));
-					break;
-				case	EventType::MouseScrolled:
-					if (eventHandler->mouseScrollHandler)
-						handled = eventHandler->mouseScrollHandler(static_cast<MouseScrolledEvent*>(event.get()));
-					break;
-				case EventType::DeferredType:
-					if (eventHandler->deferredTypeHandler)
-						handled = eventHandler->deferredTypeHandler(static_cast<DeferredTypeEvent*>(event.get()));
-					break;
-				case	EventType::CharInput:
-					if (eventHandler->charInputHandler)
-						handled = eventHandler->charInputHandler(static_cast<CharInputEvent*>(event.get()));
-					break;
+					case EventType::KeyPressed:
+						if (eventHandler->keyPressedHandler)
+						{
+							handled = eventHandler->keyPressedHandler(static_cast<KeyPressedEvent *>(event.get()));
+						}
+						break;
+					case EventType::KeyReleased:
+						if (eventHandler->keyReleasedHandler)
+						{
+							handled = eventHandler->keyReleasedHandler(static_cast<KeyReleasedEvent *>(event.get()));
+						}
+						break;
+					case EventType::MouseClicked:
+						if (eventHandler->mouseClickHandler)
+							handled = eventHandler->mouseClickHandler(static_cast<MouseClickEvent *>(event.get()));
+						break;
+					case EventType::MouseReleased:
+						if (eventHandler->mouseRelaseHandler)
+							handled = eventHandler->mouseRelaseHandler(static_cast<MouseReleaseEvent *>(event.get()));
+						break;
+					case EventType::MouseMove:
+						if (eventHandler->mouseMoveHandler)
+							handled = eventHandler->mouseMoveHandler(static_cast<MouseMoveEvent *>(event.get()));
+						break;
+					case EventType::MouseScrolled:
+						if (eventHandler->mouseScrollHandler)
+							handled = eventHandler->mouseScrollHandler(static_cast<MouseScrolledEvent *>(event.get()));
+						break;
+					case EventType::DeferredType:
+						if (eventHandler->deferredTypeHandler)
+							handled = eventHandler->deferredTypeHandler(static_cast<DeferredTypeEvent *>(event.get()));
+						break;
+					case EventType::CharInput:
+						if (eventHandler->charInputHandler)
+							handled = eventHandler->charInputHandler(static_cast<CharInputEvent *>(event.get()));
+						break;
 				}
 			}
-			if (handled)//if this event handled,this even will not dispatch in the low priority handler.
+			if (handled)        //if this event handled,this even will not dispatch in the low priority handler.
 				break;
 		}
 		return handled;
@@ -124,8 +130,8 @@ namespace maple
 	auto EventDispatcher::postEvent(std::unique_ptr<Event> &&event) -> std::future<bool>
 	{
 		PROFILE_FUNCTION();
-		std::promise<bool> promise;
-		std::future<bool> future = promise.get_future();
+		std::promise<bool>           promise;
+		std::future<bool>            future = promise.get_future();
 		std::unique_lock<std::mutex> lock(eventQueueMutex);
 		eventQueue.push(std::pair<std::promise<bool>, std::unique_ptr<Event>>(std::move(promise), std::move(event)));
 		return future;
@@ -152,9 +158,9 @@ namespace maple
 			if (i == eventHandlers.end())
 			{
 				auto upperBound = std::upper_bound(eventHandlers.begin(), eventHandlers.end(), eventHandler,
-					[](const EventHandler *a, const EventHandler *b) {
-						return a->priority > b->priority;
-					});
+				                                   [](const EventHandler *a, const EventHandler *b) {
+					                                   return a->priority > b->priority;
+				                                   });
 				eventHandlers.insert(upperBound, eventHandler);
 			}
 		}
@@ -176,4 +182,4 @@ namespace maple
 			event.first.set_value(dispatchEvent(std::move(event.second)));
 		}
 	}
-};
+};        // namespace maple

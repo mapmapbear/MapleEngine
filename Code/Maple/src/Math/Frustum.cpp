@@ -9,15 +9,14 @@
 namespace maple
 {
 	const glm::vec3 frustumCorners[8] = {
-		{ 1.0f,  1.0f, -1.0f},
-		{ 1.0f, -1.0f, -1.0f},
-		{-1.0f, -1.0f, -1.0f},
-		{-1.0f,  1.0f, -1.0f},
-		{ 1.0f,  1.0f,  1.0f},
-		{ 1.0f, -1.0f,  1.0f},
-		{-1.0f, -1.0f,  1.0f},
-		{-1.0f,  1.0f,  1.0f} 
-	};
+	    {1.0f, 1.0f, -1.0f},
+	    {1.0f, -1.0f, -1.0f},
+	    {-1.0f, -1.0f, -1.0f},
+	    {-1.0f, 1.0f, -1.0f},
+	    {1.0f, 1.0f, 1.0f},
+	    {1.0f, -1.0f, 1.0f},
+	    {-1.0f, -1.0f, 1.0f},
+	    {-1.0f, 1.0f, 1.0f}};
 
 	auto Frustum::from(const glm::mat4 &m) -> void
 	{
@@ -56,7 +55,7 @@ namespace maple
 		return true;
 	}
 
-	auto Frustum::isInside(const BoundingBox& box) const->bool
+	auto Frustum::isInside(const BoundingBox &box) const -> bool
 	{
 		PROFILE_FUNCTION();
 		for (int i = 0; i < 6; i++)
@@ -87,7 +86,7 @@ namespace maple
 		return true;
 	}
 
-	auto Frustum::isInside(const std::shared_ptr<BoundingBox>& box) const->bool
+	auto Frustum::isInside(const std::shared_ptr<BoundingBox> &box) const -> bool
 	{
 		PROFILE_FUNCTION();
 		for (int i = 0; i < 6; i++)

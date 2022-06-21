@@ -18,14 +18,14 @@ namespace maple
 		Custom
 	};
 
-	namespace component 
+	namespace component
 	{
-		struct CameraControllerComponent 
+		struct CameraControllerComponent
 		{
-			ControllerType	type = ControllerType::FPS;
+			ControllerType                    type = ControllerType::FPS;
 			std::shared_ptr<CameraController> cameraController;
 		};
-	}
+	}        // namespace component
 
 	namespace camera_controller
 	{
@@ -33,15 +33,15 @@ namespace maple
 		{
 			switch (type)
 			{
-			case ControllerType::FPS:
-				return "FPS";
-			case ControllerType::EditorCamera:
-				return "Editor";
+				case ControllerType::FPS:
+					return "FPS";
+				case ControllerType::EditorCamera:
+					return "Editor";
 			}
 			return "Custom";
 		}
 
-		inline auto stringToType(const std::string& type)
+		inline auto stringToType(const std::string &type)
 		{
 			if (type == "FPS")
 				return ControllerType::FPS;
@@ -50,6 +50,6 @@ namespace maple
 			return ControllerType::Custom;
 		}
 
-		auto MAPLE_EXPORT setControllerType(component::CameraControllerComponent& controller, maple::ControllerType type) -> void;
-	}
-};        // namespace maple
+		auto MAPLE_EXPORT setControllerType(component::CameraControllerComponent &controller, maple::ControllerType type) -> void;
+	}        // namespace camera_controller
+};           // namespace maple

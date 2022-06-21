@@ -22,7 +22,7 @@ namespace maple
 
 	namespace hierarchy
 	{
-		auto MAPLE_EXPORT updateTransform(entt::entity entity, ecs::World world, global::component::SceneTransformChanged * transform = nullptr) -> void;
+		auto MAPLE_EXPORT updateTransform(entt::entity entity, ecs::World world, global::component::SceneTransformChanged *transform = nullptr) -> void;
 
 		auto MAPLE_EXPORT reset(component::Hierarchy &hy) -> void;
 		// Return true if current entity is an ancestor of current entity

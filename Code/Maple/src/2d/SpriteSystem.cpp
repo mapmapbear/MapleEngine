@@ -3,27 +3,24 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include "SpriteSystem.h"
-#include "Sprite.h"
 #include "Scene/Component/Transform.h"
+#include "Sprite.h"
 #include <ecs/ecs.h>
 
-namespace maple 
+namespace maple
 {
-	namespace update 
+	namespace update
 	{
-		using Entity = ecs::Registry
-			::Modify<component::AnimatedSprite>
-			::Modify<component::Transform>
-			::To<ecs::Entity>;
+		using Entity = ecs::Registry ::Modify<component::AnimatedSprite>::Modify<component::Transform>::To<ecs::Entity>;
 
-		inline auto systemAnimatedSprite(Entity entity, const global::component::DeltaTime & dt, ecs::World world)
+		inline auto systemAnimatedSprite(Entity entity, const global::component::DeltaTime &dt, ecs::World world)
 		{
 			auto [anim, trans] = entity;
 
 			anim.frameTimer += dt.dt;
 			if (anim.currentFrame < anim.animationFrames.size())
 			{
-				auto& frame = anim.animationFrames[anim.currentFrame];
+				auto &frame = anim.animationFrames[anim.currentFrame];
 				if (anim.frameTimer >= frame.delay)
 				{
 					anim.frameTimer = 0;
@@ -36,16 +33,12 @@ namespace maple
 			}
 		};
 
-		using SpriteEntity = ecs::Registry
-			::Modify<component::Sprite>
-			::Modify<component::Transform>
-			::To<ecs::Entity>;
+		using SpriteEntity = ecs::Registry ::Modify<component::Sprite>::Modify<component::Transform>::To<ecs::Entity>;
 
-		inline auto systemSprite(SpriteEntity entity, ecs::World world)
-		{
+		inline auto systemSprite(SpriteEntity entity, ecs::World world){
 
 		};
-	};
+	};        // namespace update
 
 	namespace sprite2d
 	{
@@ -54,5 +47,5 @@ namespace maple
 			executePoint->registerSystem<update::systemAnimatedSprite>();
 			executePoint->registerSystem<update::systemSprite>();
 		}
-	}
-};
+	}        // namespace sprite2d
+};           // namespace maple

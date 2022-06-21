@@ -2,9 +2,9 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
+#include "Engine/Core.h"
 #include "RHI/CommandBuffer.h"
 #include "VulkanHelper.h"
-#include "Engine/Core.h"
 
 namespace maple
 {
@@ -18,7 +18,7 @@ namespace maple
 
 	class VulkanCommandBuffer : public CommandBuffer
 	{
-	public:
+	  public:
 		VulkanCommandBuffer(CommandBufferType cmdBufferType = CommandBufferType::Graphics);
 		VulkanCommandBuffer(VkCommandBuffer commandBuffer, CommandBufferType cmdBufferType = CommandBufferType::Graphics);
 		~VulkanCommandBuffer();
@@ -29,11 +29,11 @@ namespace maple
 		auto init(bool primary, VkCommandPool commandPool) -> bool;
 		auto unload() -> void override;
 		auto beginRecording() -> void override;
-		auto beginRecordingSecondary(RenderPass* renderPass, FrameBuffer* framebuffer) -> void override;
+		auto beginRecordingSecondary(RenderPass *renderPass, FrameBuffer *framebuffer) -> void override;
 		auto endRecording() -> void override;
-		auto executeSecondary(const CommandBuffer* primaryCmdBuffer) -> void override;
+		auto executeSecondary(const CommandBuffer *primaryCmdBuffer) -> void override;
 		auto updateViewport(uint32_t width, uint32_t height) const -> void override;
-		auto bindPipeline(Pipeline* pipeline) -> void override;
+		auto bindPipeline(Pipeline *pipeline) -> void override;
 		auto unbindPipeline() -> void override;
 		auto flush() -> bool override;
 
@@ -50,34 +50,36 @@ namespace maple
 		auto wait() -> void;
 		auto reset() -> void;
 
-
 		auto executeInternal(
-			const std::vector<VkPipelineStageFlags>& flags,
-			const std::vector<VkSemaphore>& waitSemaphores,
-			const std::vector<VkSemaphore>& signalSemaphores,
-			bool waitFence) -> void;
-
+		    const std::vector<VkPipelineStageFlags> &flags,
+		    const std::vector<VkSemaphore> &         waitSemaphores,
+		    const std::vector<VkSemaphore> &         signalSemaphores,
+		    bool                                     waitFence) -> void;
 
 		inline auto getCommandBuffer() const
 		{
 			return commandBuffer;
 		}
 
-		inline auto getCommandBuffeType() const { return cmdBufferType; }
+		inline auto getCommandBuffeType() const
+		{
+			return cmdBufferType;
+		}
 
-		auto addTask(const std::function<void(const CommandBuffer*)>& task)->void override;
-	private:
-		VkCommandBuffer              commandBuffer = nullptr;
-		VkCommandPool                commandPool = nullptr;
-		bool                         primary;
+		auto addTask(const std::function<void(const CommandBuffer *)> &task) -> void override;
 
-		CommandBufferState           state = CommandBufferState::Idle;
+	  private:
+		VkCommandBuffer commandBuffer = nullptr;
+		VkCommandPool   commandPool   = nullptr;
+		bool            primary;
 
-		Pipeline* boundPipeline = nullptr;
-		RenderPass* boundRenderPass = nullptr;
+		CommandBufferState state = CommandBufferState::Idle;
+
+		Pipeline *  boundPipeline   = nullptr;
+		RenderPass *boundRenderPass = nullptr;
 
 		CommandBufferType cmdBufferType = CommandBufferType::Graphics;
 
-		std::vector< std::function<void(const CommandBuffer*)>> tasks;
+		std::vector<std::function<void(const CommandBuffer *)>> tasks;
 	};
 };        // namespace maple

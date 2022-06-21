@@ -16,13 +16,12 @@ namespace maple
 			Length
 		};
 
-		static const char* Names[] =
-		{
-			"Albedo",
-			"Normal",
-			"Radiance",
-			"Emissive",
-			nullptr
-		};
-	}
-}
+		static const char *Names[] =
+		    {
+		        "Albedo",
+		        "Normal",
+		        "Radiance",
+		        "Emissive",
+		        nullptr};
+	}        // namespace VoxelBufferId
+}        // namespace maple

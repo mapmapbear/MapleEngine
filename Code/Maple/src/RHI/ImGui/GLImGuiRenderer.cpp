@@ -19,7 +19,7 @@ namespace maple
 
 	auto GLImGuiRenderer::init() -> void
 	{
-		ImGui_ImplGlfw_InitForOpenGL((GLFWwindow*)Application::getWindow()->getNativeInterface(), true);
+		ImGui_ImplGlfw_InitForOpenGL((GLFWwindow *) Application::getWindow()->getNativeInterface(), true);
 		ImGui_ImplOpenGL3_Init("#version 410");
 	}
 

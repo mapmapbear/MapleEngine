@@ -3,9 +3,9 @@
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
 
+#include "Engine/Core.h"
 #include "Renderer.h"
 #include "Scene/System/ExecutePoint.h"
-#include "Engine/Core.h"
 #include <IconsMaterialDesignIcons.h>
 namespace maple
 {
@@ -46,13 +46,13 @@ namespace maple
 
 			std::shared_ptr<PrefilterRenderer> prefilterRenderer;
 
-			int32_t cubeMapMode = 0;
+			int32_t cubeMapMode  = 0;
 			float   cubeMapLevel = 0;
 		};
-	}
-	
+	}        // namespace component
+
 	namespace skybox_renderer
 	{
-		auto registerSkyboxRenderer(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void;
+		auto registerSkyboxRenderer(ExecuteQueue &begin, ExecuteQueue &renderer, std::shared_ptr<ExecutePoint> executePoint) -> void;
 	};
 }        // namespace maple

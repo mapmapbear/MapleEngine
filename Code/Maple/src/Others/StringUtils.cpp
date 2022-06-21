@@ -3,30 +3,28 @@
 //////////////////////////////////////////////////////////////////////////////
 #include "StringUtils.h"
 
+#include <algorithm>
 #include <ctime>
+#include <memory.h>
+#include <sstream>
 #include <stdio.h>
 #include <string>
-#include <sstream>
-#include <memory.h>
-#include <algorithm>
 
 #include "Console.h"
 #include <cpp_utf8.h>
 #include <iconv.h>
 
 #ifdef _WIN32
-#include <direct.h>
-#define getCwd _getcwd
+#	include <direct.h>
+#	define getCwd _getcwd
 #else
-#include <unistd.h>
-#define getCwd getcwd
+#	include <unistd.h>
+#	define getCwd getcwd
 #endif
 
-
-
-namespace maple 
+namespace maple
 {
-	auto StringUtils::getExtension(const std::string& fileName) -> std::string
+	auto StringUtils::getExtension(const std::string &fileName) -> std::string
 	{
 		auto pos = fileName.find_last_of('.');
 		if (pos != std::string::npos)
@@ -34,7 +32,7 @@ namespace maple
 		return "";
 	}
 
-	auto StringUtils::removeExtension(const std::string& fileName) -> std::string
+	auto StringUtils::removeExtension(const std::string &fileName) -> std::string
 	{
 		auto pos = fileName.find_last_of('.');
 		if (pos != std::string::npos)
@@ -42,7 +40,7 @@ namespace maple
 		return fileName;
 	}
 
-	auto StringUtils::getFileName(const std::string& filePath) -> std::string
+	auto StringUtils::getFileName(const std::string &filePath) -> std::string
 	{
 		auto pos = filePath.find_last_of(delimiter);
 		if (pos != std::string::npos)
@@ -51,39 +49,39 @@ namespace maple
 		return filePath;
 	}
 
-	auto StringUtils::getFileNameWithoutExtension(const std::string& filePath) -> std::string
+	auto StringUtils::getFileNameWithoutExtension(const std::string &filePath) -> std::string
 	{
 		return removeExtension(getFileName(filePath));
 	}
 
-	auto StringUtils::getCurrentWorkingDirectory() ->std::string
+	auto StringUtils::getCurrentWorkingDirectory() -> std::string
 	{
 		char currentPath[FILENAME_MAX];
 		if (!getCwd(currentPath, sizeof(currentPath)))
 		{
-			return std::string(); // empty string
+			return std::string();        // empty string
 		}
-		currentPath[sizeof(currentPath) - 1] = '\0'; // terminate the string
+		currentPath[sizeof(currentPath) - 1] = '\0';        // terminate the string
 		return std::string(currentPath);
 	}
 
-	auto StringUtils::isHiddenFile(const std::string& filePath) ->bool
+	auto StringUtils::isHiddenFile(const std::string &filePath) -> bool
 	{
 		if (filePath != ".." &&
-			filePath != "." &&
-			filePath[0] == '.')
+		    filePath != "." &&
+		    filePath[0] == '.')
 		{
 			return true;
 		}
 		return false;
 	}
 
-	auto StringUtils::replace(std::u16string& src, const std::u16string& origin, const std::u16string& des) -> void
+	auto StringUtils::replace(std::u16string &src, const std::u16string &origin, const std::u16string &des) -> void
 	{
-		std::u16string::size_type pos = 0;
+		std::u16string::size_type pos    = 0;
 		std::u16string::size_type srcLen = origin.size();
 		std::u16string::size_type desLen = des.size();
-		pos = src.find(origin, pos);
+		pos                              = src.find(origin, pos);
 		while ((pos != std::u16string::npos))
 		{
 			src.replace(pos, srcLen, des);
@@ -91,25 +89,25 @@ namespace maple
 		}
 	}
 
-	auto StringUtils::toLower(std::string& data) -> void
+	auto StringUtils::toLower(std::string &data) -> void
 	{
 		std::transform(data.begin(), data.end(), data.begin(),
-			[](unsigned char c) { return std::tolower(c); });
+		               [](unsigned char c) { return std::tolower(c); });
 	}
 
 	auto StringUtils::toLower2(std::string data) -> std::string
 	{
 		std::transform(data.begin(), data.end(), data.begin(),
-			[](unsigned char c) { return std::tolower(c); });
+		               [](unsigned char c) { return std::tolower(c); });
 		return data;
 	}
 
-	auto StringUtils::replaceExtension(const std::string& path, const std::string& extension) ->std::string
+	auto StringUtils::replaceExtension(const std::string &path, const std::string &extension) -> std::string
 	{
 		return removeExtension(path) + extension;
 	}
 
-	auto StringUtils::isEmptyOrWhitespace(const std::string& str) -> bool
+	auto StringUtils::isEmptyOrWhitespace(const std::string &str) -> bool
 	{
 		if (str.empty())
 			return true;
@@ -123,11 +121,11 @@ namespace maple
 		return true;
 	}
 
-	auto StringUtils::split(std::string input, const std::string& delimiter) -> std::vector<std::string>
+	auto StringUtils::split(std::string input, const std::string &delimiter) -> std::vector<std::string>
 	{
 		std::vector<std::string> ret;
-		size_t pos = 0;
-		std::string token;
+		size_t                   pos = 0;
+		std::string              token;
 		while ((pos = input.find(delimiter)) != std::string::npos)
 		{
 			token = input.substr(0, pos);
@@ -138,7 +136,7 @@ namespace maple
 		return ret;
 	}
 
-	auto StringUtils::startWith(const std::string& str, const std::string& start, bool ignoreCase) -> bool
+	auto StringUtils::startWith(const std::string &str, const std::string &start, bool ignoreCase) -> bool
 	{
 		if (ignoreCase)
 		{
@@ -151,27 +149,27 @@ namespace maple
 		return str.compare(0, start.size(), start) == 0;
 	}
 
-	auto StringUtils::contains(const std::string& str, const std::string& start) -> bool
+	auto StringUtils::contains(const std::string &str, const std::string &start) -> bool
 	{
 		return str.find(start) != std::string::npos;
 	}
 
-	auto StringUtils::endWith(const std::string& str, const std::string& start, bool ignoreCase ) -> bool
+	auto StringUtils::endWith(const std::string &str, const std::string &start, bool ignoreCase) -> bool
 	{
-		if (ignoreCase) 
+		if (ignoreCase)
 		{
 			auto input = str;
 			toLower(input);
 			return input.compare(str.length() - start.length(), start.size(), toLower2(start)) == 0;
 		}
-		if (start.length() > str.length()) 
+		if (start.length() > str.length())
 			return false;
 		return str.compare(str.length() - start.length(), start.size(), start) == 0;
 	}
 
-	auto StringUtils::split(std::string input, const std::string& delimiter, std::vector<std::string>& outs) -> void
+	auto StringUtils::split(std::string input, const std::string &delimiter, std::vector<std::string> &outs) -> void
 	{
-		size_t pos = 0;
+		size_t      pos = 0;
 		std::string token;
 		while ((pos = input.find(delimiter)) != std::string::npos)
 		{
@@ -182,10 +180,10 @@ namespace maple
 		outs.push_back(input);
 	}
 
-	auto StringUtils::split(std::u16string input, const std::u16string& delimiter,
-		std::vector<std::u16string>& outs) -> void
+	auto StringUtils::split(std::u16string input, const std::u16string &delimiter,
+	                        std::vector<std::u16string> &outs) -> void
 	{
-		size_t pos = 0;
+		size_t         pos = 0;
 		std::u16string token;
 		while ((pos = input.find(delimiter)) != std::u16string::npos)
 		{
@@ -196,8 +194,7 @@ namespace maple
 		outs.push_back(input);
 	}
 
-
-	auto StringUtils::trim(std::string& str, const std::string& trimStr) -> void
+	auto StringUtils::trim(std::string &str, const std::string &trimStr) -> void
 	{
 		if (!str.empty())
 		{
@@ -206,9 +203,9 @@ namespace maple
 		}
 	}
 
-	auto StringUtils::replace(std::string& str, const std::string& old, const std::string& newStr) -> void
+	auto StringUtils::replace(std::string &str, const std::string &old, const std::string &newStr) -> void
 	{
-		std::string::size_type pos = 0;
+		std::string::size_type pos    = 0;
 		std::string::size_type srclen = old.size();
 		std::string::size_type dstlen = newStr.size();
 
@@ -219,7 +216,7 @@ namespace maple
 		}
 	}
 
-	auto StringUtils::trim(std::u16string& str) -> void
+	auto StringUtils::trim(std::u16string &str) -> void
 	{
 		if (!str.empty())
 		{
@@ -230,19 +227,18 @@ namespace maple
 		}
 	}
 
-	auto StringUtils::isTextFile(const std::string& filePath) -> bool
+	auto StringUtils::isTextFile(const std::string &filePath) -> bool
 	{
 		std::string extension = getExtension(filePath);
 		trim(extension);
 		toLower(extension);
-		if (extension == "txt" || extension == "glsl" || extension == "shader" || extension == "vert"
-			|| extension == "frag" || extension == "lua")
+		if (extension == "txt" || extension == "glsl" || extension == "shader" || extension == "vert" || extension == "frag" || extension == "lua")
 			return true;
 
 		return false;
 	}
 
-	auto StringUtils::isLuaFile(const std::string& filePath) -> bool
+	auto StringUtils::isLuaFile(const std::string &filePath) -> bool
 	{
 		std::string extension = getExtension(filePath);
 		trim(extension);
@@ -250,7 +246,7 @@ namespace maple
 		return extension == "lua";
 	}
 
-	auto StringUtils::isAudioFile(const std::string& filePath) -> bool
+	auto StringUtils::isAudioFile(const std::string &filePath) -> bool
 	{
 		std::string extension = getExtension(filePath);
 		trim(extension);
@@ -258,16 +254,15 @@ namespace maple
 		return extension == "ogg" || extension == "mp3" || extension == "wav" || extension == "aac";
 	}
 
-	auto StringUtils::isSceneFile(const std::string& filePath) -> bool
+	auto StringUtils::isSceneFile(const std::string &filePath) -> bool
 	{
 		std::string extension = getExtension(filePath);
 		trim(extension);
 		toLower(extension);
 		return extension == "scene";
-
 	}
 
-	auto StringUtils::isControllerFile(const std::string& filePath)  -> bool
+	auto StringUtils::isControllerFile(const std::string &filePath) -> bool
 	{
 		std::string extension = getExtension(filePath);
 		trim(extension);
@@ -275,7 +270,7 @@ namespace maple
 		return extension == "controller";
 	}
 
-	auto StringUtils::isModelFile(const std::string& filePath) -> bool
+	auto StringUtils::isModelFile(const std::string &filePath) -> bool
 	{
 		std::string extension = getExtension(filePath);
 		trim(extension);
@@ -283,7 +278,7 @@ namespace maple
 		return extension == "obj" || extension == "gltf" || extension == "glb" || extension == "fbx" || extension == "FBX";
 	}
 
-	auto StringUtils::isTextureFile(const std::string& filePath) -> bool
+	auto StringUtils::isTextureFile(const std::string &filePath) -> bool
 	{
 		std::string extension = getExtension(filePath);
 		trim(extension);
@@ -291,8 +286,7 @@ namespace maple
 		return extension == "png" || extension == "tga" || extension == "jpg" || extension == "hdr";
 	}
 
-
-	auto StringUtils::isCSharpFile(const std::string& filePath) -> bool
+	auto StringUtils::isCSharpFile(const std::string &filePath) -> bool
 	{
 		std::string extension = getExtension(filePath);
 		trim(extension);
@@ -300,7 +294,7 @@ namespace maple
 		return extension == "cs";
 	}
 
-	auto StringUtils::isFBXFile(const std::string& filePath) -> bool
+	auto StringUtils::isFBXFile(const std::string &filePath) -> bool
 	{
 		std::string extension = getExtension(filePath);
 		trim(extension);
@@ -308,7 +302,7 @@ namespace maple
 		return extension == "fbx";
 	}
 
-	auto StringUtils::UTF16ToUTF8(const std::u16string& utf16) ->std::string
+	auto StringUtils::UTF16ToUTF8(const std::u16string &utf16) -> std::string
 	{
 		try
 		{
@@ -322,7 +316,7 @@ namespace maple
 		}
 	}
 
-	auto StringUtils::UTF8ToUTF16(const std::string& utf8) ->std::u16string
+	auto StringUtils::UTF8ToUTF16(const std::string &utf8) -> std::u16string
 	{
 		try
 		{
@@ -332,30 +326,28 @@ namespace maple
 		}
 		catch (...)
 		{
-
 		}
 		return u"";
 	}
 
-
-	auto StringUtils::codeConvert(const char* fromCharset, const char* toCharset, const char* inBuf, size_t inlen, char* outBuf, size_t outlen) ->int32_t
+	auto StringUtils::codeConvert(const char *fromCharset, const char *toCharset, const char *inBuf, size_t inlen, char *outBuf, size_t outlen) -> int32_t
 	{
-		iconv_t cd;
-		const char* temp = inBuf;
-		char** pout = &outBuf;
+		iconv_t     cd;
+		const char *temp = inBuf;
+		char **     pout = &outBuf;
 		memset(outBuf, 0, outlen);
 		cd = iconv_open(toCharset, fromCharset);
 		if (cd == nullptr)
 			return -1;
 
-		iconv(cd, const_cast<char**>(&inBuf), &inlen, pout, &outlen);
+		iconv(cd, const_cast<char **>(&inBuf), &inlen, pout, &outlen);
 		iconv_close(cd);
 		return outlen;
 	}
 
 #ifdef _WIN32
-	const std::string  StringUtils::delimiter = "\\";
-#else						  
-	const std::string  StringUtils::delimiter = "/";
+	const std::string StringUtils::delimiter = "\\";
+#else
+	const std::string StringUtils::delimiter = "/";
 #endif
-};
+};        // namespace maple

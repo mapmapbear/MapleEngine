@@ -21,40 +21,40 @@ namespace maple
 			switch (format)
 			{
 				case Format::R32_FLOAT:
-					GLCall(glVertexAttribPointer(index, 1, GL_FLOAT, false, stride, (const void *) (intptr_t) (offset)));
+					GLCall(glVertexAttribPointer(index, 1, GL_FLOAT, false, stride, (const void *) (intptr_t)(offset)));
 					break;
 				case Format::R32G32_FLOAT:
-					GLCall(glVertexAttribPointer(index, 2, GL_FLOAT, false, stride, (const void *) (intptr_t) (offset)));
+					GLCall(glVertexAttribPointer(index, 2, GL_FLOAT, false, stride, (const void *) (intptr_t)(offset)));
 					break;
 				case Format::R32G32B32_FLOAT:
-					GLCall(glVertexAttribPointer(index, 3, GL_FLOAT, false, stride, (const void *) (intptr_t) (offset)));
+					GLCall(glVertexAttribPointer(index, 3, GL_FLOAT, false, stride, (const void *) (intptr_t)(offset)));
 					break;
 				case Format::R32G32B32A32_FLOAT:
-					GLCall(glVertexAttribPointer(index, 4, GL_FLOAT, false, stride, (const void *) (intptr_t) (offset)));
+					GLCall(glVertexAttribPointer(index, 4, GL_FLOAT, false, stride, (const void *) (intptr_t)(offset)));
 					break;
 				case Format::R8_UINT:
-					GLCall(glVertexAttribPointer(index, 1, GL_UNSIGNED_BYTE, false, stride, (const void *) (intptr_t) (offset)));
+					GLCall(glVertexAttribPointer(index, 1, GL_UNSIGNED_BYTE, false, stride, (const void *) (intptr_t)(offset)));
 					break;
 				case Format::R32_UINT:
-					GLCall(glVertexAttribPointer(index, 1, GL_UNSIGNED_INT, false, stride, (const void *) (intptr_t) (offset)));
+					GLCall(glVertexAttribPointer(index, 1, GL_UNSIGNED_INT, false, stride, (const void *) (intptr_t)(offset)));
 					break;
 				case Format::R32G32_UINT:
-					GLCall(glVertexAttribPointer(index, 2, GL_UNSIGNED_INT, false, stride, (const void *) (intptr_t) (offset)));
+					GLCall(glVertexAttribPointer(index, 2, GL_UNSIGNED_INT, false, stride, (const void *) (intptr_t)(offset)));
 					break;
 				case Format::R32G32B32_UINT:
-					GLCall(glVertexAttribPointer(index, 3, GL_UNSIGNED_INT, false, stride, (const void *) (intptr_t) (offset)));
+					GLCall(glVertexAttribPointer(index, 3, GL_UNSIGNED_INT, false, stride, (const void *) (intptr_t)(offset)));
 					break;
 				case Format::R32G32B32A32_UINT:
-					GLCall(glVertexAttribPointer(index, 4, GL_UNSIGNED_INT, false, stride, (const void *) (intptr_t) (offset)));
+					GLCall(glVertexAttribPointer(index, 4, GL_UNSIGNED_INT, false, stride, (const void *) (intptr_t)(offset)));
 					break;
 				case Format::R32G32_INT:
-					GLCall(glVertexAttribPointer(index, 2, GL_INT, false, stride, (const void *) (intptr_t) (offset)));
+					GLCall(glVertexAttribPointer(index, 2, GL_INT, false, stride, (const void *) (intptr_t)(offset)));
 					break;
 				case Format::R32G32B32_INT:
-					GLCall(glVertexAttribPointer(index, 3, GL_INT, false, stride, (const void *) (intptr_t) (offset)));
+					GLCall(glVertexAttribPointer(index, 3, GL_INT, false, stride, (const void *) (intptr_t)(offset)));
 					break;
 				case Format::R32G32B32A32_INT:
-					GLCall(glVertexAttribPointer(index, 4, GL_INT, false, stride, (const void *) (intptr_t) (offset)));
+					GLCall(glVertexAttribPointer(index, 4, GL_INT, false, stride, (const void *) (intptr_t)(offset)));
 					break;
 			}
 		}

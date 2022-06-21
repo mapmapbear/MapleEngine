@@ -43,13 +43,13 @@ namespace maple
 		}
 
 		template <typename... Components>
-		inline auto registerGlobalComponent(const std::function<void(Components&...)> &onInit = nullptr) -> void
+		inline auto registerGlobalComponent(const std::function<void(Components &...)> &onInit = nullptr) -> void
 		{
 			factoryQueue.jobs.emplace_back([=](entt::registry &reg) {
 				if (onInit != nullptr)
 					onInit(reg.get_or_emplace<Components>(globalEntity)...);
 				else
-					(reg.get_or_emplace<Components>(globalEntity),...);
+					(reg.get_or_emplace<Components>(globalEntity), ...);
 			});
 		}
 
@@ -126,7 +126,7 @@ namespace maple
 		}
 
 		template <typename Component, typename... Args>
-		inline auto &getGlobalComponent(Args &&...args)
+		inline auto &getGlobalComponent(Args &&... args)
 		{
 			return registry.template get_or_emplace<Component>(globalEntity, std::forward<Args>(args)...);
 		}
@@ -177,7 +177,7 @@ namespace maple
 
 	  private:
 		friend class Application;
-		
+
 		inline auto flushJobs(ExecuteQueue &queue)
 		{
 			queue.preCall(ecs::World{registry, globalEntity});

@@ -7,17 +7,33 @@
 namespace maple
 {
 	Camera::Camera(float fov, float near, float far, float aspect) :
-	    aspectRatio(aspect), projectionDirty(true), fov(fov), near_(near), far_(far), orthographic(false)
+	    aspectRatio(aspect),
+	    projectionDirty(true),
+	    fov(fov),
+	    near_(near),
+	    far_(far),
+	    orthographic(false)
 	{
 	}
 
 	Camera::Camera(float aspectRatio, float scale) :
-	    aspectRatio(aspectRatio), scale(scale), projectionDirty(true), fov(0), near_(0.1), far_(3200000.0f), orthographic(true)
+	    aspectRatio(aspectRatio),
+	    scale(scale),
+	    projectionDirty(true),
+	    fov(0),
+	    near_(0.1),
+	    far_(3200000.0f),
+	    orthographic(true)
 	{
 	}
 
 	Camera::Camera(float pitch, float yaw, const glm::vec3 &position, float fov, float near, float far, float aspect) :
-	    aspectRatio(aspect), projectionDirty(true), fov(fov), near_(near), far_(far), orthographic(false)
+	    aspectRatio(aspect),
+	    projectionDirty(true),
+	    fov(fov),
+	    near_(near),
+	    far_(far),
+	    orthographic(false)
 	{
 	}
 

@@ -169,8 +169,8 @@ namespace maple
 
 			const int32_t lpvEnable =
 			    entity.hasComponent<component::LPVGrid>() ?
-                    entity.getComponent<component::LPVGrid>().enableIndirect :
-                    0;
+			        entity.getComponent<component::LPVGrid>().enableIndirect :
+			        0;
 
 			const glm::mat4 *shadowTransforms = shadowData.shadowProjView;
 			const glm::vec4 *splitDepth       = shadowData.splitDepth;
@@ -409,8 +409,8 @@ namespace maple
 					pipeline->bind(renderData.commandBuffer);
 
 				auto shader = command.boneTransforms != nullptr ?
-                                  data.deferredColorAnimShader :
-                                  data.deferredColorShader;
+				                  data.deferredColorAnimShader :
+				                  data.deferredColorShader;
 
 				auto &pushConstants = shader->getPushConstants()[0];
 

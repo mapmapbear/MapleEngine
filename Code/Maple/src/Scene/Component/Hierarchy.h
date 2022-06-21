@@ -12,9 +12,9 @@ namespace maple
 		struct Hierarchy
 		{
 			entt::entity parent = entt::null;
-			entt::entity first = entt::null;
-			entt::entity next = entt::null;
-			entt::entity prev = entt::null;
+			entt::entity first  = entt::null;
+			entt::entity next   = entt::null;
+			entt::entity prev   = entt::null;
 		};
-	}
-};
+	}        // namespace component
+};           // namespace maple

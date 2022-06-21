@@ -3,37 +3,36 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #include "MonoVirtualMachine.h"
+#include "MapleMonoAssembly.h"
+#include "MapleMonoClass.h"
 #include "Mono.h"
 #include "MonoExporter.h"
 #include "MonoHelper.h"
-#include "MapleMonoClass.h"
-#include "MapleMonoAssembly.h"
 #include "MonoScriptInstance.h"
 
 #include "MonoSystem.h"
 
-#include "Others/StringUtils.h"
 #include "Others/Console.h"
+#include "Others/StringUtils.h"
 
-#include "FileSystem/File.h"
 #include "Application.h"
+#include "FileSystem/File.h"
 
 #include <ecs/ecs.h>
 
 namespace maple
 {
-	void monoLogCallback(const char* logDomain, const char* logLevel, const char* message, mono_bool fatal, void* userData)
+	void monoLogCallback(const char *logDomain, const char *logLevel, const char *message, mono_bool fatal, void *userData)
 	{
-		static const char* monoErrorLevels[] =
-		{
-			nullptr,
-			"error",
-			"critical",
-			"warning",
-			"message",
-			"info",
-			"debug"
-		};
+		static const char *monoErrorLevels[] =
+		    {
+		        nullptr,
+		        "error",
+		        "critical",
+		        "warning",
+		        "message",
+		        "info",
+		        "debug"};
 
 		uint32_t errorLevel = 0;
 		if (logLevel != nullptr)
@@ -66,32 +65,30 @@ namespace maple
 		}
 	}
 
-	void monoPrintCallback(const char* string, mono_bool isStdout)
+	void monoPrintCallback(const char *string, mono_bool isStdout)
 	{
 		LOGW("Mono error: {0}", string);
 	}
 
-	void monoPrintErrorCallback(const char* string, mono_bool isStdout)
+	void monoPrintErrorCallback(const char *string, mono_bool isStdout)
 	{
 		LOGE("Mono error: {0}", string);
 	}
 
-
 	MonoVirtualMachine::MonoVirtualMachine()
 	{
-		
 	}
 
 	MonoVirtualMachine::~MonoVirtualMachine()
 	{
 		assemblies.clear();
 		unloadScriptDomain();
-		if (domain != nullptr) {
+		if (domain != nullptr)
+		{
 			mono_jit_cleanup(domain);
 		}
 		scriptInstances.clear();
 	}
-
 
 	auto MonoVirtualMachine::init() -> void
 	{
@@ -110,14 +107,13 @@ namespace maple
 		//    things like accessing released/moved objects, or attempting to release handles for an unloaded domain.
 		// xdomain-checks: Makes sure that no references are left when a domain is unloaded.
 
-		const char* options[] = {
-			"--soft-breakpoints",
-			"--debugger-agent=transport=dt_socket,address=127.0.0.1:17615,embedding=1,server=y,suspend=n",
-			"--debug-domain-unload",
-			"--gc-debug=check-remset-consistency,verify-before-collections,xdomain-checks"
-		};
-		mono_jit_parse_options(4, (char**)options);
-		
+		const char *options[] = {
+		    "--soft-breakpoints",
+		    "--debugger-agent=transport=dt_socket,address=127.0.0.1:17615,embedding=1,server=y,suspend=n",
+		    "--debug-domain-unload",
+		    "--gc-debug=check-remset-consistency,verify-before-collections,xdomain-checks"};
+		mono_jit_parse_options(4, (char **) options);
+
 		mono_trace_set_log_handler(monoLogCallback, this);
 		mono_trace_set_print_handler(monoPrintCallback);
 		mono_trace_set_printerr_handler(monoPrintErrorCallback);
@@ -129,7 +125,7 @@ namespace maple
 			return;
 		}
 
-		if (!mono_domain_set((MonoDomain*)domain, false))
+		if (!mono_domain_set((MonoDomain *) domain, false))
 		{
 			LOGE("mono_domain_set failed");
 			return;
@@ -145,11 +141,10 @@ namespace maple
 		LOGI("Mono Init over");
 	}
 
-
-	auto MonoVirtualMachine::findClass(const std::string& ns, const std::string& type) -> std::shared_ptr<MapleMonoClass>
+	auto MonoVirtualMachine::findClass(const std::string &ns, const std::string &type) -> std::shared_ptr<MapleMonoClass>
 	{
 		std::shared_ptr<MapleMonoClass> monoClass = nullptr;
-		for (auto& assembly : assemblies)
+		for (auto &assembly : assemblies)
 		{
 			monoClass = assembly.second->getClass(ns, type);
 			if (monoClass != nullptr)
@@ -159,10 +154,10 @@ namespace maple
 		return nullptr;
 	}
 
-	auto MonoVirtualMachine::findClass(MonoClass* clazz) -> std::shared_ptr<MapleMonoClass>
+	auto MonoVirtualMachine::findClass(MonoClass *clazz) -> std::shared_ptr<MapleMonoClass>
 	{
 		std::shared_ptr<MapleMonoClass> monoClass;
-		for (auto& assembly : assemblies)
+		for (auto &assembly : assemblies)
 		{
 			monoClass = assembly.second->getClass(clazz);
 			if (monoClass != nullptr)
@@ -171,35 +166,37 @@ namespace maple
 		return nullptr;
 	}
 
-	auto MonoVirtualMachine::get() ->std::shared_ptr<MonoVirtualMachine>
+	auto MonoVirtualMachine::get() -> std::shared_ptr<MonoVirtualMachine>
 	{
 		return Application::get()->getMonoVm();
 	}
 
-	auto MonoVirtualMachine::loadAssembly(const std::string& path, const std::string& name) -> std::shared_ptr<MapleMonoAssembly>
+	auto MonoVirtualMachine::loadAssembly(const std::string &path, const std::string &name) -> std::shared_ptr<MapleMonoAssembly>
 	{
 		if (scriptDomain == nullptr)
 		{
-			char * appDomainName = "ScriptDomain";
+			char *appDomainName = "ScriptDomain";
 
 			scriptDomain = mono_domain_create_appdomain(appDomainName, nullptr);
-			if (scriptDomain == nullptr) {
+			if (scriptDomain == nullptr)
+			{
 				throw std::runtime_error("Cannot create script app domain.");
 			}
 
-			if (!mono_domain_set(scriptDomain, true)) {
+			if (!mono_domain_set(scriptDomain, true))
+			{
 				throw std::runtime_error("Cannot set script app domain.");
 			}
 		}
 		std::shared_ptr<MapleMonoAssembly> assembly;
-		auto iterFind = assemblies.find(name);
+		auto                               iterFind = assemblies.find(name);
 		if (iterFind != assemblies.end())
 		{
 			assembly = iterFind->second;
 		}
 		else
 		{
-			assembly = std::make_shared<MapleMonoAssembly>(path, name);
+			assembly         = std::make_shared<MapleMonoAssembly>(path, name);
 			assemblies[name] = assembly;
 		}
 
@@ -215,13 +212,13 @@ namespace maple
 			assembly->load();
 
 			// Fully initialize all types that use this assembly
-			auto & typeMetas = scriptInstances[assembly->name];
-			for (auto& meta : typeMetas)
+			auto &typeMetas = scriptInstances[assembly->name];
+			for (auto &meta : typeMetas)
 			{
 				meta->scriptClass = assembly->getClass(meta->ns, meta->name);
 				if (meta->scriptClass == nullptr)
 				{
-					LOGE("Unable to find class of type: {0}::{1}",meta->ns,meta->name);
+					LOGE("Unable to find class of type: {0}::{1}", meta->ns, meta->name);
 					throw std::runtime_error("Unable to find class");
 				}
 
@@ -240,7 +237,7 @@ namespace maple
 		if (scriptDomain != nullptr)
 		{
 			mono_domain_set(mono_get_root_domain(), true);
-			MonoObject* exception = nullptr;
+			MonoObject *exception = nullptr;
 			mono_domain_try_unload(scriptDomain, &exception);
 
 			if (exception != nullptr)
@@ -249,14 +246,14 @@ namespace maple
 			scriptDomain = nullptr;
 		}
 
-		for (auto& assemblyEntry : assemblies)
+		for (auto &assemblyEntry : assemblies)
 		{
 			assemblyEntry.second->unload();
 
-			auto & typeMetas = scriptInstances[assemblyEntry.first];
-			for (auto& entry : typeMetas)
+			auto &typeMetas = scriptInstances[assemblyEntry.first];
+			for (auto &entry : typeMetas)
 			{
-				entry->scriptClass = nullptr;
+				entry->scriptClass  = nullptr;
 				entry->thisPtrField = nullptr;
 			}
 		}
@@ -265,23 +262,22 @@ namespace maple
 		assemblies["corlib"] = corlibAssembly;
 	}
 
-	using Group = ecs::Registry
-		::Modify<component::MonoComponent>
-		::To<ecs::Group>;
+	using Group = ecs::Registry ::Modify<component::MonoComponent>::To<ecs::Group>;
 
-	auto MonoVirtualMachine::compileAssembly(const std::function<void(void*)>& callback) -> void
+	auto MonoVirtualMachine::compileAssembly(const std::function<void(void *)> &callback) -> void
 	{
 		LOGV("compileAssembly...");
 		unloadScriptDomain();
 
-		Application::get()->getThreadPool()->addTask([=]() -> void*{
+		Application::get()->getThreadPool()->addTask([=]() -> void * {
 			std::vector<std::string> out;
-			File::list(out, [](const std::string& str) -> bool {
+			File::list(out, [](const std::string &str) -> bool {
 				return StringUtils::endWith(str, ".cs");
 			});
 			MonoHelper::compileScript(out, "MapleLibrary.dll");
 
 			return nullptr;
-		}, callback);
+		},
+		                                             callback);
 	}
-};
+};        // namespace maple

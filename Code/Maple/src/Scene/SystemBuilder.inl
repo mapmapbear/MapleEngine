@@ -2,12 +2,12 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "Animation/AnimationSystem.h"
 #include "2d/SpriteSystem.h"
-#include "Scripts/Mono/MonoSystem.h"
+#include "Animation/AnimationSystem.h"
 #include "Physics/PhysicsSystem.h"
-#include "Scene/System/HierarchyModule.h"
 #include "Scene/Scene.h"
+#include "Scene/System/HierarchyModule.h"
+#include "Scripts/Mono/MonoSystem.h"
 
 namespace maple
 {
@@ -20,4 +20,4 @@ namespace maple
 		physics::registerPhysicsModule(executePoint);
 		mesh::registerMeshModule(executePoint);
 	}
-}
+}        // namespace maple

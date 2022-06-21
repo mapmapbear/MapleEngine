@@ -4,19 +4,20 @@
 
 #pragma once
 
-extern "C" {
-# include <lua.h>
-# include <lauxlib.h>
-# include <lualib.h>
+extern "C"
+{
+#include <lauxlib.h>
+#include <lua.h>
+#include <lualib.h>
 }
 
+#include "Engine/Core.h"
+#include "MetaFile.h"
 #include <LuaBridge/LuaBridge.h>
 #include <entt/entt.hpp>
 #include <string>
-#include "MetaFile.h"
-#include "Engine/Core.h"
 
-//TODO Need to be re factored 
+//TODO Need to be re factored
 namespace maple
 {
 	class Scene;
@@ -24,9 +25,9 @@ namespace maple
 	{
 		class MAPLE_EXPORT LuaComponent
 		{
-		public:
+		  public:
 			friend class MetaFile;
-			LuaComponent(const std::string& file, Scene* scene);
+			LuaComponent(const std::string &file, Scene *scene);
 			LuaComponent();
 			~LuaComponent();
 			auto onInit() -> void;
@@ -34,43 +35,46 @@ namespace maple
 			auto loadScript() -> void;
 			auto onImGui() -> void;
 			auto isLoaded() -> bool;
-			auto setFilePath(const std::string& fileName) -> void;
+			auto setFilePath(const std::string &fileName) -> void;
 
-			template<typename Archive>
-			auto save(Archive& archive) const -> void
+			template <typename Archive>
+			auto save(Archive &archive) const -> void
 			{
 				archive(
-					cereal::make_nvp("entity", entity),
-					cereal::make_nvp("filePath", file)
-				);
+				    cereal::make_nvp("entity", entity),
+				    cereal::make_nvp("filePath", file));
 				metaFile.save(this, file + ".meta");
 			}
 
-			template<typename Archive>
-			auto load(Archive& archive) -> void
+			template <typename Archive>
+			auto load(Archive &archive) -> void
 			{
 				archive(
-					cereal::make_nvp("entity", entity),
-					cereal::make_nvp("filePath", file)
-				);
+				    cereal::make_nvp("entity", entity),
+				    cereal::make_nvp("filePath", file));
 				init();
 			}
 
+			inline auto &getFileName() const
+			{
+				return file;
+			}
+			inline auto setScene(Scene *val)
+			{
+				scene = val;
+			}
 
-			inline auto& getFileName() const { return file; }
-			inline auto setScene(Scene* val) { scene = val; }
-
-			auto saveNewFile(const std::string& fileName) -> void;
-			auto init()-> void;
+			auto        saveNewFile(const std::string &fileName) -> void;
+			auto        init() -> void;
 			std::string file;
 			std::string className;
 
 			std::shared_ptr<luabridge::LuaRef> table;
 			std::shared_ptr<luabridge::LuaRef> onInitFunc;
 			std::shared_ptr<luabridge::LuaRef> onUpdateFunc;
-			Scene* scene = nullptr;
+			Scene *                            scene = nullptr;
 
 			MetaFile metaFile;
 		};
-	}
-};
+	}        // namespace component
+};           // namespace maple

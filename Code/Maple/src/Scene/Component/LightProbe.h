@@ -7,11 +7,10 @@
 
 namespace maple
 {
-	namespace component 
+	namespace component
 	{
 		struct LightProbe
 		{
-
 		};
-	}
-};        // namespace maple
+	}        // namespace component
+};           // namespace maple

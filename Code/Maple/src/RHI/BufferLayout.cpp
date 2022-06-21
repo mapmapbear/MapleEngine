@@ -68,19 +68,18 @@ namespace maple
 	{
 		push(name, Format::R32G32B32A32_FLOAT, sizeof(glm::vec4), location, normalized);
 	}
-	
 
 	template <>
-	auto BufferLayout::push<int32_t>(const std::string& name, uint32_t location, bool normalized) -> void
+	auto BufferLayout::push<int32_t>(const std::string &name, uint32_t location, bool normalized) -> void
 	{
 		push(name, Format::R32_INT, sizeof(glm::ivec2), location, normalized);
 	}
 	template <>
-	auto BufferLayout::push<glm::ivec2>(const std::string& name, uint32_t location, bool normalized) -> void
+	auto BufferLayout::push<glm::ivec2>(const std::string &name, uint32_t location, bool normalized) -> void
 	{
 		push(name, Format::R32G32_INT, sizeof(glm::ivec2), location, normalized);
 	}
-	
+
 	template <>
 	auto BufferLayout::push<glm::ivec3>(const std::string &name, uint32_t location, bool normalized) -> void
 	{

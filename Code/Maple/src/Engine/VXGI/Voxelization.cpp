@@ -578,7 +578,7 @@ namespace maple
 
 		namespace indirect_lighting_setup
 		{
-			using Entity = ecs::Registry ::Fetch<vxgi::component::Voxelization>::To<ecs::Entity>;
+			using Entity = ecs::Registry::Fetch<vxgi::component::Voxelization>::To<ecs::Entity>;
 
 			inline auto system(Entity                                      entity,
 			                   const vxgi::global::component::VoxelBuffer &vxgiBuffer,

@@ -21,12 +21,12 @@ namespace maple
 	{
 		struct Light;
 		class Transform;
-	};
+	};        // namespace component
 
 	class MAPLE_EXPORT RenderGraph
 	{
 	  public:
-		RenderGraph() = default; 
+		RenderGraph()  = default;
 		~RenderGraph() = default;
 		auto init(uint32_t width, uint32_t height) -> void;
 		auto onResize(uint32_t width, uint32_t height) -> void;
@@ -40,9 +40,10 @@ namespace maple
 
 		auto executePreviewPasss() -> void;
 
-		auto setRenderTarget(Scene * scene ,const std::shared_ptr<Texture> &texture, bool rebuildFramebuffer = true) -> void;
+		auto setRenderTarget(Scene *scene, const std::shared_ptr<Texture> &texture, bool rebuildFramebuffer = true) -> void;
 
-		auto setPreview(const std::shared_ptr<Texture>& texture, const std::shared_ptr<Texture>& depth) -> void {}
+		auto setPreview(const std::shared_ptr<Texture> &texture, const std::shared_ptr<Texture> &depth) -> void
+		{}
 
 		inline auto setPreviewFocused(bool previewFocused)
 		{
@@ -63,7 +64,8 @@ namespace maple
 			screenBufferWidth  = width;
 			screenBufferHeight = height;
 		}
-	 private:
+
+	  private:
 		bool previewFocused = false;
 
 		std::shared_ptr<GBuffer> gBuffer;

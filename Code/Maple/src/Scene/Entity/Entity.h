@@ -18,7 +18,8 @@ namespace maple
 		Entity() = default;
 
 		Entity(entt::entity handle, entt::registry &initRegistry) :
-		    entityHandle(handle), registry(&initRegistry)
+		    entityHandle(handle),
+		    registry(&initRegistry)
 		{
 		}
 
@@ -27,7 +28,7 @@ namespace maple
 		}
 
 		template <typename T, typename... Args>
-		inline T &addComponent(Args &&...args)
+		inline T &addComponent(Args &&... args)
 		{
 #ifdef MAPLE_DEBUG
 			if (hasComponent<T>())
@@ -38,14 +39,14 @@ namespace maple
 		}
 
 		template <typename T, typename... Args>
-		inline T &getOrAddComponent(Args &&...args)
+		inline T &getOrAddComponent(Args &&... args)
 		{
 			T &t = registry->get_or_emplace<T>(entityHandle, std::forward<Args>(args)...);
 			return t;
 		}
 
 		template <typename T, typename... Args>
-		inline auto addOrReplaceComponent(Args &&...args)
+		inline auto addOrReplaceComponent(Args &&... args)
 		{
 			T &t = registry->emplace_or_replace<T>(entityHandle, std::forward<Args>(args)...);
 		}
@@ -99,7 +100,7 @@ namespace maple
 		auto getChildren() -> std::vector<Entity>;
 
 		template <typename T>
-		inline auto flatChildren(std::vector<Entity> & children) -> void
+		inline auto flatChildren(std::vector<Entity> &children) -> void
 		{
 			auto hierarchyComponent = tryGetComponent<component::Hierarchy>();
 			if (hierarchyComponent)
@@ -108,7 +109,7 @@ namespace maple
 				while (child != entt::null && registry->valid(child) && registry->template has<T>(child))
 				{
 					children.emplace_back(child, *registry);
-					Entity childEntity = { child, *registry };
+					Entity childEntity = {child, *registry};
 					childEntity.flatChildren<T>(children);
 					hierarchyComponent = registry->try_get<component::Hierarchy>(child);
 					if (hierarchyComponent)
@@ -160,7 +161,6 @@ namespace maple
 	  protected:
 		entt::entity    entityHandle = entt::null;
 		entt::registry *registry     = nullptr;
-
 	};
 
 };        // namespace maple

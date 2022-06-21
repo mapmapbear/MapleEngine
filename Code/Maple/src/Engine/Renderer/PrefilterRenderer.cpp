@@ -17,9 +17,9 @@
 
 #include "Application.h"
 #include "Engine/Camera.h"
+#include "Engine/CaptureGraph.h"
 #include "Engine/GBuffer.h"
 #include "Engine/Mesh.h"
-#include "Engine/CaptureGraph.h"
 
 #include "FileSystem/File.h"
 #include "Scene/Scene.h"
@@ -102,7 +102,7 @@ namespace maple
 		updateUniform();
 	}
 
-	auto PrefilterRenderer::renderScene(const CommandBuffer* cmd, capture_graph::component::RenderGraph& graph) -> void
+	auto PrefilterRenderer::renderScene(const CommandBuffer *cmd, capture_graph::component::RenderGraph &graph) -> void
 	{
 		if (envComponent == nullptr)
 		{
@@ -116,13 +116,13 @@ namespace maple
 				envComponent->environment = skyboxCube;
 			}
 
-			generateSkybox(cmd,graph);
+			generateSkybox(cmd, graph);
 
 			updateIrradianceDescriptor(cmd);
-			generateIrradianceMap(cmd,graph);
+			generateIrradianceMap(cmd, graph);
 
 			updatePrefilterDescriptor(cmd);
-			generatePrefilterMap(cmd,graph);
+			generatePrefilterMap(cmd, graph);
 
 			envComponent = nullptr;
 		}
@@ -132,17 +132,17 @@ namespace maple
 	{
 	}
 
-	auto PrefilterRenderer::beginScene(component::Environment & env) -> void
+	auto PrefilterRenderer::beginScene(component::Environment &env) -> void
 	{
 		if (equirectangularMap != env.equirectangularMap && !env.pseudoSky)
 		{
 			equirectangularMap = env.equirectangularMap;
-			envComponent = &env;
+			envComponent       = &env;
 			updateUniform();
 		}
 	}
 
-	auto PrefilterRenderer::updateIrradianceDescriptor(const CommandBuffer * cmd) -> void
+	auto PrefilterRenderer::updateIrradianceDescriptor(const CommandBuffer *cmd) -> void
 	{
 		if (envComponent)
 		{
@@ -151,7 +151,7 @@ namespace maple
 		}
 	}
 
-	auto PrefilterRenderer::updatePrefilterDescriptor(const CommandBuffer* cmd) -> void
+	auto PrefilterRenderer::updatePrefilterDescriptor(const CommandBuffer *cmd) -> void
 	{
 		if (envComponent)
 		{
@@ -160,10 +160,9 @@ namespace maple
 		}
 	}
 
-	auto PrefilterRenderer::generateSkybox(const CommandBuffer* cmd,capture_graph::component::RenderGraph& graph) -> void
+	auto PrefilterRenderer::generateSkybox(const CommandBuffer *cmd, capture_graph::component::RenderGraph &graph) -> void
 	{
-		
-		const auto proj         = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
+		const auto proj = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
 		cubeMapSet->setUniform("UniformBufferObject", "proj", glm::value_ptr(proj));
 
 		if (equirectangularMap)
@@ -180,7 +179,7 @@ namespace maple
 		pipeInfo.clearTargets        = true;
 		pipeInfo.colorTargets[0]     = skyboxCaptureColor;
 		pipeInfo.colorTargets[1]     = skyboxCube;
-		auto cubeMapPipeline = Pipeline::get(pipeInfo, { cubeMapSet },graph);
+		auto cubeMapPipeline         = Pipeline::get(pipeInfo, {cubeMapSet}, graph);
 
 		for (auto faceId = 0; faceId < 6; faceId++)
 		{
@@ -199,7 +198,7 @@ namespace maple
 		skyboxCube->generateMipmap(cmd);
 	}
 
-	auto PrefilterRenderer::generateIrradianceMap(const CommandBuffer* cmd, capture_graph::component::RenderGraph& graph) -> void
+	auto PrefilterRenderer::generateIrradianceMap(const CommandBuffer *cmd, capture_graph::component::RenderGraph &graph) -> void
 	{
 		PipelineInfo pipeInfo;
 		pipeInfo.shader   = irradianceShader;
@@ -212,9 +211,8 @@ namespace maple
 		pipeInfo.colorTargets[0] = irradianceCaptureColor;
 		pipeInfo.colorTargets[1] = envComponent->irradianceMap;
 
-		auto pipeline = Pipeline::get(pipeInfo,{ irradianceSet }, graph);
+		auto pipeline = Pipeline::get(pipeInfo, {irradianceSet}, graph);
 
-	
 		for (auto faceId = 0; faceId < 6; faceId++)
 		{
 			auto  fb        = pipeline->bind(cmd, 0, faceId);
@@ -232,7 +230,7 @@ namespace maple
 		envComponent->irradianceMap->generateMipmap(cmd);
 	}
 
-	auto PrefilterRenderer::generatePrefilterMap(const CommandBuffer* cmd,capture_graph::component::RenderGraph & graph) -> void
+	auto PrefilterRenderer::generatePrefilterMap(const CommandBuffer *cmd, capture_graph::component::RenderGraph &graph) -> void
 	{
 		cubeMapSet->update(cmd);
 
@@ -247,13 +245,13 @@ namespace maple
 		pipeInfo.colorTargets[0] = prefilterCaptureColor;
 		pipeInfo.colorTargets[1] = envComponent->prefilteredEnvironment;
 
-		auto pipeline = Pipeline::get(pipeInfo, { prefilterSet }, graph);
+		auto pipeline = Pipeline::get(pipeInfo, {prefilterSet}, graph);
 
-		auto maxMips = 5;// std::pow(component::Environment::PrefilterMapSize, 2);
+		auto maxMips = 5;        // std::pow(component::Environment::PrefilterMapSize, 2);
 
 		for (auto mip = 0; mip < maxMips; ++mip)
 		{
-			auto roughness = (float) mip / (float)(maxMips - 1);
+			auto roughness = (float) mip / (float) (maxMips - 1);
 
 			prefilterSet->setUniform("UniformBufferRoughness", "constRoughness", &roughness, true);
 

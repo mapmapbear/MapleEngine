@@ -13,8 +13,7 @@ namespace maple
 		        glm::vec2{0, 0},
 		        glm::vec2{1, 0},
 		        glm::vec2{0, 1},
-		        glm::vec2{1, 1}
-			};
+		        glm::vec2{1, 1}};
 		return results;
 	}
 
@@ -38,8 +37,8 @@ namespace maple
 
 	auto Quad2D::setTexCoords(uint32_t x, uint32_t y, uint32_t w, uint32_t h, bool flipY) -> void
 	{
-		this->w      = w;
-		this->h      = h;
+		this->w = w;
+		this->h = h;
 		if (flipY)
 		{
 			texCoords[0] = {x / (float) texture->getWidth(), (y + h) / (float) texture->getHeight()};
@@ -54,7 +53,6 @@ namespace maple
 			texCoords[1] = {(x + w) / (float) texture->getWidth(), y / (float) texture->getHeight()};
 			texCoords[0] = {x / (float) texture->getWidth(), y / (float) texture->getHeight()};
 		}
-
 	}
 
 	maple::Quad2D Quad2D::nullQuad;

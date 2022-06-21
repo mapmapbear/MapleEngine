@@ -88,15 +88,12 @@ namespace maple
 	auto SceneManager::addScene(const std::string &name, Scene *scene) -> void
 	{
 		allScenes[name] = std::shared_ptr<Scene>(scene);
-	
-		using CameraQuery = ecs::Registry
-			::Modify<Camera>
-			::To<ecs::Group>;
 
-		CameraQuery query{ 
-			Application::getExecutePoint()->getRegistry(), 
-			Application::getExecutePoint()->getGlobalEntity() 
-		};
+		using CameraQuery = ecs::Registry ::Modify<Camera>::To<ecs::Group>;
+
+		CameraQuery query{
+		    Application::getExecutePoint()->getRegistry(),
+		    Application::getExecutePoint()->getGlobalEntity()};
 
 		if (query.empty())
 		{

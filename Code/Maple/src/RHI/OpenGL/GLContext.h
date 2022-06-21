@@ -29,7 +29,7 @@ namespace maple
 		{
 			return 0.f;
 		};
-		
+
 		inline auto getMinUniformBufferOffsetAlignment() const -> size_t override
 		{
 			return 256;

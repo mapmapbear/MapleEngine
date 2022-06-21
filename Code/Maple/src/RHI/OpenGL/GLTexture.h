@@ -59,7 +59,10 @@ namespace maple
 			return fileName;
 		}
 
-		auto toIntID() const -> const uint64_t override { return handle; };
+		auto toIntID() const -> const uint64_t override
+		{
+			return handle;
+		};
 
 	  private:
 		auto               load(const void *data) -> void;
@@ -86,7 +89,7 @@ namespace maple
 
 		auto unbind(uint32_t slot = 0) const -> void override;
 
-		auto generateMipmaps(const CommandBuffer* cmd) -> void override;
+		auto generateMipmaps(const CommandBuffer *cmd) -> void override;
 
 		auto bindImageTexture(uint32_t unit, bool read, bool write, uint32_t level, uint32_t layer, TextureFormat format) -> void override;
 
@@ -121,16 +124,16 @@ namespace maple
 			return parameters.format;
 		}
 
-		auto clear(const CommandBuffer* commandBuffer) -> void override;
+		auto clear(const CommandBuffer *commandBuffer) -> void override;
 
 	  private:
-		uint32_t      handle = 0;
-		uint32_t      width  = 0;
-		uint32_t      height = 0;
-		uint32_t      depth  = 0;
-		TextureParameters parameters;
+		uint32_t           handle = 0;
+		uint32_t           width  = 0;
+		uint32_t           height = 0;
+		uint32_t           depth  = 0;
+		TextureParameters  parameters;
 		TextureLoadOptions loadOptions;
-		std::string   filePath;
+		std::string        filePath;
 	};
 
 	class GLTextureCube : public TextureCube
@@ -190,7 +193,10 @@ namespace maple
 
 		auto generateMipmap(const CommandBuffer *commandBuffer) -> void override;
 
-		auto toIntID() const -> const uint64_t override { return handle; };
+		auto toIntID() const -> const uint64_t override
+		{
+			return handle;
+		};
 
 	  private:
 		static auto loadFromFile() -> uint32_t;
@@ -250,7 +256,10 @@ namespace maple
 		{
 			return format;
 		}
-		auto toIntID() const -> const uint64_t override { return handle; };
+		auto toIntID() const -> const uint64_t override
+		{
+			return handle;
+		};
 
 	  protected:
 		auto init() -> void;
@@ -271,8 +280,8 @@ namespace maple
 
 		auto bind(uint32_t slot = 0) const -> void override;
 		auto unbind(uint32_t slot = 0) const -> void override;
-		auto resize(uint32_t width, uint32_t height, uint32_t count, const CommandBuffer* commandBuffer = nullptr) -> void override;
-		auto init(const CommandBuffer* commandBuffer = nullptr) -> void override;
+		auto resize(uint32_t width, uint32_t height, uint32_t count, const CommandBuffer *commandBuffer = nullptr) -> void override;
+		auto init(const CommandBuffer *commandBuffer = nullptr) -> void override;
 
 		inline auto getHandle() -> void * override
 		{
@@ -314,7 +323,10 @@ namespace maple
 			return count;
 		}
 
-		auto toIntID() const -> const uint64_t override { return handle; };
+		auto toIntID() const -> const uint64_t override
+		{
+			return handle;
+		};
 
 	  private:
 		uint32_t      handle = 0;

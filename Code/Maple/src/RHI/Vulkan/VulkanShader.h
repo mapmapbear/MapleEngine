@@ -116,12 +116,11 @@ namespace maple
 		std::string filePath;
 		std::string source;
 
-
-		std::vector<ShaderType>                         shaderTypes;
-		std::vector<PushConstant>                       pushConstants;
-		std::vector<DescriptorLayoutInfo>               descriptorLayoutInfo;
-		std::vector<VkDescriptorSetLayout>              descriptorSetLayouts;
-		std::vector<VkVertexInputAttributeDescription>  vertexInputAttributeDescriptions;
+		std::vector<ShaderType>                               shaderTypes;
+		std::vector<PushConstant>                             pushConstants;
+		std::vector<DescriptorLayoutInfo>                     descriptorLayoutInfo;
+		std::vector<VkDescriptorSetLayout>                    descriptorSetLayouts;
+		std::vector<VkVertexInputAttributeDescription>        vertexInputAttributeDescriptions;
 		std::unordered_map<uint32_t, std::vector<Descriptor>> descriptorInfos;
 	};
 };        // namespace maple

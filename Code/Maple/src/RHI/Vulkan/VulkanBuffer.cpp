@@ -15,9 +15,10 @@ namespace maple
 	}
 
 	VulkanBuffer::VulkanBuffer(VkBufferUsageFlags usage, uint32_t size, const void *data, bool gpuOnly) :
-	    usage(usage), size(size)
+	    usage(usage),
+	    size(size)
 	{
-		init(usage, size, data,gpuOnly);
+		init(usage, size, data, gpuOnly);
 	}
 
 	VulkanBuffer::~VulkanBuffer()
@@ -25,7 +26,7 @@ namespace maple
 		release();
 	}
 
-	auto VulkanBuffer::init(VkBufferUsageFlags usage, uint32_t size, const void *data, bool gpuOnly ) -> void
+	auto VulkanBuffer::init(VkBufferUsageFlags usage, uint32_t size, const void *data, bool gpuOnly) -> void
 	{
 		PROFILE_FUNCTION();
 		//param for creating
@@ -125,24 +126,24 @@ namespace maple
 	auto VulkanBuffer::setVkData(uint32_t size, const void *data, uint32_t offset) -> void
 	{
 		PROFILE_FUNCTION();
-		if (data != nullptr) 
+		if (data != nullptr)
 		{
 			map(size, offset);
-			memcpy(reinterpret_cast<uint8_t*>(mapped) + offset, data, size);
+			memcpy(reinterpret_cast<uint8_t *>(mapped) + offset, data, size);
 			unmap();
 		}
 	}
 
-	auto VulkanBuffer::getDeviceAddress() const->VkDeviceAddress
+	auto VulkanBuffer::getDeviceAddress() const -> VkDeviceAddress
 	{
 		VkBufferDeviceAddressInfo info = {};
-		info.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
-		info.pNext = nullptr;
-		info.buffer = buffer;
+		info.sType                     = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
+		info.pNext                     = nullptr;
+		info.buffer                    = buffer;
 		return vkGetBufferDeviceAddress(*VulkanDevice::get(), &info);
 	}
 
-	auto VulkanBuffer::resize(uint32_t size, const void* data) -> void
+	auto VulkanBuffer::resize(uint32_t size, const void *data) -> void
 	{
 		PROFILE_FUNCTION();
 		release();
@@ -159,8 +160,7 @@ namespace maple
 			auto  bufferId = VulkanContext::get()->getSwapChain()->getCurrentBufferIndex();
 #ifdef USE_VMA_ALLOCATOR
 			auto alloc = allocation;
-			queue.emplace([buffer, alloc, bufferId] { 
-				vmaDestroyBuffer(VulkanDevice::get()->getAllocator(), buffer, alloc); });
+			queue.emplace([buffer, alloc, bufferId] { vmaDestroyBuffer(VulkanDevice::get()->getAllocator(), buffer, alloc); });
 #else
 
 			auto memory = this->memory;

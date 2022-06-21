@@ -7,11 +7,11 @@
 
 namespace maple
 {
-	namespace component 
+	namespace component
 	{
 		struct BoundingBoxComponent
 		{
-			BoundingBox* box;
+			BoundingBox *box;
 		};
-	}
-};        // namespace maple
+	}        // namespace component
+};           // namespace maple

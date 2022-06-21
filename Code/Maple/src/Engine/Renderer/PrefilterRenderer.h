@@ -22,7 +22,7 @@ namespace maple
 	class Scene;
 	class FrameBuffer;
 
-	namespace component 
+	namespace component
 	{
 		struct Environment;
 	}
@@ -33,7 +33,7 @@ namespace maple
 		{
 			struct RenderGraph;
 		}
-	}
+	}        // namespace capture_graph
 	class MAPLE_EXPORT PrefilterRenderer
 	{
 	  public:
@@ -43,16 +43,16 @@ namespace maple
 
 		auto init() -> void;
 		auto present() -> void;
-		auto renderScene(const CommandBuffer* cmd, capture_graph::component::RenderGraph& graph) -> void;
-		auto beginScene(component::Environment & env) -> void;
+		auto renderScene(const CommandBuffer *cmd, capture_graph::component::RenderGraph &graph) -> void;
+		auto beginScene(component::Environment &env) -> void;
 
 	  private:
-		auto updateIrradianceDescriptor(const CommandBuffer* cmd) -> void;
-		auto updatePrefilterDescriptor(const CommandBuffer* cmd) -> void;
+		auto updateIrradianceDescriptor(const CommandBuffer *cmd) -> void;
+		auto updatePrefilterDescriptor(const CommandBuffer *cmd) -> void;
 
-		auto generateSkybox(const CommandBuffer* cmd, capture_graph::component::RenderGraph& graph) -> void;
-		auto generateIrradianceMap(const CommandBuffer* cmd, capture_graph::component::RenderGraph& graph) -> void;
-		auto generatePrefilterMap(const CommandBuffer* cmd, capture_graph::component::RenderGraph & graph) -> void;
+		auto generateSkybox(const CommandBuffer *cmd, capture_graph::component::RenderGraph &graph) -> void;
+		auto generateIrradianceMap(const CommandBuffer *cmd, capture_graph::component::RenderGraph &graph) -> void;
+		auto generatePrefilterMap(const CommandBuffer *cmd, capture_graph::component::RenderGraph &graph) -> void;
 
 		auto createPipeline() -> void;
 		auto updateUniform() -> void;
@@ -82,9 +82,9 @@ namespace maple
 
 		std::shared_ptr<TextureDepth> skyboxDepth;
 
-		std::shared_ptr<Mesh> cube;
-		std::shared_ptr<Mesh> cube2;
-		component::Environment *         envComponent = nullptr;
-		int32_t maxMips = 8;
+		std::shared_ptr<Mesh>   cube;
+		std::shared_ptr<Mesh>   cube2;
+		component::Environment *envComponent = nullptr;
+		int32_t                 maxMips      = 8;
 	};
 };        // namespace maple

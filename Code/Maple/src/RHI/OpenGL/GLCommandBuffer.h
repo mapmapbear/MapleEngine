@@ -10,7 +10,7 @@ namespace maple
 {
 	class GLCommandBuffer : public CommandBuffer
 	{
-	public:
+	  public:
 		GLCommandBuffer();
 		~GLCommandBuffer();
 
@@ -18,13 +18,14 @@ namespace maple
 		auto beginRecording() -> void override;
 		auto endRecording() -> void override;
 		auto unload() -> void override;
-		auto beginRecordingSecondary(RenderPass* renderPass, FrameBuffer* framebuffer) -> void override;
-		auto executeSecondary(const CommandBuffer* primaryCmdBuffer) -> void override;
-		auto updateViewport(uint32_t width, uint32_t height) const -> void override {};
-		auto bindPipeline(Pipeline* pipeline) -> void;
+		auto beginRecordingSecondary(RenderPass *renderPass, FrameBuffer *framebuffer) -> void override;
+		auto executeSecondary(const CommandBuffer *primaryCmdBuffer) -> void override;
+		auto updateViewport(uint32_t width, uint32_t height) const -> void override{};
+		auto bindPipeline(Pipeline *pipeline) -> void;
 		auto unbindPipeline() -> void;
-	private:
-		bool primary = false;
-		Pipeline* currentPipeline = nullptr;
+
+	  private:
+		bool      primary         = false;
+		Pipeline *currentPipeline = nullptr;
 	};
 }        // namespace maple

@@ -123,7 +123,7 @@ namespace maple
 		return glfwWindowShouldClose(nativeInterface) == 1;
 	}
 
-	auto WindowWin::registerNativeEvent(const WindowInitData& data) -> void
+	auto WindowWin::registerNativeEvent(const WindowInitData &data) -> void
 	{
 		glfwSetWindowSizeCallback(nativeInterface, [](GLFWwindow *win, int32_t w, int32_t h) {
 			Application::getEventDispatcher().postEvent(std::make_unique<WindowResizeEvent>(w, h));
@@ -180,15 +180,18 @@ namespace maple
 		glfwSetKeyCallback(nativeInterface, [](GLFWwindow *, int32_t key, int32_t scancode, int32_t action, int32_t mods) {
 			switch (action)
 			{
-				case GLFW_PRESS: {
+				case GLFW_PRESS:
+				{
 					Application::getEventDispatcher().postEvent(std::make_unique<KeyPressedEvent>(static_cast<KeyCode::Id>(key), 0));
 					break;
 				}
-				case GLFW_RELEASE: {
+				case GLFW_RELEASE:
+				{
 					Application::getEventDispatcher().postEvent(std::make_unique<KeyReleasedEvent>(static_cast<KeyCode::Id>(key)));
 					break;
 				}
-				case GLFW_REPEAT: {
+				case GLFW_REPEAT:
+				{
 					Application::getEventDispatcher().postEvent(std::make_unique<KeyPressedEvent>(static_cast<KeyCode::Id>(key), 1));
 					break;
 				}

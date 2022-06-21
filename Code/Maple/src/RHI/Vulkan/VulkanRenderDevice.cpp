@@ -39,17 +39,16 @@ namespace maple
 		PROFILE_FUNCTION();
 
 		std::vector<VkDescriptorPoolSize> poolSizes = {
-			VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_SAMPLER, 500},
-			VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 500},
-			VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 500},
-			VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 500},
-			VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 500},
-			VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 500}
-		};
+		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_SAMPLER, 500},
+		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 500},
+		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 500},
+		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 500},
+		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 500},
+		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 500}};
 
-		if (VulkanDevice::get()->getPhysicalDevice()->isRaytracingSupport()) 
+		if (VulkanDevice::get()->getPhysicalDevice()->isRaytracingSupport())
 		{
-			poolSizes.push_back({ VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 16 });
+			poolSizes.push_back({VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 16});
 		}
 
 		// Create info
@@ -106,13 +105,13 @@ namespace maple
 		vkCmdDraw(static_cast<const VulkanCommandBuffer *>(commandBuffer)->getCommandBuffer(), count, 1, 0, 0);
 	}
 
-	auto VulkanRenderDevice::drawArraysInternal(const CommandBuffer* commandBuffer, DrawType type, uint32_t count, uint32_t start /*= 0*/) const -> void
+	auto VulkanRenderDevice::drawArraysInternal(const CommandBuffer *commandBuffer, DrawType type, uint32_t count, uint32_t start /*= 0*/) const -> void
 	{
 		PROFILE_FUNCTION();
-		vkCmdDraw(static_cast<const VulkanCommandBuffer*>(commandBuffer)->getCommandBuffer(), count, 1, 0, 0);
+		vkCmdDraw(static_cast<const VulkanCommandBuffer *>(commandBuffer)->getCommandBuffer(), count, 1, 0, 0);
 	}
 
-	auto VulkanRenderDevice::drawIndexedInternal(const CommandBuffer* commandBuffer, const DrawType type, uint32_t count, uint32_t start) const -> void
+	auto VulkanRenderDevice::drawIndexedInternal(const CommandBuffer *commandBuffer, const DrawType type, uint32_t count, uint32_t start) const -> void
 	{
 		PROFILE_FUNCTION();
 		vkCmdDrawIndexed(static_cast<const VulkanCommandBuffer *>(commandBuffer)->getCommandBuffer(), count, 1, 0, 0, 0);
@@ -138,12 +137,12 @@ namespace maple
 		}
 
 		vkCmdBindDescriptorSets(
-			static_cast<const VulkanCommandBuffer *>(commandBuffer)->getCommandBuffer(), 
-			static_cast<const VulkanPipeline*>(pipeline)->getPipelineBindPoint(), 
-			static_cast<const VulkanPipeline *>(pipeline)->getPipelineLayout(), 0, numDesciptorSets, descriptorSetPool, numDynamicDescriptorSets, &dynamicOffset);
+		    static_cast<const VulkanCommandBuffer *>(commandBuffer)->getCommandBuffer(),
+		    static_cast<const VulkanPipeline *>(pipeline)->getPipelineBindPoint(),
+		    static_cast<const VulkanPipeline *>(pipeline)->getPipelineLayout(), 0, numDesciptorSets, descriptorSetPool, numDynamicDescriptorSets, &dynamicOffset);
 	}
 
-	auto VulkanRenderDevice::clearRenderTarget(const std::shared_ptr<Texture> &texture,const CommandBuffer *commandBuffer, const glm::vec4 &clearColor) -> void
+	auto VulkanRenderDevice::clearRenderTarget(const std::shared_ptr<Texture> &texture, const CommandBuffer *commandBuffer, const glm::vec4 &clearColor) -> void
 	{
 		PROFILE_FUNCTION();
 		VkImageSubresourceRange subresourceRange = {};
@@ -174,13 +173,13 @@ namespace maple
 		}
 	}
 
-	auto VulkanRenderDevice::dispatch(const CommandBuffer* commandBuffer, uint32_t x, uint32_t y, uint32_t z) -> void
+	auto VulkanRenderDevice::dispatch(const CommandBuffer *commandBuffer, uint32_t x, uint32_t y, uint32_t z) -> void
 	{
 		PROFILE_FUNCTION();
-		vkCmdDispatch(((const VulkanCommandBuffer*)commandBuffer)->getCommandBuffer(), x,y,z);
+		vkCmdDispatch(((const VulkanCommandBuffer *) commandBuffer)->getCommandBuffer(), x, y, z);
 	}
 
-	auto VulkanRenderDevice::memoryBarrier(const CommandBuffer* commandBuffer, uint32_t flag) -> void
+	auto VulkanRenderDevice::memoryBarrier(const CommandBuffer *commandBuffer, uint32_t flag) -> void
 	{
 		PROFILE_FUNCTION();
 	}

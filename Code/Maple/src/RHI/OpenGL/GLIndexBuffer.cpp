@@ -24,7 +24,8 @@ namespace maple
 	}
 
 	GLIndexBuffer::GLIndexBuffer(const uint16_t *data, uint32_t count, BufferUsage bufferUsage) :
-	    count(count), usage(bufferUsage)
+	    count(count),
+	    usage(bufferUsage)
 	{
 		PROFILE_FUNCTION();
 		GLCall(glGenBuffers(1, &handle));
@@ -33,7 +34,8 @@ namespace maple
 	}
 
 	GLIndexBuffer::GLIndexBuffer(const uint32_t *data, uint32_t count, BufferUsage bufferUsage) :
-	    count(count), usage(bufferUsage)
+	    count(count),
+	    usage(bufferUsage)
 	{
 		PROFILE_FUNCTION();
 		GLCall(glGenBuffers(1, &handle));

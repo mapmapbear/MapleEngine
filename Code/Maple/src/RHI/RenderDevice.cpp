@@ -46,7 +46,7 @@ namespace maple
 		Application::getRenderDevice()->drawIndexedInternal(commandBuffer, type, count, start);
 	}
 
-	auto RenderDevice::drawArrays(const CommandBuffer* commandBuffer, DrawType type, uint32_t count, uint32_t start /*= 0*/) -> void
+	auto RenderDevice::drawArrays(const CommandBuffer *commandBuffer, DrawType type, uint32_t count, uint32_t start /*= 0*/) -> void
 	{
 		Application::getRenderDevice()->drawArraysInternal(commandBuffer, type, count, start);
 	}

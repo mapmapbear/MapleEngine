@@ -68,16 +68,14 @@ namespace maple
 	auto MAPLE_EXPORT BufferLayout::push<glm::vec3>(const std::string &name, uint32_t level, bool normalized) -> void;
 	template <>
 	auto MAPLE_EXPORT BufferLayout::push<glm::vec4>(const std::string &name, uint32_t level, bool normalized) -> void;
-	
+
 	template <>
-	auto MAPLE_EXPORT BufferLayout::push<int32_t>(const std::string& name, uint32_t level, bool normalized) -> void;
+	auto MAPLE_EXPORT BufferLayout::push<int32_t>(const std::string &name, uint32_t level, bool normalized) -> void;
 	template <>
-	auto MAPLE_EXPORT BufferLayout::push<glm::ivec2>(const std::string& name, uint32_t level, bool normalized) -> void;
+	auto MAPLE_EXPORT BufferLayout::push<glm::ivec2>(const std::string &name, uint32_t level, bool normalized) -> void;
 	template <>
 	auto MAPLE_EXPORT BufferLayout::push<glm::ivec3>(const std::string &name, uint32_t level, bool normalized) -> void;
 	template <>
 	auto MAPLE_EXPORT BufferLayout::push<glm::ivec4>(const std::string &name, uint32_t level, bool normalized) -> void;
-
-
 
 }        // namespace maple

@@ -4,12 +4,12 @@
 #include <glm/glm.hpp>
 #include <imgui.h>
 
-#include <ecs/World.h>
 #include <Scene/Component/MeshRenderer.h>
 #include <Scene/System/ExecutePoint.h>
+#include <ecs/World.h>
 
-#include "Mesh.h"
 #include "Application.h"
+#include "Mesh.h"
 #include "Vertex.h"
 #define _USE_MATH_DEFINES
 #include "Math/BoundingBox.h"
@@ -17,16 +17,16 @@
 
 namespace maple
 {
-	Mesh::Mesh(const std::shared_ptr<VertexBuffer>& vertexBuffer, const std::shared_ptr<IndexBuffer>& indexBuffer) :
-		vertexBuffer(vertexBuffer), indexBuffer(indexBuffer)
+	Mesh::Mesh(const std::shared_ptr<VertexBuffer> &vertexBuffer, const std::shared_ptr<IndexBuffer> &indexBuffer) :
+	    vertexBuffer(vertexBuffer),
+	    indexBuffer(indexBuffer)
 	{
-
 	}
 
-	Mesh::Mesh(const std::vector<uint32_t>& indices, const std::vector<Vertex>& vertices)
+	Mesh::Mesh(const std::vector<uint32_t> &indices, const std::vector<Vertex> &vertices)
 	{
 		boundingBox = std::make_shared<BoundingBox>();
-		for (auto& vertex : vertices)
+		for (auto &vertex : vertices)
 		{
 			boundingBox->merge(vertex.pos);
 		}
@@ -35,10 +35,10 @@ namespace maple
 		indexBuffer = IndexBuffer::create(indices.data(), indices.size());
 	}
 
-	Mesh::Mesh(const std::vector<uint32_t>& indices, const std::vector<SkinnedVertex>& vertices)
+	Mesh::Mesh(const std::vector<uint32_t> &indices, const std::vector<SkinnedVertex> &vertices)
 	{
 		boundingBox = std::make_shared<BoundingBox>();
-		for (auto& vertex : vertices)
+		for (auto &vertex : vertices)
 		{
 			boundingBox->merge(vertex.pos);
 		}
@@ -56,38 +56,38 @@ namespace maple
 	{
 		std::vector<Vertex> data(4);
 
-		data[0].pos = glm::vec3(-1.0f, -1.0f, 0.0f);
+		data[0].pos      = glm::vec3(-1.0f, -1.0f, 0.0f);
 		data[0].texCoord = glm::vec2(0.0f, 0.0f);
-		data[0].color = glm::vec4(1.0f);
+		data[0].color    = glm::vec4(1.0f);
 
-		data[1].pos = glm::vec3(1.0f, -1.0f, 0.0f);
+		data[1].pos      = glm::vec3(1.0f, -1.0f, 0.0f);
 		data[1].texCoord = glm::vec2(1.0f, 0.0f);
-		data[1].color = glm::vec4(1.f);
+		data[1].color    = glm::vec4(1.f);
 
-		data[2].pos = glm::vec3(1.0f, 1.0f, 0.0f);
+		data[2].pos      = glm::vec3(1.0f, 1.0f, 0.0f);
 		data[2].texCoord = glm::vec2(1.0f, 1.0f);
-		data[2].color = glm::vec4(1.f);
+		data[2].color    = glm::vec4(1.f);
 
-		data[3].pos = glm::vec3(-1.0f, 1.0f, 0.0f);
+		data[3].pos      = glm::vec3(-1.0f, 1.0f, 0.0f);
 		data[3].texCoord = glm::vec2(0.0f, 1.0f);
-		data[3].color = glm::vec4(1.f);
+		data[3].color    = glm::vec4(1.f);
 
 		std::vector<uint32_t> indices = {
-			0,
-			1,
-			2,
-			2,
-			3,
-			0,
+		    0,
+		    1,
+		    2,
+		    2,
+		    3,
+		    0,
 		};
 #ifdef MAPLE_VULKAN
 		indices = {
-			0,
-			3,
-			2,
-			2,
-			1,
-			0,
+		    0,
+		    3,
+		    2,
+		    2,
+		    1,
+		    0,
 		};
 #endif        // MAPLE_VULKAN
 
@@ -98,40 +98,40 @@ namespace maple
 	{
 		std::vector<Vertex> data(4);
 
-		data[0].pos = glm::vec3(-1.0f, -1.0f, 0.0f);
+		data[0].pos      = glm::vec3(-1.0f, -1.0f, 0.0f);
 		data[0].texCoord = glm::vec2(0.0f, 0.0f);
-		data[0].color = glm::vec4(1.f);
+		data[0].color    = glm::vec4(1.f);
 
-		data[1].pos = glm::vec3(0.f, -1.0f, 0.0f);
+		data[1].pos      = glm::vec3(0.f, -1.0f, 0.0f);
 		data[1].texCoord = glm::vec2(1.0f, 0.0f);
-		data[1].color = glm::vec4(1.f);
+		data[1].color    = glm::vec4(1.f);
 
-		data[2].pos = glm::vec3(0.f, 0.f, 0.0f);
+		data[2].pos      = glm::vec3(0.f, 0.f, 0.0f);
 		data[2].texCoord = glm::vec2(1.0f, 1.0f);
-		data[2].color = glm::vec4(1.f);
+		data[2].color    = glm::vec4(1.f);
 
-		data[3].pos = glm::vec3(-1.0f, 0.f, 0.0f);
+		data[3].pos      = glm::vec3(-1.0f, 0.f, 0.0f);
 		data[3].texCoord = glm::vec2(0.0f, 1.0f);
-		data[3].color = glm::vec4(1.f);
+		data[3].color    = glm::vec4(1.f);
 
 #ifdef MAPLE_VULKAN
 
 		std::vector<uint32_t> indices = {
-				0,
-				3,
-				2,
-				2,
-				1,
-				0,
+		    0,
+		    3,
+		    2,
+		    2,
+		    1,
+		    0,
 		};
 #else
 		std::vector<uint32_t> indices = {
-			0,
-			1,
-			2,
-			2,
-			3,
-			0,
+		    0,
+		    1,
+		    2,
+		    2,
+		    3,
+		    0,
 		};
 #endif        // MAPLE_VULKAN
 		return std::make_shared<Mesh>(indices, data);
@@ -142,102 +142,102 @@ namespace maple
 		std::vector<Vertex> data;
 		data.resize(24);
 
-		data[0].pos = glm::vec3(1.0f, 1.0f, 1.0f);
-		data[0].color = glm::vec4(1.0f);
+		data[0].pos    = glm::vec3(1.0f, 1.0f, 1.0f);
+		data[0].color  = glm::vec4(1.0f);
 		data[0].normal = glm::vec3(0.0f, 0.0f, 1.0f);
 
-		data[1].pos = glm::vec3(-1.0f, 1.0f, 1.0f);
-		data[1].color = glm::vec4(1.0f);
+		data[1].pos    = glm::vec3(-1.0f, 1.0f, 1.0f);
+		data[1].color  = glm::vec4(1.0f);
 		data[1].normal = glm::vec3(0.0f, 0.0f, 1.0f);
 
-		data[2].pos = glm::vec3(-1.0f, -1.0f, 1.0f);
-		data[2].color = glm::vec4(1.0f);
+		data[2].pos    = glm::vec3(-1.0f, -1.0f, 1.0f);
+		data[2].color  = glm::vec4(1.0f);
 		data[2].normal = glm::vec3(0.0f, 0.0f, 1.0f);
 
-		data[3].pos = glm::vec3(1.0f, -1.0f, 1.0f);
-		data[3].color = glm::vec4(1.0f);
+		data[3].pos    = glm::vec3(1.0f, -1.0f, 1.0f);
+		data[3].color  = glm::vec4(1.0f);
 		data[3].normal = glm::vec3(0.0f, 0.0f, 1.0f);
 
-		data[4].pos = glm::vec3(1.0f, 1.0f, 1.0f);
-		data[4].color = glm::vec4(1.0f);
+		data[4].pos    = glm::vec3(1.0f, 1.0f, 1.0f);
+		data[4].color  = glm::vec4(1.0f);
 		data[4].normal = glm::vec3(1.0f, 0.0f, 0.0f);
 
-		data[5].pos = glm::vec3(1.0f, -1.0f, 1.0f);
-		data[5].color = glm::vec4(1.0f);
+		data[5].pos    = glm::vec3(1.0f, -1.0f, 1.0f);
+		data[5].color  = glm::vec4(1.0f);
 		data[5].normal = glm::vec3(1.0f, 0.0f, 0.0f);
 
-		data[6].pos = glm::vec3(1.0f, -1.0f, -1.0f);
-		data[6].color = glm::vec4(1.0f);
+		data[6].pos    = glm::vec3(1.0f, -1.0f, -1.0f);
+		data[6].color  = glm::vec4(1.0f);
 		data[6].normal = glm::vec3(1.0f, 0.0f, 0.0f);
 
-		data[7].pos = glm::vec3(1.0f, 1.0f, -1.0f);
-		data[7].color = glm::vec4(1.0f);
+		data[7].pos      = glm::vec3(1.0f, 1.0f, -1.0f);
+		data[7].color    = glm::vec4(1.0f);
 		data[7].texCoord = glm::vec2(0.0f, 1.0f);
-		data[7].normal = glm::vec3(1.0f, 0.0f, 0.0f);
+		data[7].normal   = glm::vec3(1.0f, 0.0f, 0.0f);
 
-		data[8].pos = glm::vec3(1.0f, 1.0f, 1.0f);
-		data[8].color = glm::vec4(1.0f);
+		data[8].pos    = glm::vec3(1.0f, 1.0f, 1.0f);
+		data[8].color  = glm::vec4(1.0f);
 		data[8].normal = glm::vec3(0.0f, 1.0f, 0.0f);
 
-		data[9].pos = glm::vec3(1.0f, 1.0f, -1.0f);
-		data[9].color = glm::vec4(1.0f);
+		data[9].pos    = glm::vec3(1.0f, 1.0f, -1.0f);
+		data[9].color  = glm::vec4(1.0f);
 		data[9].normal = glm::vec3(0.0f, 1.0f, 0.0f);
 
-		data[10].pos = glm::vec3(-1.0f, 1.0f, -1.0f);
-		data[10].color = glm::vec4(1.0f);
+		data[10].pos      = glm::vec3(-1.0f, 1.0f, -1.0f);
+		data[10].color    = glm::vec4(1.0f);
 		data[10].texCoord = glm::vec2(0.0f, 1.0f);
-		data[10].normal = glm::vec3(0.0f, 1.0f, 0.0f);
+		data[10].normal   = glm::vec3(0.0f, 1.0f, 0.0f);
 
-		data[11].pos = glm::vec3(-1.0f, 1.0f, 1.0f);
-		data[11].color = glm::vec4(1.0f);
+		data[11].pos    = glm::vec3(-1.0f, 1.0f, 1.0f);
+		data[11].color  = glm::vec4(1.0f);
 		data[11].normal = glm::vec3(0.0f, 1.0f, 0.0f);
 
-		data[12].pos = glm::vec3(-1.0f, 1.0f, 1.0f);
-		data[12].color = glm::vec4(1.0f);
+		data[12].pos    = glm::vec3(-1.0f, 1.0f, 1.0f);
+		data[12].color  = glm::vec4(1.0f);
 		data[12].normal = glm::vec3(-1.0f, 0.0f, 0.0f);
 
-		data[13].pos = glm::vec3(-1.0f, 1.0f, -1.0f);
-		data[13].color = glm::vec4(1.0f);
+		data[13].pos    = glm::vec3(-1.0f, 1.0f, -1.0f);
+		data[13].color  = glm::vec4(1.0f);
 		data[13].normal = glm::vec3(-1.0f, 0.0f, 0.0f);
 
-		data[14].pos = glm::vec3(-1.0f, -1.0f, -1.0f);
-		data[14].color = glm::vec4(1.0f);
+		data[14].pos    = glm::vec3(-1.0f, -1.0f, -1.0f);
+		data[14].color  = glm::vec4(1.0f);
 		data[14].normal = glm::vec3(-1.0f, 0.0f, 0.0f);
 
-		data[15].pos = glm::vec3(-1.0f, -1.0f, 1.0f);
-		data[15].color = glm::vec4(1.0f);
+		data[15].pos    = glm::vec3(-1.0f, -1.0f, 1.0f);
+		data[15].color  = glm::vec4(1.0f);
 		data[15].normal = glm::vec3(-1.0f, 0.0f, 0.0f);
 
-		data[16].pos = glm::vec3(-1.0f, -1.0f, -1.0f);
-		data[16].color = glm::vec4(1.0f);
+		data[16].pos    = glm::vec3(-1.0f, -1.0f, -1.0f);
+		data[16].color  = glm::vec4(1.0f);
 		data[16].normal = glm::vec3(0.0f, -1.0f, 0.0f);
 
-		data[17].pos = glm::vec3(1.0f, -1.0f, -1.0f);
-		data[17].color = glm::vec4(1.0f);
+		data[17].pos    = glm::vec3(1.0f, -1.0f, -1.0f);
+		data[17].color  = glm::vec4(1.0f);
 		data[17].normal = glm::vec3(0.0f, -1.0f, 0.0f);
 
-		data[18].pos = glm::vec3(1.0f, -1.0f, 1.0f);
-		data[18].color = glm::vec4(1.0f);
+		data[18].pos    = glm::vec3(1.0f, -1.0f, 1.0f);
+		data[18].color  = glm::vec4(1.0f);
 		data[18].normal = glm::vec3(0.0f, -1.0f, 0.0f);
 
-		data[19].pos = glm::vec3(-1.0f, -1.0f, 1.0f);
-		data[19].color = glm::vec4(1.0f);
+		data[19].pos    = glm::vec3(-1.0f, -1.0f, 1.0f);
+		data[19].color  = glm::vec4(1.0f);
 		data[19].normal = glm::vec3(0.0f, -1.0f, 0.0f);
 
-		data[20].pos = glm::vec3(1.0f, -1.0f, -1.0f);
-		data[20].color = glm::vec4(1.0f);
+		data[20].pos    = glm::vec3(1.0f, -1.0f, -1.0f);
+		data[20].color  = glm::vec4(1.0f);
 		data[20].normal = glm::vec3(0.0f, 0.0f, -1.0f);
 
-		data[21].pos = glm::vec3(-1.0f, -1.0f, -1.0f);
-		data[21].color = glm::vec4(1.0f);
+		data[21].pos    = glm::vec3(-1.0f, -1.0f, -1.0f);
+		data[21].color  = glm::vec4(1.0f);
 		data[21].normal = glm::vec3(0.0f, 0.0f, -1.0f);
 
-		data[22].pos = glm::vec3(-1.0f, 1.0f, -1.0f);
-		data[22].color = glm::vec4(1.0f);
+		data[22].pos    = glm::vec3(-1.0f, 1.0f, -1.0f);
+		data[22].color  = glm::vec4(1.0f);
 		data[22].normal = glm::vec3(0.0f, 0.0f, -1.0f);
 
-		data[23].pos = glm::vec3(1.0f, 1.0f, -1.0f);
-		data[23].color = glm::vec4(1.0f);
+		data[23].pos    = glm::vec3(1.0f, 1.0f, -1.0f);
+		data[23].color  = glm::vec4(1.0f);
 		data[23].normal = glm::vec3(0.0f, 0.0f, -1.0f);
 
 		for (int i = 0; i < 6; i++)
@@ -249,18 +249,18 @@ namespace maple
 		}
 
 		std::vector<uint32_t> indices{
-			0, 1, 2,
-			0, 2, 3,
-			4, 5, 6,
-			4, 6, 7,
-			8, 9, 10,
-			8, 10, 11,
-			12, 13, 14,
-			12, 14, 15,
-			16, 17, 18,
-			16, 18, 19,
-			20, 21, 22,
-			20, 22, 23 };
+		    0, 1, 2,
+		    0, 2, 3,
+		    4, 5, 6,
+		    4, 6, 7,
+		    8, 9, 10,
+		    8, 10, 11,
+		    12, 13, 14,
+		    12, 14, 15,
+		    16, 17, 18,
+		    16, 18, 19,
+		    20, 21, 22,
+		    20, 22, 23};
 
 		return std::make_shared<Mesh>(indices, data);
 	}
@@ -270,119 +270,119 @@ namespace maple
 		std::vector<Vertex> data;
 		data.resize(18);
 
-		data[0].pos = glm::vec3(1.0f, 1.0f, -1.0f);
-		data[0].color = glm::vec4(1.0f);
+		data[0].pos      = glm::vec3(1.0f, 1.0f, -1.0f);
+		data[0].color    = glm::vec4(1.0f);
 		data[0].texCoord = glm::vec2(0.24f, 0.20f);
-		data[0].normal = glm::vec3(0.0f, 0.8948f, 0.4464f);
+		data[0].normal   = glm::vec3(0.0f, 0.8948f, 0.4464f);
 
-		data[1].pos = glm::vec3(-1.0f, 1.0f, -1.0f);
-		data[1].color = glm::vec4(1.0f);
+		data[1].pos      = glm::vec3(-1.0f, 1.0f, -1.0f);
+		data[1].color    = glm::vec4(1.0f);
 		data[1].texCoord = glm::vec2(0.24f, 0.81f);
-		data[1].normal = glm::vec3(0.0f, 0.8948f, 0.4464f);
+		data[1].normal   = glm::vec3(0.0f, 0.8948f, 0.4464f);
 
-		data[2].pos = glm::vec3(0.0f, 0.0f, 1.0f);
-		data[2].color = glm::vec4(1.0f);
+		data[2].pos      = glm::vec3(0.0f, 0.0f, 1.0f);
+		data[2].color    = glm::vec4(1.0f);
 		data[2].texCoord = glm::vec2(0.95f, 0.50f);
-		data[2].normal = glm::vec3(0.0f, 0.8948f, 0.4464f);
+		data[2].normal   = glm::vec3(0.0f, 0.8948f, 0.4464f);
 
-		data[3].pos = glm::vec3(-1.0f, 1.0f, -1.0f);
-		data[3].color = glm::vec4(1.0f);
+		data[3].pos      = glm::vec3(-1.0f, 1.0f, -1.0f);
+		data[3].color    = glm::vec4(1.0f);
 		data[3].texCoord = glm::vec2(0.24f, 0.21f);
-		data[3].normal = glm::vec3(-0.8948f, 0.0f, 0.4464f);
+		data[3].normal   = glm::vec3(-0.8948f, 0.0f, 0.4464f);
 
-		data[4].pos = glm::vec3(-1.0f, -1.0f, -1.0f);
-		data[4].color = glm::vec4(1.0f);
+		data[4].pos      = glm::vec3(-1.0f, -1.0f, -1.0f);
+		data[4].color    = glm::vec4(1.0f);
 		data[4].texCoord = glm::vec2(0.24f, 0.81f);
-		data[4].normal = glm::vec3(-0.8948f, 0.0f, 0.4464f);
+		data[4].normal   = glm::vec3(-0.8948f, 0.0f, 0.4464f);
 
-		data[5].pos = glm::vec3(0.0f, 0.0f, 1.0f);
-		data[5].color = glm::vec4(1.0f);
+		data[5].pos      = glm::vec3(0.0f, 0.0f, 1.0f);
+		data[5].color    = glm::vec4(1.0f);
 		data[5].texCoord = glm::vec2(0.95f, 0.50f);
-		data[5].normal = glm::vec3(-0.8948f, 0.0f, 0.4464f);
+		data[5].normal   = glm::vec3(-0.8948f, 0.0f, 0.4464f);
 
-		data[6].pos = glm::vec3(1.0f, 1.0f, -1.0f);
-		data[6].color = glm::vec4(1.0f);
+		data[6].pos      = glm::vec3(1.0f, 1.0f, -1.0f);
+		data[6].color    = glm::vec4(1.0f);
 		data[6].texCoord = glm::vec2(0.24f, 0.81f);
-		data[6].normal = glm::vec3(0.8948f, 0.0f, 0.4475f);
+		data[6].normal   = glm::vec3(0.8948f, 0.0f, 0.4475f);
 
-		data[7].pos = glm::vec3(0.0f, 0.0f, 1.0f);
-		data[7].color = glm::vec4(1.0f);
+		data[7].pos      = glm::vec3(0.0f, 0.0f, 1.0f);
+		data[7].color    = glm::vec4(1.0f);
 		data[7].texCoord = glm::vec2(0.95f, 0.50f);
-		data[7].normal = glm::vec3(0.8948f, 0.0f, 0.4475f);
+		data[7].normal   = glm::vec3(0.8948f, 0.0f, 0.4475f);
 
-		data[8].pos = glm::vec3(1.0f, -1.0f, -1.0f);
-		data[8].color = glm::vec4(1.0f);
+		data[8].pos      = glm::vec3(1.0f, -1.0f, -1.0f);
+		data[8].color    = glm::vec4(1.0f);
 		data[8].texCoord = glm::vec2(0.24f, 0.21f);
-		data[8].normal = glm::vec3(0.8948f, 0.0f, 0.4475f);
+		data[8].normal   = glm::vec3(0.8948f, 0.0f, 0.4475f);
 
-		data[9].pos = glm::vec3(-1.0f, -1.0f, -1.0f);
-		data[9].color = glm::vec4(1.0f);
+		data[9].pos      = glm::vec3(-1.0f, -1.0f, -1.0f);
+		data[9].color    = glm::vec4(1.0f);
 		data[9].texCoord = glm::vec2(0.24f, 0.21f);
-		data[9].normal = glm::vec3(0.0f, -0.8948f, 0.448f);
+		data[9].normal   = glm::vec3(0.0f, -0.8948f, 0.448f);
 
-		data[10].pos = glm::vec3(1.0f, -1.0f, -1.0f);
-		data[10].color = glm::vec4(1.0f);
+		data[10].pos      = glm::vec3(1.0f, -1.0f, -1.0f);
+		data[10].color    = glm::vec4(1.0f);
 		data[10].texCoord = glm::vec2(0.24f, 0.81f);
-		data[10].normal = glm::vec3(0.0f, -0.8948f, 0.448f);
+		data[10].normal   = glm::vec3(0.0f, -0.8948f, 0.448f);
 
-		data[11].pos = glm::vec3(0.0f, 0.0f, 1.0f);
-		data[11].color = glm::vec4(1.0f);
+		data[11].pos      = glm::vec3(0.0f, 0.0f, 1.0f);
+		data[11].color    = glm::vec4(1.0f);
 		data[11].texCoord = glm::vec2(0.95f, 0.50f);
-		data[11].normal = glm::vec3(0.0f, -0.8948f, 0.448f);
+		data[11].normal   = glm::vec3(0.0f, -0.8948f, 0.448f);
 
-		data[12].pos = glm::vec3(-1.0f, 1.0f, -1.0f);
-		data[12].color = glm::vec4(1.0f);
+		data[12].pos      = glm::vec3(-1.0f, 1.0f, -1.0f);
+		data[12].color    = glm::vec4(1.0f);
 		data[12].texCoord = glm::vec2(0.0f, 0.0f);
-		data[12].normal = glm::vec3(0.0f, 0.0f, -1.0f);
+		data[12].normal   = glm::vec3(0.0f, 0.0f, -1.0f);
 
-		data[13].pos = glm::vec3(1.0f, 1.0f, -1.0f);
-		data[13].color = glm::vec4(1.0f);
+		data[13].pos      = glm::vec3(1.0f, 1.0f, -1.0f);
+		data[13].color    = glm::vec4(1.0f);
 		data[13].texCoord = glm::vec2(0.0f, 1.0f);
-		data[13].normal = glm::vec3(0.0f, 0.0f, -1.0f);
+		data[13].normal   = glm::vec3(0.0f, 0.0f, -1.0f);
 
-		data[14].pos = glm::vec3(1.0f, -1.0f, -1.0f);
-		data[14].color = glm::vec4(1.0f);
+		data[14].pos      = glm::vec3(1.0f, -1.0f, -1.0f);
+		data[14].color    = glm::vec4(1.0f);
 		data[14].texCoord = glm::vec2(1.0f, 1.0f);
-		data[14].normal = glm::vec3(0.0f, 0.0f, -1.0f);
+		data[14].normal   = glm::vec3(0.0f, 0.0f, -1.0f);
 
-		data[15].pos = glm::vec3(-1.0f, -1.0f, -1.0f);
-		data[15].color = glm::vec4(1.0f);
+		data[15].pos      = glm::vec3(-1.0f, -1.0f, -1.0f);
+		data[15].color    = glm::vec4(1.0f);
 		data[15].texCoord = glm::vec2(0.96f, 0.0f);
-		data[15].normal = glm::vec3(0.0f, 0.0f, -1.0f);
+		data[15].normal   = glm::vec3(0.0f, 0.0f, -1.0f);
 
-		data[16].pos = glm::vec3(0.0f, 0.0f, 0.0f);
-		data[16].color = glm::vec4(1.0f);
+		data[16].pos      = glm::vec3(0.0f, 0.0f, 0.0f);
+		data[16].color    = glm::vec4(1.0f);
 		data[16].texCoord = glm::vec2(0.0f, 0.0f);
-		data[16].normal = glm::vec3(0.0f, 0.0f, 0.0f);
+		data[16].normal   = glm::vec3(0.0f, 0.0f, 0.0f);
 
-		data[17].pos = glm::vec3(0.0f, 0.0f, 0.0f);
-		data[17].color = glm::vec4(1.0f);
+		data[17].pos      = glm::vec3(0.0f, 0.0f, 0.0f);
+		data[17].color    = glm::vec4(1.0f);
 		data[17].texCoord = glm::vec2(0.0f, 0.0f);
-		data[17].normal = glm::vec3(0.0f, 0.0f, 0.0f);
+		data[17].normal   = glm::vec3(0.0f, 0.0f, 0.0f);
 
 		const std::vector<uint32_t> indices{
-			0, 1, 2,
-			3, 4, 5,
-			6, 7, 8,
-			9, 10, 11,
-			12, 13, 14,
-			15, 12, 14 };
+		    0, 1, 2,
+		    3, 4, 5,
+		    6, 7, 8,
+		    9, 10, 11,
+		    12, 13, 14,
+		    15, 12, 14};
 
 		return std::make_shared<Mesh>(indices, data);
 	}
 
-	auto Mesh::createCapsule(float radius /*= 0.5f*/, float midHeight /*= 2.0f*/, int32_t radialSegments /*= 64*/, int32_t rings /*= 8*/) ->std::shared_ptr<Mesh>
+	auto Mesh::createCapsule(float radius /*= 0.5f*/, float midHeight /*= 2.0f*/, int32_t radialSegments /*= 64*/, int32_t rings /*= 8*/) -> std::shared_ptr<Mesh>
 	{
 		PROFILE_FUNCTION();
 		int32_t prevRow = 0;
 		int32_t thisRow = 0;
-		int32_t point = 0;
+		int32_t point   = 0;
 
-		float x, y, z, u, v, w;
-		constexpr float oneThird = 1.0f / 3.0f;
+		float           x, y, z, u, v, w;
+		constexpr float oneThird  = 1.0f / 3.0f;
 		constexpr float twoThirds = 2.0f / 3.0f;
 
-		std::vector<Vertex> data;
+		std::vector<Vertex>   data;
 		std::vector<uint32_t> indices;
 
 		/* top hemisphere */
@@ -405,10 +405,10 @@ namespace maple
 				glm::vec3 p = glm::vec3(x * radius * w, y, z * radius * w);
 
 				Vertex vertex;
-				vertex.pos = p + glm::vec3(0.0f, 0.5f * midHeight, 0.0f);
-				vertex.normal = glm::normalize((p + glm::vec3(0.0f, 0.5f * midHeight, 0.0f)));
+				vertex.pos      = p + glm::vec3(0.0f, 0.5f * midHeight, 0.0f);
+				vertex.normal   = glm::normalize((p + glm::vec3(0.0f, 0.5f * midHeight, 0.0f)));
 				vertex.texCoord = glm::vec2(u, oneThird * v);
-				vertex.color = glm::vec4(1, 1, 1, 1.f);
+				vertex.color    = glm::vec4(1, 1, 1, 1.f);
 				data.emplace_back(vertex);
 				point++;
 
@@ -450,10 +450,10 @@ namespace maple
 				glm::vec3 p = glm::vec3(x * radius, y, z * radius);
 
 				Vertex vertex;
-				vertex.pos = p;
-				vertex.normal = glm::vec3(x, z, 0.0f);
+				vertex.pos      = p;
+				vertex.normal   = glm::vec3(x, z, 0.0f);
 				vertex.texCoord = glm::vec2(u, oneThird + (v * oneThird));
-				vertex.color = glm::vec4(1, 1, 1, 1.f);
+				vertex.color    = glm::vec4(1, 1, 1, 1.f);
 				data.emplace_back(vertex);
 
 				point++;
@@ -498,10 +498,10 @@ namespace maple
 				glm::vec3 p = glm::vec3(x * radius * w, y, z * radius * w);
 
 				Vertex vertex;
-				vertex.pos = p + glm::vec3(0.0f, -0.5f * midHeight, 0.0f);
-				vertex.normal = glm::normalize((p + glm::vec3(0.0f, -0.5f * midHeight, 0.0f)));
+				vertex.pos      = p + glm::vec3(0.0f, -0.5f * midHeight, 0.0f);
+				vertex.normal   = glm::normalize((p + glm::vec3(0.0f, -0.5f * midHeight, 0.0f)));
 				vertex.texCoord = glm::vec2(u2, twoThirds + ((v - 1.0f) * oneThird));
-				vertex.color = glm::vec4(1, 1, 1, 1.f);
+				vertex.color    = glm::vec4(1, 1, 1, 1.f);
 				data.emplace_back(vertex);
 
 				point++;
@@ -530,31 +530,31 @@ namespace maple
 	{
 		std::vector<Vertex> data;
 		float               sectorCount = static_cast<float>(xSegments);
-		float               stackCount = static_cast<float>(ySegments);
-		float               sectorStep = 2 * M_PI / sectorCount;
-		float               stackStep = M_PI / stackCount;
-		float               radius = 1.0f;
+		float               stackCount  = static_cast<float>(ySegments);
+		float               sectorStep  = 2 * M_PI / sectorCount;
+		float               stackStep   = M_PI / stackCount;
+		float               radius      = 1.0f;
 
 		for (int i = 0; i <= stackCount; ++i)
 		{
 			float stackAngle = M_PI / 2 - i * stackStep;
-			float xy = radius * cos(stackAngle);
-			float z = radius * sin(stackAngle);
+			float xy         = radius * cos(stackAngle);
+			float z          = radius * sin(stackAngle);
 
 			for (int32_t j = 0; j <= sectorCount; ++j)
 			{
 				float sectorAngle = j * sectorStep;
-				float x = xy * cosf(sectorAngle);
-				float y = xy * sinf(sectorAngle);
+				float x           = xy * cosf(sectorAngle);
+				float y           = xy * sinf(sectorAngle);
 
 				float s = static_cast<float>(j / sectorCount);
 				float t = static_cast<float>(i / stackCount);
 
-				Vertex& vertex = data.emplace_back();
-				vertex.pos = glm::vec3(x, y, z);
+				Vertex &vertex  = data.emplace_back();
+				vertex.pos      = glm::vec3(x, y, z);
 				vertex.texCoord = glm::vec2(s, t);
-				vertex.normal = glm::normalize(glm::vec3(x, y, z));
-				vertex.color = glm::vec4(1.f);
+				vertex.normal   = glm::normalize(glm::vec3(x, y, z));
+				vertex.color    = glm::vec4(1.f);
 			}
 		}
 
@@ -586,53 +586,51 @@ namespace maple
 		return std::make_shared<Mesh>(indices, data);
 	}
 
-	auto Mesh::createPlane(float width, float height, const glm::vec3& normal) -> std::shared_ptr<Mesh>
+	auto Mesh::createPlane(float width, float height, const glm::vec3 &normal) -> std::shared_ptr<Mesh>
 	{
 		glm::vec3 vec = glm::radians(normal * 90.0f);
 		glm::quat rotation =
-			glm::angleAxis(vec.z, glm::vec3(1.0f, 0.0f, 0.0f)) *
-			glm::angleAxis(vec.y, glm::vec3(0.0f, 1.0f, 0.0f)) *
-			glm::angleAxis(vec.x, glm::vec3(0.0f, 0.0f, 1.0f));
+		    glm::angleAxis(vec.z, glm::vec3(1.0f, 0.0f, 0.0f)) *
+		    glm::angleAxis(vec.y, glm::vec3(0.0f, 1.0f, 0.0f)) *
+		    glm::angleAxis(vec.x, glm::vec3(0.0f, 0.0f, 1.0f));
 
 		std::vector<Vertex> data;
 		data.resize(4);
-		data[0].pos = rotation * glm::vec3(-width / 2.0f, -1.0f, -height / 2.0f);
-		data[0].normal = normal;
+		data[0].pos      = rotation * glm::vec3(-width / 2.0f, -1.0f, -height / 2.0f);
+		data[0].normal   = normal;
 		data[0].texCoord = glm::vec2(0.0f, 0.0f);
-		data[0].color = glm::vec4(1.f);
+		data[0].color    = glm::vec4(1.f);
 
-		data[1].pos = rotation * glm::vec3(-width / 2.0f, -1.0f, height / 2.0f);
-		data[1].normal = normal;
+		data[1].pos      = rotation * glm::vec3(-width / 2.0f, -1.0f, height / 2.0f);
+		data[1].normal   = normal;
 		data[1].texCoord = glm::vec2(0.0f, 1.0f);
-		data[1].color = glm::vec4(1.f);
+		data[1].color    = glm::vec4(1.f);
 
-
-		data[2].pos = rotation * glm::vec3(width / 2.0f, 1.0f, height / 2.0f);
-		data[2].normal = normal;
+		data[2].pos      = rotation * glm::vec3(width / 2.0f, 1.0f, height / 2.0f);
+		data[2].normal   = normal;
 		data[2].texCoord = glm::vec2(1.0f, 1.0f);
-		data[2].color = glm::vec4(1.f);
+		data[2].color    = glm::vec4(1.f);
 
-
-		data[3].pos = rotation * glm::vec3(width / 2.0f, 1.0f, -height / 2.0f);
-		data[3].normal = normal;
+		data[3].pos      = rotation * glm::vec3(width / 2.0f, 1.0f, -height / 2.0f);
+		data[3].normal   = normal;
 		data[3].texCoord = glm::vec2(1.0f, 0.0f);
-		data[3].color = glm::vec4(1.f);
+		data[3].color    = glm::vec4(1.f);
 
 		std::vector<uint32_t> indices{
-			0, 1, 2,
-			2, 3, 0 };
+		    0, 1, 2,
+		    2, 3, 0};
 
 		return std::make_shared<Mesh>(indices, data);
 	}
 
-	auto Mesh::generateTangent(const glm::vec3& a, const glm::vec3& b, const glm::vec3& c, const glm::vec2& ta, const glm::vec2& tb, const glm::vec2& tc) -> glm::vec3
+	auto Mesh::generateTangent(const glm::vec3 &a, const glm::vec3 &b, const glm::vec3 &c, const glm::vec2 &ta, const glm::vec2 &tb, const glm::vec2 &tc) -> glm::vec3
 	{
-		const glm::vec2 coord1 = tb - ta;
-		const glm::vec2 coord2 = tc - ta;
+		const glm::vec2 coord1  = tb - ta;
+		const glm::vec2 coord2  = tc - ta;
 		const glm::vec3 vertex1 = b - a;
 		const glm::vec3 vertex2 = c - a;
-		const glm::vec3 axis = (vertex1 * coord2.y - vertex2 * coord1.y);
-		const float     factor = 1.0f / (coord1.x * coord2.y - coord2.x * coord1.y);
+		const glm::vec3 axis    = (vertex1 * coord2.y - vertex2 * coord1.y);
+		const float     factor  = 1.0f / (coord1.x * coord2.y - coord2.x * coord1.y);
 		return axis * factor;
 	}
 };        // namespace maple

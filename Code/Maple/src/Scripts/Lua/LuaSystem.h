@@ -11,4 +11,4 @@ namespace maple
 	{
 		auto registerLuaSystem(std::shared_ptr<ExecutePoint> executePoint) -> void;
 	}
-};
+};        // namespace maple

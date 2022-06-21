@@ -5,5 +5,4 @@
 
 namespace maple
 {
-	
 };        // namespace maple

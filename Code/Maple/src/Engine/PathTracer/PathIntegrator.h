@@ -5,18 +5,18 @@
 #include "Scene/System/ExecutePoint.h"
 #include <cstdint>
 
-namespace maple 
+namespace maple
 {
-	namespace component 
+	namespace component
 	{
-		struct PathIntegrator 
+		struct PathIntegrator
 		{
 			int32_t depth = 8;
 		};
-	}
+	}        // namespace component
 
-	namespace path_integrator 
+	namespace path_integrator
 	{
-		auto registerPathIntegrator(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void;
+		auto registerPathIntegrator(ExecuteQueue &begin, ExecuteQueue &renderer, std::shared_ptr<ExecutePoint> executePoint) -> void;
 	}
-}
+}        // namespace maple

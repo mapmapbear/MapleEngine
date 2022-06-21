@@ -13,16 +13,16 @@ namespace maple
 		{
 			struct RigidBody
 			{
-				btRigidBody* rigidbody = nullptr;
-				bool dynamic = false;
-				bool kinematic = false;
-				float mass = 1.0;
-//----------------------------------------------------//
+				btRigidBody *rigidbody = nullptr;
+				bool         dynamic   = false;
+				bool         kinematic = false;
+				float        mass      = 1.0;
+				//----------------------------------------------------//
 				glm::vec3 localInertia;
 				glm::vec3 worldCenterPositionMass;
 				glm::vec3 velocity;
 				glm::vec3 angularVelocity;
 			};
-		}
-	}
-}
+		}        // namespace component
+	}            // namespace physics
+}        // namespace maple

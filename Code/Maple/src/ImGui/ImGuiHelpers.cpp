@@ -14,12 +14,11 @@ namespace maple
 {
 	namespace ImGuiHelper
 	{
-
 		inline void addUnderLine(ImColor col)
 		{
 			ImVec2 min = ImGui::GetItemRectMin();
 			ImVec2 max = ImGui::GetItemRectMax();
-			min.y = max.y;
+			min.y      = max.y;
 			ImGui::GetWindowDrawList()->AddLine(min, max, col, 1.0f);
 		}
 
@@ -258,38 +257,38 @@ namespace maple
 			return updated;
 		}
 
-		auto hyperLink(const std::string& name, const std::string& value, const std::string& hint, const std::function<void()>& callback) -> void
+		auto hyperLink(const std::string &name, const std::string &value, const std::string &hint, const std::function<void()> &callback) -> void
 		{
 			ImGui::TextUnformatted(name.c_str());
 			ImGui::NextColumn();
 			ImGui::PushItemWidth(-1);
-			
+
 			ImGui::Text(value.c_str());
 
-			if (value != "") 
+			if (value != "")
 			{
 				if (ImGui::IsItemHovered())
 				{
 					if (ImGui::IsMouseClicked(0))
 					{
-						if (callback != nullptr) 
+						if (callback != nullptr)
 						{
 							callback();
 						}
 					}
-					addUnderLine(ImColor{ 238,83,23,255 });
+					addUnderLine(ImColor{238, 83, 23, 255});
 					ImGui::SetTooltip(ICON_MDI_LINK "%s", hint.c_str());
 				}
 				else
 				{
-					addUnderLine(ImColor{ 197,210,233,255 });
+					addUnderLine(ImColor{197, 210, 233, 255});
 				}
 			}
 			ImGui::PopItemWidth();
 			ImGui::NextColumn();
 		}
 
-		auto showProperty(const std::string& name, const std::string& value) -> void
+		auto showProperty(const std::string &name, const std::string &value) -> void
 		{
 			ImGui::TextUnformatted(name.c_str());
 			ImGui::NextColumn();
@@ -298,8 +297,8 @@ namespace maple
 			ImGui::PopItemWidth();
 			ImGui::NextColumn();
 		}
-	
-		auto showProperty(const std::string& name, const glm::vec3& value) -> void
+
+		auto showProperty(const std::string &name, const glm::vec3 &value) -> void
 		{
 			auto v = value;
 
@@ -314,7 +313,7 @@ namespace maple
 			ImGui::NextColumn();
 		}
 
-		auto propertyWithDefault(const std::string& name, float& value, float min /*= -1.0f*/, float max /*= 1.0f*/, float defaultValue /*= 0.f*/, PropertyFlag flags /*= PropertyFlag::None*/, float speed) -> bool
+		auto propertyWithDefault(const std::string &name, float &value, float min /*= -1.0f*/, float max /*= 1.0f*/, float defaultValue /*= 0.f*/, PropertyFlag flags /*= PropertyFlag::None*/, float speed) -> bool
 		{
 			auto ret = property(name, value, min, max, flags, "%.3f", speed);
 
@@ -390,21 +389,21 @@ namespace maple
 			                          ImVec2(uv[1].x, uv[3].y), -1);
 		}
 
-		auto acceptFile(const std::function<void(const std::string&)>& callback) -> void
+		auto acceptFile(const std::function<void(const std::string &)> &callback) -> void
 		{
 			if (ImGui::BeginDragDropTarget())
 			{
 				auto data = ImGui::AcceptDragDropPayload("AssetFile", ImGuiDragDropFlags_None);
 				if (data)
 				{
-					std::string file = (char*)data->Data;
+					std::string file = (char *) data->Data;
 					callback(file);
 				}
 				ImGui::EndDragDropTarget();
 			}
 		}
 
-		auto combox(const std::string & id, const char* names[], int32_t namesLen, int32_t currentIndex) -> int32_t
+		auto combox(const std::string &id, const char *names[], int32_t namesLen, int32_t currentIndex) -> int32_t
 		{
 			ImGui::TextUnformatted(id.c_str());
 			ImGui::NextColumn();

@@ -17,8 +17,8 @@ namespace maple
 				}
 				for (int32_t i = world.dynamicsWorld->getNumCollisionObjects() - 1; i >= 0; i--)
 				{
-					btCollisionObject* obj = world.dynamicsWorld->getCollisionObjectArray()[i];
-					btRigidBody* body = btRigidBody::upcast(obj);
+					btCollisionObject *obj  = world.dynamicsWorld->getCollisionObjectArray()[i];
+					btRigidBody *      body = btRigidBody::upcast(obj);
 					if (body && body->getMotionState())
 					{
 						delete body->getMotionState();
@@ -30,7 +30,7 @@ namespace maple
 			//delete collision shapes
 			for (int32_t j = 0; j < world.collisionShapes.size(); j++)
 			{
-				btCollisionShape* shape = world.collisionShapes[j];
+				btCollisionShape *shape = world.collisionShapes[j];
 				delete shape;
 			}
 			world.collisionShapes.clear();
@@ -50,5 +50,5 @@ namespace maple
 			delete world.collisionConfiguration;
 			world.collisionConfiguration = nullptr;
 		}
-	}
-}
+	}        // namespace physics
+}        // namespace maple

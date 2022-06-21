@@ -6,11 +6,9 @@
 #include <cstdint>
 #include <vector>
 
-namespace maple 
+namespace maple
 {
 	namespace Interpolation
 	{
-
 	};
-};
-
+};        // namespace maple

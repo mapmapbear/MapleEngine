@@ -167,7 +167,7 @@ namespace maple
 			{
 				LOGI("[VULKAN] - DEBUG : [{0}] Code {1}  : {2}", pLayerPrefix, msgCode, pMsg);
 			}
- 			return VK_FALSE;
+			return VK_FALSE;
 		}
 
 		inline auto createDebugReportCallbackEXT(VkInstance instance, const VkDebugReportCallbackCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDebugReportCallbackEXT *pCallback) -> VkResult
@@ -225,7 +225,7 @@ namespace maple
 
 			VkDebugUtilsMessengerCreateInfoEXT createInfo2 = {};
 			VulkanHelper::populateDebugMessengerCreateInfo(createInfo2);
-			auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(vkInstance, "vkCreateDebugUtilsMessengerEXT");
+			auto func = (PFN_vkCreateDebugUtilsMessengerEXT) vkGetInstanceProcAddr(vkInstance, "vkCreateDebugUtilsMessengerEXT");
 			func(vkInstance, &createInfo2, nullptr, &debugMessenger);
 		}
 	}
@@ -302,7 +302,7 @@ namespace maple
 		features.pEnabledValidationFeatures     = enabled;
 		features.pNext                          = createInfo.pNext;
 
-		createInfo.pNext                        = &features;
+		createInfo.pNext = &features;
 
 		VK_CHECK_RESULT(vkCreateInstance(&createInfo, nullptr, &vkInstance));
 	}

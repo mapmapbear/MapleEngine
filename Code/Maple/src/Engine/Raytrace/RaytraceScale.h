@@ -6,7 +6,7 @@
 
 namespace maple
 {
-	enum class RaytraceScale : int32_t 
+	enum class RaytraceScale : int32_t
 	{
 		Full,
 		Half,

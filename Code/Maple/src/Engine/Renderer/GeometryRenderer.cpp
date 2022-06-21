@@ -4,10 +4,10 @@
 //////////////////////////////////////////////////////////////////////////////
 #include "GeometryRenderer.h"
 #include "Engine/Camera.h"
+#include "Engine/CaptureGraph.h"
 #include "Engine/GBuffer.h"
 #include "Engine/Profiler.h"
 #include "Engine/Vertex.h"
-#include "Engine/CaptureGraph.h"
 
 #include "Math/BoundingBox.h"
 #include "RHI/IndexBuffer.h"
@@ -15,12 +15,12 @@
 #include "RHI/Shader.h"
 #include "RHI/VertexBuffer.h"
 #include "RenderGraph.h"
-#include "Scene/Component/Transform.h"
 #include "Scene/Component/Light.h"
+#include "Scene/Component/Transform.h"
 #include "Scene/Scene.h"
 
-#include "RendererData.h"
 #include "Application.h"
+#include "RendererData.h"
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -53,18 +53,18 @@ namespace maple
 
 	namespace
 	{
-		constexpr uint32_t MaxPoints = 10000;
-		constexpr uint32_t MaxPointVertices = MaxPoints * 4;
-		constexpr uint32_t MaxPointIndices = MaxPoints * 6;
-		constexpr uint32_t MaxBatchDrawCalls = 100;
-		constexpr uint32_t RendererPointSize = sizeof(PointVertex) * 4;
+		constexpr uint32_t MaxPoints               = 10000;
+		constexpr uint32_t MaxPointVertices        = MaxPoints * 4;
+		constexpr uint32_t MaxPointIndices         = MaxPoints * 6;
+		constexpr uint32_t MaxBatchDrawCalls       = 100;
+		constexpr uint32_t RendererPointSize       = sizeof(PointVertex) * 4;
 		constexpr uint32_t RendererPointBufferSize = RendererPointSize * MaxPointVertices;
 
-		constexpr uint32_t MaxLines = 10000;
-		constexpr uint32_t MaxLineVertices = MaxLines * 2;
-		constexpr uint32_t MaxLineIndices = MaxLines * 6;
-		constexpr uint32_t MaxLineBatchDrawCalls = 100;
-		constexpr uint32_t RendererLineSize = sizeof(LineVertex) * 4;
+		constexpr uint32_t MaxLines               = 10000;
+		constexpr uint32_t MaxLineVertices        = MaxLines * 2;
+		constexpr uint32_t MaxLineIndices         = MaxLines * 6;
+		constexpr uint32_t MaxLineBatchDrawCalls  = 100;
+		constexpr uint32_t RendererLineSize       = sizeof(LineVertex) * 4;
 		constexpr uint32_t RendererLineBufferSize = RendererLineSize * MaxLineVertices;
 	}        // namespace
 
@@ -76,7 +76,6 @@ namespace maple
 			std::vector<GeometryTriangle> triangles;
 			std::vector<GeometryPoint>    points;
 
-
 			std::shared_ptr<VertexBuffer> lineVertexBuffers;
 			std::shared_ptr<VertexBuffer> pointVertexBuffers;
 
@@ -86,12 +85,12 @@ namespace maple
 			std::vector<std::shared_ptr<DescriptorSet>> pointDescriptorSet;
 			std::vector<std::shared_ptr<DescriptorSet>> lineDescriptorSet;
 
-			LineVertex* lineBuffer = nullptr;
-			PointVertex* pointBuffer = nullptr;
+			LineVertex * lineBuffer  = nullptr;
+			PointVertex *pointBuffer = nullptr;
 
-			uint32_t lineIndexCount = 0;
-			uint32_t pointIndexCount = 0;
-			uint32_t lineBatchDrawCallIndex = 0;
+			uint32_t lineIndexCount          = 0;
+			uint32_t pointIndexCount         = 0;
+			uint32_t lineBatchDrawCallIndex  = 0;
 			uint32_t pointBatchDrawCallIndex = 0;
 
 			std::shared_ptr<Shader> lineShader;
@@ -100,12 +99,12 @@ namespace maple
 			GeometryRenderData()
 			{
 				pointShader = Shader::create("shaders/BatchPoint.shader");
-				lineShader = Shader::create("shaders/BatchLine.shader");
+				lineShader  = Shader::create("shaders/BatchLine.shader");
 
 				{
 					DescriptorInfo descriptorInfo{};
 					descriptorInfo.layoutIndex = 0;
-					descriptorInfo.shader = pointShader.get();
+					descriptorInfo.shader      = pointShader.get();
 					pointDescriptorSet.emplace_back(DescriptorSet::create(descriptorInfo));
 
 					pointVertexBuffers = VertexBuffer::create(BufferUsage::Dynamic);
@@ -116,7 +115,7 @@ namespace maple
 
 					for (int32_t i = 0, offset = 0; i < MaxPointIndices; i += 6, offset += 4)
 					{
-						indices[i] = offset + 0;
+						indices[i]     = offset + 0;
 						indices[i + 1] = offset + 1;
 						indices[i + 2] = offset + 2;
 
@@ -130,7 +129,7 @@ namespace maple
 				{
 					DescriptorInfo descriptorLineInfo{};
 					descriptorLineInfo.layoutIndex = 0;
-					descriptorLineInfo.shader = lineShader.get();
+					descriptorLineInfo.shader      = lineShader.get();
 					lineDescriptorSet.emplace_back(DescriptorSet::create(descriptorLineInfo));
 
 					lineVertexBuffers = VertexBuffer::create(BufferUsage::Dynamic);
@@ -146,20 +145,20 @@ namespace maple
 				}
 			}
 		};
+	}        // namespace component
+
+	auto GeometryRenderer::drawLine(const glm::vec3 &start, const glm::vec3 &end, const glm::vec4 &color) -> void
+	{
+		auto &renderData = Application::getExecutePoint()->getGlobalComponent<component::GeometryRenderData>();
+		renderData.lines.push_back({start, end, color});
 	}
 
-	auto GeometryRenderer::drawLine(const glm::vec3& start, const glm::vec3& end, const glm::vec4& color) -> void
+	auto GeometryRenderer::drawFrustum(const Frustum &frustum, const glm::vec4 &color) -> void
 	{
-		auto& renderData = Application::getExecutePoint()->getGlobalComponent<component::GeometryRenderData>();
-		renderData.lines.push_back({ start, end, color });
-	}
-
-	auto GeometryRenderer::drawFrustum(const Frustum& frustum, const glm::vec4& color) -> void
-	{
-		const glm::vec3* vertices = frustum.getVertices();
+		const glm::vec3 *vertices = frustum.getVertices();
 
 		auto c = color * 0.6f;
-		c.a = 1.0f;
+		c.a    = 1.0f;
 
 		drawLine(vertices[0], vertices[1], c);
 		drawLine(vertices[1], vertices[2], c);
@@ -177,16 +176,16 @@ namespace maple
 
 	auto GeometryRenderer::drawRect(int32_t x, int32_t y, int32_t width, int32_t height) -> void
 	{
-		auto right = x + width;
+		auto right  = x + width;
 		auto bottom = y + height;
 
-		drawLine({ x, y, 0 }, { right, y, 0 });
-		drawLine({ right, y, 0 }, { right, bottom, 0 });
-		drawLine({ right, bottom, 0 }, { x, bottom, 0 });
-		drawLine({ x, bottom, 0 }, { x, y, 0 });
+		drawLine({x, y, 0}, {right, y, 0});
+		drawLine({right, y, 0}, {right, bottom, 0});
+		drawLine({right, bottom, 0}, {x, bottom, 0});
+		drawLine({x, bottom, 0}, {x, y, 0});
 	}
 
-	auto GeometryRenderer::drawBox(const glm::vec3& position, const BoundingBox& box, const glm::vec4& color) -> void
+	auto GeometryRenderer::drawBox(const glm::vec3 &position, const BoundingBox &box, const glm::vec4 &color) -> void
 	{
 		glm::vec3 uuu = box.max + position;
 		glm::vec3 lll = box.min + position;
@@ -211,13 +210,13 @@ namespace maple
 		drawLine(uul, uuu, color);
 	}
 
-	auto GeometryRenderer::drawTriangle(const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2, const glm::vec4& color) -> void
+	auto GeometryRenderer::drawTriangle(const glm::vec3 &v0, const glm::vec3 &v1, const glm::vec3 &v2, const glm::vec4 &color) -> void
 	{
-		auto& renderData = Application::getExecutePoint()->getGlobalComponent<component::GeometryRenderData>();
-		renderData.triangles.push_back({ v0, v1, v2, color });
+		auto &renderData = Application::getExecutePoint()->getGlobalComponent<component::GeometryRenderData>();
+		renderData.triangles.push_back({v0, v1, v2, color});
 	}
 
-	auto GeometryRenderer::drawLight(component::Light* light, const glm::quat& rotation, const glm::vec4& color) -> void
+	auto GeometryRenderer::drawLight(component::Light *light, const glm::quat &rotation, const glm::vec4 &color) -> void
 	{
 		if (light->lightData.type < 0.1f)
 		{
@@ -231,7 +230,7 @@ namespace maple
 		//Spot
 		else if (light->lightData.type < 1.1f)
 		{
-			drawCone(60, 4, light->lightData.angle, light->lightData.intensity, light->lightData.position, rotation, color,	true);
+			drawCone(60, 4, light->lightData.angle, light->lightData.intensity, light->lightData.position, rotation, color, true);
 		}
 		//Point
 		else
@@ -240,30 +239,29 @@ namespace maple
 		}
 	}
 
-	auto GeometryRenderer::drawCone(int32_t numCircleVerts, int32_t numLinesToCircle, float angle, float length, const glm::vec3& position, const glm::quat& rotation, const glm::vec4& color, bool backward) -> void
+	auto GeometryRenderer::drawCone(int32_t numCircleVerts, int32_t numLinesToCircle, float angle, float length, const glm::vec3 &position, const glm::quat &rotation, const glm::vec4 &color, bool backward) -> void
 	{
-		float endAngle = std::tan(angle * 0.5f) * length;
-		glm::vec3 forward = glm::normalize(rotation * maple::FORWARD * (backward ? -1.f : 1.f));
+		float     endAngle    = std::tan(angle * 0.5f) * length;
+		glm::vec3 forward     = glm::normalize(rotation * maple::FORWARD * (backward ? -1.f : 1.f));
 		glm::vec3 endPosition = position + forward * length;
-		float offset = 0.0f;
+		float     offset      = 0.0f;
 		drawCircle(numCircleVerts, endAngle, endPosition, rotation, color);
 
 		for (int i = 0; i < numLinesToCircle; i++)
 		{
-			float a = glm::radians(i * 90.0f);
+			float     a     = glm::radians(i * 90.0f);
 			glm::vec3 point = rotation * glm::vec3(std::cos(a), std::sin(a), 0.0f) * endAngle;
 			drawLine(position, position + point + forward * length, color);
 		}
 	}
 
-	auto GeometryRenderer::drawSphere(float radius, const glm::vec3& position, const glm::vec4& color) -> void
+	auto GeometryRenderer::drawSphere(float radius, const glm::vec3 &position, const glm::vec4 &color) -> void
 	{
 		drawCircle(60, radius, position, glm::quat(glm::vec3(0.0f, 0.0f, 0.0f)), color);
 		drawCircle(60, radius, position, glm::quat(glm::vec3(45.0f, 0.0f, 0.0f)), color);
 
 		drawCircle(60, radius, position, glm::quat(glm::vec3(0.0f, 45.0f, 0.0f)), color);
 		drawCircle(60, radius, position, glm::quat(glm::vec3(0.0f, 90.0f, 0.0f)), color);
-
 
 		drawCircle(60, radius, position, glm::quat(glm::vec3(0.0f, 0, 45.0f)), color);
 		drawCircle(60, radius, position, glm::quat(glm::vec3(0.0f, 0, 90.0f)), color);
@@ -272,53 +270,52 @@ namespace maple
 		drawCircle(60, radius, position, glm::quat(glm::vec3(0.0f, 45.f, 90.0f)), color);
 	}
 
-
-	auto GeometryRenderer::drawCircle(int32_t numVerts, float radius, const glm::vec3& position, const glm::quat& rotation, const glm::vec4& color) -> void
+	auto GeometryRenderer::drawCircle(int32_t numVerts, float radius, const glm::vec3 &position, const glm::quat &rotation, const glm::vec4 &color) -> void
 	{
 		float step = 360.0f / float(numVerts);
 
 		for (int i = 0; i < numVerts; i++)
 		{
-			float cx = std::cos(step * i) * radius;
-			float cy = std::sin(step * i) * radius;
+			float     cx      = std::cos(step * i) * radius;
+			float     cy      = std::sin(step * i) * radius;
 			glm::vec3 current = glm::vec3(cx, cy, 0.0f);
 
-			float nx = std::cos(step * (i + 1)) * radius;
-			float ny = std::sin(step * (i + 1)) * radius;
+			float     nx   = std::cos(step * (i + 1)) * radius;
+			float     ny   = std::sin(step * (i + 1)) * radius;
 			glm::vec3 next = glm::vec3(nx, ny, 0.0f);
 
 			drawLine(position + (rotation * current), position + (rotation * next), color);
 		}
 	}
 
-	auto GeometryRenderer::drawArc(int32_t numVerts, float radius, const glm::vec3& start, const glm::vec3& end, const glm::quat& rotation, const glm::vec4& color) -> void
+	auto GeometryRenderer::drawArc(int32_t numVerts, float radius, const glm::vec3 &start, const glm::vec3 &end, const glm::quat &rotation, const glm::vec4 &color) -> void
 	{
 		PROFILE_FUNCTION();
-		float step = 180.0f / numVerts;
-		glm::quat rot = glm::lookAt(rotation * start, rotation * end, maple::UP);
-		rot = rotation * rot;
+		float     step = 180.0f / numVerts;
+		glm::quat rot  = glm::lookAt(rotation * start, rotation * end, maple::UP);
+		rot            = rotation * rot;
 
 		glm::vec3 arcCentre = (start + end) * 0.5f;
 		for (int i = 0; i < numVerts; i++)
 		{
-			float cx = std::cos(glm::radians(step * i)) * radius;
-			float cy = std::sin(glm::radians(step * i)) * radius;
+			float     cx      = std::cos(glm::radians(step * i)) * radius;
+			float     cy      = std::sin(glm::radians(step * i)) * radius;
 			glm::vec3 current = glm::vec3(cx, cy, 0.0f);
 
-			float nx = std::cos(glm::radians(step * (i + 1))) * radius;
-			float ny = std::sin(glm::radians(step * (i + 1))) * radius;
+			float     nx   = std::cos(glm::radians(step * (i + 1))) * radius;
+			float     ny   = std::sin(glm::radians(step * (i + 1))) * radius;
 			glm::vec3 next = glm::vec3(nx, ny, 0.0f);
 
 			drawLine(arcCentre + (rot * current), arcCentre + (rot * next), color);
 		}
 	}
 
-	auto GeometryRenderer::drawCapsule(const glm::vec3& position, const glm::quat& rotation, float height, float radius, const glm::vec4& color) -> void
+	auto GeometryRenderer::drawCapsule(const glm::vec3 &position, const glm::quat &rotation, float height, float radius, const glm::vec4 &color) -> void
 	{
 		PROFILE_FUNCTION();
 		glm::vec3 up = (rotation * maple::UP);
 
-		glm::vec3 topSphereCentre = position + up * (height * 0.5f);
+		glm::vec3 topSphereCentre    = position + up * (height * 0.5f);
 		glm::vec3 bottomSphereCentre = position - up * (height * 0.5f);
 
 		drawCircle(20, radius, topSphereCentre, rotation * glm::quat(glm::vec3(glm::radians(90.0f), 0.0f, 0.0f)), color);
@@ -349,11 +346,7 @@ namespace maple
 
 	namespace on_begin_scene
 	{
-		using Entity = ecs::Registry
-			::Fetch<component::RendererData>
-			::Modify<component::GeometryRenderData>
-			::Fetch<component::CameraView>
-			::To<ecs::Entity>;
+		using Entity = ecs::Registry ::Fetch<component::RendererData>::Modify<component::GeometryRenderData>::Fetch<component::CameraView>::To<ecs::Entity>;
 
 		inline auto system(Entity entity, ecs::World world)
 		{
@@ -361,34 +354,29 @@ namespace maple
 			geometry.lineDescriptorSet[0]->setUniform("UniformBufferObject", "projView", &cameraView.projView);
 			geometry.pointDescriptorSet[0]->setUniform("UniformBufferObject", "projView", &cameraView.projView);
 		}
-	}
+	}        // namespace on_begin_scene
 
 	namespace on_render_lines
 	{
-		using Entity = ecs::Registry
-			::Fetch<component::RendererData>
-			::Modify<component::GeometryRenderData>
-			::Modify<component::CameraView>
-			::Modify<capture_graph::component::RenderGraph>
-			::To<ecs::Entity>;
+		using Entity = ecs::Registry ::Fetch<component::RendererData>::Modify<component::GeometryRenderData>::Modify<component::CameraView>::Modify<capture_graph::component::RenderGraph>::To<ecs::Entity>;
 
 		inline auto systemLines(Entity entity, ecs::World world)
 		{
 			auto [render, geometry, cameraView, graph] = entity;
-			auto commandBuffer = render.commandBuffer;
+			auto commandBuffer                         = render.commandBuffer;
 
 			if (!geometry.lines.empty())
 			{
 				geometry.lineDescriptorSet[0]->update(render.commandBuffer);
 
 				PipelineInfo pipelineInfo;
-				pipelineInfo.shader = geometry.lineShader;
-				pipelineInfo.polygonMode = PolygonMode::Fill;
-				pipelineInfo.cullMode = CullMode::Back;
+				pipelineInfo.shader              = geometry.lineShader;
+				pipelineInfo.polygonMode         = PolygonMode::Fill;
+				pipelineInfo.cullMode            = CullMode::Back;
 				pipelineInfo.transparencyEnabled = false;
-				pipelineInfo.clearTargets = false;
-				pipelineInfo.drawType = DrawType::Lines;
-				pipelineInfo.colorTargets[0] = render.gbuffer->getBuffer(GBufferTextures::SCREEN);
+				pipelineInfo.clearTargets        = false;
+				pipelineInfo.drawType            = DrawType::Lines;
+				pipelineInfo.colorTargets[0]     = render.gbuffer->getBuffer(GBufferTextures::SCREEN);
 
 				auto pipeline = Pipeline::get(pipelineInfo, geometry.lineDescriptorSet, graph);
 
@@ -396,13 +384,13 @@ namespace maple
 				geometry.lineVertexBuffers->bind(commandBuffer, pipeline.get());
 				geometry.lineBuffer = geometry.lineVertexBuffers->getPointer<LineVertex>();
 
-				for (auto& line : geometry.lines)
+				for (auto &line : geometry.lines)
 				{
 					geometry.lineBuffer->vertex = line.start;
-					geometry.lineBuffer->color = line.color;
+					geometry.lineBuffer->color  = line.color;
 					geometry.lineBuffer++;
 					geometry.lineBuffer->vertex = line.end;
-					geometry.lineBuffer->color = line.color;
+					geometry.lineBuffer->color  = line.color;
 					geometry.lineBuffer++;
 					geometry.lineIndexCount += 2;
 				}
@@ -431,19 +419,19 @@ namespace maple
 		inline auto systemPoints(Entity entity, ecs::World world)
 		{
 			auto [render, geometry, cameraView, graph] = entity;
-			auto commandBuffer = render.commandBuffer;
+			auto commandBuffer                         = render.commandBuffer;
 
 			if (!geometry.points.empty())
 			{
 				geometry.pointDescriptorSet[0]->update(render.commandBuffer);
 				PipelineInfo pipelineInfo;
-				pipelineInfo.shader = geometry.pointShader;
-				pipelineInfo.polygonMode = PolygonMode::Fill;
-				pipelineInfo.cullMode = CullMode::Back;
+				pipelineInfo.shader              = geometry.pointShader;
+				pipelineInfo.polygonMode         = PolygonMode::Fill;
+				pipelineInfo.cullMode            = CullMode::Back;
 				pipelineInfo.transparencyEnabled = true;
-				pipelineInfo.drawType = DrawType::Triangle;
-				pipelineInfo.blendMode = BlendMode::SrcAlphaOneMinusSrcAlpha;
-				pipelineInfo.colorTargets[0] = render.gbuffer->getBuffer(GBufferTextures::SCREEN);
+				pipelineInfo.drawType            = DrawType::Triangle;
+				pipelineInfo.blendMode           = BlendMode::SrcAlphaOneMinusSrcAlpha;
+				pipelineInfo.colorTargets[0]     = render.gbuffer->getBuffer(GBufferTextures::SCREEN);
 
 				auto pipeline = Pipeline::get(pipelineInfo, geometry.pointDescriptorSet, graph);
 
@@ -451,33 +439,33 @@ namespace maple
 				geometry.pointVertexBuffers->bind(commandBuffer, pipeline.get());
 				geometry.pointBuffer = geometry.pointVertexBuffers->getPointer<PointVertex>();
 
-				for (auto& pointInfo : geometry.points)
+				for (auto &pointInfo : geometry.points)
 				{
 					auto right = pointInfo.size * cameraView.cameraTransform->getRightDirection();
-					auto up = pointInfo.size * cameraView.cameraTransform->getUpDirection();
+					auto up    = pointInfo.size * cameraView.cameraTransform->getUpDirection();
 
 					geometry.pointBuffer->vertex = pointInfo.p1 - right - up;
-					geometry.pointBuffer->color = pointInfo.color;
-					geometry.pointBuffer->size = { pointInfo.size, 0.0f };
-					geometry.pointBuffer->uv = { -1.0f, -1.0f };
+					geometry.pointBuffer->color  = pointInfo.color;
+					geometry.pointBuffer->size   = {pointInfo.size, 0.0f};
+					geometry.pointBuffer->uv     = {-1.0f, -1.0f};
 					geometry.pointBuffer++;
 
 					geometry.pointBuffer->vertex = pointInfo.p1 + right - up;
-					geometry.pointBuffer->color = pointInfo.color;
-					geometry.pointBuffer->size = { pointInfo.size, 0.0f };
-					geometry.pointBuffer->uv = { 1.0f, -1.0f };
+					geometry.pointBuffer->color  = pointInfo.color;
+					geometry.pointBuffer->size   = {pointInfo.size, 0.0f};
+					geometry.pointBuffer->uv     = {1.0f, -1.0f};
 					geometry.pointBuffer++;
 
 					geometry.pointBuffer->vertex = pointInfo.p1 + right + up;
-					geometry.pointBuffer->color = pointInfo.color;
-					geometry.pointBuffer->size = { pointInfo.size, 0.0f };
-					geometry.pointBuffer->uv = { 1.0f, 1.0f };
+					geometry.pointBuffer->color  = pointInfo.color;
+					geometry.pointBuffer->size   = {pointInfo.size, 0.0f};
+					geometry.pointBuffer->uv     = {1.0f, 1.0f};
 					geometry.pointBuffer++;
 
 					geometry.pointBuffer->vertex = pointInfo.p1 - right + up;
-					geometry.pointBuffer->color = pointInfo.color;
-					geometry.pointBuffer->size = { pointInfo.size, 0.0f };
-					geometry.pointBuffer->uv = { -1.0f, 1.0f };
+					geometry.pointBuffer->color  = pointInfo.color;
+					geometry.pointBuffer->size   = {pointInfo.size, 0.0f};
+					geometry.pointBuffer->uv     = {-1.0f, 1.0f};
 					geometry.pointBuffer++;
 
 					geometry.pointIndexCount += 6;
@@ -502,17 +490,17 @@ namespace maple
 				geometry.points.clear();
 			}
 		}
-	}
+	}        // namespace on_render_lines
 
 	namespace geometry_renderer
 	{
-		auto registerGeometryRenderer(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void
+		auto registerGeometryRenderer(ExecuteQueue &begin, ExecuteQueue &renderer, std::shared_ptr<ExecutePoint> executePoint) -> void
 		{
 			executePoint->registerGlobalComponent<component::GeometryRenderData>();
 			executePoint->registerWithinQueue<on_begin_scene::system>(begin);
 			executePoint->registerWithinQueue<on_render_lines::systemLines>(renderer);
 			executePoint->registerWithinQueue<on_render_lines::systemPoints>(renderer);
 		}
-	}
+	}        // namespace geometry_renderer
 
 };        // namespace maple

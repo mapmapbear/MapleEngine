@@ -9,7 +9,7 @@
 
 namespace maple
 {
-	class Image 
+	class Image
 	{
 	  public:
 		Image() = default;
@@ -19,7 +19,14 @@ namespace maple
 		Image(TextureFormat initPixelFormat,
 		      uint32_t width, uint32_t height,
 		      void *initData, uint32_t imageSize, uint32_t channel, bool mipmaps = true, bool isHDR = false) :
-		    pixelFormat(initPixelFormat), width(width), height(height), data(initData), size(imageSize), channel(channel), mipmaps(mipmaps), HDR(isHDR)
+		    pixelFormat(initPixelFormat),
+		    width(width),
+		    height(height),
+		    data(initData),
+		    size(imageSize),
+		    channel(channel),
+		    mipmaps(mipmaps),
+		    HDR(isHDR)
 		{
 		}
 

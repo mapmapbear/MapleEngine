@@ -6,19 +6,19 @@
 #define GLM_FORCE_RADIANS
 #define GLM_ENABLE_EXPERIMENTAL
 
+#include <array>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/hash.hpp>
-#include <array>
 namespace maple
 {
-	struct Vertex 
+	struct Vertex
 	{
-		glm::vec3 pos;
-		glm::vec4 color;
-		glm::vec2 texCoord;
-		glm::vec3 normal;
-		glm::vec3 tangent;
+		glm::vec3   pos;
+		glm::vec4   color;
+		glm::vec2   texCoord;
+		glm::vec3   normal;
+		glm::vec3   tangent;
 		inline auto operator-(const Vertex &right) -> Vertex
 		{
 			Vertex ret;
@@ -65,23 +65,17 @@ namespace maple
 		glm::vec4 boneIndices;
 		glm::vec4 boneWeights;
 
-		inline auto operator==(const SkinnedVertex& other) const -> bool
+		inline auto operator==(const SkinnedVertex &other) const -> bool
 		{
-			return pos == other.pos 
-				&& color == other.color 
-				&& texCoord == other.texCoord 
-				&& normal == other.normal 
-				&& tangent == other.tangent 
-				&& boneIndices == other.boneIndices
-				&& boneWeights == other.boneWeights;
+			return pos == other.pos && color == other.color && texCoord == other.texCoord && normal == other.normal && tangent == other.tangent && boneIndices == other.boneIndices && boneWeights == other.boneWeights;
 		}
 	};
 
 	struct Vertex2D
 	{
-		glm::vec3 vertex;
-		glm::vec4 color;
-		glm::vec3 uv;
+		glm::vec3   vertex;
+		glm::vec4   color;
+		glm::vec3   uv;
 		inline auto operator==(const Vertex2D &other) const -> bool
 		{
 			return vertex == other.vertex && uv == other.uv && color == other.color;
@@ -111,16 +105,18 @@ namespace maple
 			return vertex == other.vertex && color == other.color && size == other.size && uv == other.uv;
 		}
 	};
-};
-namespace std {
-	template<> struct hash<maple::Vertex> {
-		size_t operator()(const maple::Vertex& vertex) const {
-			return
-					((hash<glm::vec3>()(vertex.pos) ^
-					(hash<glm::vec2>()(vertex.texCoord) << 1) ^
-					(hash<glm::vec4>()(vertex.color) << 1) ^
-					(hash<glm::vec3>()(vertex.normal) << 1)
-				));
+};        // namespace maple
+namespace std
+{
+	template <>
+	struct hash<maple::Vertex>
+	{
+		size_t operator()(const maple::Vertex &vertex) const
+		{
+			return ((hash<glm::vec3>()(vertex.pos) ^
+			         (hash<glm::vec2>()(vertex.texCoord) << 1) ^
+			         (hash<glm::vec4>()(vertex.color) << 1) ^
+			         (hash<glm::vec3>()(vertex.normal) << 1)));
 		}
 	};
-}
+}        // namespace std

@@ -9,18 +9,22 @@
 
 struct lua_State;
 
-namespace maple 
+namespace maple
 {
 	class MAPLE_EXPORT LuaVirtualMachine final
 	{
-	public:
+	  public:
 		LuaVirtualMachine();
 		~LuaVirtualMachine();
-		auto init() -> void;
-		inline auto getState() { return L; }
-	private:
-		auto addSystemPath(const std::string& path) -> void;
-		auto addPath(const std::string& path) -> void;
-		lua_State * L = nullptr;
+		auto        init() -> void;
+		inline auto getState()
+		{
+			return L;
+		}
+
+	  private:
+		auto       addSystemPath(const std::string &path) -> void;
+		auto       addPath(const std::string &path) -> void;
+		lua_State *L = nullptr;
 	};
-};
+};        // namespace maple

@@ -3,13 +3,13 @@
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-#include "Scene/System/ExecutePoint.h"
 #include "Engine/Core.h"
+#include "Scene/System/ExecutePoint.h"
 
 namespace maple
 {
-	namespace ddgi 
+	namespace ddgi
 	{
-		auto registerDDGI(ExecuteQueue& begin, std::shared_ptr<ExecutePoint> point) -> void;
+		auto registerDDGI(ExecuteQueue &begin, std::shared_ptr<ExecutePoint> point) -> void;
 	}
-}
+}        // namespace maple

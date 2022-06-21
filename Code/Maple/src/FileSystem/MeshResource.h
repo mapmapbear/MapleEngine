@@ -24,7 +24,7 @@ namespace maple
 		{
 			return meshes;
 		}
-		inline auto& getMeshes() 
+		inline auto &getMeshes()
 		{
 			return meshes;
 		}

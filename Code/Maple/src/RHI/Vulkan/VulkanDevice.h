@@ -3,8 +3,8 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #pragma once
-#include "Engine/Profiler.h"
 #include "Engine/Core.h"
+#include "Engine/Profiler.h"
 #include "VulkanHelper.h"
 
 #include <TracyVulkan.hpp>
@@ -19,61 +19,70 @@ namespace maple
 
 	class VulkanPhysicalDevice final
 	{
-	public:
+	  public:
 		VulkanPhysicalDevice();
 		NO_COPYABLE(VulkanPhysicalDevice);
-		inline auto isExtensionSupported(const std::string& extensionName) const
+		inline auto isExtensionSupported(const std::string &extensionName) const
 		{
 			return supportedExtensions.find(extensionName) != supportedExtensions.end();
 		}
 
-		auto getMemoryTypeIndex(uint32_t typeBits, VkMemoryPropertyFlags properties) const->uint32_t;
+		auto getMemoryTypeIndex(uint32_t typeBits, VkMemoryPropertyFlags properties) const -> uint32_t;
 
 		inline operator auto() const
 		{
 			return physicalDevice;
 		}
 
-		inline auto& getProperties() const
+		inline auto &getProperties() const
 		{
 			return physicalDeviceProperties;
 		};
 
-		inline auto& getQueueFamilyIndices() const
+		inline auto &getQueueFamilyIndices() const
 		{
 			return indices;
 		}
-		inline auto& getMemoryProperties() const
+		inline auto &getMemoryProperties() const
 		{
 			return memoryProperties;
 		}
 
 		auto getRaytracingProperties() -> void;
 
-		inline auto& getRayTracingPipelineProperties() const { return rayTracingPipelineProperties; }
-		inline auto& getAccelerationStructureProperties() const { return accelerationStructureProperties; }
+		inline auto &getRayTracingPipelineProperties() const
+		{
+			return rayTracingPipelineProperties;
+		}
+		inline auto &getAccelerationStructureProperties() const
+		{
+			return accelerationStructureProperties;
+		}
 
-		inline auto isRaytracingSupport() const { return raytracingSupport; }
+		inline auto isRaytracingSupport() const
+		{
+			return raytracingSupport;
+		}
 
-	private:
+	  private:
 		std::vector<VkQueueFamilyProperties> queueFamilyProperties;
 		std::unordered_set<std::string>      supportedExtensions;
 		std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 
-		VkPhysicalDevice                 physicalDevice;
-		VkPhysicalDeviceProperties       physicalDeviceProperties;
-		VkPhysicalDeviceMemoryProperties memoryProperties;
-		VkPhysicalDeviceRayTracingPipelinePropertiesKHR rayTracingPipelineProperties;
+		VkPhysicalDevice                                   physicalDevice;
+		VkPhysicalDeviceProperties                         physicalDeviceProperties;
+		VkPhysicalDeviceMemoryProperties                   memoryProperties;
+		VkPhysicalDeviceRayTracingPipelinePropertiesKHR    rayTracingPipelineProperties;
 		VkPhysicalDeviceAccelerationStructurePropertiesKHR accelerationStructureProperties;
 
 		friend class VulkanDevice;
 		QueueFamilyIndices indices;
-		bool raytracingSupport = false;
+		bool               raytracingSupport = false;
 	};
 
 	class VulkanDevice final
 	{
-	public:
+	  public:
 		VulkanDevice();
 		~VulkanDevice();
 
@@ -129,14 +138,14 @@ namespace maple
 		inline auto getAllocator() const
 		{
 			return allocator;
-	}
+		}
 #endif
 
 #if defined(MAPLE_PROFILE) && defined(TRACY_ENABLE)
-		auto getTracyContext()->tracy::VkCtx*;
+		auto getTracyContext() -> tracy::VkCtx *;
 #endif
 
-	private:
+	  private:
 		auto createTracyContext() -> void;
 
 		std::shared_ptr<VulkanPhysicalDevice> physicalDevice;
@@ -153,7 +162,7 @@ namespace maple
 		VkPipelineCache          pipelineCache;
 
 #if defined(MAPLE_PROFILE) && defined(TRACY_ENABLE)
-		tracy::VkCtx* tracyContext;
+		tracy::VkCtx *tracyContext;
 #endif
 
 #ifdef USE_VMA_ALLOCATOR
@@ -161,7 +170,5 @@ namespace maple
 #endif
 
 		bool enableDebugMarkers = false;
-
-
-};
+	};
 };        // namespace maple

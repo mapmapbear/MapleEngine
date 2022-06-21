@@ -6,15 +6,15 @@
 #include "Devices/Input.h"
 #include "Math/MathUtils.h"
 
-namespace maple 
+namespace maple
 {
 	EditorCameraController::EditorCameraController()
 	{
-		focalPoint = maple::ZERO;
-		velocity = glm::vec3(0.0f);
-		mouseSensitivity = 0.00001f;
-		zoomDampeningFactor = 0.00001f;
-		dampeningFactor = 0.00001f;
+		focalPoint            = maple::ZERO;
+		velocity              = glm::vec3(0.0f);
+		mouseSensitivity      = 0.00001f;
+		zoomDampeningFactor   = 0.00001f;
+		dampeningFactor       = 0.00001f;
 		rotateDampeningFactor = 0.0000001f;
 	}
 
@@ -22,14 +22,14 @@ namespace maple
 	{
 	}
 
-	auto EditorCameraController::handleMouse(component::Transform& transform, float dt, float xpos, float ypos) -> void
+	auto EditorCameraController::handleMouse(component::Transform &transform, float dt, float xpos, float ypos) -> void
 	{
 		if (_2DMode)
 		{
 			if (Input::getInput()->isMouseHeld(KeyCode::ButtonRight))
 			{
 				mouseSensitivity = 1.f;
-				auto position = transform.getLocalPosition();
+				auto position    = transform.getLocalPosition();
 				position.x -= (xpos - previousCurserPos.x) * mouseSensitivity * 0.5f;
 				position.y += (ypos - previousCurserPos.y) * mouseSensitivity * 0.5f;
 				transform.setLocalPosition(position);
@@ -40,30 +40,26 @@ namespace maple
 			if (Input::getInput()->isMouseHeld(KeyCode::MouseKey::ButtonRight))
 			{
 				mouseSensitivity = 0.01f;
-				rotateVelocity = rotateVelocity + (glm::vec2{ xpos,ypos } - previousCurserPos) * mouseSensitivity;
+				rotateVelocity   = rotateVelocity + (glm::vec2{xpos, ypos} - previousCurserPos) * mouseSensitivity;
 			}
 
-
 			glm::vec3 euler = glm::degrees(transform.getLocalOrientation());
-			float pitch = euler.x - rotateVelocity.y;
-			float yaw = euler.y - rotateVelocity.x;
+			float     pitch = euler.x - rotateVelocity.y;
+			float     yaw   = euler.y - rotateVelocity.x;
 
 			pitch = std::min(pitch, 89.0f);
 			pitch = std::max(pitch, -89.0f);
 
-			transform.setLocalOrientation(glm::radians(glm::vec3{ pitch, yaw, 0.0f }));
-
+			transform.setLocalOrientation(glm::radians(glm::vec3{pitch, yaw, 0.0f}));
 		}
 
 		previousCurserPos = glm::vec2(xpos, ypos);
-		rotateVelocity = rotateVelocity * std::pow(rotateDampeningFactor, dt);
+		rotateVelocity    = rotateVelocity * std::pow(rotateDampeningFactor, dt);
 		updateScroll(transform, Input::getInput()->getScrollOffset(), dt);
-
 	}
 
-	auto EditorCameraController::handleKeyboard(component::Transform& transform, float dt) -> void
+	auto EditorCameraController::handleKeyboard(component::Transform &transform, float dt) -> void
 	{
-
 		if (_2DMode)
 		{
 			glm::vec3 up(0, 1, 0);
@@ -153,9 +149,8 @@ namespace maple
 		}
 	}
 
-	auto EditorCameraController::updateScroll(component::Transform& transform, float offset, float dt) -> void
+	auto EditorCameraController::updateScroll(component::Transform &transform, float offset, float dt) -> void
 	{
-
 		if (_2DMode)
 		{
 			float multiplier = 100.0f;
@@ -177,7 +172,7 @@ namespace maple
 
 				if (scale < 0.15f)
 				{
-					scale = 0.15f;
+					scale        = 0.15f;
 					zoomVelocity = 0.0f;
 				}
 				else
@@ -204,4 +199,4 @@ namespace maple
 			}
 		}
 	}
-};
+};        // namespace maple

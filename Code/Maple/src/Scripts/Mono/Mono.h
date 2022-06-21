@@ -5,22 +5,22 @@
 #pragma once
 
 // Mono
+#include "Engine/Core.h"
+#include <memory>
 #include <mono/jit/jit.h>
+#include <mono/metadata/appdomain.h>
 #include <mono/metadata/assembly.h>
+#include <mono/metadata/attrdefs.h>
+#include <mono/metadata/debug-helpers.h>
+#include <mono/metadata/environment.h>
+#include <mono/metadata/exception.h>
 #include <mono/metadata/loader.h>
-#include <mono/metadata/threads.h>
-#include <mono/metadata/mono-gc.h>
 #include <mono/metadata/mono-config.h>
 #include <mono/metadata/mono-debug.h>
-#include <mono/metadata/environment.h>
-#include <mono/metadata/debug-helpers.h>
-#include <mono/metadata/exception.h>
-#include <mono/metadata/appdomain.h>
+#include <mono/metadata/mono-gc.h>
+#include <mono/metadata/threads.h>
 #include <mono/metadata/tokentype.h>
-#include <mono/metadata/attrdefs.h>
 #include <mono/utils/mono-logger.h>
-#include <memory>
-#include "Engine/Core.h"
 
 enum class MonoPrimitiveType
 {
@@ -44,7 +44,7 @@ enum class MonoPrimitiveType
 	Unknown
 };
 
-enum class MonoMemberVisibility 
+enum class MonoMemberVisibility
 {
 	Private,
 	Protected,
@@ -53,7 +53,8 @@ enum class MonoMemberVisibility
 	Public
 };
 
-namespace maple {
+namespace maple
+{
 	class MapleMonoMethod;
 	class MapleMonoField;
 	class MapleMonoProperty;
@@ -61,4 +62,4 @@ namespace maple {
 	class MapleMonoAssembly;
 	class MapleMonoObject;
 	struct MonoScriptInstance;
-};
+};        // namespace maple

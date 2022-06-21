@@ -6,11 +6,11 @@
 #include "MonoComponent.h"
 #include "MonoScript.h"
 
-namespace maple 
+namespace maple
 {
 	namespace mono
 	{
-		auto addScript(component::MonoComponent& comp,const std::string& name, int32_t entity) -> void
+		auto addScript(component::MonoComponent &comp, const std::string &name, int32_t entity) -> void
 		{
 			if (comp.scripts.find(name) == comp.scripts.end())
 			{
@@ -18,10 +18,9 @@ namespace maple
 			}
 		}
 
-		auto remove(component::MonoComponent& comp, const std::string& script) -> void
+		auto remove(component::MonoComponent &comp, const std::string &script) -> void
 		{
 			comp.scripts.erase(script);
 		}
-	}
-};
-
+	}        // namespace mono
+};           // namespace maple

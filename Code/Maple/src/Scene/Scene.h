@@ -4,8 +4,8 @@
 
 #pragma once
 #include "Engine/Core.h"
-#include "Scene/Entity/Entity.h"
 #include "Math/BoundingBox.h"
+#include "Scene/Entity/Entity.h"
 #include <functional>
 #include <memory>
 #include <string>
@@ -16,7 +16,7 @@ namespace maple
 	class Camera;
 	class ExecutePoint;
 
-	namespace component 
+	namespace component
 	{
 		class Transform;
 	}
@@ -32,7 +32,6 @@ namespace maple
 		virtual auto onUpdate(float dt) -> void;
 		virtual auto saveTo(const std::string &filePath = "", bool binary = false) -> void;
 		virtual auto loadFrom() -> void;
-
 
 		inline auto setOverrideCamera(Camera *overrideCamera)
 		{
@@ -98,39 +97,44 @@ namespace maple
 			archive(version, name);
 		}
 
-		inline auto& getBoundingBox() { if (boxDirty) calculateBoundingBox();  return sceneBox; }
+		inline auto &getBoundingBox()
+		{
+			if (boxDirty)
+				calculateBoundingBox();
+			return sceneBox;
+		}
 
 		auto calculateBoundingBox() -> void;
 		auto onMeshRenderCreated() -> void;
-		
-		auto addMesh(const std::string& file) -> Entity;
-		auto create()->Entity;
-		auto create(const std::string& name)->Entity;
+
+		auto addMesh(const std::string &file) -> Entity;
+		auto create() -> Entity;
+		auto create(const std::string &name) -> Entity;
 
 	  protected:
 		auto updateCameraController(float dt) -> void;
 		auto copyComponents(const Entity &from, const Entity &to) -> void;
 
-		std::string                    name;
-		std::string                    filePath;
+		std::string name;
+		std::string filePath;
 
 		uint32_t width  = 0;
 		uint32_t height = 0;
 
 		bool                              inited            = false;
 		Camera *                          overrideCamera    = nullptr;
-		component::Transform *                       overrideTransform = nullptr;
+		component::Transform *            overrideTransform = nullptr;
 		std::function<void(Scene *scene)> initCallback;
 
 		int32_t version;
 
-		bool     dirty          = false;
-		bool     useSceneCamera = false;
+		bool dirty          = false;
+		bool useSceneCamera = false;
 
 		std::function<void(Entity)> onEntityAdd;
 
 		BoundingBox sceneBox;
-		bool boxDirty = false;
+		bool        boxDirty = false;
 	};
 
 	namespace mesh

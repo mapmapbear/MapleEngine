@@ -4,10 +4,10 @@
 #pragma once
 
 #include "Engine/Core.h"
+#include <functional>
 #include <glm/glm.hpp>
 #include <imgui.h>
 #include <string>
-#include <functional>
 #include <vector>
 
 #define IMGUI_DEFINE_MATH_OPERATORS
@@ -24,17 +24,15 @@ namespace maple
 		{
 			None          = 0,
 			ColorProperty = 1,
-			DragFloat    = 2
+			DragFloat     = 2
 		};
 
 		MAPLE_EXPORT auto tooltip(const char *str) -> void;
-		MAPLE_EXPORT auto property(const std::string& name, bool& value) -> bool;
-		MAPLE_EXPORT auto showProperty(const std::string& name, const std::string& value) -> void;
-		MAPLE_EXPORT auto showProperty(const std::string& name, const glm::vec3& value) -> void;
+		MAPLE_EXPORT auto property(const std::string &name, bool &value) -> bool;
+		MAPLE_EXPORT auto showProperty(const std::string &name, const std::string &value) -> void;
+		MAPLE_EXPORT auto showProperty(const std::string &name, const glm::vec3 &value) -> void;
 		MAPLE_EXPORT auto property(const std::string &name, std::string &value, bool disable = false) -> bool;
-		MAPLE_EXPORT auto hyperLink(const std::string& name, const std::string& value, const std::string & hint, const std::function<void()> & callback) -> void;
-
-
+		MAPLE_EXPORT auto hyperLink(const std::string &name, const std::string &value, const std::string &hint, const std::function<void()> &callback) -> void;
 
 		MAPLE_EXPORT auto property(const std::string &name, float &value, float min = -1.0f, float max = 1.0f, PropertyFlag flags = PropertyFlag::None, const char *format = "%.3f", float speed = 1.f) -> bool;
 		MAPLE_EXPORT auto propertyWithDefault(const std::string &name, float &value, float min = -1.0f, float max = 1.0f, float defaultValue = 0.f, PropertyFlag flags = PropertyFlag::None, float speed = 1.f) -> bool;
@@ -51,10 +49,10 @@ namespace maple
 
 		MAPLE_EXPORT auto inputFloat(const std::string &name, float &value, float min = -1.0f, float max = 1.0f) -> bool;
 		MAPLE_EXPORT auto image(Texture *texture, const glm::vec2 &size) -> void;
-		MAPLE_EXPORT auto imageButton(const Quad2D * texture,const glm::vec2 & scale) -> bool;
+		MAPLE_EXPORT auto imageButton(const Quad2D *texture, const glm::vec2 &scale) -> bool;
 
-		MAPLE_EXPORT auto acceptFile(const std::function<void(const std::string& )>& callback) -> void;
-		MAPLE_EXPORT auto combox(const std::string& id, const char* names[], int32_t namesLen , int32_t currentIndex)->int32_t;
+		MAPLE_EXPORT auto acceptFile(const std::function<void(const std::string &)> &callback) -> void;
+		MAPLE_EXPORT auto combox(const std::string &id, const char *names[], int32_t namesLen, int32_t currentIndex) -> int32_t;
 
 	};        // namespace ImGuiHelper
 };            // namespace maple

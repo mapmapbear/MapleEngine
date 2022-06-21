@@ -13,8 +13,8 @@ namespace maple
 		std::this_thread::sleep_for(std::chrono::milliseconds(ms));
 	}
 
-	Thread::Thread(const std::string& name)
-		:name(name)
+	Thread::Thread(const std::string &name) :
+	    name(name)
 	{
 		thread = std::make_shared<std::thread>(&Thread::run, this);
 	}
@@ -37,7 +37,7 @@ namespace maple
 		std::unique_lock<std::mutex> lock(mutex);
 		condition.wait(lock, [this]() {
 			return jobs.empty();
-			});
+		});
 	}
 	auto Thread::getTaskSize() -> int32_t
 	{
@@ -45,14 +45,14 @@ namespace maple
 		return jobs.size();
 	}
 
-	auto Thread::addTask(const Task& task) -> void
+	auto Thread::addTask(const Task &task) -> void
 	{
 		std::lock_guard<std::mutex> lock(mutex);
 		jobs.emplace_back(task);
 		condition.notify_one();
 	}
 
-	auto Thread::addTask(const std::function<void*()> & job, const std::function<void(void*)> & complete) -> void
+	auto Thread::addTask(const std::function<void *()> &job, const std::function<void(void *)> &complete) -> void
 	{
 		std::lock_guard<std::mutex> lock(mutex);
 		jobs.emplace_back(job, complete);
@@ -70,7 +70,7 @@ namespace maple
 				std::unique_lock<std::mutex> lock(mutex);
 				condition.wait(lock, [this] {
 					return !jobs.empty() || close;
-					});
+				});
 
 				if (close)
 				{
@@ -82,7 +82,7 @@ namespace maple
 
 			if (task.job)
 			{
-				void* result = task.job();
+				void *result = task.job();
 				if (task.complete)
 				{
 					Application::get()->postOnMainThread([=]() {
@@ -103,24 +103,23 @@ namespace maple
 		}
 	}
 
-
 	ThreadPool::ThreadPool(int32_t count)
 	{
 		for (int32_t i = 0; i < count; i++)
 		{
-			threads.emplace_back(std::make_shared<Thread>("Thread:"+std::to_string(i)));
+			threads.emplace_back(std::make_shared<Thread>("Thread:" + std::to_string(i)));
 		}
 	}
 
 	auto ThreadPool::waitAll() -> void
 	{
-		for (auto& i : threads)
+		for (auto &i : threads)
 		{
 			i->wait();
 		}
 	}
 
-	auto ThreadPool::addTask(const std::function<void*()> & job, const std::function<void(void*)> & complete, int32_t threadIndex) -> void
+	auto ThreadPool::addTask(const std::function<void *()> &job, const std::function<void(void *)> &complete, int32_t threadIndex) -> void
 	{
 		if (threadIndex >= 0 && threadIndex < threads.size())
 		{
@@ -128,7 +127,7 @@ namespace maple
 		}
 		else
 		{
-			int32_t minLen = INT32_MAX;
+			int32_t minLen   = INT32_MAX;
 			int32_t minIndex = -1;
 
 			for (int32_t i = 0; i < threads.size(); ++i)
@@ -136,7 +135,7 @@ namespace maple
 				auto len = threads[i]->getTaskSize();
 				if (minLen > len)
 				{
-					minLen = len;
+					minLen   = len;
 					minIndex = i;
 					if (minLen == 0)
 					{
@@ -148,7 +147,7 @@ namespace maple
 		}
 	}
 
-	auto ThreadPool::addTask(const Thread::Task& task, int32_t threadIndex) -> void
+	auto ThreadPool::addTask(const Thread::Task &task, int32_t threadIndex) -> void
 	{
 		if (threadIndex >= 0 && threadIndex < threads.size())
 		{
@@ -156,7 +155,7 @@ namespace maple
 		}
 		else
 		{
-			int32_t minLen = INT32_MAX;
+			int32_t minLen   = INT32_MAX;
 			int32_t minIndex = -1;
 
 			for (int32_t i = 0; i < threads.size(); ++i)
@@ -164,7 +163,7 @@ namespace maple
 				auto len = threads[i]->getTaskSize();
 				if (minLen > len)
 				{
-					minLen = len;
+					minLen   = len;
 					minIndex = i;
 					if (minLen == 0)
 					{
@@ -175,4 +174,4 @@ namespace maple
 			threads[minIndex]->addTask(task);
 		}
 	}
-};
+};        // namespace maple

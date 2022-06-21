@@ -10,7 +10,7 @@
 #endif
 
 #if defined(PROFILE_GPU) && defined(RENDER_API_VULKAN) && defined(MAPLE_PROFILE) && defined(TRACY_ENABLE)
-#	define GPUProfile(name) 
+#	define GPUProfile(name)
 #else
 #	define GPUProfile(name)
 #endif

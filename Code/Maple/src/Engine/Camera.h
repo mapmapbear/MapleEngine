@@ -14,7 +14,7 @@ namespace maple
 	class MAPLE_EXPORT Camera
 	{
 	  public:
-		Camera()                    = default;
+		Camera() = default;
 		Camera(float fov, float near, float far, float aspect);
 		Camera(float aspectRatio, float scale);
 		Camera(float pitch, float yaw, const glm::vec3 &position, float fov, float near, float far, float aspect);

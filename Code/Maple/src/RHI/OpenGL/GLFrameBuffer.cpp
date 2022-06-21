@@ -133,7 +133,7 @@ namespace maple
 		{
 			attachmentData.emplace_back(attachment);
 		}
-		auto id = (GLuint) (size_t) texture->getHandle();
+		auto id = (GLuint)(size_t) texture->getHandle();
 		GLCall(glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, attachment, GL_TEXTURE_2D, id, 0));
 	}
 
@@ -170,7 +170,7 @@ namespace maple
 				break;
 		}
 
-		GLCall(glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, faceID, (GLuint) (size_t) texture->getHandle(), 0));
+		GLCall(glFramebufferTexture2D(GL_FRAMEBUFFER, attachment, faceID, (GLuint)(size_t) texture->getHandle(), 0));
 	}
 	auto GLFrameBuffer::addShadowAttachment(const std::shared_ptr<Texture> &texture) -> void
 	{
@@ -178,7 +178,7 @@ namespace maple
 #ifdef PLATFORM_MOBILE
 		GLCall(glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, (GLuint) texture->getHandle(), 0, 0));
 #else
-		GLCall(glFramebufferTextureLayer(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT, (GLuint) (size_t) texture->getHandle(), 0, 0));
+		GLCall(glFramebufferTextureLayer(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT, (GLuint)(size_t) texture->getHandle(), 0, 0));
 #endif
 		GLCall(glDrawBuffers(0, GL_NONE));
 	}
@@ -186,9 +186,9 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 #ifdef PLATFORM_MOBILE
-		GLCall(glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, (GLuint) (size_t) texture->getHandle(), 0, index));
+		GLCall(glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, (GLuint)(size_t) texture->getHandle(), 0, index));
 #else
-		GLCall(glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, (GLuint) (size_t) texture->getHandle(), 0, index));
+		GLCall(glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, (GLuint)(size_t) texture->getHandle(), 0, index));
 #endif
 	}
 	auto GLFrameBuffer::validate() -> void

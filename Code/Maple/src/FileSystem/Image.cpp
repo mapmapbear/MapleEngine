@@ -6,10 +6,10 @@
 
 namespace maple
 {
-	Image::Image(const std::string& fileName)
-		:fileName(fileName)
+	Image::Image(const std::string &fileName) :
+	    fileName(fileName)
 	{
-		ImageLoader::loadAsset(fileName,this);
+		ImageLoader::loadAsset(fileName, this);
 	}
 
-};
+};        // namespace maple

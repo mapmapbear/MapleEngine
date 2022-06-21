@@ -15,16 +15,16 @@
 #include "stb_image.h"
 
 #include "Engine/Profiler.h"
+#include "Others/Console.h"
 #include "Others/StringUtils.h"
 #include "RHI/Definitions.h"
-#include "Others/Console.h"
 
 #ifdef MAPLE_VULKAN
-#include "RHI/Vulkan/VulkanTexture.h"
+#	include "RHI/Vulkan/VulkanTexture.h"
 #endif
 
 #ifdef MAPLE_OPENGL
-#include "RHI/OpenGL/GLTexture.h"
+#	include "RHI/OpenGL/GLTexture.h"
 #endif
 
 namespace maple
@@ -33,7 +33,7 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 		bool hdr = stbi_is_hdr(name.c_str());
-		LOGI("load image : {0}",name);
+		LOGI("load image : {0}", name);
 
 		stbi_set_flip_vertically_on_load(flipY);
 
@@ -42,8 +42,8 @@ namespace maple
 		int32_t       channels;
 		TextureFormat format = hdr ? TextureFormat::RGBA32 : TextureFormat::RGBA8;
 		uint8_t *     data   = hdr ?
-                                   (uint8_t *) stbi_loadf(name.c_str(), &width, &height, &channels, STBI_rgb_alpha) :
-                                   stbi_load(name.c_str(), &width, &height, &channels, STBI_rgb_alpha);
+		                    (uint8_t *) stbi_loadf(name.c_str(), &width, &height, &channels, STBI_rgb_alpha) :
+		                    stbi_load(name.c_str(), &width, &height, &channels, STBI_rgb_alpha);
 
 		uint32_t imageSize = width * height * 4 * (hdr ? sizeof(float) : sizeof(uint8_t));
 		assert(data);

@@ -4,16 +4,17 @@
 
 #include "MathExport.h"
 #include "LuaVirtualMachine.h"
-extern "C" {
-# include "lua.h"
-# include "lauxlib.h"
-# include "lualib.h"
+extern "C"
+{
+#include "lauxlib.h"
+#include "lua.h"
+#include "lualib.h"
 }
 #include <LuaBridge/LuaBridge.h>
+#include <functional>
 #include <glm/glm.hpp>
 #include <glm/gtx/string_cast.hpp>
 #include <string>
-#include <functional>
 
 namespace maple
 {
@@ -22,123 +23,125 @@ namespace maple
 		struct VecHelper
 		{
 			template <class T, unsigned index>
-			static float get(T const* vec)
+			static float get(T const *vec)
 			{
 				return (*vec)[index];
 			}
 
 			template <class T, unsigned index>
-			static void set(T* vec, float value)
+			static void set(T *vec, float value)
 			{
 				(*vec)[index] = value;
 			}
 
 			template <class T>
-			static std::string toString(const T* v)
+			static std::string toString(const T *v)
 			{
 				return glm::to_string(*v);
 			}
 
 			template <class T>
-			static bool equal(const T* v)
+			static bool equal(const T *v)
 			{
 				return glm::to_string(*v);
 			}
 
 			template <class T>
-			static T add(const T* t, const T* t2) {
+			static T add(const T *t, const T *t2)
+			{
 				return *t + *t2;
 			}
 
 			template <class T>
-			static T sub(const T* t, const T* t2) {
+			static T sub(const T *t, const T *t2)
+			{
 				return *t - *t2;
 			}
 			template <class T>
-			static T mul(const T* t, const T* t2) {
+			static T mul(const T *t, const T *t2)
+			{
 				return (*t) * (*t2);
 			}
 
 			template <class T>
-			static float dot(const T* t, const T* t2) {
-				return  glm::dot(*t, *t2);
+			static float dot(const T *t, const T *t2)
+			{
+				return glm::dot(*t, *t2);
 			}
 
 			template <class T>
-			static T cross(const T* t, const T* t2) {
+			static T cross(const T *t, const T *t2)
+			{
 				return T();
 			}
 
-
 			template <class T>
-			static T normalize(const T* t) {
-				return  glm::normalize(*t);
+			static T normalize(const T *t)
+			{
+				return glm::normalize(*t);
 			}
-
 
 			template <>
-			static glm::vec3 cross(const glm::vec3* t, const glm::vec3* t2) {
+			static glm::vec3 cross(const glm::vec3 *t, const glm::vec3 *t2)
+			{
 				return glm::cross(*t, *t2);
 			}
-
 		};
 
-		auto exportLua(lua_State* L) -> void
+		auto exportLua(lua_State *L) -> void
 		{
 			luabridge::getGlobalNamespace(L)
-				.beginNamespace("glm")
+			    .beginNamespace("glm")
 
-				.beginClass <glm::vec2>("vec2")
-				.addConstructor <void (*) (float, float)>()
-				.addProperty("x", &VecHelper::get <glm::vec2, 0>, &VecHelper::set <glm::vec2, 0>)
-				.addProperty("y", &VecHelper::get <glm::vec2, 1>, &VecHelper::set <glm::vec2, 1>)
-				.addFunction("__tostring", &VecHelper::toString<glm::vec2>)
-				.addFunction("__add", &VecHelper::add<glm::vec2>)
-				.addFunction("__mul", &VecHelper::mul<glm::vec2>)
-				.addFunction("__sub", &VecHelper::sub<glm::vec2>)
-				.addFunction("dot", &VecHelper::dot<glm::vec2>)
-				.endClass()
+			    .beginClass<glm::vec2>("vec2")
+			    .addConstructor<void (*)(float, float)>()
+			    .addProperty("x", &VecHelper::get<glm::vec2, 0>, &VecHelper::set<glm::vec2, 0>)
+			    .addProperty("y", &VecHelper::get<glm::vec2, 1>, &VecHelper::set<glm::vec2, 1>)
+			    .addFunction("__tostring", &VecHelper::toString<glm::vec2>)
+			    .addFunction("__add", &VecHelper::add<glm::vec2>)
+			    .addFunction("__mul", &VecHelper::mul<glm::vec2>)
+			    .addFunction("__sub", &VecHelper::sub<glm::vec2>)
+			    .addFunction("dot", &VecHelper::dot<glm::vec2>)
+			    .endClass()
 
-				.beginClass <glm::vec3>("vec3")
-				.addConstructor <void (*) (float, float, float)>()
-				.addProperty("x", &VecHelper::get <glm::vec3, 0>, &VecHelper::set <glm::vec3, 0>)
-				.addProperty("y", &VecHelper::get <glm::vec3, 1>, &VecHelper::set <glm::vec3, 1>)
-				.addProperty("z", &VecHelper::get <glm::vec3, 2>, &VecHelper::set <glm::vec3, 2>)
-				.addFunction("__tostring", &VecHelper::toString<glm::vec3>)
-				.addFunction("__add", &VecHelper::add<glm::vec3>)
-				.addFunction("__mul", &VecHelper::mul<glm::vec3>)
-				.addFunction("__sub", &VecHelper::sub<glm::vec3>)
-				.addFunction("dot", &VecHelper::dot<glm::vec3>)
-				.addFunction("cross", &VecHelper::cross<glm::vec3>)
-				.addFunction("normalize", &VecHelper::normalize<glm::vec3>)
-				.endClass()
+			    .beginClass<glm::vec3>("vec3")
+			    .addConstructor<void (*)(float, float, float)>()
+			    .addProperty("x", &VecHelper::get<glm::vec3, 0>, &VecHelper::set<glm::vec3, 0>)
+			    .addProperty("y", &VecHelper::get<glm::vec3, 1>, &VecHelper::set<glm::vec3, 1>)
+			    .addProperty("z", &VecHelper::get<glm::vec3, 2>, &VecHelper::set<glm::vec3, 2>)
+			    .addFunction("__tostring", &VecHelper::toString<glm::vec3>)
+			    .addFunction("__add", &VecHelper::add<glm::vec3>)
+			    .addFunction("__mul", &VecHelper::mul<glm::vec3>)
+			    .addFunction("__sub", &VecHelper::sub<glm::vec3>)
+			    .addFunction("dot", &VecHelper::dot<glm::vec3>)
+			    .addFunction("cross", &VecHelper::cross<glm::vec3>)
+			    .addFunction("normalize", &VecHelper::normalize<glm::vec3>)
+			    .endClass()
 
+			    .beginClass<glm::vec4>("vec4")
+			    .addConstructor<void (*)(float, float, float, float)>()
+			    .addProperty("x", &VecHelper::get<glm::vec4, 0>, &VecHelper::set<glm::vec4, 0>)
+			    .addProperty("y", &VecHelper::get<glm::vec4, 1>, &VecHelper::set<glm::vec4, 1>)
+			    .addProperty("z", &VecHelper::get<glm::vec4, 2>, &VecHelper::set<glm::vec4, 2>)
+			    .addProperty("w", &VecHelper::get<glm::vec4, 3>, &VecHelper::set<glm::vec4, 3>)
+			    .addFunction("__tostring", &VecHelper::toString<glm::vec4>)
+			    .addFunction("__add", &VecHelper::add<glm::vec4>)
+			    .addFunction("__mul", &VecHelper::mul<glm::vec4>)
+			    .addFunction("__sub", &VecHelper::sub<glm::vec4>)
+			    .addFunction("dot", &VecHelper::dot<glm::vec4>)
+			    .addFunction("cross", &VecHelper::cross<glm::vec4>)
+			    .addFunction("normalize", &VecHelper::normalize<glm::vec4>)
+			    .endClass()
 
-				.beginClass <glm::vec4>("vec4")
-				.addConstructor <void (*) (float, float, float, float)>()
-				.addProperty("x", &VecHelper::get <glm::vec4, 0>, &VecHelper::set <glm::vec4, 0>)
-				.addProperty("y", &VecHelper::get <glm::vec4, 1>, &VecHelper::set <glm::vec4, 1>)
-				.addProperty("z", &VecHelper::get <glm::vec4, 2>, &VecHelper::set <glm::vec4, 2>)
-				.addProperty("w", &VecHelper::get <glm::vec4, 3>, &VecHelper::set <glm::vec4, 3>)
-				.addFunction("__tostring", &VecHelper::toString<glm::vec4>)
-				.addFunction("__add", &VecHelper::add<glm::vec4>)
-				.addFunction("__mul", &VecHelper::mul<glm::vec4>)
-				.addFunction("__sub", &VecHelper::sub<glm::vec4>)
-				.addFunction("dot", &VecHelper::dot<glm::vec4>)
-				.addFunction("cross", &VecHelper::cross<glm::vec4>)
-				.addFunction("normalize", &VecHelper::normalize<glm::vec4>)
-				.endClass()
-
-
-				.beginClass <glm::mat4>("mat4")
-				.addConstructor <void (*) ()>()
-				.addConstructor <void (*) (float)>()
-				.addFunction("__tostring", &VecHelper::toString<glm::mat4>)
-				.addFunction("__add", &VecHelper::add<glm::mat4>)
-				.addFunction("__mul", &VecHelper::mul<glm::mat4>)
-				.addFunction("__sub", &VecHelper::sub<glm::mat4>)
-				.endClass()
-				.endNamespace();
+			    .beginClass<glm::mat4>("mat4")
+			    .addConstructor<void (*)()>()
+			    .addConstructor<void (*)(float)>()
+			    .addFunction("__tostring", &VecHelper::toString<glm::mat4>)
+			    .addFunction("__add", &VecHelper::add<glm::mat4>)
+			    .addFunction("__mul", &VecHelper::mul<glm::mat4>)
+			    .addFunction("__sub", &VecHelper::sub<glm::mat4>)
+			    .endClass()
+			    .endNamespace();
 		}
-	};
-};
+	};        // namespace MathExport
+};            // namespace maple

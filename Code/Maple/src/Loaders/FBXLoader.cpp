@@ -2,22 +2,22 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #include "FBXLoader.h"
-#include "FileSystem/Skeleton.h"
 #include "FileSystem/MeshResource.h"
+#include "FileSystem/Skeleton.h"
 
 #include "Animation/Animation.h"
-#include "Others/StringUtils.h"
-#include "Others/Console.h"
 #include "Engine/Core.h"
 #include "Engine/Material.h"
-#include "Scene/Component/Transform.h"
-#include "Math/BoundingBox.h"
 #include "FileSystem/File.h"
+#include "Math/BoundingBox.h"
 #include "Math/MathUtils.h"
+#include "Others/Console.h"
+#include "Others/StringUtils.h"
+#include "Scene/Component/Transform.h"
 
-#include <vector>
 #include <mio/mmap.hpp>
 #include <ofbx.h>
+#include <vector>
 
 namespace maple
 {
@@ -32,102 +32,102 @@ namespace maple
 
 	namespace
 	{
-		static auto operator-(const ofbx::Vec3& a, const ofbx::Vec3& b) -> ofbx::Vec3
+		static auto operator-(const ofbx::Vec3 &a, const ofbx::Vec3 &b) -> ofbx::Vec3
 		{
-			return { a.x - b.x, a.y - b.y, a.z - b.z };
+			return {a.x - b.x, a.y - b.y, a.z - b.z};
 		}
 
-		static auto operator-(const ofbx::Vec2& a, const ofbx::Vec2& b) -> ofbx::Vec2
+		static auto operator-(const ofbx::Vec2 &a, const ofbx::Vec2 &b) -> ofbx::Vec2
 		{
-			return { a.x - b.x, a.y - b.y };
+			return {a.x - b.x, a.y - b.y};
 		}
 
-		inline auto getBonePath(const ofbx::Object* bone)->std::string
+		inline auto getBonePath(const ofbx::Object *bone) -> std::string
 		{
-			if (bone == nullptr) {
+			if (bone == nullptr)
+			{
 				return "";
 			}
 			return getBonePath(bone->getParent()) + "/" + bone->name;
 		}
 
-
-		inline auto toGlm(const ofbx::Vec2& vec)
+		inline auto toGlm(const ofbx::Vec2 &vec)
 		{
 			return glm::vec2(float(vec.x), float(vec.y));
 		}
 
-		inline auto toGlm(const ofbx::Vec3& vec)
+		inline auto toGlm(const ofbx::Vec3 &vec)
 		{
 			return glm::vec3(float(vec.x), float(vec.y), float(vec.z));
 		}
 
-		inline auto toGlm(const ofbx::Vec4& vec)
+		inline auto toGlm(const ofbx::Vec4 &vec)
 		{
 			return glm::vec4(float(vec.x), float(vec.y), float(vec.z), float(vec.w));
 		}
 
-		inline auto toGlm(const ofbx::Color& vec)
+		inline auto toGlm(const ofbx::Color &vec)
 		{
 			return glm::vec4(float(vec.r), float(vec.g), float(vec.b), 1.0f);
 		}
 
-		inline auto fixOrientation(const glm::vec3& v, Orientation orientation) -> glm::vec3
+		inline auto fixOrientation(const glm::vec3 &v, Orientation orientation) -> glm::vec3
 		{
 			switch (orientation)
 			{
-			case Orientation::Y_UP:
-				return glm::vec3(v.x, v.y, v.z);
-			case Orientation::Z_UP:
-				return glm::vec3(v.x, v.z, -v.y);
-			case Orientation::Z_MINUS_UP:
-				return glm::vec3(v.x, -v.z, v.y);
-			case Orientation::X_MINUS_UP:
-				return glm::vec3(v.y, -v.x, v.z);
-			case Orientation::X_UP:
-				return glm::vec3(-v.y, v.x, v.z);
+				case Orientation::Y_UP:
+					return glm::vec3(v.x, v.y, v.z);
+				case Orientation::Z_UP:
+					return glm::vec3(v.x, v.z, -v.y);
+				case Orientation::Z_MINUS_UP:
+					return glm::vec3(v.x, -v.z, v.y);
+				case Orientation::X_MINUS_UP:
+					return glm::vec3(v.y, -v.x, v.z);
+				case Orientation::X_UP:
+					return glm::vec3(-v.y, v.x, v.z);
 			}
 			return v;
 		}
 
-		inline auto fixOrientation(const glm::quat& v, Orientation orientation) -> glm::quat
+		inline auto fixOrientation(const glm::quat &v, Orientation orientation) -> glm::quat
 		{
 			switch (orientation)
 			{
-			case Orientation::Y_UP:
-				return { v.w,v.x, v.y, v.z };
-			case Orientation::Z_UP:
-				return { v.w,v.x,-v.y, v.z };
-			case Orientation::Z_MINUS_UP:
-				return { v.w,v.x, -v.z, v.y };
-			case Orientation::X_MINUS_UP:
-				return { v.w, -v.x, v.z, v.y };
-			case Orientation::X_UP:
-				return { -v.y, v.x, v.z, v.w };
+				case Orientation::Y_UP:
+					return {v.w, v.x, v.y, v.z};
+				case Orientation::Z_UP:
+					return {v.w, v.x, -v.y, v.z};
+				case Orientation::Z_MINUS_UP:
+					return {v.w, v.x, -v.z, v.y};
+				case Orientation::X_MINUS_UP:
+					return {v.w, -v.x, v.z, v.y};
+				case Orientation::X_UP:
+					return {-v.y, v.x, v.z, v.w};
 			}
 			return v;
 		}
 
-		inline auto computeTangents(ofbx::Vec3* out, int32_t vertexCount, const ofbx::Vec3* vertices, const ofbx::Vec3* normals, const ofbx::Vec2* uvs)
+		inline auto computeTangents(ofbx::Vec3 *out, int32_t vertexCount, const ofbx::Vec3 *vertices, const ofbx::Vec3 *normals, const ofbx::Vec2 *uvs)
 		{
 			for (int i = 0; i < vertexCount; i += 3)
 			{
-				const auto& v0 = vertices[i + 0];
-				const auto& v1 = vertices[i + 1];
-				const auto& v2 = vertices[i + 2];
-				const auto& uv0 = uvs[i + 0];
-				const auto& uv1 = uvs[i + 1];
-				const auto& uv2 = uvs[i + 2];
+				const auto &v0  = vertices[i + 0];
+				const auto &v1  = vertices[i + 1];
+				const auto &v2  = vertices[i + 2];
+				const auto &uv0 = uvs[i + 0];
+				const auto &uv1 = uvs[i + 1];
+				const auto &uv2 = uvs[i + 2];
 
-				const ofbx::Vec3 dv10 = v1 - v0;
-				const ofbx::Vec3 dv20 = v2 - v0;
+				const ofbx::Vec3 dv10  = v1 - v0;
+				const ofbx::Vec3 dv20  = v2 - v0;
 				const ofbx::Vec2 duv10 = uv1 - uv0;
 				const ofbx::Vec2 duv20 = uv2 - uv0;
 
 				const float dir = duv20.x * duv10.y - duv20.y * duv10.x < 0 ? -1.f : 1.f;
-				ofbx::Vec3 tangent;
-				tangent.x = (dv20.x * duv10.y - dv10.x * duv20.y) * dir;
-				tangent.y = (dv20.y * duv10.y - dv10.y * duv20.y) * dir;
-				tangent.z = (dv20.z * duv10.y - dv10.z * duv20.y) * dir;
+				ofbx::Vec3  tangent;
+				tangent.x     = (dv20.x * duv10.y - dv10.x * duv20.y) * dir;
+				tangent.y     = (dv20.y * duv10.y - dv10.y * duv20.y) * dir;
+				tangent.z     = (dv20.z * duv10.y - dv10.z * duv20.y) * dir;
 				const float l = 1 / sqrtf(float(tangent.x * tangent.x + tangent.y * tangent.y + tangent.z * tangent.z));
 				tangent.x *= l;
 				tangent.y *= l;
@@ -138,39 +138,39 @@ namespace maple
 			}
 		}
 
-		inline auto toMatrix(const ofbx::Matrix& mat) 
+		inline auto toMatrix(const ofbx::Matrix &mat)
 		{
-			glm::mat4  result;
+			glm::mat4 result;
 			for (int32_t i = 0; i < 4; i++)
 				for (int32_t j = 0; j < 4; j++)
-					result[i][j] = (float)mat.m[i * 4 + j];
+					result[i][j] = (float) mat.m[i * 4 + j];
 			return result;
 		}
 
-		inline auto getTransform(const ofbx::Object* object, Orientation orientation) -> component::Transform
+		inline auto getTransform(const ofbx::Object *object, Orientation orientation) -> component::Transform
 		{
 			component::Transform transform;
-			ofbx::Vec3 p = object->getLocalTranslation();
-			transform.setLocalPosition(fixOrientation({ static_cast<float>(p.x), static_cast<float>(p.y), static_cast<float>(p.z) }, orientation));
+			ofbx::Vec3           p = object->getLocalTranslation();
+			transform.setLocalPosition(fixOrientation({static_cast<float>(p.x), static_cast<float>(p.y), static_cast<float>(p.z)}, orientation));
 			ofbx::Vec3 r = object->getLocalRotation();
 			transform.setLocalOrientation(fixOrientation(glm::vec3(static_cast<float>(r.x), static_cast<float>(r.y), static_cast<float>(r.z)), orientation));
 			ofbx::Vec3 s = object->getLocalScaling();
-			transform.setLocalScale({ static_cast<float>(s.x), static_cast<float>(s.y), static_cast<float>(s.z) });
+			transform.setLocalScale({static_cast<float>(s.x), static_cast<float>(s.y), static_cast<float>(s.z)});
 
-			if (object->getParent()) 
+			if (object->getParent())
 			{
 				transform.setWorldMatrix(getTransform(object->getParent(), orientation).getWorldMatrix());
 			}
-			else 
+			else
 			{
 				transform.setWorldMatrix(glm::mat4(1));
 			}
 			return transform;
 		}
 
-		inline auto loadTexture(const ofbx::Material* material, ofbx::Texture::TextureType type) -> std::shared_ptr<Texture2D>
+		inline auto loadTexture(const ofbx::Material *material, ofbx::Texture::TextureType type) -> std::shared_ptr<Texture2D>
 		{
-			const ofbx::Texture* ofbxTexture = material->getTexture(type);
+			const ofbx::Texture *      ofbxTexture = material->getTexture(type);
 			std::shared_ptr<Texture2D> texture2D;
 			if (ofbxTexture)
 			{
@@ -185,7 +185,7 @@ namespace maple
 				{
 					texture2D = Texture2D::create(filePath, filePath);
 				}
-				else 
+				else
 				{
 					LOGW("file {0} did not find", filePath);
 				}
@@ -194,25 +194,25 @@ namespace maple
 			return texture2D;
 		}
 
-		inline auto loadMaterial(const ofbx::Material* material, bool animated) 
+		inline auto loadMaterial(const ofbx::Material *material, bool animated)
 		{
 			auto pbrMaterial = std::make_shared<Material>();
 
 			PBRMataterialTextures textures;
-			MaterialProperties properties;
+			MaterialProperties    properties;
 
-			properties.albedoColor = toGlm(material->getDiffuseColor());
+			properties.albedoColor   = toGlm(material->getDiffuseColor());
 			properties.metallicColor = toGlm(material->getSpecularColor());
 
-			float roughness = 1.0f - std::sqrt(float(material->getShininess()) / 100.0f);
+			float roughness           = 1.0f - std::sqrt(float(material->getShininess()) / 100.0f);
 			properties.roughnessColor = glm::vec4(roughness);
 
-			textures.albedo = loadTexture(material, ofbx::Texture::TextureType::DIFFUSE);
-			textures.normal = loadTexture(material, ofbx::Texture::TextureType::NORMAL);
-			textures.metallic = loadTexture(material, ofbx::Texture::TextureType::SPECULAR);
+			textures.albedo    = loadTexture(material, ofbx::Texture::TextureType::DIFFUSE);
+			textures.normal    = loadTexture(material, ofbx::Texture::TextureType::NORMAL);
+			textures.metallic  = loadTexture(material, ofbx::Texture::TextureType::SPECULAR);
 			textures.roughness = loadTexture(material, ofbx::Texture::TextureType::SHININESS);
-			textures.emissive = loadTexture(material, ofbx::Texture::TextureType::EMISSIVE);
-			textures.ao = loadTexture(material, ofbx::Texture::TextureType::AMBIENT);
+			textures.emissive  = loadTexture(material, ofbx::Texture::TextureType::EMISSIVE);
+			textures.ao        = loadTexture(material, ofbx::Texture::TextureType::AMBIENT);
 
 			if (!textures.albedo)
 				properties.usingAlbedoMap = 0.0f;
@@ -233,14 +233,14 @@ namespace maple
 			return pbrMaterial;
 		}
 
-		inline auto getOffsetMatrix(const ofbx::Mesh* mesh, const ofbx::Object* node) -> glm::mat4
+		inline auto getOffsetMatrix(const ofbx::Mesh *mesh, const ofbx::Object *node) -> glm::mat4
 		{
-			auto* skin = mesh ? mesh->getGeometry()->getSkin() : nullptr;
+			auto *skin = mesh ? mesh->getGeometry()->getSkin() : nullptr;
 			if (skin)
 			{
 				for (int i = 0, c = skin->getClusterCount(); i < c; i++)
 				{
-					const ofbx::Cluster* cluster = skin->getCluster(i);
+					const ofbx::Cluster *cluster = skin->getCluster(i);
 					if (cluster->getLink() == node)
 					{
 						return toMatrix(cluster->getTransformLinkMatrix());
@@ -250,22 +250,22 @@ namespace maple
 			return toMatrix(node->getGlobalTransform());
 		}
 
-		inline auto loadBones(const ofbx::Object* parent, Skeleton * skeleton, int32_t parentId, std::vector<const ofbx::Object*> & sceneBones) -> void
+		inline auto loadBones(const ofbx::Object *parent, Skeleton *skeleton, int32_t parentId, std::vector<const ofbx::Object *> &sceneBones) -> void
 		{
 			int32_t i = 0;
-			while (const ofbx::Object* child = parent->resolveObjectLink(i++))
+			while (const ofbx::Object *child = parent->resolveObjectLink(i++))
 			{
 				if (child->getType() == ofbx::Object::Type::LIMB_NODE)
 				{
-					auto boneIndex = skeleton->getBoneIndex(child->name);//create a bone if missing
+					auto boneIndex = skeleton->getBoneIndex(child->name);        //create a bone if missing
 					if (boneIndex == -1)
 					{
-						auto& newBone = skeleton->createBone();
-						newBone.name = child->name;
+						auto &newBone          = skeleton->createBone();
+						newBone.name           = child->name;
 						newBone.localTransform = toMatrix(child->getLocalTransform());
-						boneIndex = newBone.id;
-						newBone.parentIdx = parentId;
-						auto& parent = skeleton->getBones()[parentId];
+						boneIndex              = newBone.id;
+						newBone.parentIdx      = parentId;
+						auto &parent           = skeleton->getBones()[parentId];
 						parent.children.emplace_back(boneIndex);
 						sceneBones.emplace_back(child);
 						loadBones(child, skeleton, boneIndex, sceneBones);
@@ -274,13 +274,13 @@ namespace maple
 			}
 		}
 
-		inline auto loadWeight(const ofbx::Skin* skin, Skeleton* skeleton, std::vector<SkinnedVertex> & vertices) -> void
+		inline auto loadWeight(const ofbx::Skin *skin, Skeleton *skeleton, std::vector<SkinnedVertex> &vertices) -> void
 		{
-			if(skeleton != nullptr)
+			if (skeleton != nullptr)
 			{
 				for (int32_t clusterIndex = 0; clusterIndex < skin->getClusterCount(); clusterIndex++)
 				{
-					const ofbx::Cluster* cluster = skin->getCluster(clusterIndex);
+					const ofbx::Cluster *cluster = skin->getCluster(clusterIndex);
 					if (cluster->getIndicesCount() == 0)
 						continue;
 
@@ -292,18 +292,18 @@ namespace maple
 						LOGC("Missing bone");
 						return;
 					}
-					const int* clusterIndices = cluster->getIndices();
-					const double* clusterWeights = cluster->getWeights();
+					const int *   clusterIndices = cluster->getIndices();
+					const double *clusterWeights = cluster->getWeights();
 					for (int32_t j = 0; j < cluster->getIndicesCount(); j++)
 					{
-						int32_t vtxIndex = clusterIndices[j];
-						float vtxWeight = (float)clusterWeights[j];
+						int32_t vtxIndex  = clusterIndices[j];
+						float   vtxWeight = (float) clusterWeights[j];
 
 						if (vtxWeight <= 0 || vtxIndex < 0)
 							continue;
 
-						auto& indices = vertices[vtxIndex].boneIndices;
-						auto& weights = vertices[vtxIndex].boneWeights;
+						auto &indices = vertices[vtxIndex].boneIndices;
+						auto &weights = vertices[vtxIndex].boneWeights;
 
 						for (int32_t k = 0; k < 4; k++)
 						{
@@ -325,7 +325,7 @@ namespace maple
 			}
 		}
 
-		inline auto getCurveData(AnimationCurveProperty& curve, const ofbx::AnimationCurve* node)
+		inline auto getCurveData(AnimationCurveProperty &curve, const ofbx::AnimationCurve *node)
 		{
 			if (node != nullptr)
 			{
@@ -337,11 +337,11 @@ namespace maple
 			}
 		}
 
-		inline auto loadClip(const ofbx::IScene* scene, int32_t index, float frameRate, const std::vector<const ofbx::Object*>& sceneBones)  -> std::shared_ptr<AnimationClip>
+		inline auto loadClip(const ofbx::IScene *scene, int32_t index, float frameRate, const std::vector<const ofbx::Object *> &sceneBones) -> std::shared_ptr<AnimationClip>
 		{
-			const ofbx::AnimationStack* stack = scene->getAnimationStack(index);
-			const ofbx::AnimationLayer* layer = stack->getLayer(0);
-			const ofbx::TakeInfo* takeInfo = scene->getTakeInfo(stack->name);
+			const ofbx::AnimationStack *stack    = scene->getAnimationStack(index);
+			const ofbx::AnimationLayer *layer    = stack->getLayer(0);
+			const ofbx::TakeInfo *      takeInfo = scene->getTakeInfo(stack->name);
 			if (takeInfo == nullptr)
 				return nullptr;
 
@@ -353,44 +353,44 @@ namespace maple
 			auto clip = std::make_shared<AnimationClip>();
 
 			clip->wrapMode = AnimationWrapMode::Loop;
-			clip->length = localDuration;//animationDuration;
+			clip->length   = localDuration;        //animationDuration;
 
 			char name[256];
 			takeInfo->name.toString(name);
 			clip->name = name;
-			
+
 			// Import curves
 			for (int32_t i = 0; i < sceneBones.size(); i++)
 			{
-				const ofbx::AnimationCurveNode* translationNode = layer->getCurveNode(*sceneBones[i], "Lcl Translation");
-				const ofbx::AnimationCurveNode* rotationNode = layer->getCurveNode(*sceneBones[i], "Lcl Rotation");
+				const ofbx::AnimationCurveNode *translationNode = layer->getCurveNode(*sceneBones[i], "Lcl Translation");
+				const ofbx::AnimationCurveNode *rotationNode    = layer->getCurveNode(*sceneBones[i], "Lcl Rotation");
 
 				if (rotationNode)
 				{
-					auto& curve0 = clip->curves.emplace_back();
-					curve0.path = getBonePath(sceneBones[i]);
-					auto& cur0 = curve0.properties.emplace_back();
+					auto &curve0 = clip->curves.emplace_back();
+					curve0.path  = getBonePath(sceneBones[i]);
+					auto &cur0   = curve0.properties.emplace_back();
 					getCurveData(cur0, rotationNode->getCurve(0));
-					cur0.type = AnimationCurvePropertyType::LocalRotationX;
-					auto& cur1 = curve0.properties.emplace_back();
+					cur0.type  = AnimationCurvePropertyType::LocalRotationX;
+					auto &cur1 = curve0.properties.emplace_back();
 					getCurveData(cur1, rotationNode->getCurve(1));
-					cur1.type = AnimationCurvePropertyType::LocalRotationY;
-					auto& cur2 = curve0.properties.emplace_back();
+					cur1.type  = AnimationCurvePropertyType::LocalRotationY;
+					auto &cur2 = curve0.properties.emplace_back();
 					getCurveData(cur2, rotationNode->getCurve(2));
 					cur2.type = AnimationCurvePropertyType::LocalRotationZ;
 				}
 
 				if (translationNode)
 				{
-					auto& curve = clip->curves.emplace_back();
-					curve.path = getBonePath(sceneBones[i]);
-					auto& cur0 = curve.properties.emplace_back();
+					auto &curve = clip->curves.emplace_back();
+					curve.path  = getBonePath(sceneBones[i]);
+					auto &cur0  = curve.properties.emplace_back();
 					getCurveData(cur0, translationNode->getCurve(0));
-					cur0.type = AnimationCurvePropertyType::LocalPositionX;
-					auto& cur1 = curve.properties.emplace_back();
+					cur0.type  = AnimationCurvePropertyType::LocalPositionX;
+					auto &cur1 = curve.properties.emplace_back();
 					getCurveData(cur1, translationNode->getCurve(1));
-					cur1.type = AnimationCurvePropertyType::LocalPositionY;
-					auto& cur2 = curve.properties.emplace_back();
+					cur1.type  = AnimationCurvePropertyType::LocalPositionY;
+					auto &cur2 = curve.properties.emplace_back();
 					getCurveData(cur2, translationNode->getCurve(2));
 					cur2.type = AnimationCurvePropertyType::LocalPositionZ;
 				}
@@ -398,7 +398,7 @@ namespace maple
 			return clip;
 		}
 
-		inline auto loadAnimation(const std::string& fileName, const ofbx::IScene* scene, const std::vector<const ofbx::Object*> & sceneBones, std::vector<std::shared_ptr<IResource>>& outRes, Orientation orientation)
+		inline auto loadAnimation(const std::string &fileName, const ofbx::IScene *scene, const std::vector<const ofbx::Object *> &sceneBones, std::vector<std::shared_ptr<IResource>> &outRes, Orientation orientation)
 		{
 			float frameRate = scene->getSceneFrameRate();
 			if (frameRate <= 0)
@@ -410,32 +410,32 @@ namespace maple
 			for (int32_t animIndex = 0; animIndex < animCount; animIndex++)
 			{
 				auto clip = loadClip(scene, animIndex, frameRate, sceneBones);
-				if (clip != nullptr) 
+				if (clip != nullptr)
 				{
 					animation->addClip(clip);
 				}
 			}
-			if (animCount > 0) 
+			if (animCount > 0)
 			{
 				outRes.emplace_back(animation);
 			}
 		}
 
-		inline auto loadSkeleton(const std::string& fileName, const ofbx::IScene* scene, std::vector<const ofbx::Object*>& sceneBone, std::vector<std::shared_ptr<IResource>>& outRes, Orientation orientation)
+		inline auto loadSkeleton(const std::string &fileName, const ofbx::IScene *scene, std::vector<const ofbx::Object *> &sceneBone, std::vector<std::shared_ptr<IResource>> &outRes, Orientation orientation)
 		{
-			int32_t i = 0;
-			auto skeleton = std::make_shared<Skeleton>(fileName);
-			while (const ofbx::Object* bone = scene->getRoot()->resolveObjectLink(i++))
+			int32_t i        = 0;
+			auto    skeleton = std::make_shared<Skeleton>(fileName);
+			while (const ofbx::Object *bone = scene->getRoot()->resolveObjectLink(i++))
 			{
 				if (bone->getType() == ofbx::Object::Type::LIMB_NODE)
 				{
-					auto boneIndex = skeleton->getBoneIndex(bone->name);//create a bone if missing
+					auto boneIndex = skeleton->getBoneIndex(bone->name);        //create a bone if missing
 					if (boneIndex == -1)
 					{
-						auto& newBone = skeleton->createBone();
-						newBone.name = bone->name;
+						auto &newBone          = skeleton->createBone();
+						newBone.name           = bone->name;
 						newBone.localTransform = toMatrix(bone->getLocalTransform());
-						boneIndex = newBone.id;
+						boneIndex              = newBone.id;
 						sceneBone.emplace_back(bone);
 					}
 					loadBones(bone, skeleton.get(), boneIndex, sceneBone);
@@ -449,7 +449,7 @@ namespace maple
 			return skeleton;
 		}
 
-		inline auto loadMesh(const std::string& fileName, const ofbx::IScene* scene, std::vector<const ofbx::Object*> & sceneBone, std::shared_ptr<Skeleton> skeleton, std::vector<std::shared_ptr<IResource>>& outRes, Orientation orientation)
+		inline auto loadMesh(const std::string &fileName, const ofbx::IScene *scene, std::vector<const ofbx::Object *> &sceneBone, std::shared_ptr<Skeleton> skeleton, std::vector<std::shared_ptr<IResource>> &outRes, Orientation orientation)
 		{
 			if (scene->getMeshCount() > 0)
 			{
@@ -458,26 +458,26 @@ namespace maple
 
 				for (int32_t i = 0; i < scene->getMeshCount(); ++i)
 				{
-					const auto fbxMesh = (const ofbx::Mesh*)scene->getMesh(i);
-					const auto geom = fbxMesh->getGeometry();
-					const auto numIndices = geom->getIndexCount();
+					const auto fbxMesh     = (const ofbx::Mesh *) scene->getMesh(i);
+					const auto geom        = fbxMesh->getGeometry();
+					const auto numIndices  = geom->getIndexCount();
 					const auto vertexCount = geom->getVertexCount();
-					const auto vertices = geom->getVertices();
-					const auto normals = geom->getNormals();
-					const auto tangents = geom->getTangents();
-					const auto colors = geom->getColors();
-					const auto uvs = geom->getUVs();
-					const auto materials = geom->getMaterials();
+					const auto vertices    = geom->getVertices();
+					const auto normals     = geom->getNormals();
+					const auto tangents    = geom->getTangents();
+					const auto colors      = geom->getColors();
+					const auto uvs         = geom->getUVs();
+					const auto materials   = geom->getMaterials();
 
 					for (auto i = 0; i < sceneBone.size(); i++)
 					{
-						auto& ske = skeleton->getBone(i);
+						auto &ske        = skeleton->getBone(i);
 						ske.offsetMatrix = glm::inverse(getOffsetMatrix(fbxMesh, sceneBone[i]));
 					}
 
 					std::vector<std::shared_ptr<Material>> pbrMaterials;
 
-					std::vector<Vertex> tempVertices;
+					std::vector<Vertex>        tempVertices;
 					std::vector<SkinnedVertex> skinnedVertices;
 
 					if (skeleton->hasBones())
@@ -497,7 +497,7 @@ namespace maple
 
 					const auto indices = geom->getFaceIndices();
 
-					ofbx::Vec3* generatedTangents = nullptr;
+					ofbx::Vec3 *generatedTangents = nullptr;
 					if (!tangents && normals && uvs)
 					{
 						generatedTangents = new ofbx::Vec3[vertexCount];
@@ -505,33 +505,34 @@ namespace maple
 					}
 
 					auto transform = getTransform(fbxMesh, orientation);
-					bool skin = skeleton->hasBones();
+					bool skin      = skeleton->hasBones();
 
 					for (int32_t i = 0; i < vertexCount; ++i)
 					{
-						const ofbx::Vec3& cp = vertices[i];
+						const ofbx::Vec3 &cp = vertices[i];
 
-#define GEN_VERTEX(Vertices) { \
-					auto& vertex = Vertices[i]; \
-					vertex.pos = transform.getWorldMatrix() * glm::vec4(float(cp.x), float(cp.y), float(cp.z), 1.0); \
-					fixOrientation(vertex.pos, orientation); \
-					boundingBox->merge(vertex.pos); \
-					if (normals) \
-					{ \
-						glm::mat3 matrix(transform.getWorldMatrix()); \
-						vertex.normal = glm::transpose(glm::inverse(matrix)) * glm::normalize(glm::vec3{ float(normals[i].x), float(normals[i].y), float(normals[i].z) }); \
-					}\
-					if (uvs)\
-						vertex.texCoord = { float(uvs[i].x), 1.0f - float(uvs[i].y) };\
-					if (colors)\
-						vertex.color = { float(colors[i].x), float(colors[i].y), float(colors[i].z), float(colors[i].w) };\
-					else\
-						vertex.color = { 1,1,1,1 };\
-					if (tangents)\
-						vertex.tangent = transform.getWorldMatrix() * glm::vec4(float(tangents[i].x), float(tangents[i].y), float(tangents[i].z), 1.0);\
-					fixOrientation(vertex.normal, orientation);\
-					fixOrientation(vertex.tangent, orientation);\
-				}
+#define GEN_VERTEX(Vertices)                                                                                                                                 \
+	{                                                                                                                                                        \
+		auto &vertex = Vertices[i];                                                                                                                          \
+		vertex.pos   = transform.getWorldMatrix() * glm::vec4(float(cp.x), float(cp.y), float(cp.z), 1.0);                                                   \
+		fixOrientation(vertex.pos, orientation);                                                                                                             \
+		boundingBox->merge(vertex.pos);                                                                                                                      \
+		if (normals)                                                                                                                                         \
+		{                                                                                                                                                    \
+			glm::mat3 matrix(transform.getWorldMatrix());                                                                                                    \
+			vertex.normal = glm::transpose(glm::inverse(matrix)) * glm::normalize(glm::vec3{float(normals[i].x), float(normals[i].y), float(normals[i].z)}); \
+		}                                                                                                                                                    \
+		if (uvs)                                                                                                                                             \
+			vertex.texCoord = {float(uvs[i].x), 1.0f - float(uvs[i].y)};                                                                                     \
+		if (colors)                                                                                                                                          \
+			vertex.color = {float(colors[i].x), float(colors[i].y), float(colors[i].z), float(colors[i].w)};                                                 \
+		else                                                                                                                                                 \
+			vertex.color = {1, 1, 1, 1};                                                                                                                     \
+		if (tangents)                                                                                                                                        \
+			vertex.tangent = transform.getWorldMatrix() * glm::vec4(float(tangents[i].x), float(tangents[i].y), float(tangents[i].z), 1.0);                  \
+		fixOrientation(vertex.normal, orientation);                                                                                                          \
+		fixOrientation(vertex.tangent, orientation);                                                                                                         \
+	}
 
 						if (skin)
 						{
@@ -545,7 +546,7 @@ namespace maple
 
 					for (int32_t i = 0; i < numIndices; i++)
 					{
-						int32_t index = (i % 3 == 2) ? (-indices[i] - 1) : indices[i];
+						int32_t index   = (i % 3 == 2) ? (-indices[i] - 1) : indices[i];
 						indicesArray[i] = index;
 					}
 
@@ -566,7 +567,7 @@ namespace maple
 
 					for (auto i = 0; i < fbxMesh->getMaterialCount(); i++)
 					{
-						const ofbx::Material* material = fbxMesh->getMaterial(i);
+						const ofbx::Material *material = fbxMesh->getMaterial(i);
 						pbrMaterials.emplace_back(loadMaterial(material, false));
 					}
 
@@ -578,7 +579,7 @@ namespace maple
 
 					if (fbxMesh->getMaterialCount() > 1)
 					{
-						int32_t rangeStart = 0;
+						int32_t rangeStart    = 0;
 						int32_t rangeStartVal = materials[rangeStart];
 						for (int32_t triangleIndex = 1; triangleIndex < trianglesCount; triangleIndex++)
 						{
@@ -595,7 +596,6 @@ namespace maple
 						MAPLE_ASSERT(subMeshIdx.size() == pbrMaterials.size(), "size is not same");
 					}
 
-
 					std::string name = fbxMesh->name;
 
 					MAPLE_ASSERT(name != "", "name should not be null");
@@ -608,37 +608,37 @@ namespace maple
 				}
 			}
 		}
-	}
+	}        // namespace
 
-	auto FBXLoader::load(const std::string& fileName, const std::string& extension, std::vector<std::shared_ptr<IResource>>& outRes) const -> void
+	auto FBXLoader::load(const std::string &fileName, const std::string &extension, std::vector<std::shared_ptr<IResource>> &outRes) const -> void
 	{
 		mio::mmap_source mmap(fileName);
 		MAPLE_ASSERT(mmap.is_open(), "open fbx file failed");
 
 		constexpr bool ignoreGeometry = false;
-		const uint64_t flags = ignoreGeometry ? (uint64_t)ofbx::LoadFlags::IGNORE_GEOMETRY : (uint64_t)ofbx::LoadFlags::TRIANGULATE;
-		auto scene = ofbx::load((uint8_t*)mmap.data(), mmap.size(), flags);
+		const uint64_t flags          = ignoreGeometry ? (uint64_t) ofbx::LoadFlags::IGNORE_GEOMETRY : (uint64_t) ofbx::LoadFlags::TRIANGULATE;
+		auto           scene          = ofbx::load((uint8_t *) mmap.data(), mmap.size(), flags);
 
-		const ofbx::GlobalSettings* settings = scene->getGlobalSettings();
+		const ofbx::GlobalSettings *settings = scene->getGlobalSettings();
 
 		Orientation orientation = Orientation::Y_UP;
 
 		switch (settings->UpAxis)
 		{
-		case ofbx::UpVector_AxisX:
-			orientation = Orientation::X_UP;
-			break;
-		case ofbx::UpVector_AxisY:
-			orientation = Orientation::Y_UP;
-			break;
-		case ofbx::UpVector_AxisZ:
-			orientation = Orientation::Z_UP;
-			break;
+			case ofbx::UpVector_AxisX:
+				orientation = Orientation::X_UP;
+				break;
+			case ofbx::UpVector_AxisY:
+				orientation = Orientation::Y_UP;
+				break;
+			case ofbx::UpVector_AxisZ:
+				orientation = Orientation::Z_UP;
+				break;
 		}
-		std::vector<const ofbx::Object*> sceneBone;
+		std::vector<const ofbx::Object *> sceneBone;
 
 		auto skeleton = loadSkeleton(fileName, scene, sceneBone, outRes, orientation);
 		loadAnimation(fileName, scene, sceneBone, outRes, orientation);
 		loadMesh(fileName, scene, sceneBone, skeleton, outRes, orientation);
 	}
-};            // namespace maple
+};        // namespace maple

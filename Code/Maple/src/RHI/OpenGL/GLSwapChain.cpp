@@ -13,7 +13,6 @@
 #	include <GLFW/glfw3.h>
 #endif
 
-
 namespace maple
 {
 	namespace
@@ -123,7 +122,8 @@ namespace maple
 	}        // namespace
 
 	GLSwapChain::GLSwapChain(uint32_t width, uint32_t height) :
-	    width(width), height(height)
+	    width(width),
+	    height(height)
 	{
 	}
 

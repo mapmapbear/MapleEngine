@@ -12,16 +12,15 @@
 #include "Engine/Timestep.h"
 #include "Event/EventDispatcher.h"
 #include "ImGui/ImGuiSystem.h"
-#include "Others/Timer.h"
 #include "Others/RenderDocExt.h"
-#include "RHI/RenderDevice.h"
+#include "Others/Timer.h"
 #include "RHI/GraphicsContext.h"
 #include "RHI/RenderDevice.h"
+#include "Scene/Component/AppState.h"
 #include "Scene/SceneManager.h"
 #include "Scripts/Lua/LuaVirtualMachine.h"
 #include "Thread/ThreadPool.h"
 #include "Window/NativeWindow.h"
-#include "Scene/Component/AppState.h"
 
 namespace maple
 {
@@ -34,7 +33,7 @@ namespace maple
 	  public:
 		virtual auto onInit() -> void    = 0;
 		virtual auto onDestory() -> void = 0;
-		auto getScene()->Scene*;
+		auto         getScene() -> Scene *;
 	};
 
 	class DefaultDelegate final : public AppDelegate
@@ -69,7 +68,7 @@ namespace maple
 			return get()->dispatcher;
 		}
 
-		inline static auto& getRenderDoc()
+		inline static auto &getRenderDoc()
 		{
 			return get()->renderDoc;
 		}
@@ -169,17 +168,16 @@ namespace maple
 		std::unique_ptr<TexturePool>       texturePool;
 		std::unique_ptr<LuaVirtualMachine> luaVm;
 
-		std::shared_ptr<MonoVirtualMachine> monoVm;
-		std::shared_ptr<ImGuiSystem>        imGuiManager;
-		std::shared_ptr<AppDelegate>        appDelegate;
-		std::shared_ptr<RenderDevice>       renderDevice;
-		std::shared_ptr<GraphicsContext>    graphicsContext;
-		std::shared_ptr<RenderGraph>        renderGraph;
-		std::shared_ptr<ExecutePoint>       executePoint;
+		std::shared_ptr<MonoVirtualMachine>  monoVm;
+		std::shared_ptr<ImGuiSystem>         imGuiManager;
+		std::shared_ptr<AppDelegate>         appDelegate;
+		std::shared_ptr<RenderDevice>        renderDevice;
+		std::shared_ptr<GraphicsContext>     graphicsContext;
+		std::shared_ptr<RenderGraph>         renderGraph;
+		std::shared_ptr<ExecutePoint>        executePoint;
 		std::shared_ptr<AssetsLoaderFactory> loaderFactory;
 
-
-		RenderDocExt													 renderDoc;
+		RenderDocExt                                                     renderDoc;
 		EventDispatcher                                                  dispatcher;
 		Timer                                                            timer;
 		uint64_t                                                         updates     = 0;

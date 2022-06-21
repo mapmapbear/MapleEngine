@@ -2,8 +2,8 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <memory>
 #include "Scene/System/ExecutePoint.h"
+#include <memory>
 
 namespace maple
 {
@@ -18,9 +18,9 @@ namespace maple
 			std::shared_ptr<Shader>                     ssaoBlurShader;
 			std::vector<std::shared_ptr<DescriptorSet>> ssaoSet;
 			std::vector<std::shared_ptr<DescriptorSet>> ssaoBlurSet;
-			bool  enable = false;
-			float bias = 0.025;
-			float ssaoRadius = 0.25f;
+			bool                                        enable     = false;
+			float                                       bias       = 0.025;
+			float                                       ssaoRadius = 0.25f;
 		};
 
 		struct SSRData
@@ -35,15 +35,15 @@ namespace maple
 			bool                           enable = false;
 			std::shared_ptr<DescriptorSet> bloomDescriptorSet;
 			std::shared_ptr<Shader>        bloomShader;
-			float blurScale = 0.003f;
-			float blurStrength = 1.5f;
+			float                          blurScale    = 0.003f;
+			float                          blurStrength = 1.5f;
 		};
-	};
+	};        // namespace component
 
 	namespace post_process
 	{
-		auto registerSSAOPass(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void;
-		auto registerSSR(ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void;
-		auto registerBloom(ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void;
-	};
+		auto registerSSAOPass(ExecuteQueue &begin, ExecuteQueue &renderer, std::shared_ptr<ExecutePoint> executePoint) -> void;
+		auto registerSSR(ExecuteQueue &renderer, std::shared_ptr<ExecutePoint> executePoint) -> void;
+		auto registerBloom(ExecuteQueue &renderer, std::shared_ptr<ExecutePoint> executePoint) -> void;
+	};        // namespace post_process
 }        // namespace maple

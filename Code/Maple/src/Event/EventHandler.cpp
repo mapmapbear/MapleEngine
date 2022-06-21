@@ -5,8 +5,7 @@
 #include "EventHandler.h"
 #include "EventDispatcher.h"
 
-
-namespace maple 
+namespace maple
 {
 	EventHandler::~EventHandler()
 	{
@@ -23,4 +22,4 @@ namespace maple
 		}
 	}
 
-};
+};        // namespace maple

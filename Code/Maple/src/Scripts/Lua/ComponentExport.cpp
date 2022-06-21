@@ -5,72 +5,71 @@
 #include "ComponentExport.h"
 
 #include "LuaVirtualMachine.h"
-extern "C" {
-# include "lua.h"
-# include "lauxlib.h"
-# include "lualib.h"
+extern "C"
+{
+#include "lauxlib.h"
+#include "lua.h"
+#include "lualib.h"
 }
 #include <LuaBridge/LuaBridge.h>
-#include <string>
 #include <functional>
+#include <string>
 
-#include "Scene/Component/Transform.h"
 #include "Scene/Component/Component.h"
+#include "Scene/Component/Transform.h"
 
 #include "LuaComponent.h"
 
 #include "Scene/Entity/Entity.h"
 
-
 namespace maple
 {
-#define EXPORT_COMPONENTS(Comp) \
-		 addFunction("add" #Comp,&Entity::addComponent<Comp>) \
-		.addFunction("remove" #Comp, &Entity::removeComponent<Comp>) \
-		.addFunction("get" #Comp, &Entity::getComponent<Comp>) \
-		.addFunction("getOrAdd" #Comp, &Entity::getOrAddComponent<Comp>) \
-		.addFunction("tryGet" #Comp, &Entity::tryGetComponent<Comp>) \
-        .addFunction("has" #Comp, &Entity::hasComponent<Comp>) \
+#define EXPORT_COMPONENTS(Comp)                                          \
+	addFunction("add" #Comp, &Entity::addComponent<Comp>)                \
+	    .addFunction("remove" #Comp, &Entity::removeComponent<Comp>)     \
+	    .addFunction("get" #Comp, &Entity::getComponent<Comp>)           \
+	    .addFunction("getOrAdd" #Comp, &Entity::getOrAddComponent<Comp>) \
+	    .addFunction("tryGet" #Comp, &Entity::tryGetComponent<Comp>)     \
+	    .addFunction("has" #Comp, &Entity::hasComponent<Comp>)
 
 	namespace ComponentExport
 	{
-		auto exportLua(lua_State* L) -> void
+		auto exportLua(lua_State *L) -> void
 		{
 			luabridge::getGlobalNamespace(L)
-				.beginNamespace("entt")
-				.beginClass<entt::registry>("registry")
-				.endClass()
-				.beginClass<entt::entity>("entity")
-				.endClass()
-				.endNamespace()
+			    .beginNamespace("entt")
+			    .beginClass<entt::registry>("registry")
+			    .endClass()
+			    .beginClass<entt::entity>("entity")
+			    .endClass()
+			    .endNamespace()
 
+			    .beginClass<Entity>("Entity")
+			    //.addConstructor <void (*) (entt::entity, entt::registry&)>()
+			    .addConstructor<void (*)()>()
+			    .addFunction("valid", &Entity::valid)
+			    .addFunction("destroy", &Entity::destroy)
+			    .addFunction("setParent", &Entity::setParent)
+			    .addFunction("getParent", &Entity::getParent)
+			    .addFunction("isParent", &Entity::isParent)
+			    .addFunction("getChildren", &Entity::getChildren)
+			    .addFunction("setActive", &Entity::setActive)
+			    .addFunction("isActive", &Entity::isActive)
 
-				.beginClass <Entity>("Entity")
-				//.addConstructor <void (*) (entt::entity, entt::registry&)>()
-				.addConstructor <void (*) ()>()
-				.addFunction("valid", &Entity::valid)
-				.addFunction("destroy", &Entity::destroy)
-				.addFunction("setParent", &Entity::setParent)
-				.addFunction("getParent", &Entity::getParent)
-				.addFunction("isParent", &Entity::isParent)
-				.addFunction("getChildren", &Entity::getChildren)
-				.addFunction("setActive", &Entity::setActive)
-				.addFunction("isActive", &Entity::isActive)
+			    .EXPORT_COMPONENTS(component::NameComponent)
+			    .EXPORT_COMPONENTS(component::ActiveComponent)
+			    .EXPORT_COMPONENTS(component::Transform)
+			    .EXPORT_COMPONENTS(component::LuaComponent)
 
-				.EXPORT_COMPONENTS(component::NameComponent)
-				.EXPORT_COMPONENTS(component::ActiveComponent)
-				.EXPORT_COMPONENTS(component::Transform)
-				.EXPORT_COMPONENTS(component::LuaComponent)
-
-				.endClass()
-/*
+			    .endClass()
+			    /*
 
 				.beginClass<EntityManager>("EntityManager")
 				.addFunction("Create", static_cast<Entity(EntityManager::*)()> (&EntityManager::create))
 				.addFunction("getRegistry", &EntityManager::getRegistry)
 				.endClass()*/
 
-			/*	.beginClass<component::NameComponent>("NameComponent")
+			    /*	.beginClass<component::NameComponent>("NameComponent")
 				.addProperty("name", &component::NameComponent::name)
 				.addFunction("getEntity", &component::NameComponent::getEntity)
 				.endClass()
@@ -82,10 +81,8 @@ namespace maple
 				.endClass()
 
 				.beginClass<component::LuaComponent>("LuaComponent")
-				.endClass()*/;
-
-	
-
+				.endClass()*/
+			    ;
 		}
-	};
-};
+	};        // namespace ComponentExport
+};            // namespace maple

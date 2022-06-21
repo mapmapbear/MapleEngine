@@ -6,11 +6,9 @@
 #include "NativeWindow.h"
 #include <memory>
 
-
 #ifdef PLATFORM_DESKTOP
 
 struct GLFWwindow;
-
 
 namespace maple
 {
@@ -48,13 +46,11 @@ namespace maple
 			return nativeInterface;
 		}
 
-
 	  private:
 		auto registerNativeEvent(const WindowInitData &data) -> void;
 
-		WindowInitData             data;
-		GLFWwindow *               nativeInterface = nullptr;
-
+		WindowInitData data;
+		GLFWwindow *   nativeInterface = nullptr;
 	};
 
 };            // namespace maple

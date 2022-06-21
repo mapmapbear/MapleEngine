@@ -167,13 +167,13 @@ namespace maple
 	auto GLRenderDevice::dispatch(const CommandBuffer *commandBuffer, uint32_t x, uint32_t y, uint32_t z) -> void
 	{
 		PROFILE_FUNCTION();
-		GLCall(glDispatchCompute(x,y,z));
+		GLCall(glDispatchCompute(x, y, z));
 	}
 
-	auto GLRenderDevice::memoryBarrier(const CommandBuffer* commandBuffer, uint32_t flag) -> void
+	auto GLRenderDevice::memoryBarrier(const CommandBuffer *commandBuffer, uint32_t flag) -> void
 	{
 		PROFILE_FUNCTION();
-		
+
 		int32_t glFlag = 0;
 
 		if (flag & MemoryBarrierFlags::Shader_Image_Access_Barrier)
@@ -186,7 +186,7 @@ namespace maple
 			glFlag |= GL_TEXTURE_FETCH_BARRIER_BIT;
 		}
 
-		if (flag & MemoryBarrierFlags::Shader_Storage_Barrier) 
+		if (flag & MemoryBarrierFlags::Shader_Storage_Barrier)
 		{
 			glFlag |= GL_SHADER_STORAGE_BARRIER_BIT;
 		}
@@ -201,7 +201,6 @@ namespace maple
 	auto GLRenderDevice::presentInternal(const CommandBuffer *commandBuffer) -> void
 	{
 	}
-
 
 	auto GLRenderDevice::setDepthTestingInternal(bool enabled) -> void
 	{
@@ -347,10 +346,10 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 		//NumDrawCalls++;
-		GLCall(	glDrawElements( drawTypeToGL(type), count, dataTypeToGL(DataType::UnsignedInt), (void*)(sizeof(uint32_t) * start) ) );
+		GLCall(glDrawElements(drawTypeToGL(type), count, dataTypeToGL(DataType::UnsignedInt), (void *) (sizeof(uint32_t) * start)));
 	}
 
-	auto GLRenderDevice::drawArraysInternal(const CommandBuffer* commandBuffer, DrawType type, uint32_t count, uint32_t start /*= 0*/) const -> void
+	auto GLRenderDevice::drawArraysInternal(const CommandBuffer *commandBuffer, DrawType type, uint32_t count, uint32_t start /*= 0*/) const -> void
 	{
 		PROFILE_FUNCTION();
 		//NumDrawCalls++;

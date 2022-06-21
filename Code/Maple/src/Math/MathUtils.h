@@ -4,13 +4,13 @@
 #pragma once
 #include <algorithm>
 #include <glm/glm.hpp>
-#include <string>
 #include <stdexcept>
+#include <string>
 
 #ifndef M_PI
-#	define M_PI 3.14159265358979323846        // pi
+#	define M_PI 3.14159265358979323846            // pi
 #	define M_PI_TWO 6.28318530717958647692        // pi
-#endif                                         // !M_PI
+#endif                                             // !M_PI
 
 namespace maple
 {
@@ -131,7 +131,7 @@ namespace maple
 				while (t != 0.0)
 				{
 					t = t * 2.0;
-					d = (int32_t) (t);
+					d = (int32_t)(t);
 					i = i + d * p;
 					p = p * 2;
 					t = t - (float) (d);
@@ -139,7 +139,7 @@ namespace maple
 			}
 			else
 			{
-				i = (int32_t) (round((float) (n) *r[0]));
+				i = (int32_t)(round((float) (n) *r[0]));
 			}
 
 			return i;
@@ -342,12 +342,12 @@ namespace maple
 
 		inline auto hammersley(int32_t i, int32_t m, int32_t n) -> float *
 		{
-			int     d;
-			int     i1;
-			int     j;
+			int    d;
+			int    i1;
+			int    j;
 			float *prime_inv;
 			float *r;
-			int *   t;
+			int *  t;
 
 			t = new int[m];
 

@@ -20,7 +20,7 @@ namespace maple
 		~Timer()
 		{
 		}
-	
+
 		// Start the timer by setting the last measurement to now.
 		inline auto start() -> void
 		{
@@ -50,7 +50,7 @@ namespace maple
 		}
 
 		inline auto elapsed(std::chrono::high_resolution_clock::time_point begin,
-		             std::chrono::high_resolution_clock::time_point end)
+		                    std::chrono::high_resolution_clock::time_point end)
 		{
 			return std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
 		}

@@ -5,8 +5,7 @@
 #include <memory.h>
 namespace maple
 {
-
-	VulkanUniformBuffer::VulkanUniformBuffer(uint32_t size, const void* data)
+	VulkanUniformBuffer::VulkanUniformBuffer(uint32_t size, const void *data)
 	{
 		VulkanBuffer::init(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, size, data);
 	}
@@ -19,12 +18,12 @@ namespace maple
 	{
 	}
 
-	auto VulkanUniformBuffer::init(uint32_t size, const void* data) -> void
+	auto VulkanUniformBuffer::init(uint32_t size, const void *data) -> void
 	{
 		VulkanBuffer::init(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, size, data);
 	}
 
-	auto VulkanUniformBuffer::setDynamicData(uint32_t size, uint32_t typeSize, const void* data) -> void
+	auto VulkanUniformBuffer::setDynamicData(uint32_t size, uint32_t typeSize, const void *data) -> void
 	{
 		VulkanBuffer::map();
 		memcpy(mapped, data, size);
@@ -32,10 +31,10 @@ namespace maple
 		VulkanBuffer::unmap();
 	}
 
-	auto VulkanUniformBuffer::setData(uint32_t size, const void *data) -> void 
+	auto VulkanUniformBuffer::setData(uint32_t size, const void *data) -> void
 	{
 		VulkanBuffer::map();
 		memcpy(mapped, data, size);
 		VulkanBuffer::unmap();
 	}
-};
+};        // namespace maple

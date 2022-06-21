@@ -8,12 +8,18 @@
 namespace maple
 {
 	VulkanIndexBuffer::VulkanIndexBuffer(const uint16_t *data, uint32_t initCount, BufferUsage bufferUsage) :
-	    VulkanBuffer(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, initCount * sizeof(uint16_t), data), size(initCount * sizeof(uint16_t)), count(initCount), usage(bufferUsage)
+	    VulkanBuffer(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, initCount * sizeof(uint16_t), data),
+	    size(initCount * sizeof(uint16_t)),
+	    count(initCount),
+	    usage(bufferUsage)
 	{
 	}
 
 	VulkanIndexBuffer::VulkanIndexBuffer(const uint32_t *data, uint32_t initCount, BufferUsage bufferUsage) :
-	    VulkanBuffer(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, initCount * sizeof(uint32_t), data), size(initCount * sizeof(uint32_t)), count(initCount), usage(bufferUsage)
+	    VulkanBuffer(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, initCount * sizeof(uint32_t), data),
+	    size(initCount * sizeof(uint32_t)),
+	    count(initCount),
+	    usage(bufferUsage)
 	{
 	}
 
@@ -52,7 +58,7 @@ namespace maple
 		}
 	}
 
-	auto VulkanIndexBuffer::getPointerInternal() -> void * 
+	auto VulkanIndexBuffer::getPointerInternal() -> void *
 	{
 		if (!mappedBuffer)
 		{

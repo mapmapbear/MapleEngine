@@ -3,11 +3,10 @@
 //////////////////////////////////////////////////////////////////////////////
 #include "Console.h"
 
-#include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 
-
-namespace maple 
+namespace maple
 {
 	auto Console::init() -> void
 	{
@@ -22,10 +21,7 @@ namespace maple
 		spdlog::register_logger(logger);
 		logger->set_level(spdlog::level::trace);
 		logger->flush_on(spdlog::level::trace);
-
 	}
 	std::shared_ptr<spdlog::logger> Console::logger;
 
-};
-
-
+};        // namespace maple

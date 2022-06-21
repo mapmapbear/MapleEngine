@@ -91,7 +91,7 @@ namespace maple
 #endif
 	}
 
-	auto Shader::create(const std::string& filePath) -> std::shared_ptr<Shader>
+	auto Shader::create(const std::string &filePath) -> std::shared_ptr<Shader>
 	{
 #ifdef MAPLE_VULKAN
 		return Application::getAssetsLoaderFactory()->emplace<VulkanShader>(filePath, filePath);
@@ -102,7 +102,7 @@ namespace maple
 #endif
 	}
 
-	auto Shader::create(const std::vector<uint32_t>& vertData, const std::vector<uint32_t>& fragData) -> std::shared_ptr<Shader>
+	auto Shader::create(const std::vector<uint32_t> &vertData, const std::vector<uint32_t> &fragData) -> std::shared_ptr<Shader>
 	{
 #ifdef MAPLE_VULKAN
 		return std::make_shared<VulkanShader>(vertData, fragData);
@@ -112,7 +112,7 @@ namespace maple
 #endif
 	}
 
-	auto FrameBuffer::create(const FrameBufferInfo& desc) -> std::shared_ptr<FrameBuffer>
+	auto FrameBuffer::create(const FrameBufferInfo &desc) -> std::shared_ptr<FrameBuffer>
 	{
 		size_t hash = 0;
 		HashCode::hashCode(hash, desc.attachments.size(), desc.width, desc.height, desc.layer, desc.renderPass, desc.screenFBO);
@@ -121,12 +121,12 @@ namespace maple
 		{
 			HashCode::hashCode(hash, desc.attachments[i]);
 #ifdef MAPLE_VULKAN
-			VkDescriptorImageInfo* imageHandle = (VkDescriptorImageInfo*)(desc.attachments[i]->getDescriptorInfo());
+			VkDescriptorImageInfo *imageHandle = (VkDescriptorImageInfo *) (desc.attachments[i]->getDescriptorInfo());
 			HashCode::hashCode(hash, imageHandle->imageLayout, imageHandle->imageView, imageHandle->sampler);
 #endif
 		}
-		auto& frameBufferCache = Application::getGraphicsContext()->getFrameBufferCache();
-		auto  found = frameBufferCache.find(hash);
+		auto &frameBufferCache = Application::getGraphicsContext()->getFrameBufferCache();
+		auto  found            = frameBufferCache.find(hash);
 		if (found != frameBufferCache.end() && found->second.asset)
 		{
 			found->second.lastTimestamp = Application::getTimer().currentTimestamp();
@@ -143,7 +143,7 @@ namespace maple
 #endif
 	}
 
-	auto DescriptorSet::create(const DescriptorInfo& desc) -> std::shared_ptr<DescriptorSet>
+	auto DescriptorSet::create(const DescriptorInfo &desc) -> std::shared_ptr<DescriptorSet>
 	{
 #ifdef MAPLE_VULKAN
 		return std::make_shared<VulkanDescriptorSet>(desc);
@@ -173,7 +173,7 @@ namespace maple
 #endif
 	}
 
-	auto IndexBuffer::create(const uint16_t* data, uint32_t count, BufferUsage bufferUsage) -> std::shared_ptr<IndexBuffer>
+	auto IndexBuffer::create(const uint16_t *data, uint32_t count, BufferUsage bufferUsage) -> std::shared_ptr<IndexBuffer>
 	{
 #ifdef MAPLE_VULKAN
 		return std::make_shared<VulkanIndexBuffer>(data, count, bufferUsage);
@@ -182,7 +182,7 @@ namespace maple
 		return std::make_shared<GLIndexBuffer>(data, count, bufferUsage);
 #endif
 	}
-	auto IndexBuffer::create(const uint32_t* data, uint32_t count, BufferUsage bufferUsage) -> std::shared_ptr<IndexBuffer>
+	auto IndexBuffer::create(const uint32_t *data, uint32_t count, BufferUsage bufferUsage) -> std::shared_ptr<IndexBuffer>
 	{
 #ifdef MAPLE_VULKAN
 		return std::make_shared<VulkanIndexBuffer>(data, count, bufferUsage);
@@ -192,7 +192,7 @@ namespace maple
 #endif
 	}
 
-	auto Pipeline::get(const PipelineInfo& desc) -> std::shared_ptr<Pipeline>
+	auto Pipeline::get(const PipelineInfo &desc) -> std::shared_ptr<Pipeline>
 	{
 		size_t hash = 0;
 
@@ -208,7 +208,7 @@ namespace maple
 				HashCode::hashCode(hash, texture->getHandle());
 				HashCode::hashCode(hash, texture->getFormat());
 #ifdef MAPLE_VULKAN
-				VkDescriptorImageInfo* imageHandle = (VkDescriptorImageInfo*)(texture->getDescriptorInfo());
+				VkDescriptorImageInfo *imageHandle = (VkDescriptorImageInfo *) (texture->getDescriptorInfo());
 				HashCode::hashCode(hash, imageHandle->imageLayout, imageHandle->imageView, imageHandle->sampler);
 #endif
 			}
@@ -230,13 +230,13 @@ namespace maple
 				HashCode::hashCode(hash, texture->getHandle());
 				HashCode::hashCode(hash, texture->getFormat());
 #ifdef MAPLE_VULKAN
-				VkDescriptorImageInfo* imageHandle = (VkDescriptorImageInfo*)(texture->getDescriptorInfo());
+				VkDescriptorImageInfo *imageHandle = (VkDescriptorImageInfo *) (texture->getDescriptorInfo());
 				HashCode::hashCode(hash, imageHandle->imageLayout, imageHandle->imageView, imageHandle->sampler);
 #endif
 			}
 		}
-		auto& pipelineCache = Application::getGraphicsContext()->getPipelineCache();
-		auto  found = pipelineCache.find(hash);
+		auto &pipelineCache = Application::getGraphicsContext()->getPipelineCache();
+		auto  found         = pipelineCache.find(hash);
 
 		if (found != pipelineCache.end() && found->second.asset)
 		{
@@ -267,8 +267,7 @@ namespace maple
 #endif        // MAPLE_OPENGL
 	}
 
-
-	auto Pipeline::get(const PipelineInfo& desc, const std::vector<std::shared_ptr<DescriptorSet>>& sets, capture_graph::component::RenderGraph& graph) -> std::shared_ptr<Pipeline>
+	auto Pipeline::get(const PipelineInfo &desc, const std::vector<std::shared_ptr<DescriptorSet>> &sets, capture_graph::component::RenderGraph &graph) -> std::shared_ptr<Pipeline>
 	{
 		auto pip = Pipeline::get(desc);
 
@@ -283,19 +282,19 @@ namespace maple
 			}
 		}
 
-		capture_graph::input(desc.shader->getName(), graph, { desc.depthTarget });
-		capture_graph::output(desc.shader->getName(), graph, { desc.depthArrayTarget });
+		capture_graph::input(desc.shader->getName(), graph, {desc.depthTarget});
+		capture_graph::output(desc.shader->getName(), graph, {desc.depthArrayTarget});
 
 		for (auto color : desc.colorTargets)
 		{
 			if (color != nullptr)
-				capture_graph::output(desc.shader->getName(), graph, { color });
+				capture_graph::output(desc.shader->getName(), graph, {color});
 		}
 
 		return pip;
 	}
 
-	auto RenderPass::create(const RenderPassInfo& desc) -> std::shared_ptr<RenderPass>
+	auto RenderPass::create(const RenderPassInfo &desc) -> std::shared_ptr<RenderPass>
 	{
 #ifdef MAPLE_VULKAN
 		return std::make_shared<VulkanRenderPass>(desc);
@@ -303,7 +302,7 @@ namespace maple
 #ifdef MAPLE_OPENGL
 		return std::make_shared<GLRenderPass>(desc);
 #endif
-}
+	}
 
 	auto UniformBuffer::create() -> std::shared_ptr<UniformBuffer>
 	{
@@ -315,7 +314,7 @@ namespace maple
 #endif
 	}
 
-	auto UniformBuffer::create(uint32_t size, const void* data) -> std::shared_ptr<UniformBuffer>
+	auto UniformBuffer::create(uint32_t size, const void *data) -> std::shared_ptr<UniformBuffer>
 	{
 #ifdef MAPLE_VULKAN
 		auto buffer = std::make_shared<VulkanUniformBuffer>();
@@ -327,7 +326,7 @@ namespace maple
 		return buffer;
 	}
 
-	auto VertexBuffer::create(const BufferUsage& usage) -> std::shared_ptr<VertexBuffer>
+	auto VertexBuffer::create(const BufferUsage &usage) -> std::shared_ptr<VertexBuffer>
 	{
 #ifdef MAPLE_VULKAN
 		return std::make_shared<VulkanVertexBuffer>(usage);
@@ -337,7 +336,7 @@ namespace maple
 #endif
 	}
 
-	auto StorageBuffer::create(const BufferOptions& options)->std::shared_ptr<StorageBuffer>
+	auto StorageBuffer::create(const BufferOptions &options) -> std::shared_ptr<StorageBuffer>
 	{
 #ifdef MAPLE_VULKAN
 		return std::make_shared<VulkanStorageBuffer>(options);
@@ -347,7 +346,7 @@ namespace maple
 #endif
 	}
 
-	auto StorageBuffer::create(uint32_t size, const void* data, const BufferOptions& options)->std::shared_ptr<StorageBuffer>
+	auto StorageBuffer::create(uint32_t size, const void *data, const BufferOptions &options) -> std::shared_ptr<StorageBuffer>
 	{
 #ifdef MAPLE_VULKAN
 		return std::make_shared<VulkanStorageBuffer>(size, data, options);

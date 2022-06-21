@@ -107,9 +107,9 @@ namespace maple
 		std::string source;
 
 		std::unordered_map<uint32_t, std::vector<Descriptor>> descriptorInfos;
-		std::unordered_map<std::string, uint32_t>       uniformLocations;
-		std::unordered_map<uint32_t, uint32_t>          sampledLocations;
-		std::unordered_map<ShaderType, std::string>     sources;
+		std::unordered_map<std::string, uint32_t>             uniformLocations;
+		std::unordered_map<uint32_t, uint32_t>                sampledLocations;
+		std::unordered_map<ShaderType, std::string>           sources;
 
 		std::unordered_map<ShaderType, std::unique_ptr<spirv_cross::CompilerGLSL>> shaderCompilers;
 		std::array<std::string, static_cast<size_t>(ShaderType::Length)>           shaderSources;

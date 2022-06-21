@@ -2,7 +2,6 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 
-
 #include "Serialization.h"
 #include "Engine/Camera.h"
 #include "Engine/Mesh.h"
@@ -23,17 +22,17 @@
 #include "Application.h"
 #include "Scene/System/ExecutePoint.h"
 
-#define ALL_COMPONENTS Camera/*,								\
-	                   Material,							\
-	                   component::Transform,				\
-	                   component::NameComponent,			\
-	                   component::ActiveComponent,			\
-	                   component::Hierarchy,				\
-	                   component::Light,					\
-	                   component::CameraControllerComponent,\
-	                   component::Model,					\
-	                   component::MeshRenderer,				\
-	                   component::Environment*/
+#define ALL_COMPONENTS Camera /*,								\                     \
+	                    Material,							\                      \
+	                    component::Transform,				\             \
+	                    component::NameComponent,			\          \
+	                    component::ActiveComponent,			\        \
+	                    component::Hierarchy,				\             \
+	                    component::Light,					\                \
+	                    component::CameraControllerComponent,\ \
+	                    component::Model,					\                \
+	                    component::MeshRenderer,				\          \
+	                    component::Environment*/
 
 namespace maple
 {
@@ -46,9 +45,9 @@ namespace maple
 			cereal::JSONOutputArchive output{storage};
 			output(*scene);
 			entt::snapshot{
-				Application::getExecutePoint()->getRegistry() 
-			}.entities(output)
-		     .component<ALL_COMPONENTS>(output);
+			    Application::getExecutePoint()->getRegistry()}
+			    .entities(output)
+			    .component<ALL_COMPONENTS>(output);
 		}
 
 		File file(outPath, true);
@@ -64,13 +63,14 @@ namespace maple
 		cereal::JSONInputArchive input(istr);
 		input(*scene);
 		entt::snapshot_loader{
-			Application::getExecutePoint()->getRegistry()
-		}.entities(input).component<ALL_COMPONENTS>(input);
+		    Application::getExecutePoint()->getRegistry()}
+		    .entities(input)
+		    .component<ALL_COMPONENTS>(input);
 	}
 
 	auto Serialization::loadMaterial(Material *material, const std::string &file) -> void
 	{
-		File               f(file);
+		File f(file);
 		if (f.getFileSize() != 0)
 		{
 			auto               buffer = f.getBuffer();

@@ -9,15 +9,15 @@
 #include "Engine/Terrain.h"
 #include "Engine/Timestep.h"
 
+#include "2d/Sprite.h"
+#include "Scene/Component/BoundingBox.h"
 #include "Scene/Component/CameraControllerComponent.h"
 #include "Scene/Component/Light.h"
+#include "Scene/Component/LightProbe.h"
 #include "Scene/Component/MeshRenderer.h"
-#include "Scene/SystemBuilder.inl"
 #include "Scene/Component/Transform.h"
 #include "Scene/Component/VolumetricCloud.h"
-#include "Scene/Component/BoundingBox.h"
-#include "Scene/Component/LightProbe.h"
-#include "2d/Sprite.h"
+#include "Scene/SystemBuilder.inl"
 
 #include "Others/Console.h"
 #include "Window/WindowWin.h"
@@ -28,11 +28,11 @@
 #include "Devices/Input.h"
 #include "ImGui/ImGuiSystem.h"
 #include "ImGui/ImNotification.h"
+#include "Physics/PhysicsWorld.h"
 #include "Scene/Scene.h"
 #include "Scene/SceneManager.h"
 #include "Scene/System/ExecutePoint.h"
 #include "Scripts/Mono/MonoVirtualMachine.h"
-#include "Physics/PhysicsWorld.h"
 
 #include "Loaders/Loader.h"
 
@@ -45,19 +45,19 @@
 
 namespace maple
 {
-	Application::Application(AppDelegate* app)
+	Application::Application(AppDelegate *app)
 	{
-		appDelegate = std::shared_ptr<AppDelegate>(app);
-		window = NativeWindow::create(WindowInitData{ 1280, 720, false, "Maple-Engine" });
-		renderDevice = RenderDevice::create();
+		appDelegate     = std::shared_ptr<AppDelegate>(app);
+		window          = NativeWindow::create(WindowInitData{1280, 720, false, "Maple-Engine"});
+		renderDevice    = RenderDevice::create();
 		graphicsContext = GraphicsContext::create();
 
-		sceneManager = std::make_unique<SceneManager>();
-		threadPool = std::make_unique<ThreadPool>(4);
-		texturePool = std::make_unique<TexturePool>();
-		luaVm = std::make_unique<LuaVirtualMachine>();
-		monoVm = std::make_shared<MonoVirtualMachine>();
-		renderGraph = std::make_shared<RenderGraph>();
+		sceneManager  = std::make_unique<SceneManager>();
+		threadPool    = std::make_unique<ThreadPool>(4);
+		texturePool   = std::make_unique<TexturePool>();
+		luaVm         = std::make_unique<LuaVirtualMachine>();
+		monoVm        = std::make_shared<MonoVirtualMachine>();
+		renderGraph   = std::make_shared<RenderGraph>();
 		loaderFactory = std::make_shared<AssetsLoaderFactory>();
 	}
 
@@ -76,7 +76,7 @@ namespace maple
 		executePoint->addDependency<component::LightProbe, component::Transform>();
 		executePoint->addDependency<component::Hierarchy, component::Transform>();
 
-		executePoint->getGlobalComponent<component::BoundingBoxComponent>();//todo refactor later
+		executePoint->getGlobalComponent<component::BoundingBoxComponent>();        //todo refactor later
 
 		executePoint->getGlobalComponent<global::component::DeltaTime>();
 		executePoint->getGlobalComponent<global::component::AppState>();
@@ -125,7 +125,7 @@ namespace maple
 			{
 				secondTimer += 1.0f;
 				LOGV("frames : {0}", frames);
-				frames = 0;
+				frames  = 0;
 				updates = 0;
 			}
 		}
@@ -137,7 +137,7 @@ namespace maple
 
 	auto Application::setEditorState(EditorState state) -> void
 	{
-		this->state = state;
+		this->state                                                           = state;
 		executePoint->getGlobalComponent<global::component::AppState>().state = state;
 
 		if (state == EditorState::Play)
@@ -151,7 +151,7 @@ namespace maple
 	}
 
 	//update all things
-	auto Application::onUpdate(const Timestep& delta) -> void
+	auto Application::onUpdate(const Timestep &delta) -> void
 	{
 		PROFILE_FUNCTION();
 		auto scene = sceneManager->getCurrentScene();
@@ -196,7 +196,7 @@ namespace maple
 		sceneActive = active;
 	}
 
-	auto Application::onSceneCreated(Scene* scene) -> void
+	auto Application::onSceneCreated(Scene *scene) -> void
 	{
 	}
 
@@ -232,7 +232,7 @@ namespace maple
 		}
 	}
 
-	auto Application::postOnMainThread(const std::function<bool()>& mainCallback) -> std::future<bool>
+	auto Application::postOnMainThread(const std::function<bool()> &mainCallback) -> std::future<bool>
 	{
 		PROFILE_FUNCTION();
 		std::promise<bool> promise;
@@ -263,11 +263,11 @@ namespace maple
 		}
 	}
 
-	auto AppDelegate::getScene()->Scene*
+	auto AppDelegate::getScene() -> Scene *
 	{
 		return Application::get()->getCurrentScene();
 	}
 
-	maple::Application* Application::app = nullptr;
+	maple::Application *Application::app = nullptr;
 
 };        // namespace maple

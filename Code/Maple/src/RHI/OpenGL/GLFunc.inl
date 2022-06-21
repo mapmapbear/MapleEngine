@@ -59,9 +59,9 @@ namespace maple
 		if (location != GL_INVALID_INDEX)
 			GLCall(glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(matrix)));
 	}
-	inline auto setUniformMat4Array(uint32_t location, const void * buffer,uint32_t size) -> void
+	inline auto setUniformMat4Array(uint32_t location, const void *buffer, uint32_t size) -> void
 	{
 		if (location != GL_INVALID_INDEX)
-			GLCall(glUniformMatrix4fv(location, size, GL_FALSE, (const float*)buffer));
+			GLCall(glUniformMatrix4fv(location, size, GL_FALSE, (const float *) buffer));
 	}
 };        // namespace maple

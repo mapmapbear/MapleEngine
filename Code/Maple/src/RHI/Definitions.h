@@ -139,12 +139,20 @@ namespace maple
 		TextureWrap   wrapT;
 
 		constexpr TextureParameters() :
-		    format(TextureFormat::RGBA8), minFilter(TextureFilter::Linear), magFilter(TextureFilter::Linear), wrap(TextureWrap::Repeat), wrapT(TextureWrap::Repeat)
+		    format(TextureFormat::RGBA8),
+		    minFilter(TextureFilter::Linear),
+		    magFilter(TextureFilter::Linear),
+		    wrap(TextureWrap::Repeat),
+		    wrapT(TextureWrap::Repeat)
 		{
 		}
 
 		constexpr TextureParameters(TextureFormat format, TextureFilter filter, TextureWrap wrap) :
-		    format(format), minFilter(filter), magFilter(filter), wrap(wrap), wrapT(wrap)
+		    format(format),
+		    minFilter(filter),
+		    magFilter(filter),
+		    wrap(wrap),
+		    wrapT(wrap)
 		{
 		}
 
@@ -153,38 +161,65 @@ namespace maple
 		{}
 
 		constexpr TextureParameters(TextureFormat format, TextureFilter minFilter, TextureFilter magFilter, TextureWrap wrap) :
-		    format(format), minFilter(minFilter), magFilter(magFilter), wrap(wrap), wrapT(TextureWrap::Repeat)
+		    format(format),
+		    minFilter(minFilter),
+		    magFilter(magFilter),
+		    wrap(wrap),
+		    wrapT(TextureWrap::Repeat)
 		{
 		}
 
 		constexpr TextureParameters(TextureFilter minFilter, TextureFilter magFilter, TextureWrap wrapS, TextureWrap wrapT) :
-			format(TextureFormat::RGBA8), minFilter(minFilter), magFilter(magFilter), wrap(wrapS), wrapT(wrapT)
+		    format(TextureFormat::RGBA8),
+		    minFilter(minFilter),
+		    magFilter(magFilter),
+		    wrap(wrapS),
+		    wrapT(wrapT)
 		{
 		}
 
 		constexpr TextureParameters(TextureFilter minFilter, TextureFilter magFilter) :
-		    format(TextureFormat::RGBA8), minFilter(minFilter), magFilter(magFilter), wrap(TextureWrap::Clamp), wrapT(TextureWrap::Clamp)
+		    format(TextureFormat::RGBA8),
+		    minFilter(minFilter),
+		    magFilter(magFilter),
+		    wrap(TextureWrap::Clamp),
+		    wrapT(TextureWrap::Clamp)
 		{
 		}
 
 		constexpr TextureParameters(TextureFilter minFilter, TextureFilter magFilter, TextureWrap wrap) :
-		    format(TextureFormat::RGBA8), minFilter(minFilter), magFilter(magFilter), wrap(wrap), wrapT(wrap)
+		    format(TextureFormat::RGBA8),
+		    minFilter(minFilter),
+		    magFilter(magFilter),
+		    wrap(wrap),
+		    wrapT(wrap)
 		{
 		}
-	
 
 		constexpr TextureParameters(TextureWrap wrap) :
-		    format(TextureFormat::RGBA8), minFilter(TextureFilter::Linear), magFilter(TextureFilter::Linear), wrap(wrap), wrapT(wrap)
+		    format(TextureFormat::RGBA8),
+		    minFilter(TextureFilter::Linear),
+		    magFilter(TextureFilter::Linear),
+		    wrap(wrap),
+		    wrapT(wrap)
 		{
 		}
 
 		constexpr TextureParameters(TextureFormat format) :
-		    format(format), minFilter(TextureFilter::Linear), magFilter(TextureFilter::Linear), wrap(TextureWrap::Clamp), wrapT(TextureWrap::Clamp)
+		    format(format),
+		    minFilter(TextureFilter::Linear),
+		    magFilter(TextureFilter::Linear),
+		    wrap(TextureWrap::Clamp),
+		    wrapT(TextureWrap::Clamp)
 		{
 		}
 
 		constexpr TextureParameters(TextureFormat format, TextureWrap wrap) :
-		    format(format), minFilter(TextureFilter::Linear), magFilter(TextureFilter::Linear), wrap(wrap), wrapT(wrap)
+		    format(format),
+		    minFilter(TextureFilter::Linear),
+		    magFilter(TextureFilter::Linear),
+		    wrap(wrap),
+		    wrapT(wrap)
 		{
 		}
 	};
@@ -194,7 +229,7 @@ namespace maple
 		bool flipX;
 		bool flipY;
 		bool generateMipMaps;
-		bool mutableFormat;// used in vulkan.
+		bool mutableFormat;        // used in vulkan.
 
 		constexpr TextureLoadOptions() :
 		    TextureLoadOptions(false, true, false)
@@ -202,7 +237,10 @@ namespace maple
 		}
 
 		constexpr TextureLoadOptions(bool flipX, bool flipY, bool genMips = false, bool mutableFormat = false) :
-		    flipX(flipX), flipY(flipY), generateMipMaps(genMips), mutableFormat(mutableFormat)
+		    flipX(flipX),
+		    flipY(flipY),
+		    generateMipMaps(genMips),
+		    mutableFormat(mutableFormat)
 		{
 		}
 	};
@@ -323,8 +361,8 @@ namespace maple
 
 	struct RenderCommand
 	{
-		Mesh*    mesh      = nullptr;
-		Material* material = nullptr;
+		Mesh *    mesh     = nullptr;
+		Material *material = nullptr;
 
 		std::shared_ptr<glm::mat4[]> boneTransforms;
 
@@ -332,16 +370,15 @@ namespace maple
 		PipelineInfo stencilPipelineInfo;
 
 		glm::mat4 transform;
-
 	};
 
 	enum MemoryBarrierFlags : int32_t
 	{
-		None						= BIT(0),
+		None                        = BIT(0),
 		Shader_Image_Access_Barrier = BIT(1),
-		Shader_Storage_Barrier		= BIT(2),
-		Texture_Fetch_Barrier		= BIT(3),
-		General						= BIT(4) // mainly for Vulkan
+		Shader_Storage_Barrier      = BIT(2),
+		Texture_Fetch_Barrier       = BIT(3),
+		General                     = BIT(4)        // mainly for Vulkan
 	};
 }        // namespace maple
 

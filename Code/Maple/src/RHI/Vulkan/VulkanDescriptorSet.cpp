@@ -5,15 +5,15 @@
 #include "Engine/Profiler.h"
 #include "Others/Console.h"
 #include "VulkanBuffer.h"
+#include "VulkanCommandBuffer.h"
 #include "VulkanDevice.h"
 #include "VulkanHelper.h"
 #include "VulkanPipeline.h"
 #include "VulkanRenderDevice.h"
 #include "VulkanShader.h"
+#include "VulkanStorageBuffer.h"
 #include "VulkanTexture.h"
 #include "VulkanUniformBuffer.h"
-#include "VulkanCommandBuffer.h"
-#include "VulkanStorageBuffer.h"
 
 #include "Application.h"
 
@@ -21,29 +21,29 @@ namespace maple
 {
 	namespace
 	{
-		inline auto transitionImageLayout(const CommandBuffer* cmd, Texture* texture,bool sampler2d, int32_t mipLevel)
+		inline auto transitionImageLayout(const CommandBuffer *cmd, Texture *texture, bool sampler2d, int32_t mipLevel)
 		{
 			if (!texture)
 				return;
 
-			const VulkanCommandBuffer *commandBuffer = (VulkanCommandBuffer *)cmd;
+			const VulkanCommandBuffer *commandBuffer = (VulkanCommandBuffer *) cmd;
 			if (texture->getType() == TextureType::Color)
 			{
-				if (sampler2d) 
+				if (sampler2d)
 				{
-					if (((VulkanTexture2D*)texture)->getImageLayout() != VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+					if (((VulkanTexture2D *) texture)->getImageLayout() != VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
 					{
-						((VulkanTexture2D*)texture)->transitionImage(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, commandBuffer);
+						((VulkanTexture2D *) texture)->transitionImage(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, commandBuffer);
 					}
 				}
-				else 
+				else
 				{
-					((VulkanTexture2D*)texture)->transitionImage(VK_IMAGE_LAYOUT_GENERAL, commandBuffer);
+					((VulkanTexture2D *) texture)->transitionImage(VK_IMAGE_LAYOUT_GENERAL, commandBuffer);
 				}
 			}
 			else if (texture->getType() == TextureType::Color3D)
 			{
-				((VulkanTexture3D*)texture)->transitionImage2( VK_IMAGE_LAYOUT_GENERAL, commandBuffer, mipLevel);
+				((VulkanTexture3D *) texture)->transitionImage2(VK_IMAGE_LAYOUT_GENERAL, commandBuffer, mipLevel);
 			}
 			else if (texture->getType() == TextureType::Cube)
 			{
@@ -104,7 +104,7 @@ namespace maple
 				info.members                        = descriptor.members;
 				uniformBuffersData[descriptor.name] = info;
 			}
-			else if (descriptor.type == DescriptorType::Buffer) 
+			else if (descriptor.type == DescriptorType::Buffer)
 			{
 				for (uint32_t frame = 0; frame < framesInFlight; frame++)
 				{
@@ -112,7 +112,7 @@ namespace maple
 				}
 
 				SSBOInfo info;
-				info.localStorage = {};
+				info.localStorage  = {};
 				info.hasUpdated[0] = false;
 				info.hasUpdated[1] = false;
 				info.hasUpdated[2] = false;
@@ -136,15 +136,15 @@ namespace maple
 		PROFILE_FUNCTION();
 	}
 
-	auto VulkanDescriptorSet::update(const CommandBuffer* commandBuffer) -> void
+	auto VulkanDescriptorSet::update(const CommandBuffer *commandBuffer) -> void
 	{
 		PROFILE_FUNCTION();
 
 		dynamic = false;
 
-		int32_t  descriptorWritesCount = 0;
+		int32_t descriptorWritesCount = 0;
 
-		const auto vkCmd = static_cast<const VulkanCommandBuffer*>(commandBuffer);
+		const auto vkCmd = static_cast<const VulkanCommandBuffer *>(commandBuffer);
 
 		auto compute = vkCmd->getCommandBuffeType() == CommandBufferType::Compute;
 
@@ -181,14 +181,12 @@ namespace maple
 							if (imageInfo.textures[i])
 							{
 								transitionImageLayout(
-									commandBuffer,imageInfo.textures[i].get(), 
-									imageInfo.type == DescriptorType::ImageSampler,
-									imageInfo.mipmapLevel
-								);
+								    commandBuffer, imageInfo.textures[i].get(),
+								    imageInfo.type == DescriptorType::ImageSampler,
+								    imageInfo.mipmapLevel);
 
-								const auto &des = *static_cast<VkDescriptorImageInfo *>(imageInfo.textures[i]->getDescriptorInfo(
-									imageInfo.mipmapLevel, imageInfo.format
-								));
+								const auto &des               = *static_cast<VkDescriptorImageInfo *>(imageInfo.textures[i]->getDescriptorInfo(
+                                    imageInfo.mipmapLevel, imageInfo.format));
 								imageInfoPool[i + imageIndex] = des;
 								validCount++;
 							}
@@ -231,7 +229,6 @@ namespace maple
 					writeDescriptorSetPool[descriptorWritesCount] = writeDescriptorSet;
 					index++;
 					descriptorWritesCount++;
-				
 				}
 				else if (imageInfo.type == DescriptorType::Buffer)
 				{
@@ -239,14 +236,14 @@ namespace maple
 
 					bufferInfoPool[index].buffer = buffer->getHandle();
 					bufferInfoPool[index].offset = imageInfo.offset;
-					bufferInfoPool[index].range = imageInfo.size;
+					bufferInfoPool[index].range  = imageInfo.size;
 
 					VkWriteDescriptorSet writeDescriptorSet{};
-					writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-					writeDescriptorSet.dstSet = descriptorSet[currentFrame];
-					writeDescriptorSet.descriptorType = VkConverter::descriptorTypeToVK(imageInfo.type);
-					writeDescriptorSet.dstBinding = imageInfo.binding;
-					writeDescriptorSet.pBufferInfo = &bufferInfoPool[index];
+					writeDescriptorSet.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+					writeDescriptorSet.dstSet          = descriptorSet[currentFrame];
+					writeDescriptorSet.descriptorType  = VkConverter::descriptorTypeToVK(imageInfo.type);
+					writeDescriptorSet.dstBinding      = imageInfo.binding;
+					writeDescriptorSet.pBufferInfo     = &bufferInfoPool[index];
 					writeDescriptorSet.descriptorCount = 1;
 
 					writeDescriptorSetPool[descriptorWritesCount] = writeDescriptorSet;
@@ -269,14 +266,13 @@ namespace maple
 	{
 		for (auto &descriptor : descriptors)
 		{
-			if ( (descriptor.type == DescriptorType::ImageSampler || descriptor.type == DescriptorType::Image)
-				&& descriptor.name == name)
+			if ((descriptor.type == DescriptorType::ImageSampler || descriptor.type == DescriptorType::Image) && descriptor.name == name)
 			{
-				descriptor.textures = textures;
+				descriptor.textures    = textures;
 				descriptor.mipmapLevel = mipLevel;
-				descriptorDirty[0]  = true;
-				descriptorDirty[1]  = true;
-				descriptorDirty[2]  = true;
+				descriptorDirty[0]     = true;
+				descriptorDirty[1]     = true;
+				descriptorDirty[2]     = true;
 			}
 		}
 	}
@@ -284,7 +280,7 @@ namespace maple
 	auto VulkanDescriptorSet::setTexture(const std::string &name, const std::shared_ptr<Texture> &texture, int32_t mipLevel) -> void
 	{
 		PROFILE_FUNCTION();
-		setTexture(name, std::vector<std::shared_ptr<Texture>>{texture},mipLevel);
+		setTexture(name, std::vector<std::shared_ptr<Texture>>{texture}, mipLevel);
 	}
 
 	auto VulkanDescriptorSet::setBuffer(const std::string &name, const std::shared_ptr<UniformBuffer> &buffer) -> void
@@ -352,7 +348,7 @@ namespace maple
 		LOGW("Uniform not found {0}.{1}", bufferName);
 	}
 
-	auto VulkanDescriptorSet::setSSBO(const std::string& name, uint32_t size, const void* data) -> void
+	auto VulkanDescriptorSet::setSSBO(const std::string &name, uint32_t size, const void *data) -> void
 	{
 		PROFILE_FUNCTION();
 

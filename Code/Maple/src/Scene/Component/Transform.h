@@ -4,10 +4,10 @@
 #pragma once
 
 #include "Engine/Core.h"
+#include <entt/entt.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <vector>
-#include <entt/entt.hpp>
 
 namespace maple
 {
@@ -42,7 +42,7 @@ namespace maple
 
 			auto lookAt(const glm::vec3 &target) -> void;
 
-			inline auto &getWorldMatrix() const 
+			inline auto &getWorldMatrix() const
 			{
 				return worldMatrix;
 			}
@@ -147,8 +147,8 @@ namespace maple
 	{
 		struct SceneTransformChanged
 		{
-			bool dirty = true;
+			bool                      dirty = true;
 			std::vector<entt::entity> entities;
 		};
-	}
+	}        // namespace global::component
 };           // namespace maple

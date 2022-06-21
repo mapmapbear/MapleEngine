@@ -4,18 +4,18 @@
 #include "RenderGraph.h"
 #include "Application.h"
 #include "Engine/Camera.h"
+#include "Engine/CaptureGraph.h"
 #include "Engine/GBuffer.h"
+#include "Engine/LPVGI/LPVIndirectLighting.h"
+#include "Engine/LPVGI/LightPropagationVolume.h"
+#include "Engine/LPVGI/ReflectiveShadowMap.h"
 #include "Engine/Material.h"
 #include "Engine/Mesh.h"
 #include "Engine/Profiler.h"
 #include "Engine/Quad2D.h"
-#include "Engine/Vertex.h"
-#include "Engine/CaptureGraph.h"
-#include "Engine/LPVGI/LightPropagationVolume.h"
-#include "Engine/LPVGI/LPVIndirectLighting.h"
-#include "Engine/LPVGI/ReflectiveShadowMap.h"
-#include "Engine/VXGI/Voxelization.h"
 #include "Engine/VXGI/DrawVoxel.h"
+#include "Engine/VXGI/Voxelization.h"
+#include "Engine/Vertex.h"
 
 #include "RHI/CommandBuffer.h"
 #include "RHI/GPUProfile.h"
@@ -38,57 +38,55 @@
 #include "CloudRenderer.h"
 #include "DeferredOffScreenRenderer.h"
 
+#include "FinalPass.h"
+#include "GeometryRenderer.h"
+#include "GridRenderer.h"
 #include "PostProcessRenderer.h"
 #include "Renderer2D.h"
 #include "RendererData.h"
-#include "SkyboxRenderer.h"
-#include "GridRenderer.h"
-#include "GeometryRenderer.h"
-#include "FinalPass.h"
 #include "ShadowRenderer.h"
+#include "SkyboxRenderer.h"
 
-#include "Others/Randomizer.h"
 #include "ImGui/ImGuiHelpers.h"
+#include "Others/Randomizer.h"
 
 #include <ecs/ecs.h>
 
 namespace maple
 {
-	namespace on_begin_renderer 
+	namespace on_begin_renderer
 	{
-		using Entity = ecs::Registry
-			::Fetch<component::RendererData>
-			::To<ecs::Entity>;
+		using Entity = ecs::Registry ::Fetch<component::RendererData>::To<ecs::Entity>;
 
 		inline auto system(Entity entity, ecs::World world)
 		{
 			auto [renderer] = entity;
 			if (renderer.gbuffer == nullptr)
 				return;
-			auto        renderTargert = renderer.gbuffer->getBuffer(GBufferTextures::SCREEN);
+			auto renderTargert = renderer.gbuffer->getBuffer(GBufferTextures::SCREEN);
 
-			Application::getRenderDevice()->clearRenderTarget(renderer.gbuffer->getDepthBuffer(), renderer.commandBuffer, { 0, 0, 0, 0 });
+			Application::getRenderDevice()->clearRenderTarget(renderer.gbuffer->getDepthBuffer(), renderer.commandBuffer, {0, 0, 0, 0});
 			Application::getRenderDevice()->clearRenderTarget(renderTargert, renderer.commandBuffer);
 
-			Application::getRenderDevice()->clearRenderTarget(renderer.gbuffer->getBuffer(GBufferTextures::COLOR), renderer.commandBuffer, { 0, 0, 0, 0 });
-			Application::getRenderDevice()->clearRenderTarget(renderer.gbuffer->getBuffer(GBufferTextures::POSITION), renderer.commandBuffer, { 0, 0, 0, 0 });
-			Application::getRenderDevice()->clearRenderTarget(renderer.gbuffer->getBuffer(GBufferTextures::NORMALS), renderer.commandBuffer, { 0, 0, 0, 0 });
-			Application::getRenderDevice()->clearRenderTarget(renderer.gbuffer->getBuffer(GBufferTextures::PBR), renderer.commandBuffer, { 0, 0, 0, 0 });
+			Application::getRenderDevice()->clearRenderTarget(renderer.gbuffer->getBuffer(GBufferTextures::COLOR), renderer.commandBuffer, {0, 0, 0, 0});
+			Application::getRenderDevice()->clearRenderTarget(renderer.gbuffer->getBuffer(GBufferTextures::POSITION), renderer.commandBuffer, {0, 0, 0, 0});
+			Application::getRenderDevice()->clearRenderTarget(renderer.gbuffer->getBuffer(GBufferTextures::NORMALS), renderer.commandBuffer, {0, 0, 0, 0});
+			Application::getRenderDevice()->clearRenderTarget(renderer.gbuffer->getBuffer(GBufferTextures::PBR), renderer.commandBuffer, {0, 0, 0, 0});
 
-			Application::getRenderDevice()->clearRenderTarget(renderer.gbuffer->getBuffer(GBufferTextures::VIEW_POSITION), renderer.commandBuffer, { 0, 0, 0, 0 });
-			Application::getRenderDevice()->clearRenderTarget(renderer.gbuffer->getBuffer(GBufferTextures::VIEW_NORMALS), renderer.commandBuffer, { 0, 0, 0, 0 });
-			Application::getRenderDevice()->clearRenderTarget(renderer.gbuffer->getBuffer(GBufferTextures::VELOCITY), renderer.commandBuffer, { 0, 0, 0, 0 });
+			Application::getRenderDevice()->clearRenderTarget(renderer.gbuffer->getBuffer(GBufferTextures::VIEW_POSITION), renderer.commandBuffer, {0, 0, 0, 0});
+			Application::getRenderDevice()->clearRenderTarget(renderer.gbuffer->getBuffer(GBufferTextures::VIEW_NORMALS), renderer.commandBuffer, {0, 0, 0, 0});
+			Application::getRenderDevice()->clearRenderTarget(renderer.gbuffer->getBuffer(GBufferTextures::VELOCITY), renderer.commandBuffer, {0, 0, 0, 0});
 		}
-	}
+	}        // namespace on_begin_renderer
 
 	auto RenderGraph::init(uint32_t width, uint32_t height) -> void
 	{
 		auto executePoint = Application::getExecutePoint();
-		gBuffer = std::make_shared<GBuffer>(width, height);
-		executePoint->registerGlobalComponent<component::RendererData>([&, width,height](component::RendererData& data) {
+		gBuffer           = std::make_shared<GBuffer>(width, height);
+		executePoint->registerGlobalComponent<component::RendererData>([&, width, height](component::RendererData &data) {
 			data.screenQuad = Mesh::createQuad(true);
-			data.unitCube = TextureCube::create(1);
-			data.gbuffer = gBuffer.get();
+			data.unitCube   = TextureCube::create(1);
+			data.gbuffer    = gBuffer.get();
 		});
 		executePoint->registerGlobalComponent<capture_graph::component::RenderGraph>();
 		executePoint->registerGlobalComponent<component::CameraView>();
@@ -107,10 +105,10 @@ namespace maple
 		post_process::registerSSAOPass(beginQ, renderQ, executePoint);
 		vxgi::registerVXGIIndirectLighting(renderQ, executePoint);
 		deferred_lighting::registerDeferredLighting(beginQ, renderQ, executePoint);
-		atmosphere_pass::registerAtmosphere(beginQ,renderQ, executePoint);
+		atmosphere_pass::registerAtmosphere(beginQ, renderQ, executePoint);
 		skybox_renderer::registerSkyboxRenderer(beginQ, renderQ, executePoint);
 		cloud_renderer::registerCloudRenderer(beginQ, renderQ, executePoint);
-		render2d::registerRenderer2D(beginQ,renderQ, executePoint);
+		render2d::registerRenderer2D(beginQ, renderQ, executePoint);
 		post_process::registerSSR(renderQ, executePoint);
 		grid_renderer::registerGridRenderer(beginQ, renderQ, executePoint);
 		geometry_renderer::registerGeometryRenderer(beginQ, renderQ, executePoint);
@@ -119,7 +117,7 @@ namespace maple
 		vxgi::registerVoxelizer(beginQ, renderQ, executePoint);
 		final_screen_pass::registerFinalPass(renderQ, executePoint);
 
-//############################################################################
+		//############################################################################
 		cloud_renderer::registerComputeCloud(renderQ, executePoint);
 		vxgi::registerUpdateRadiace(renderQ, executePoint);
 		light_propagation_volume::registerLPV(beginQ, renderQ, executePoint);
@@ -137,15 +135,15 @@ namespace maple
 			return;
 		}
 
-		auto& cameraView = Application::getExecutePoint()->getGlobalComponent<component::CameraView>();
-		cameraView.proj = camera.first->getProjectionMatrix();
-		cameraView.view = camera.second->getWorldMatrixInverse();
-		cameraView.projView = cameraView.proj * cameraView.view;
-		cameraView.nearPlane = camera.first->getNear();
-		cameraView.farPlane = camera.first->getFar();
-		cameraView.frustum = camera.first->getFrustum(cameraView.view);
+		auto &cameraView           = Application::getExecutePoint()->getGlobalComponent<component::CameraView>();
+		cameraView.proj            = camera.first->getProjectionMatrix();
+		cameraView.view            = camera.second->getWorldMatrixInverse();
+		cameraView.projView        = cameraView.proj * cameraView.view;
+		cameraView.nearPlane       = camera.first->getNear();
+		cameraView.farPlane        = camera.first->getFar();
+		cameraView.frustum         = camera.first->getFrustum(cameraView.view);
 		cameraView.cameraTransform = camera.second;
-		cameraView.fov = camera.first->getFov();
+		cameraView.fov             = camera.first->getFov();
 	}
 
 	auto RenderGraph::beginPreviewScene(Scene *scene) -> void
@@ -155,7 +153,7 @@ namespace maple
 			return;
 		}
 
-/*
+		/*
 		auto camera = scene->getCamera();
 		if (camera.first == nullptr || camera.second == nullptr)
 		{
@@ -233,7 +231,7 @@ namespace maple
 
 	auto RenderGraph::executePreviewPasss() -> void
 	{
-	/*	PROFILE_FUNCTION();
+		/*	PROFILE_FUNCTION();
 		previewData->descriporSets[2]->update();
 
 		auto commandBuffer = getCommandBuffer();
@@ -289,10 +287,10 @@ namespace maple
 	auto RenderGraph::onUpdate(const Timestep &step, Scene *scene) -> void
 	{
 		PROFILE_FUNCTION();
-		auto& renderData =	Application::getExecutePoint()->getGlobalComponent<component::RendererData>();
-		auto& winSize =		Application::getExecutePoint()->getGlobalComponent<component::WindowSize>();
-		winSize.height = screenBufferHeight;
-		winSize.width = screenBufferWidth;
+		auto &renderData         = Application::getExecutePoint()->getGlobalComponent<component::RendererData>();
+		auto &winSize            = Application::getExecutePoint()->getGlobalComponent<component::WindowSize>();
+		winSize.height           = screenBufferHeight;
+		winSize.width            = screenBufferWidth;
 		renderData.commandBuffer = Application::getGraphicsContext()->getSwapChain()->getCurrentCommandBuffer();
 		//renderData.commandBuffer = Application::getGraphicsContext()->getSwapChain()->getComputeCmdBuffer();
 		renderData.renderDevice = Application::getRenderDevice().get();
@@ -303,13 +301,13 @@ namespace maple
 		PROFILE_FUNCTION();
 		setScreenBufferSize(width, height);
 		auto cmd = Application::getGraphicsContext()->getSwapChain()->getCurrentCommandBuffer();
-		if (cmd != nullptr) 
+		if (cmd != nullptr)
 		{
-			cmd->addTask([&,width,height](const CommandBuffer * command) {
+			cmd->addTask([&, width, height](const CommandBuffer *command) {
 				gBuffer->resize(width, height, command);
 			});
 		}
-		else 
+		else
 		{
 			gBuffer->resize(width, height, cmd);
 		}
@@ -320,7 +318,7 @@ namespace maple
 		PROFILE_FUNCTION();
 	}
 
-	auto RenderGraph::setRenderTarget(Scene* scene, const std::shared_ptr<Texture> &texture, bool rebuildFramebuffer) -> void
+	auto RenderGraph::setRenderTarget(Scene *scene, const std::shared_ptr<Texture> &texture, bool rebuildFramebuffer) -> void
 	{
 		PROFILE_FUNCTION();
 		Application::getExecutePoint()->getGlobalComponent<component::FinalPass>().renderTarget = texture;

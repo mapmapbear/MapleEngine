@@ -38,7 +38,8 @@ namespace maple
 		maple::clearError();                         \
 		x;                                           \
 		if (!maple::logCall(#x, __FILE__, __LINE__)) \
-			{}//__debugbreak();
+		{                                            \
+		}        //__debugbreak();
 #else
 #	define GLCall(x) x
 #endif

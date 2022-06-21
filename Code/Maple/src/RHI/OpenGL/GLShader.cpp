@@ -43,18 +43,18 @@ namespace maple
 				case spirv_cross::SPIRType::Int:
 					switch (type.vecsize)
 					{
-					case 1:
-						layout.push<int32_t>(name, location);
-						break;
-					case 2:
-						layout.push<glm::ivec2>(name, location);
-						break;
-					case 3:
-						layout.push<glm::ivec3>(name, location);
-						break;
-					case 4:
-						layout.push<glm::ivec4>(name, location);
-						break;
+						case 1:
+							layout.push<int32_t>(name, location);
+							break;
+						case 2:
+							layout.push<glm::ivec2>(name, location);
+							break;
+						case 3:
+							layout.push<glm::ivec3>(name, location);
+							break;
+						case 4:
+							layout.push<glm::ivec4>(name, location);
+							break;
 					}
 					break;
 				case spirv_cross::SPIRType::Double:
@@ -104,7 +104,9 @@ namespace maple
 	};
 
 	GLShader::GLShader(const std::string &filePath, bool loadSPV) :
-	    loadSPV(loadSPV), name(StringUtils::getFileName(filePath)), filePath(filePath)
+	    loadSPV(loadSPV),
+	    name(StringUtils::getFileName(filePath)),
+	    filePath(filePath)
 	{
 		reload();
 	}
@@ -546,7 +548,7 @@ namespace maple
 				auto &member    = pushConst.members.emplace_back();
 				member.size     = (uint32_t) size;
 				member.offset   = offset;
-				member.type     = spirvTypeToDataType(type,size);
+				member.type     = spirvTypeToDataType(type, size);
 				member.fullName = uniformName;
 				member.name     = memberName;
 			}

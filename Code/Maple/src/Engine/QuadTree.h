@@ -287,7 +287,12 @@ namespace maple
 			K bottom;
 
 			Node(const V &v, K p, K l, K r, K t, K b) :
-			    value(v), parent(p), left(l), right(r), top(t), bottom(b)
+			    value(v),
+			    parent(p),
+			    left(l),
+			    right(r),
+			    top(t),
+			    bottom(b)
 			{
 			}
 

@@ -9,11 +9,11 @@
 namespace maple
 {
 	class MonoScript;
-	namespace component 
+	namespace component
 	{
-		struct MonoComponent 
+		struct MonoComponent
 		{
 			std::unordered_map<std::string, std::shared_ptr<maple::MonoScript>> scripts;
 		};
-	}
-};        // namespace maple
+	}        // namespace component
+};           // namespace maple

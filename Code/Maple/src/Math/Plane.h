@@ -11,12 +11,14 @@ namespace maple
 	{
 	  public:
 		inline constexpr Plane() :
-		    normal(0.0f, 1.0f, 0.0f), distance(0)
+		    normal(0.0f, 1.0f, 0.0f),
+		    distance(0)
 		{
 		}
 
 		inline Plane(const glm::vec3 &normal, float distance) :
-		    normal(normal), distance(distance)
+		    normal(normal),
+		    distance(distance)
 		{
 		}
 
@@ -138,7 +140,7 @@ namespace maple
 
 		inline operator glm::vec4() const
 		{
-			return {normal,distance};
+			return {normal, distance};
 		}
 
 	  private:

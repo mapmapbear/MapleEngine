@@ -4,23 +4,22 @@
 //////////////////////////////////////////////////////////////////////////////
 #include "MapleMonoMethod.h"
 #include "MapleMonoClass.h"
-#include "Others/Console.h"
+#include "MapleMonoField.h"
 #include "MonoHelper.h"
 #include "MonoVirtualMachine.h"
-#include "MapleMonoField.h"
+#include "Others/Console.h"
 
 namespace maple
 {
-	MapleMonoMethod::MapleMonoMethod(MonoMethod* method)
-		:method(method)
+	MapleMonoMethod::MapleMonoMethod(MonoMethod *method) :
+	    method(method)
 	{
-
 	}
 	auto MapleMonoMethod::cacheSignature() const -> void
 	{
-		MonoMethodSignature* methodSignature = mono_method_signature(method);
+		MonoMethodSignature *methodSignature = mono_method_signature(method);
 
-		MonoType* returnType = mono_signature_get_return_type(methodSignature);
+		MonoType *returnType = mono_signature_get_return_type(methodSignature);
 		if (returnType != nullptr)
 		{
 			auto returnClass = mono_class_from_mono_type(returnType);
@@ -28,7 +27,7 @@ namespace maple
 				cachedReturnType = MonoVirtualMachine::get()->findClass(returnClass);
 		}
 
-		cachedNumParameters = (uint32_t)mono_signature_get_param_count(methodSignature);
+		cachedNumParameters = (uint32_t) mono_signature_get_param_count(methodSignature);
 		if (!cachedParameters.empty())
 		{
 			cachedParameters.clear();
@@ -38,16 +37,16 @@ namespace maple
 		{
 			cachedParameters.resize(cachedNumParameters);
 
-			void* iter = nullptr;
+			void *iter = nullptr;
 			for (auto i = 0; i < cachedNumParameters; i++)
 			{
-				auto curParamType = mono_signature_get_params(methodSignature, &iter);
-				auto rawClass = mono_class_from_mono_type(curParamType);
+				auto curParamType   = mono_signature_get_params(methodSignature, &iter);
+				auto rawClass       = mono_class_from_mono_type(curParamType);
 				cachedParameters[i] = MonoVirtualMachine::get()->findClass(rawClass);
 			}
 		}
 
-		_static = !mono_signature_is_instance(methodSignature);
+		_static            = !mono_signature_is_instance(methodSignature);
 		hasCachedSignature = true;
 	}
 
@@ -55,25 +54,25 @@ namespace maple
 	{
 		cachedParameters.clear();
 	}
-	auto MapleMonoMethod::invoke(MonoObject* instance, void** params) -> MonoObject*
+	auto MapleMonoMethod::invoke(MonoObject *instance, void **params) -> MonoObject *
 	{
-		MonoObject* exception = nullptr;
-		auto retVal = mono_runtime_invoke(method, instance, params, &exception);
+		MonoObject *exception = nullptr;
+		auto        retVal    = mono_runtime_invoke(method, instance, params, &exception);
 
 		MonoHelper::throwIfException(exception);
 		return retVal;
 	}
-	auto MapleMonoMethod::invokeVirtual(MonoObject* instance, void** params) -> MonoObject*
+	auto MapleMonoMethod::invokeVirtual(MonoObject *instance, void **params) -> MonoObject *
 	{
 		auto virtualMethod = mono_object_get_virtual_method(instance, method);
 
-		MonoObject* exception = nullptr;
-		auto retVal = mono_runtime_invoke(virtualMethod, instance, params, &exception);
+		MonoObject *exception = nullptr;
+		auto        retVal    = mono_runtime_invoke(virtualMethod, instance, params, &exception);
 
 		MonoHelper::throwIfException(exception);
 		return retVal;
 	}
-	auto MapleMonoMethod::getThunk() const -> void*
+	auto MapleMonoMethod::getThunk() const -> void *
 	{
 		return mono_method_get_unmanaged_thunk(method);
 	}
@@ -97,7 +96,7 @@ namespace maple
 	}
 	auto MapleMonoMethod::getParameterType(uint32_t paramIdx) const -> std::shared_ptr<MapleMonoClass>
 	{
-		if(!hasCachedSignature)
+		if (!hasCachedSignature)
 			cacheSignature();
 
 		if (paramIdx >= cachedNumParameters)
@@ -113,20 +112,20 @@ namespace maple
 	}
 	auto MapleMonoMethod::hasAttribute(std::shared_ptr<MapleMonoClass> monoClass) const -> bool
 	{
-		MonoCustomAttrInfo* attrInfo = mono_custom_attrs_from_method(method);
+		MonoCustomAttrInfo *attrInfo = mono_custom_attrs_from_method(method);
 		if (attrInfo == nullptr)
 			return false;
 		bool hasAttr = mono_custom_attrs_has_attr(attrInfo, monoClass->getInternalClass()) != 0;
 		mono_custom_attrs_free(attrInfo);
 		return hasAttr;
 	}
-	auto MapleMonoMethod::getAttribute(std::shared_ptr<MapleMonoClass> monoClass) const -> MonoObject*
+	auto MapleMonoMethod::getAttribute(std::shared_ptr<MapleMonoClass> monoClass) const -> MonoObject *
 	{
-		MonoCustomAttrInfo* attrInfo = mono_custom_attrs_from_method(method);
+		MonoCustomAttrInfo *attrInfo = mono_custom_attrs_from_method(method);
 		if (attrInfo == nullptr)
 			return nullptr;
 
-		MonoObject* foundAttr = nullptr;
+		MonoObject *foundAttr = nullptr;
 		if (mono_custom_attrs_has_attr(attrInfo, monoClass->getInternalClass()))
 			foundAttr = mono_custom_attrs_get_attr(attrInfo, monoClass->getInternalClass());
 
@@ -152,4 +151,4 @@ namespace maple
 		return MonoMemberVisibility::Private;
 	}
 
-};
+};        // namespace maple

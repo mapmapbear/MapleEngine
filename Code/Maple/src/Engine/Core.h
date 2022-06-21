@@ -11,13 +11,13 @@
 #include <unordered_map>
 #include <vector>
 
-#define MAPLE_ASSERT(condition, ...)                     \
-	{                                                    \
-		if (!(condition))                                \
-		{                                                \
-			LOGE("Assertion Failed : {0} . {1} : {2}", __VA_ARGS__, __FUNCTION__,__LINE__); \
-			__debugbreak();                              \
-		}                                                \
+#define MAPLE_ASSERT(condition, ...)                                                         \
+	{                                                                                        \
+		if (!(condition))                                                                    \
+		{                                                                                    \
+			LOGE("Assertion Failed : {0} . {1} : {2}", __VA_ARGS__, __FUNCTION__, __LINE__); \
+			__debugbreak();                                                                  \
+		}                                                                                    \
 	}
 
 #ifdef PLATFORM_WINDOWS
@@ -44,9 +44,8 @@
 
 #define BIT(x) (1 << x)
 
-
-#define NO_COPYABLE(TypeName) \
-	TypeName(const TypeName &) = delete;   \
-	TypeName(TypeName &&) = delete;	\
-	TypeName& operator=(TypeName &&) = delete;	\
-	TypeName& operator=(const TypeName &) = delete
+#define NO_COPYABLE(TypeName)                  \
+	TypeName(const TypeName &) = delete;       \
+	TypeName(TypeName &&)      = delete;       \
+	TypeName &operator=(TypeName &&) = delete; \
+	TypeName &operator=(const TypeName &) = delete

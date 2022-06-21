@@ -1,41 +1,41 @@
 //////////////////////////////////////////////////////////////////////////////
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
+#include <filesystem>
+#include <fstream>
 #include <imgui.h>
 #include <imgui_internal.h>
-#include <fstream>
-#include <filesystem>
 
 #include "IconsMaterialDesignIcons.h"
+#include "ImGui/ImGuiHelpers.h"
 #include "LuaComponent.h"
 #include "LuaVirtualMachine.h"
-#include "ImGui/ImGuiHelpers.h"
-#include "Scene/Entity/Entity.h"
-#include "Others/StringUtils.h"
 #include "Others/Console.h"
+#include "Others/StringUtils.h"
+#include "Scene/Entity/Entity.h"
 
 #include "Engine/Camera.h"
 
 #include "Application.h"
 
-namespace maple 
+namespace maple
 {
 	namespace component
 	{
-		LuaComponent::LuaComponent(const std::string& file, Scene* initScene)
-			:scene(initScene), file(file)
+		LuaComponent::LuaComponent(const std::string &file, Scene *initScene) :
+		    scene(initScene),
+		    file(file)
 		{
 			table = nullptr;
 			init();
 		}
 
-
-		auto LuaComponent::saveNewFile(const std::string& clazzName) -> void
+		auto LuaComponent::saveNewFile(const std::string &clazzName) -> void
 		{
 			std::string newPath = "scripts/";
 
 			std::string defaultScript =
-				R"(
+			    R"(
 
 #name = {}
 
@@ -61,13 +61,11 @@ return #name
 			reload();
 		}
 
-
-		auto LuaComponent::setFilePath(const std::string& fileName) -> void
+		auto LuaComponent::setFilePath(const std::string &fileName) -> void
 		{
-			file = fileName;
+			file      = fileName;
 			className = StringUtils::removeExtension(StringUtils::getFileName(file));
 		}
-
 
 		auto LuaComponent::init() -> void
 		{
@@ -77,12 +75,10 @@ return #name
 
 		LuaComponent::LuaComponent()
 		{
-
 		}
 
 		LuaComponent::~LuaComponent()
 		{
-
 		}
 
 		auto LuaComponent::onInit() -> void
@@ -99,7 +95,7 @@ return #name
 				{
 					(*onInitFunc)(*table);
 				}
-				catch (const std::exception& e)
+				catch (const std::exception &e)
 				{
 					LOGE("{0}", e.what());
 				}
@@ -107,14 +103,14 @@ return #name
 			}
 		}
 
-		auto LuaComponent::reload()  -> void
+		auto LuaComponent::reload() -> void
 		{
 			loadScript();
 		}
 
 		auto LuaComponent::loadScript() -> void
 		{
-			auto& vm = Application::get()->getLuaVirtualMachine();
+			auto &vm = Application::get()->getLuaVirtualMachine();
 			luaL_dofile(vm->getState(), file.c_str());
 			try
 			{
@@ -122,11 +118,11 @@ return #name
 
 				table = std::make_shared<luabridge::LuaRef>((*table)["new"]());
 
-				onInitFunc = std::make_shared<luabridge::LuaRef>((*table)["OnInit"]);
+				onInitFunc   = std::make_shared<luabridge::LuaRef>((*table)["OnInit"]);
 				onUpdateFunc = std::make_shared<luabridge::LuaRef>((*table)["OnUpdate"]);
 				//(*table)["entity"] = getEntity();
 			}
-			catch (const std::exception& e)
+			catch (const std::exception &e)
 			{
 				LOGE("{0}", e.what());
 			}
@@ -141,11 +137,12 @@ return #name
 			static char modelName[255] = {};
 			if (table && table->isTable())
 			{
-				for (auto&& pair : luabridge::pairs(*table))
+				for (auto &&pair : luabridge::pairs(*table))
 				{
 					auto name = pair.first.tostring();
 
-					if (name == "__cname" || name == "__index") {
+					if (name == "__cname" || name == "__index")
+					{
 						continue;
 					}
 
@@ -193,7 +190,6 @@ return #name
 						}
 						catch (...)
 						{
-
 						}
 
 						ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(ImColor(200, 200, 200)));
@@ -202,13 +198,12 @@ return #name
 
 						ImGui::PopItemWidth();
 						ImGui::NextColumn();
-
 					}
 					else if (pair.second.isUserdata())
 					{
 						if (pair.second.isInstance<glm::vec2>())
 						{
-							glm::vec2* v = pair.second;
+							glm::vec2 *v = pair.second;
 
 							if (ImGuiHelper::property(pair.first.tostring(), *v))
 							{
@@ -216,7 +211,7 @@ return #name
 						}
 						else if (pair.second.isInstance<glm::vec3>())
 						{
-							glm::vec3* v = pair.second;
+							glm::vec3 *v = pair.second;
 
 							if (ImGuiHelper::property(pair.first.tostring(), *v))
 							{
@@ -224,7 +219,7 @@ return #name
 						}
 						else if (pair.second.isInstance<glm::vec4>())
 						{
-							glm::vec4* v = pair.second;
+							glm::vec4 *v = pair.second;
 
 							if (ImGuiHelper::property(pair.first.tostring(), *v))
 							{
@@ -232,20 +227,19 @@ return #name
 						}
 						else if ((pair.second.isInstance<Entity>() && name != "entity"))
 						{
-							Entity* v = pair.second;
+							Entity *v = pair.second;
 							if (v != nullptr && v->getHandle() != entt::null)
 							{
 								auto icon =
-									v->hasComponent<Camera>() ?
-									ICON_MDI_CAMERA :
-									v->hasComponent<LuaComponent>() ?
-									ICON_MDI_SCRIPT : ICON_MDI_CUBE
-									;
+								    v->hasComponent<Camera>() ?
+								        ICON_MDI_CAMERA :
+								        v->hasComponent<LuaComponent>() ?
+								        ICON_MDI_SCRIPT :
+								        ICON_MDI_CUBE;
 
 								auto entityName = icon + v->getComponent<NameComponent>().name;
 								memcpy(modelName, entityName.c_str(), entityName.length() + 1);
 							}
-
 
 							ImGui::TextUnformatted(name.c_str());
 							ImGui::NextColumn();
@@ -260,10 +254,10 @@ return #name
 							ImGui::PopItemWidth();
 							ImGui::NextColumn();
 
-							const ImGuiPayload* payload = ImGui::GetDragDropPayload();
+							const ImGuiPayload *payload = ImGui::GetDragDropPayload();
 							if (payload != NULL && payload->IsDataType("Drag_Entity"))
 							{
-								auto& entity = *reinterpret_cast<entt::entity*>(payload->Data);
+								auto &entity = *reinterpret_cast<entt::entity *>(payload->Data);
 
 								if (ImGui::BeginDragDropTarget())
 								{
@@ -282,12 +276,11 @@ return #name
 			ImGui::Columns(1);
 			ImGui::Separator();
 			ImGui::PopStyleVar();
-
 		}
 
 		auto LuaComponent::isLoaded() -> bool
 		{
 			return table != nullptr && !table->isNil();
 		}
-	}
-};
+	}        // namespace component
+};           // namespace maple

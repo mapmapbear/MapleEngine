@@ -21,7 +21,7 @@ namespace maple
 		VulkanDescriptorSet(const DescriptorInfo &info);
 		~VulkanDescriptorSet();
 		NO_COPYABLE(VulkanDescriptorSet);
-		auto update(const CommandBuffer* commandBuffer) -> void override;
+		auto update(const CommandBuffer *commandBuffer) -> void override;
 
 		inline auto setDynamicOffset(uint32_t offset) -> void override
 		{
@@ -46,11 +46,17 @@ namespace maple
 		auto setUniform(const std::string &bufferName, const std::string &uniformName, const void *data, bool dynamic) -> void override;
 		auto setUniform(const std::string &bufferName, const std::string &uniformName, const void *data, uint32_t size, bool dynamic) -> void override;
 		auto setUniformBufferData(const std::string &bufferName, const void *data) -> void override;
-		
-		inline auto getDescriptors() const -> const std::vector<Descriptor>& override { return descriptors; }
-		inline auto toIntID() const -> const uint64_t override { return (uint64_t)descriptorSet[currentFrame]; };
 
-		auto setSSBO(const std::string& name, uint32_t size, const void* data) -> void override;
+		inline auto getDescriptors() const -> const std::vector<Descriptor> & override
+		{
+			return descriptors;
+		}
+		inline auto toIntID() const -> const uint64_t override
+		{
+			return (uint64_t) descriptorSet[currentFrame];
+		};
+
+		auto setSSBO(const std::string &name, uint32_t size, const void *data) -> void override;
 
 	  private:
 		uint32_t dynamicOffset      = 0;
@@ -76,9 +82,9 @@ namespace maple
 
 		struct SSBOInfo
 		{
-			Buffer                        localStorage;
-			bool                          dynamic = false;
-			bool                          hasUpdated[10] = {};
+			Buffer localStorage;
+			bool   dynamic        = false;
+			bool   hasUpdated[10] = {};
 		};
 
 		std::vector<VkDescriptorSet>                                                 descriptorSet;
@@ -86,7 +92,7 @@ namespace maple
 		std::vector<std::unordered_map<std::string, std::shared_ptr<StorageBuffer>>> ssbos;
 
 		std::unordered_map<std::string, UniformBufferInfo> uniformBuffersData;
-		std::unordered_map<std::string, SSBOInfo> ssboData;
+		std::unordered_map<std::string, SSBOInfo>          ssboData;
 
 		uint32_t currentFrame = 0;
 	};

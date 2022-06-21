@@ -6,28 +6,27 @@
 #include "MapleMonoClass.h"
 #include "Others/Console.h"
 
-namespace maple 
+namespace maple
 {
-	MapleMonoObject::MapleMonoObject(MonoObject* rawPtr, MapleMonoClass* clazz)
-		:rawPtr(rawPtr), clazz(clazz)
+	MapleMonoObject::MapleMonoObject(MonoObject *rawPtr, MapleMonoClass *clazz) :
+	    rawPtr(rawPtr),
+	    clazz(clazz)
 	{
-
 	}
 
 	MapleMonoObject::~MapleMonoObject()
 	{
-	
 	}
 
-	auto MapleMonoObject::setValue(void* value, const std::string& name) -> void
+	auto MapleMonoObject::setValue(void *value, const std::string &name) -> void
 	{
-		if (MonoClassField* field = mono_class_get_field_from_name(clazz->clazz, name.c_str()))
+		if (MonoClassField *field = mono_class_get_field_from_name(clazz->clazz, name.c_str()))
 		{
 			mono_field_set_value(rawPtr, field, value);
 		}
-		else 
+		else
 		{
-			LOGE("Failed to setValue to {0}",name);
+			LOGE("Failed to setValue to {0}", name);
 		}
 	}
 
@@ -36,7 +35,4 @@ namespace maple
 		mono_runtime_object_init(rawPtr);
 	}
 
-};
-
-
-
+};        // namespace maple

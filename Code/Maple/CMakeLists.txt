@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.4.1)
 
 project(MapleEngine)
 
+
 get_filename_component(ENGINE_LIB_SRC_DIR
                        ${CMAKE_CURRENT_LIST_DIR}/lib
                        ABSOLUTE)
@@ -300,6 +301,8 @@ foreach(GLSL ${SHADERS_GLSL})
 endforeach(GLSL)
 
 add_custom_target(MapleShader DEPENDS ${SPIRV_BINARY_FILES})
+
+add_custom_target(Maple-Code-Format COMMAND D:/C++/LLVM/bin/clang-format.exe -i -style=file ${VK_APP_SRC})
 
 add_dependencies(MapleEngine MapleShader)
 	

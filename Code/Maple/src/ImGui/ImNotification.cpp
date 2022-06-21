@@ -2,10 +2,9 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 
-
 #include "ImNotification.h"
-#include <imgui_notify.h>
 #include <imgui.h>
+#include <imgui_notify.h>
 
 namespace maple
 {

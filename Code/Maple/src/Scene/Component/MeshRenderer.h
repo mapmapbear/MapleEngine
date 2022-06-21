@@ -21,45 +21,44 @@ namespace maple
 		class Transform;
 		enum class PrimitiveType : int32_t
 		{
-			Plane = 0,
-			Quad = 1,
-			Cube = 2,
-			Pyramid = 3,
-			Sphere = 4,
-			Capsule = 5,
+			Plane    = 0,
+			Quad     = 1,
+			Cube     = 2,
+			Pyramid  = 3,
+			Sphere   = 4,
+			Capsule  = 5,
 			Cylinder = 6,
-			Terrain = 7,
-			File = 8,
+			Terrain  = 7,
+			File     = 8,
 			Length
 		};
 
-		struct SkinnedMeshRenderer 
+		struct SkinnedMeshRenderer
 		{
-			bool castShadow = true;
+			bool        castShadow = true;
 			std::string meshName;
 			std::string filePath;
 
-			std::shared_ptr<Mesh> mesh;
-			std::shared_ptr<Skeleton> skeleton;
+			std::shared_ptr<Mesh>        mesh;
+			std::shared_ptr<Skeleton>    skeleton;
 			std::shared_ptr<glm::mat4[]> boneTransforms;
 		};
 
 		struct BoneComponent
 		{
-		public:
-
-			int32_t boneIndex;
-			Skeleton* skeleton;
+		  public:
+			int32_t   boneIndex;
+			Skeleton *skeleton;
 		};
 
 		struct MeshRenderer
 		{
-			bool castShadow = true;
-			bool active = true;
-			PrimitiveType type;
+			bool                  castShadow = true;
+			bool                  active     = true;
+			PrimitiveType         type;
 			std::shared_ptr<Mesh> mesh;
-			std::string meshName;
-			std::string filePath;
+			std::string           meshName;
+			std::string           filePath;
 		};
-	}
-};        // namespace maple
+	}        // namespace component
+};           // namespace maple

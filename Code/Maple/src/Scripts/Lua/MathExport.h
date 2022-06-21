@@ -4,16 +4,12 @@
 
 #pragma once
 
-
 struct lua_State;
 
-
-namespace maple 
+namespace maple
 {
-	namespace MathExport 
+	namespace MathExport
 	{
-		auto exportLua(lua_State* L) -> void;
+		auto exportLua(lua_State *L) -> void;
 	};
-};
-
-
+};        // namespace maple

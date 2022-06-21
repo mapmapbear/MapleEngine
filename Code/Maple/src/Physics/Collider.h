@@ -2,8 +2,8 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include <glm/glm.hpp>
 #include "Math/BoundingBox.h"
+#include <glm/glm.hpp>
 
 class btCollisionShape;
 
@@ -24,15 +24,15 @@ namespace maple
 		{
 			struct Collider
 			{
-				ColliderType type;
-				btCollisionShape* shape = nullptr;
-				BoundingBox box;
-				float radius;
-				float height;
+				ColliderType      type;
+				btCollisionShape *shape = nullptr;
+				BoundingBox       box;
+				float             radius;
+				float             height;
 
 				BoundingBox originalBox;
 			};
-		}
+		}        // namespace component
 
 		inline auto getNameByType(ColliderType type)
 		{
@@ -47,9 +47,9 @@ namespace maple
 				STR(ColliderType::CycleCollider);
 				STR(ColliderType::PolygonCollider);
 #undef STR
-			default:
-				return "UNKNOWN_ERROR";
+				default:
+					return "UNKNOWN_ERROR";
 			}
 		}
-	}
-}
+	}        // namespace physics
+}        // namespace maple

@@ -9,7 +9,7 @@ namespace maple
 {
 	static bool updateValue = true;
 
-	auto DescriptorSet::canUpdate() ->bool
+	auto DescriptorSet::canUpdate() -> bool
 	{
 		return updateValue;
 	}
@@ -18,4 +18,4 @@ namespace maple
 	{
 		updateValue = u;
 	}
-}
+}        // namespace maple

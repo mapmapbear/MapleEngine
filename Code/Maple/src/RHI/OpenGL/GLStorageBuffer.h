@@ -12,15 +12,16 @@ namespace maple
 
 	class GLStorageBuffer : public StorageBuffer
 	{
-	public:
+	  public:
 		GLStorageBuffer();
-		GLStorageBuffer(uint32_t size, const void* data);
+		GLStorageBuffer(uint32_t size, const void *data);
 		~GLStorageBuffer();
-		auto setData(uint32_t size, const void* data) -> void override;
-		auto bind(uint32_t slot) const-> void;
-		auto unbind() const-> void;
-	private:
+		auto setData(uint32_t size, const void *data) -> void override;
+		auto bind(uint32_t slot) const -> void;
+		auto unbind() const -> void;
+
+	  private:
 		uint32_t handle{};
 		uint32_t size = 0;
 	};
-}
+}        // namespace maple

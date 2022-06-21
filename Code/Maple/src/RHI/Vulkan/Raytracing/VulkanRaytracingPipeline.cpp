@@ -4,6 +4,7 @@
 
 #include "VulkanRaytracingPipeline.h"
 
+#include "RHI/Vulkan/VulkanBuffer.h"
 #include "RHI/Vulkan/VulkanCommandBuffer.h"
 #include "RHI/Vulkan/VulkanContext.h"
 #include "RHI/Vulkan/VulkanDescriptorSet.h"
@@ -13,10 +14,9 @@
 #include "RHI/Vulkan/VulkanShader.h"
 #include "RHI/Vulkan/VulkanSwapChain.h"
 #include "RHI/Vulkan/VulkanTexture.h"
-#include "RHI/Vulkan/VulkanBuffer.h"
 
-#include "ShaderBindingTable.h"
 #include "RayTracingProperties.h"
+#include "ShaderBindingTable.h"
 
 #include "Engine/Vertex.h"
 #include "Others/Console.h"
@@ -33,61 +33,62 @@ namespace maple
 		{
 			return (value + alignment - 1) & ~(alignment - 1);
 		}
-	}
+	}        // namespace
 
-	VulkanRaytracingPipeline::VulkanRaytracingPipeline(const PipelineInfo& info)
+	VulkanRaytracingPipeline::VulkanRaytracingPipeline(const PipelineInfo &info)
 	{
 		init(info);
 	}
 
-
-	auto VulkanRaytracingPipeline::init(const PipelineInfo& info) -> bool
+	auto VulkanRaytracingPipeline::init(const PipelineInfo &info) -> bool
 	{
 		PROFILE_FUNCTION();
-		shader = info.shader;
-		auto vkShader = std::static_pointer_cast<VulkanShader>(info.shader);
-		description = info;
+		shader         = info.shader;
+		auto vkShader  = std::static_pointer_cast<VulkanShader>(info.shader);
+		description    = info;
 		pipelineLayout = vkShader->getPipelineLayout();
 
-
-		std::vector<VkShaderModule> rayGens;
-		std::vector<VkShaderModule> missGens;
+		std::vector<VkShaderModule>                                             rayGens;
+		std::vector<VkShaderModule>                                             missGens;
 		std::vector<std::tuple<VkShaderModule, VkShaderModule, VkShaderModule>> hits;
 
 		int32_t idx = 0;
 
-		for (auto& stage : vkShader->getShaderStages())
+		for (auto &stage : vkShader->getShaderStages())
 		{
 			switch (stage.stage)
 			{
-			case VK_SHADER_STAGE_MISS_BIT_KHR:
-				missGens.emplace_back(stage.module);
+				case VK_SHADER_STAGE_MISS_BIT_KHR:
+					missGens.emplace_back(stage.module);
+					break;
+				case VK_SHADER_STAGE_RAYGEN_BIT_KHR:
+					rayGens.emplace_back(stage.module);
+					break;
+				case VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR:
+				{
+					if (idx++ == 0)
+						hits.emplace_back();
+
+					std::get<0>(hits.back()) = stage.module;
+				}
 				break;
-			case VK_SHADER_STAGE_RAYGEN_BIT_KHR:
-				rayGens.emplace_back(stage.module);
+
+				case VK_SHADER_STAGE_ANY_HIT_BIT_KHR:
+				{
+					if (idx++ == 0)
+						hits.emplace_back();
+
+					std::get<1>(hits.back()) = stage.module;
+				}
 				break;
-			case VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR:
-			{
-				if (idx++ == 0)
-					hits.emplace_back();
 
-				std::get<0>(hits.back()) = stage.module;
-			}break;
-
-			case VK_SHADER_STAGE_ANY_HIT_BIT_KHR:
-			{
-				if (idx++ == 0)
-					hits.emplace_back();
-
-				std::get<1>(hits.back()) = stage.module;
-			}break;
-
-			case VK_SHADER_STAGE_INTERSECTION_BIT_KHR:
-			{
-				if (idx++ == 0)
-					hits.emplace_back();
-				std::get<2>(hits.back()) = stage.module;
-			}break;
+				case VK_SHADER_STAGE_INTERSECTION_BIT_KHR:
+				{
+					if (idx++ == 0)
+						hits.emplace_back();
+					std::get<2>(hits.back()) = stage.module;
+				}
+				break;
 			}
 
 			if (idx == 3)
@@ -99,43 +100,41 @@ namespace maple
 		if (!rayGens.empty() || !missGens.empty() || !hits.empty())
 		{
 			rayTracingProperties = std::make_shared<RayTracingProperties>();
-			sbt = std::make_shared<ShaderBindingTable>(rayTracingProperties);
+			sbt                  = std::make_shared<ShaderBindingTable>(rayTracingProperties);
 			sbt->addShader(rayGens, missGens, hits);
 		}
 
-
 		VkRayTracingPipelineCreateInfoKHR pipelineCreateInfo = {};
-		pipelineCreateInfo.sType = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_KHR;
-		pipelineCreateInfo.pNext = nullptr;
-		pipelineCreateInfo.flags = 0;
-		
-		pipelineCreateInfo.pStages = sbt->getStages().data();
+		pipelineCreateInfo.sType                             = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_KHR;
+		pipelineCreateInfo.pNext                             = nullptr;
+		pipelineCreateInfo.flags                             = 0;
+
+		pipelineCreateInfo.pStages    = sbt->getStages().data();
 		pipelineCreateInfo.stageCount = sbt->getStages().size();
-		pipelineCreateInfo.pGroups = sbt->getGroups().data();
+		pipelineCreateInfo.pGroups    = sbt->getGroups().data();
 		pipelineCreateInfo.groupCount = sbt->getGroups().size();
 
 		pipelineCreateInfo.maxPipelineRayRecursionDepth = 1;
-		pipelineCreateInfo.layout = pipelineLayout;
-		pipelineCreateInfo.basePipelineHandle = nullptr;
-		pipelineCreateInfo.basePipelineIndex = 0;
+		pipelineCreateInfo.layout                       = pipelineLayout;
+		pipelineCreateInfo.basePipelineHandle           = nullptr;
+		pipelineCreateInfo.basePipelineIndex            = 0;
 
 		VK_CHECK_RESULT(vkCreateRayTracingPipelinesKHR(*VulkanDevice::get(), VK_NULL_HANDLE, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &pipeline));
-	
 
 		auto alignSize = alignedSize(rayTracingProperties->getShaderGroupHandleSize(), rayTracingProperties->getShaderGroupBaseAlignment());
 
 		const size_t groupCount = sbt->getGroups().size();
-		size_t sbtSize = groupCount * alignSize;
+		size_t       sbtSize    = groupCount * alignSize;
 
 		std::vector<uint8_t> mem(sbtSize);
 
 		VK_CHECK_RESULT(vkGetRayTracingShaderGroupHandlesKHR(
-			*VulkanDevice::get(),
-			pipeline,
-			0, 
-			static_cast<uint32_t>(groupCount),
-			sbtSize,
-			mem.data()));
+		    *VulkanDevice::get(),
+		    pipeline,
+		    0,
+		    static_cast<uint32_t>(groupCount),
+		    sbtSize,
+		    mem.data()));
 
 		buffer = std::make_shared<VulkanBuffer>(VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT, sbtSize, mem.data());
 		//TODO, I'm not sure if I should use alignment for Buffer.
@@ -144,12 +143,12 @@ namespace maple
 		return true;
 	}
 
-	auto VulkanRaytracingPipeline::bind(const CommandBuffer* cmdBuffer, uint32_t layer, int32_t cubeFace, int32_t mipMapLevel) -> FrameBuffer*
+	auto VulkanRaytracingPipeline::bind(const CommandBuffer *cmdBuffer, uint32_t layer, int32_t cubeFace, int32_t mipMapLevel) -> FrameBuffer *
 	{
 		PROFILE_FUNCTION();
-		vkCmdBindPipeline(static_cast<const VulkanCommandBuffer*>(cmdBuffer)->getCommandBuffer(), 
-			VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR,
-			pipeline);
+		vkCmdBindPipeline(static_cast<const VulkanCommandBuffer *>(cmdBuffer)->getCommandBuffer(),
+		                  VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR,
+		                  pipeline);
 		return nullptr;
 	}
 };        // namespace maple

@@ -5,8 +5,8 @@
 #include "Engine/Core.h"
 #include "Others/Console.h"
 #include <cstdint>
-#include <memory>
 #include <glm/glm.hpp>
+#include <memory>
 
 namespace maple
 {
@@ -16,12 +16,14 @@ namespace maple
 		uint32_t size;
 
 		Buffer() :
-		    data(nullptr), size(0)
+		    data(nullptr),
+		    size(0)
 		{
 		}
 
 		Buffer(void *data, uint32_t size) :
-		    data((uint8_t *) data), size(size)
+		    data((uint8_t *) data),
+		    size(size)
 		{
 		}
 
@@ -44,7 +46,7 @@ namespace maple
 			if (size == 0)
 				return;
 
-			data = new uint8_t[size];
+			data       = new uint8_t[size];
 			this->size = size;
 		}
 
@@ -108,25 +110,27 @@ namespace maple
 		}
 	};
 
-
 	class BinaryReader
 	{
-	private:
-		const uint8_t* data;
-		uint32_t size;
-		uint32_t offset;
-	public:
-		BinaryReader(const uint8_t* data, uint32_t size) :
-			data(data), size(size), offset(0)
+	  private:
+		const uint8_t *data;
+		uint32_t       size;
+		uint32_t       offset;
+
+	  public:
+		BinaryReader(const uint8_t *data, uint32_t size) :
+		    data(data),
+		    size(size),
+		    offset(0)
 		{
 		}
 
 		template <typename T>
-		inline auto& read()
+		inline auto &read()
 		{
 			MAPLE_ASSERT(offset + sizeof(T) <= this->size, "Index out of bounds");
 
-			T & t = *(T*)((uint8_t*)data + offset);
+			T &t = *(T *) ((uint8_t *) data + offset);
 			offset += sizeof(T);
 			return t;
 		}
@@ -136,8 +140,8 @@ namespace maple
 			MAPLE_ASSERT(offset + sizeof(glm::vec2) <= this->size, "Index out of bounds");
 
 			glm::vec2 vec = {};
-			vec.x = read<float>();
-			vec.y = read<float>();
+			vec.x         = read<float>();
+			vec.y         = read<float>();
 			return vec;
 		}
 
@@ -145,9 +149,9 @@ namespace maple
 		{
 			MAPLE_ASSERT(offset + sizeof(glm::vec3) <= this->size, "Index out of bounds");
 			glm::vec3 vec = {};
-			vec.x = read<float>();
-			vec.y = read<float>();
-			vec.z = read<float>();
+			vec.x         = read<float>();
+			vec.y         = read<float>();
+			vec.z         = read<float>();
 			return vec;
 		}
 
@@ -155,23 +159,23 @@ namespace maple
 		{
 			MAPLE_ASSERT(offset + sizeof(glm::vec4) <= this->size, "Index out of bounds");
 			glm::vec4 vec = {};
-			vec.x = read<float>();
-			vec.y = read<float>();
-			vec.z = read<float>();
-			vec.w = read<float>();
+			vec.x         = read<float>();
+			vec.y         = read<float>();
+			vec.z         = read<float>();
+			vec.w         = read<float>();
 			return vec;
 		}
 
 		inline auto readBytes(uint32_t size) -> std::unique_ptr<uint8_t[]>
 		{
 			MAPLE_ASSERT(offset + size <= this->size, "Index out of bounds");
-			uint8_t* buffer = new uint8_t[size];
-			memcpy(buffer, (uint8_t*)data + offset, size);
+			uint8_t *buffer = new uint8_t[size];
+			memcpy(buffer, (uint8_t *) data + offset, size);
 			offset += size;
 			return std::unique_ptr<uint8_t[]>(buffer);
 		}
 
-		inline auto skip(uint32_t size) 
+		inline auto skip(uint32_t size)
 		{
 			MAPLE_ASSERT(offset + size <= this->size, "Index out of bounds");
 			offset += size;

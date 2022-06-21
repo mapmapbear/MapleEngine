@@ -13,22 +13,22 @@ namespace maple
 
 	class ImGuiSystem
 	{
-	public:
+	  public:
 		ImGuiSystem(bool clearScreen = false);
 		~ImGuiSystem();
 
-		auto newFrame(const Timestep& step) -> void;
-		auto onInit() -> void ;
+		auto newFrame(const Timestep &step) -> void;
+		auto onInit() -> void;
 
-		auto onRender(Scene* scene) -> void;
+		auto onRender(Scene *scene) -> void;
 		auto addIcon() -> void;
 		auto onResize(uint32_t w, uint32_t h) -> void;
 		auto setTheme() -> void;
 		auto update() -> void;
-	private:
 
-		bool clearScreen = false;
+	  private:
+		bool                           clearScreen = false;
 		std::shared_ptr<ImGuiRenderer> imguiRender;
-		EventHandler handler;
+		EventHandler                   handler;
 	};
-}
+}        // namespace maple

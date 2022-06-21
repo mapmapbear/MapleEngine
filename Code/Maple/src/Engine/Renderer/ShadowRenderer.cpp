@@ -2,55 +2,55 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #include "ShadowRenderer.h"
-#include "RHI/Texture.h"
 #include "RHI/CommandBuffer.h"
 #include "RHI/DescriptorSet.h"
 #include "RHI/Pipeline.h"
 #include "RHI/Shader.h"
+#include "RHI/Texture.h"
 
-#include "Scene/Component/Light.h"
-#include "Scene/Scene.h"
-#include "Scene/Component/MeshRenderer.h"
 #include "Scene/Component/BoundingBox.h"
+#include "Scene/Component/Light.h"
+#include "Scene/Component/MeshRenderer.h"
+#include "Scene/Scene.h"
 
 #include "Engine/Camera.h"
+#include "Engine/CaptureGraph.h"
 #include "Engine/Core.h"
 #include "Engine/Material.h"
-#include "Engine/Profiler.h"
 #include "Engine/Mesh.h"
-#include "Engine/Renderer/RendererData.h"
-#include "Engine/CaptureGraph.h"
+#include "Engine/Profiler.h"
 #include "Engine/Renderer/GeometryRenderer.h"
+#include "Engine/Renderer/RendererData.h"
 
 #include "Engine/LPVGI/ReflectiveShadowMap.h"
 
 #include <ecs/ecs.h>
 
-namespace maple 
+namespace maple
 {
 	namespace        //private block
 	{
-		inline auto updateCascades(const component::CameraView& camera, component::ShadowMapData& shadowData, component::Light* light)
+		inline auto updateCascades(const component::CameraView &camera, component::ShadowMapData &shadowData, component::Light *light)
 		{
 			PROFILE_FUNCTION();
 
 			float cascadeSplits[SHADOWMAP_MAX];
 
-			const float nearClip = camera.nearPlane;
-			const float farClip = camera.farPlane;
+			const float nearClip  = camera.nearPlane;
+			const float farClip   = camera.farPlane;
 			const float clipRange = farClip - nearClip;
-			const float minZ = nearClip;
-			const float maxZ = nearClip + clipRange;
-			const float range = maxZ - minZ;
-			const float ratio = maxZ / minZ;
+			const float minZ      = nearClip;
+			const float maxZ      = nearClip + clipRange;
+			const float range     = maxZ - minZ;
+			const float ratio     = maxZ / minZ;
 			// Calculate split depths based on view camera frustum
 			// Based on method presented in https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch10.html
 			for (uint32_t i = 0; i < shadowData.shadowMapNum; i++)
 			{
-				float p = static_cast<float>(i + 1) / static_cast<float>(shadowData.shadowMapNum);
-				float log = minZ * std::pow(ratio, p);
-				float uniform = minZ + range * p;
-				float d = shadowData.cascadeSplitLambda * (log - uniform) + uniform;
+				float p          = static_cast<float>(i + 1) / static_cast<float>(shadowData.shadowMapNum);
+				float log        = minZ * std::pow(ratio, p);
+				float uniform    = minZ + range * p;
+				float d          = shadowData.cascadeSplitLambda * (log - uniform) + uniform;
 				cascadeSplits[i] = (d - nearClip) / clipRange;
 			}
 
@@ -62,13 +62,13 @@ namespace maple
 
 				auto frum = camera.frustum;
 
-				glm::vec3* frustumCorners = frum.getVertices();
+				glm::vec3 *frustumCorners = frum.getVertices();
 
 				for (uint32_t i = 0; i < 4; i++)
 				{
-					glm::vec3 dist = frustumCorners[i + 4] - frustumCorners[i];
+					glm::vec3 dist        = frustumCorners[i + 4] - frustumCorners[i];
 					frustumCorners[i + 4] = frustumCorners[i] + (dist * splitDist);
-					frustumCorners[i] = frustumCorners[i] + (dist * lastSplitDist);
+					frustumCorners[i]     = frustumCorners[i] + (dist * lastSplitDist);
 				}
 
 				glm::vec3 frustumCenter = glm::vec3(0.0f);
@@ -82,23 +82,23 @@ namespace maple
 				for (uint32_t i = 0; i < 8; i++)
 				{
 					float distance = glm::length(frustumCorners[i] - frustumCenter);
-					radius = glm::max(radius, distance);
+					radius         = glm::max(radius, distance);
 				}
 				radius = std::ceil(radius * 16.0f) / 16.0f;
 
 				glm::vec3 maxExtents = glm::vec3(radius);
 				glm::vec3 minExtents = -maxExtents;
 
-				glm::vec3 lightDir = glm::normalize(glm::vec3(light->lightData.direction));
-				glm::mat4 lightViewMatrix = glm::lookAt(frustumCenter - lightDir * -minExtents.z, frustumCenter, maple::UP);
+				glm::vec3 lightDir         = glm::normalize(glm::vec3(light->lightData.direction));
+				glm::mat4 lightViewMatrix  = glm::lookAt(frustumCenter - lightDir * -minExtents.z, frustumCenter, maple::UP);
 				glm::mat4 lightOrthoMatrix = glm::ortho(minExtents.x, maxExtents.x, minExtents.y, maxExtents.y, -(maxExtents.z - minExtents.z), maxExtents.z - minExtents.z);
 
-				shadowData.splitDepth[i] = glm::vec4(camera.nearPlane + splitDist * clipRange) * -1.f;
+				shadowData.splitDepth[i]     = glm::vec4(camera.nearPlane + splitDist * clipRange) * -1.f;
 				shadowData.shadowProjView[i] = lightOrthoMatrix * lightViewMatrix;
 				if (i == 0)
 				{
 					shadowData.lightMatrix = lightViewMatrix;
-					shadowData.lightDir = lightDir;
+					shadowData.lightDir    = lightDir;
 				}
 
 				lastSplitDist = cascadeSplits[i];
@@ -108,40 +108,22 @@ namespace maple
 
 	namespace shadow_map_pass
 	{
-		using Entity = ecs::Registry
-			::Modify<component::ShadowMapData>
-			::Fetch<component::CameraView>
-			::OptinalModify<component::ReflectiveShadowData>
-			::To<ecs::Entity>;
+		using Entity = ecs::Registry ::Modify<component::ShadowMapData>::Fetch<component::CameraView>::OptinalModify<component::ReflectiveShadowData>::To<ecs::Entity>;
 
-		using LightQuery = ecs::Registry
-			::Modify<component::Light>
-			::To<ecs::Group>;
+		using LightQuery = ecs::Registry ::Modify<component::Light>::To<ecs::Group>;
 
-		using MeshQuery = ecs::Registry
-			::Modify<component::MeshRenderer>
-			::Modify<component::Transform>
-			::To<ecs::Group>;
+		using MeshQuery = ecs::Registry ::Modify<component::MeshRenderer>::Modify<component::Transform>::To<ecs::Group>;
 
-		using MeshEntity = ecs::Registry
-			::Modify<component::MeshRenderer>
-			::Modify<component::Transform>
-			::To<ecs::Entity>;
+		using MeshEntity = ecs::Registry ::Modify<component::MeshRenderer>::Modify<component::Transform>::To<ecs::Entity>;
 
-		using BoneMeshQuery = ecs::Registry
-			::Modify<component::BoneComponent>
-			::Modify<component::Transform>
-			::To<ecs::Group>;
+		using BoneMeshQuery = ecs::Registry ::Modify<component::BoneComponent>::Modify<component::Transform>::To<ecs::Group>;
 
-		using SkinnedMeshQuery = ecs::Registry
-			::Modify<component::SkinnedMeshRenderer>
-			::Modify<component::Transform>
-			::To<ecs::Group>;
+		using SkinnedMeshQuery = ecs::Registry ::Modify<component::SkinnedMeshRenderer>::Modify<component::Transform>::To<ecs::Group>;
 
-		auto beginScene(Entity entity, LightQuery lightQuery, MeshQuery meshQuery, SkinnedMeshQuery skinnedQuery, BoneMeshQuery boneQuery, 
-			const global::component::SceneTransformChanged & sceneChanged,
-			
-			ecs::World world)
+		auto beginScene(Entity entity, LightQuery lightQuery, MeshQuery meshQuery, SkinnedMeshQuery skinnedQuery, BoneMeshQuery boneQuery,
+		                const global::component::SceneTransformChanged &sceneChanged,
+
+		                ecs::World world)
 		{
 			auto [shadowData, cameraView] = entity;
 
@@ -234,11 +216,7 @@ namespace maple
 			}
 		}
 
-		using RenderEntity = ecs::Registry
-			::Modify<component::ShadowMapData>
-			::Fetch<component::RendererData>
-			::Modify<capture_graph::component::RenderGraph>
-			::To<ecs::Entity>;
+		using RenderEntity = ecs::Registry ::Modify<component::ShadowMapData>::Fetch<component::RendererData>::Modify<capture_graph::component::RenderGraph>::To<ecs::Entity>;
 
 		inline auto onRender(RenderEntity entity, const global::component::SceneTransformChanged &sceneChanged, ecs::World world)
 		{
@@ -256,8 +234,8 @@ namespace maple
 				pipelineInfo.depthBiasEnabled    = false;
 				pipelineInfo.depthArrayTarget    = shadowData.shadowTexture;
 				pipelineInfo.clearTargets        = true;
-				pipelineInfo.depthTest			 = true;
-				pipelineInfo.clearColor			 = {0,0,0,0};
+				pipelineInfo.depthTest           = true;
+				pipelineInfo.clearColor          = {0, 0, 0, 0};
 
 				auto pipeline = Pipeline::get(pipelineInfo, shadowData.descriptorSet, renderGraph);
 
@@ -268,9 +246,9 @@ namespace maple
 
 					for (auto &command : shadowData.cascadeCommandQueue[i])
 					{
-						Mesh *mesh                          = command.mesh;
-						const auto &trans                   = command.transform;
-						auto &      pushConstants           = shadowData.shader->getPushConstants()[0];
+						Mesh *      mesh          = command.mesh;
+						const auto &trans         = command.transform;
+						auto &      pushConstants = shadowData.shader->getPushConstants()[0];
 
 						pushConstants.setValue("transform", (void *) &trans);
 						pushConstants.setValue("cascadeIndex", (void *) &i);
@@ -293,7 +271,7 @@ namespace maple
 			{
 				shadowData.animDescriptorSet[0]->update(rendererData.commandBuffer);
 				PipelineInfo pipelineInfo;
-				pipelineInfo.shader = shadowData.animShader;
+				pipelineInfo.shader              = shadowData.animShader;
 				pipelineInfo.cullMode            = CullMode::Back;
 				pipelineInfo.transparencyEnabled = false;
 				pipelineInfo.depthBiasEnabled    = false;
@@ -327,24 +305,23 @@ namespace maple
 				pipeline->end(rendererData.commandBuffer);
 			}
 		}
-	}
+	}        // namespace shadow_map_pass
 
-	namespace shadow_map 
+	namespace shadow_map
 	{
-		auto registerShadowMap(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void
+		auto registerShadowMap(ExecuteQueue &begin, ExecuteQueue &renderer, std::shared_ptr<ExecutePoint> executePoint) -> void
 		{
-			executePoint->registerGlobalComponent<component::ShadowMapData,component::RendererData>([](component::ShadowMapData& data, 
-				component::RendererData & renderData) {
-					
+			executePoint->registerGlobalComponent<component::ShadowMapData, component::RendererData>([](component::ShadowMapData &data,
+			                                                                                            component::RendererData & renderData) {
 				data.shadowTexture = TextureDepthArray::create(SHADOWMAP_SiZE_MAX, SHADOWMAP_SiZE_MAX, data.shadowMapNum, renderData.commandBuffer);
-				data.shader = Shader::create("shaders/Shadow.shader");
-				data.animShader = Shader::create("shaders/ShadowAnim.shader");
+				data.shader        = Shader::create("shaders/Shadow.shader");
+				data.animShader    = Shader::create("shaders/ShadowAnim.shader");
 
 				data.descriptorSet.resize(1);
 				data.animDescriptorSet.resize(1);
 
-				data.descriptorSet[0] = DescriptorSet::create({ 0,data.shader.get() });
-				data.animDescriptorSet[0] = DescriptorSet::create({ 0,data.animShader.get() });
+				data.descriptorSet[0]     = DescriptorSet::create({0, data.shader.get()});
+				data.animDescriptorSet[0] = DescriptorSet::create({0, data.animShader.get()});
 
 				data.animationQueue.reserve(50);
 
@@ -360,6 +337,5 @@ namespace maple
 			executePoint->registerWithinQueue<shadow_map_pass::onRender>(renderer);
 			executePoint->registerWithinQueue<shadow_map_pass::onRenderAnim>(renderer);
 		}
-	};
-}
-
+	};        // namespace shadow_map
+}        // namespace maple

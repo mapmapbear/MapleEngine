@@ -7,25 +7,26 @@
 
 namespace maple
 {
-	GBuffer::GBuffer(uint32_t width, uint32_t height, const CommandBuffer* commandBuffer) :
-	    width(width), height(height)
+	GBuffer::GBuffer(uint32_t width, uint32_t height, const CommandBuffer *commandBuffer) :
+	    width(width),
+	    height(height)
 	{
-		formats[PREV_DISPLAY]     = TextureFormat::RGBA8;
-		formats[SCREEN]           = TextureFormat::RGBA32;
-		formats[BLOOM_SCREEN]     = TextureFormat::RGBA32;
-		formats[BLOOM_BLUR]		  = TextureFormat::RGBA32;
-		formats[SSAO_SCREEN]      = TextureFormat::RGB8;
-		formats[SSAO_BLUR]        = TextureFormat::RGB8;
-		formats[SSR_SCREEN]       = TextureFormat::RGBA32;
-		formats[COLOR]            = TextureFormat::RGBA32;
-		formats[POSITION]         = TextureFormat::RGBA32;
-		formats[NORMALS]          = TextureFormat::RGBA32;
-		formats[VIEW_POSITION]    = TextureFormat::RGBA32;
-		formats[VIEW_NORMALS]     = TextureFormat::RGBA32;
-		formats[VELOCITY]         = TextureFormat::RGBA8;
-		formats[PBR]              = TextureFormat::RGBA32;
-		formats[VOLUMETRIC_LIGHT] = TextureFormat::RGB8;
-		formats[PSEUDO_SKY]       = TextureFormat::RGBA8;
+		formats[PREV_DISPLAY]      = TextureFormat::RGBA8;
+		formats[SCREEN]            = TextureFormat::RGBA32;
+		formats[BLOOM_SCREEN]      = TextureFormat::RGBA32;
+		formats[BLOOM_BLUR]        = TextureFormat::RGBA32;
+		formats[SSAO_SCREEN]       = TextureFormat::RGB8;
+		formats[SSAO_BLUR]         = TextureFormat::RGB8;
+		formats[SSR_SCREEN]        = TextureFormat::RGBA32;
+		formats[COLOR]             = TextureFormat::RGBA32;
+		formats[POSITION]          = TextureFormat::RGBA32;
+		formats[NORMALS]           = TextureFormat::RGBA32;
+		formats[VIEW_POSITION]     = TextureFormat::RGBA32;
+		formats[VIEW_NORMALS]      = TextureFormat::RGBA32;
+		formats[VELOCITY]          = TextureFormat::RGBA8;
+		formats[PBR]               = TextureFormat::RGBA32;
+		formats[VOLUMETRIC_LIGHT]  = TextureFormat::RGB8;
+		formats[PSEUDO_SKY]        = TextureFormat::RGBA8;
 		formats[INDIRECT_LIGHTING] = TextureFormat::RGBA32;
 		//buildTexture(commandBuffer);
 	}
@@ -46,7 +47,7 @@ namespace maple
 				screenTextures[i] = Texture2D::create();
 				screenTextures[i]->setName(GBufferNames[i]);
 			}
-			depthBuffer = TextureDepth::create(width, height, true,commandBuffer);
+			depthBuffer = TextureDepth::create(width, height, true, commandBuffer);
 			depthBuffer->setName("GBuffer-Depth");
 #if defined(__ANDROID__)
 			constexpr int32_t SSAO_NOISE_DIM = 8;

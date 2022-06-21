@@ -9,7 +9,7 @@ namespace maple
 {
 	namespace cloud_renderer
 	{
-		auto registerCloudRenderer(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void;
-		auto registerComputeCloud( ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void;
-	}
+		auto registerCloudRenderer(ExecuteQueue &begin, ExecuteQueue &renderer, std::shared_ptr<ExecutePoint> executePoint) -> void;
+		auto registerComputeCloud(ExecuteQueue &renderer, std::shared_ptr<ExecutePoint> executePoint) -> void;
+	}        // namespace cloud_renderer
 }        // namespace maple

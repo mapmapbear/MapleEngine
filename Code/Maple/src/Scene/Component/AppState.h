@@ -15,9 +15,9 @@ namespace maple
 
 	namespace global::component
 	{
-		struct AppState 
+		struct AppState
 		{
-			EditorState	state = EditorState::Play;
+			EditorState state = EditorState::Play;
 		};
-	}
-}
+	}        // namespace global::component
+}        // namespace maple
