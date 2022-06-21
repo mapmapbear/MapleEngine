@@ -349,10 +349,10 @@ namespace maple
 
 	namespace on_begin_scene
 	{
-		using Entity = ecs::Chain
-			::Read<component::RendererData>
-			::Write<component::GeometryRenderData>
-			::Read<component::CameraView>
+		using Entity = ecs::Registry
+			::Fetch<component::RendererData>
+			::Modify<component::GeometryRenderData>
+			::Fetch<component::CameraView>
 			::To<ecs::Entity>;
 
 		inline auto system(Entity entity, ecs::World world)
@@ -365,11 +365,11 @@ namespace maple
 
 	namespace on_render_lines
 	{
-		using Entity = ecs::Chain
-			::Read<component::RendererData>
-			::Write<component::GeometryRenderData>
-			::Write<component::CameraView>
-			::Write<capture_graph::component::RenderGraph>
+		using Entity = ecs::Registry
+			::Fetch<component::RendererData>
+			::Modify<component::GeometryRenderData>
+			::Modify<component::CameraView>
+			::Modify<capture_graph::component::RenderGraph>
 			::To<ecs::Entity>;
 
 		inline auto systemLines(Entity entity, ecs::World world)

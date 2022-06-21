@@ -23,6 +23,8 @@ namespace maple
 	class MAPLE_EXPORT Pipeline
 	{
 	public:
+		using Ptr = std::shared_ptr<Pipeline>;
+
 		static auto get(const PipelineInfo& pipelineDesc)->std::shared_ptr<Pipeline>;
 		static auto get(const PipelineInfo& pipelineDesc, const std::vector<std::shared_ptr<DescriptorSet>>& sets, capture_graph::component::RenderGraph&)->std::shared_ptr<Pipeline>;
 

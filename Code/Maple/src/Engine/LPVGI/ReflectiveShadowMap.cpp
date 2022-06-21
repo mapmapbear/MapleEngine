@@ -40,24 +40,24 @@ namespace maple
 	{
 		namespace begin_scene 
 		{
-			using Entity = ecs::Chain
-				::Read<component::CameraView>
-				::Write<component::ReflectiveShadowData>
-				::Read<component::BoundingBoxComponent>
+			using Entity = ecs::Registry
+				::Fetch<component::CameraView>
+				::Modify<component::ReflectiveShadowData>
+				::Fetch<component::BoundingBoxComponent>
 				::To<ecs::Entity>;
 
-			using LightQuery = ecs::Chain
-				::Write<component::Light>
-				::To<ecs::Query>;
+			using LightQuery = ecs::Registry
+				::Modify<component::Light>
+				::To<ecs::Group>;
 
-			using MeshQuery = ecs::Chain
-				::Write<component::MeshRenderer>
-				::Write<component::Transform>
-				::To<ecs::Query>;
+			using MeshQuery = ecs::Registry
+				::Modify<component::MeshRenderer>
+				::Modify<component::Transform>
+				::To<ecs::Group>;
 
-			using MeshEntity = ecs::Chain
-				::Write<component::MeshRenderer>
-				::Write<component::Transform>
+			using MeshEntity = ecs::Registry
+				::Modify<component::MeshRenderer>
+				::Modify<component::Transform>
 				::To<ecs::Entity>;
 
 			inline auto system(Entity entity, 
@@ -151,10 +151,10 @@ namespace maple
 			}
 		}
 
-		using Entity = ecs::Chain
-			::Write<component::ReflectiveShadowData>
-			::Read<component::RendererData>
-			::Write<capture_graph::component::RenderGraph>
+		using Entity = ecs::Registry
+			::Modify<component::ReflectiveShadowData>
+			::Fetch<component::RendererData>
+			::Modify<capture_graph::component::RenderGraph>
 			::To<ecs::Entity>;
 
 		inline auto onRender(Entity entity, ecs::World world)

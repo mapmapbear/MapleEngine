@@ -46,9 +46,9 @@ namespace maple
 		{
 			Camera *camera     = nullptr;
 
-			using CameraQuery = ecs::Chain
-				::Write<Camera>
-				::To<ecs::Query>;
+			using CameraQuery = ecs::Registry
+				::Modify<Camera>
+				::To<ecs::Group>;
 
 			CameraQuery query{
 				Application::getExecutePoint()->getRegistry(),

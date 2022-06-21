@@ -29,11 +29,11 @@ namespace maple
 
 	namespace final_screen_pass
 	{
-		using Entity = ecs::Chain
-			::ReadIfExist<component::BloomData>
-			::Read<component::FinalPass>
-			::Read<component::RendererData>
-			::Write<capture_graph::component::RenderGraph>
+		using Entity = ecs::Registry
+			::OptinalFetch<component::BloomData>
+			::Fetch<component::FinalPass>
+			::Fetch<component::RendererData>
+			::Modify<capture_graph::component::RenderGraph>
 			::To<ecs::Entity>;
 
 		inline auto system(Entity entity, ecs::World world)

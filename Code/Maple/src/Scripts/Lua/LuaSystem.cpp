@@ -11,8 +11,8 @@ namespace maple
 {
 	namespace update 
 	{
-		using Entity = ecs::Chain
-			::Read<component::LuaComponent>
+		using Entity = ecs::Registry
+			::Fetch<component::LuaComponent>
 			::To<ecs::Entity>;
 
 		inline auto system(Entity entity,ecs::World world) 

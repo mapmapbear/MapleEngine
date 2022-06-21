@@ -89,9 +89,9 @@ namespace maple
 	{
 		allScenes[name] = std::shared_ptr<Scene>(scene);
 	
-		using CameraQuery = ecs::Chain
-			::Write<Camera>
-			::To<ecs::Query>;
+		using CameraQuery = ecs::Registry
+			::Modify<Camera>
+			::To<ecs::Group>;
 
 		CameraQuery query{ 
 			Application::getExecutePoint()->getRegistry(), 

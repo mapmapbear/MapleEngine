@@ -63,10 +63,10 @@ namespace maple
 
 	namespace on_begin
 	{
-		using Entity = ecs::Chain
-			::Read<component::RendererData>
-			::Write<component::GridData>
-			::Write<component::CameraView>
+		using Entity = ecs::Registry
+			::Fetch<component::RendererData>
+			::Modify<component::GridData>
+			::Modify<component::CameraView>
 			::To<ecs::Entity>;
 
 		inline auto system(Entity entity,ecs::World world)
@@ -86,10 +86,10 @@ namespace maple
 
 	namespace on_render 
 	{
-		using Entity = ecs::Chain
-			::Read<component::GridData>
-			::Read<component::RendererData>
-			::Read<component::GridRender>
+		using Entity = ecs::Registry
+			::Fetch<component::GridData>
+			::Fetch<component::RendererData>
+			::Fetch<component::GridRender>
 			::To<ecs::Entity>;
 		inline auto system(Entity entity, ecs::World world)
 		{

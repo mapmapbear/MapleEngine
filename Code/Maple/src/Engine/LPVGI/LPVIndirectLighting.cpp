@@ -34,12 +34,12 @@ namespace maple
 			};
 		};
 
-		using Entity = ecs::Chain
-			::Write<capture_graph::component::RenderGraph>
-			::Read<component::IndirectLight>
-			::Read<maple::component::RendererData>
-			::Read<maple::component::LPVGrid>
-			::Read<maple::component::BoundingBoxComponent>
+		using Entity = ecs::Registry
+			::Modify<capture_graph::component::RenderGraph>
+			::Fetch<component::IndirectLight>
+			::Fetch<maple::component::RendererData>
+			::Fetch<maple::component::LPVGrid>
+			::Fetch<maple::component::BoundingBoxComponent>
 			::To<ecs::Entity>;
 
 		inline auto dispatch(Entity entity, ecs::World world)

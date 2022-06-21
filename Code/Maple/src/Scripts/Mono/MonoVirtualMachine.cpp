@@ -265,9 +265,9 @@ namespace maple
 		assemblies["corlib"] = corlibAssembly;
 	}
 
-	using Query = ecs::Chain
-		::Write<component::MonoComponent>
-		::To<ecs::Query>;
+	using Group = ecs::Registry
+		::Modify<component::MonoComponent>
+		::To<ecs::Group>;
 
 	auto MonoVirtualMachine::compileAssembly(const std::function<void(void*)>& callback) -> void
 	{

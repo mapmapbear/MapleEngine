@@ -37,9 +37,9 @@ namespace maple
 
 		namespace on_init
 		{
-			using Entity = ecs::Chain
-				::With<component::IrradianceVolume>
-				::Without<component::DDGIPipeline>
+			using Entity = ecs::Registry
+				::Include<component::IrradianceVolume>
+				::Exclude<component::DDGIPipeline>
 				::To<ecs::Entity>;
 
 			inline auto system(Entity entity, ecs::World world)
@@ -52,8 +52,8 @@ namespace maple
 
 		namespace begin_scene
 		{
-			using Entity = ecs::Chain
-				::Write<component::IrradianceVolume>
+			using Entity = ecs::Registry
+				::Modify<component::IrradianceVolume>
 				::To<ecs::Entity>;
 
 			inline auto system(Entity entity)

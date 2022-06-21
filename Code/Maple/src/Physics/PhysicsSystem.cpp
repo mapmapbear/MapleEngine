@@ -22,8 +22,8 @@ namespace maple
 	{
 		namespace update 
 		{
-			using Entity = ecs::Chain
-				::Write<global::physics::component::PhysicsWorld>
+			using Entity = ecs::Registry
+				::Modify<global::physics::component::PhysicsWorld>
 				::To<ecs::Entity>;
 
 			inline auto updateWorld(Entity entity,
@@ -42,10 +42,10 @@ namespace maple
 				}
 			}
 
-			using RigidBodyEntity = ecs::Chain
-				::Write<component::RigidBody>
-				::Write<component::Collider>
-				::Write<maple::component::Transform>
+			using RigidBodyEntity = ecs::Registry
+				::Modify<component::RigidBody>
+				::Modify<component::Collider>
+				::Modify<maple::component::Transform>
 				::To<ecs::Entity>;
 
 			inline auto updateRigidbody(RigidBodyEntity entity, ecs::World world)
@@ -93,10 +93,10 @@ namespace maple
 
 		namespace on_game_start 
 		{
-			using RigidBodyEntity = ecs::Chain
-				::Write<component::RigidBody>
-				::Write<component::Collider>
-				::Write<maple::component::Transform>
+			using RigidBodyEntity = ecs::Registry
+				::Modify<component::RigidBody>
+				::Modify<component::Collider>
+				::Modify<maple::component::Transform>
 				::To<ecs::Entity>;
 
 			inline auto system(RigidBodyEntity entity, global::physics::component::PhysicsWorld & phyWorld, ecs::World world)
@@ -166,10 +166,10 @@ namespace maple
 
 		namespace on_game_ended 
 		{
-			using RigidBodyEntity = ecs::Chain
-				::Write<component::RigidBody>
-				::Write<component::Collider>
-				::Write<maple::component::Transform>
+			using RigidBodyEntity = ecs::Registry
+				::Modify<component::RigidBody>
+				::Modify<component::Collider>
+				::Modify<maple::component::Transform>
 				::To<ecs::Entity>;
 
 			inline auto system(RigidBodyEntity entity, global::physics::component::PhysicsWorld &phyWorld, ecs::World world)

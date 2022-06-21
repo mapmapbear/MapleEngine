@@ -11,9 +11,9 @@ namespace maple
 {
 	namespace update 
 	{
-		using Entity = ecs::Chain
-			::Write<component::AnimatedSprite>
-			::Write<component::Transform>
+		using Entity = ecs::Registry
+			::Modify<component::AnimatedSprite>
+			::Modify<component::Transform>
 			::To<ecs::Entity>;
 
 		inline auto systemAnimatedSprite(Entity entity, const global::component::DeltaTime & dt, ecs::World world)
@@ -36,9 +36,9 @@ namespace maple
 			}
 		};
 
-		using SpriteEntity = ecs::Chain
-			::Write<component::Sprite>
-			::Write<component::Transform>
+		using SpriteEntity = ecs::Registry
+			::Modify<component::Sprite>
+			::Modify<component::Transform>
 			::To<ecs::Entity>;
 
 		inline auto systemSprite(SpriteEntity entity, ecs::World world)

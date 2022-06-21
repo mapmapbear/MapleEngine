@@ -4,19 +4,19 @@
 
 #include "Scene.h"
 #include "Entity/Entity.h"
+#include "Scene/Component/BoundingBox.h"
 #include "Scene/Component/CameraControllerComponent.h"
 #include "Scene/Component/Light.h"
+#include "Scene/Component/LightProbe.h"
 #include "Scene/Component/MeshRenderer.h"
-#include "Scene/SystemBuilder.inl"
 #include "Scene/Component/Transform.h"
 #include "Scene/Component/VolumetricCloud.h"
-#include "Scene/Component/BoundingBox.h"
-#include "Scene/Component/LightProbe.h"
 #include "Scene/System/ExecutePoint.h"
+#include "Scene/SystemBuilder.inl"
 
 #include "2d/Sprite.h"
-#include "Scripts/Mono/MonoSystem.h"
 #include "Scripts/Mono/MonoComponent.h"
+#include "Scripts/Mono/MonoSystem.h"
 
 #include "FileSystem/Skeleton.h"
 #include "Loaders/Loader.h"
@@ -25,8 +25,8 @@
 #include "Engine/Camera.h"
 #include "Engine/CameraController.h"
 #include "Engine/Material.h"
-#include "Engine/Profiler.h"
 #include "Engine/Mesh.h"
+#include "Engine/Profiler.h"
 
 #include "Others/Serialization.h"
 #include "Others/StringUtils.h"
@@ -44,29 +44,29 @@ namespace maple
 {
 	namespace
 	{
-		inline auto addEntity(Scene* scene, Entity parent, Skeleton* skeleton, int32_t idx, std::vector<Entity> & outEntities) -> Entity
+		inline auto addEntity(Scene *scene, Entity parent, Skeleton *skeleton, int32_t idx, std::vector<Entity> &outEntities) -> Entity
 		{
-			auto& bone = skeleton->getBone(idx);
-			auto entity = scene->createEntity(bone.name);
-			auto & transform = entity.addComponent<component::Transform>();
-			auto& boneComp = entity.addComponent<component::BoneComponent>();
+			auto &bone      = skeleton->getBone(idx);
+			auto  entity    = scene->createEntity(bone.name);
+			auto &transform = entity.addComponent<component::Transform>();
+			auto &boneComp  = entity.addComponent<component::BoneComponent>();
 
 			transform.setOffsetTransform(bone.offsetMatrix);
 			transform.setLocalTransform(bone.localTransform);
 			boneComp.boneIndex = idx;
-			boneComp.skeleton = skeleton;
+			boneComp.skeleton  = skeleton;
 
 			entity.setParent(parent);
 
 			for (auto child : bone.children)
 			{
-				addEntity(scene, entity, skeleton, child,outEntities);
+				addEntity(scene, entity, skeleton, child, outEntities);
 			}
 			outEntities.emplace_back(entity);
 			return entity;
 		}
 
-	}
+	}        // namespace
 
 	Scene::Scene(const std::string &initName) :
 	    name(initName)
@@ -164,22 +164,18 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 
-		using CameraQuery = ecs::Chain
-			::Write<Camera>
-			::Write<component::Transform>
-			::To<ecs::Query>;
+		using CameraQuery = ecs::Registry ::Modify<Camera>::Modify<component::Transform>::To<ecs::Group>;
 
-		CameraQuery query{ 
-			Application::getExecutePoint()->getRegistry(), 
-			Application::getExecutePoint()->getGlobalEntity()
-		};
+		CameraQuery query{
+		    Application::getExecutePoint()->getRegistry(),
+		    Application::getExecutePoint()->getGlobalEntity()};
 
 		if (useSceneCamera)
 		{
 			for (auto entity : query)
 			{
-				auto & [sceneCam, sceneCamTr] = query.convert(entity);
-				return { &sceneCam, &sceneCamTr };
+				auto &[sceneCam, sceneCamTr] = query.convert(entity);
+				return {&sceneCam, &sceneCamTr};
 			}
 		}
 		return {overrideCamera, overrideTransform};
@@ -197,24 +193,22 @@ namespace maple
 		boxDirty = false;
 
 		sceneBox.clear();
-		
-		using Query = ecs::Chain
-			::Write<component::MeshRenderer>
-			::To<ecs::Query>;
 
-		Query query(Application::getExecutePoint()->getRegistry(), Application::getExecutePoint()->getGlobalEntity());
+		using Group = ecs::Registry ::Modify<component::MeshRenderer>::To<ecs::Group>;
 
-		for (auto entity : query)
+		Group group(Application::getExecutePoint()->getRegistry(), Application::getExecutePoint()->getGlobalEntity());
+
+		for (auto entity : group)
 		{
-			auto [meshRender] = query.convert(entity);
+			auto [meshRender] = group.convert(entity);
 			if (auto mesh = meshRender.mesh)
 			{
 				if (mesh->isActive())
 					sceneBox.merge(mesh->getBoundingBox());
 			}
 		}
-		auto & aabb = Application::getExecutePoint()->getGlobalComponent<component::BoundingBoxComponent>();
-		aabb.box = &sceneBox;
+		auto &aabb = Application::getExecutePoint()->getGlobalComponent<component::BoundingBoxComponent>();
+		aabb.box   = &sceneBox;
 	}
 
 	auto Scene::onMeshRenderCreated() -> void
@@ -222,20 +216,20 @@ namespace maple
 		boxDirty = true;
 	}
 
-	auto Scene::addMesh(const std::string& file) -> Entity
+	auto Scene::addMesh(const std::string &file) -> Entity
 	{
 		PROFILE_FUNCTION();
-		auto name = StringUtils::getFileNameWithoutExtension(file);
+		auto name        = StringUtils::getFileNameWithoutExtension(file);
 		auto modelEntity = createEntity(name);
 
 		std::vector<std::shared_ptr<IResource>> resources;
 		Loader::load(file, resources);
 
-		bool hasSkeleton = std::find_if(resources.begin(), resources.end(), [](auto & res) {
-			return res->getResourceType() == FileType::Skeleton;
-		}) != resources.end();
+		bool hasSkeleton = std::find_if(resources.begin(), resources.end(), [](auto &res) {
+			                   return res->getResourceType() == FileType::Skeleton;
+		                   }) != resources.end();
 
-		for (auto& res : resources)
+		for (auto &res : resources)
 		{
 			if (res->getResourceType() == FileType::Skeleton)
 			{
@@ -243,35 +237,35 @@ namespace maple
 				skeleton->buildRoot();
 
 				std::vector<Entity> outEntities;
-				auto rootEntity = addEntity(this, modelEntity, skeleton.get(), skeleton->getRoot(), outEntities);
+				auto                rootEntity = addEntity(this, modelEntity, skeleton.get(), skeleton->getRoot(), outEntities);
 
 				if (skeleton->isBuildOffset())
 				{
-					hierarchy::updateTransform(modelEntity, ecs::World{ Application::getExecutePoint()->getRegistry(), entt::null });
+					hierarchy::updateTransform(modelEntity, ecs::World{Application::getExecutePoint()->getRegistry(), entt::null});
 					for (auto entity : outEntities)
 					{
-						auto& transform = entity.getComponent<component::Transform>();
+						auto &transform = entity.getComponent<component::Transform>();
 						transform.setOffsetTransform(transform.getWorldMatrixInverse());
 					}
 				}
 			}
-			else if(res->getResourceType() == FileType::Model)
+			else if (res->getResourceType() == FileType::Model)
 			{
 				for (auto mesh : std::static_pointer_cast<MeshResource>(res)->getMeshes())
 				{
 					auto child = createEntity(mesh.first);
-					if (hasSkeleton) 
+					if (hasSkeleton)
 					{
-						auto& meshRenderer = child.addComponent<component::SkinnedMeshRenderer>();
-						meshRenderer.mesh = mesh.second;
+						auto &meshRenderer    = child.addComponent<component::SkinnedMeshRenderer>();
+						meshRenderer.mesh     = mesh.second;
 						meshRenderer.meshName = mesh.first;
 						meshRenderer.filePath = file;
 					}
-					else 
+					else
 					{
-						auto& meshRenderer = child.addComponent<component::MeshRenderer>();
-						meshRenderer.type = component::PrimitiveType::File;
-						meshRenderer.mesh = mesh.second;
+						auto &meshRenderer    = child.addComponent<component::MeshRenderer>();
+						meshRenderer.type     = component::PrimitiveType::File;
+						meshRenderer.mesh     = mesh.second;
 						meshRenderer.meshName = mesh.first;
 						meshRenderer.filePath = file;
 					}
@@ -282,7 +276,7 @@ namespace maple
 		return modelEntity;
 	}
 
-	auto Scene::copyComponents(const Entity& from, const Entity& to) -> void
+	auto Scene::copyComponents(const Entity &from, const Entity &to) -> void
 	{
 		LOGW("Not implementation {0}", __FUNCTION__);
 	}
@@ -294,24 +288,18 @@ namespace maple
 		{
 			initCallback(this);
 		}
-		using MonoQuery = ecs::Chain
-			::Write<component::MonoComponent>
-			::To<ecs::Query>;
+		using MonoQuery = ecs::Registry ::Modify<component::MonoComponent>::To<ecs::Group>;
 
-		MonoQuery query{ Application::getExecutePoint()->getRegistry() ,Application::getExecutePoint()->getGlobalEntity() };
+		MonoQuery query{Application::getExecutePoint()->getRegistry(), Application::getExecutePoint()->getGlobalEntity()};
 		mono::recompile(query);
 		mono::callMonoStart(query);
-
 	}
 
 	auto Scene::onClean() -> void
 	{
 	}
-	
-	using ControllerQuery = ecs::Chain
-		::Write<component::CameraControllerComponent>
-		::Write<component::Transform>
-		::To<ecs::Query>;
+
+	using ControllerQuery = ecs::Registry ::Modify<component::CameraControllerComponent>::Modify<component::Transform>::To<ecs::Group>;
 
 	auto Scene::updateCameraController(float dt) -> void
 	{
@@ -321,11 +309,11 @@ namespace maple
 
 		for (auto entity : query)
 		{
-			auto [con, trans] = query.convert(entity);
+			auto [con, trans]   = query.convert(entity);
 			const auto mousePos = Input::getInput()->getMousePosition();
 			if (Application::get()->isSceneActive() &&
-				Application::get()->getEditorState() == EditorState::Play &&
-				con.cameraController)
+			    Application::get()->getEditorState() == EditorState::Play &&
+			    con.cameraController)
 			{
 				con.cameraController->handleMouse(trans, dt, mousePos.x, mousePos.y);
 				con.cameraController->handleKeyboard(trans, dt);
@@ -336,34 +324,34 @@ namespace maple
 	auto Scene::onUpdate(float dt) -> void
 	{
 		PROFILE_FUNCTION();
-		auto& deltaTime = Application::getExecutePoint()->getGlobalComponent<global::component::DeltaTime>();
-		deltaTime.dt = dt;
+		auto &deltaTime = Application::getExecutePoint()->getGlobalComponent<global::component::DeltaTime>();
+		deltaTime.dt    = dt;
 		updateCameraController(dt);
 		getBoundingBox();
 	}
 
 	auto Scene::create() -> Entity
 	{
-		auto& registry = Application::getExecutePoint()->getRegistry();
+		auto &registry = Application::getExecutePoint()->getRegistry();
 
 		return Entity(registry.create(), registry);
 	}
 
-	auto Scene::create(const std::string& name) -> Entity
+	auto Scene::create(const std::string &name) -> Entity
 	{
-		auto& registry = Application::getExecutePoint()->getRegistry();
-		auto e = registry.create();
+		auto &registry = Application::getExecutePoint()->getRegistry();
+		auto  e        = registry.create();
 		registry.emplace<component::NameComponent>(e, name);
 		return Entity(e, registry);
 	}
 
 	namespace
 	{
-		inline auto meshInOut(component::MeshRenderer& mesh, Entity entity, ecs::World world)
+		inline auto meshInOut(component::MeshRenderer &mesh, Entity entity, ecs::World world)
 		{
 			Application::getCurrentScene()->calculateBoundingBox();
 		}
-	}
+	}        // namespace
 	namespace mesh
 	{
 		auto registerMeshModule(std::shared_ptr<ExecutePoint> executePoint) -> void
@@ -371,5 +359,5 @@ namespace maple
 			executePoint->onConstruct<component::MeshRenderer, &meshInOut>();
 			executePoint->onDestory<component::MeshRenderer, &meshInOut>();
 		}
-	}
-};        // namespace maple
+	}        // namespace mesh
+};           // namespace maple

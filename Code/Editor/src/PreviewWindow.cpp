@@ -17,14 +17,14 @@
 #include "Application.h"
 #include <imGuIZMOquat.h>
 
-#include <ecs/ComponentChain.h>
 #include "Scene/System/ExecutePoint.h"
+#include <ecs/ComponentRegistry.h>
 
 namespace maple
 {
 	PreviewWindow::PreviewWindow()
 	{
-/*
+		/*
 		scene = new Scene("PreviewScene");
 		Application::getSceneManager()->addScene("PreviewScene", scene);
 
@@ -69,7 +69,7 @@ namespace maple
 			if (sceneViewSize.y > 0 && sceneViewSize.x)
 			{
 				resize(static_cast<uint32_t>(sceneViewSize.x), static_cast<uint32_t>(sceneViewSize.y));
-				ImGuiHelper::image(renderTexture.get(), { static_cast<uint32_t>(sceneViewSize.x), static_cast<uint32_t>(sceneViewSize.y) });
+				ImGuiHelper::image(renderTexture.get(), {static_cast<uint32_t>(sceneViewSize.x), static_cast<uint32_t>(sceneViewSize.y)});
 			}
 
 			auto  camera            = scene->getCamera();

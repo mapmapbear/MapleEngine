@@ -103,8 +103,8 @@ namespace maple
 
 	namespace on_trace 
 	{
-		using Entity = ecs::Chain
-			::Write<raytraced_shadow::component::RaytracedShadow>
+		using Entity = ecs::Registry
+			::Modify<raytraced_shadow::component::RaytracedShadow>
 			::To<ecs::Entity>;
 
 		inline auto system(Entity entity, component::RendererData& renderData )

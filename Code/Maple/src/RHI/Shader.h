@@ -103,6 +103,7 @@ namespace maple
 	class MAPLE_EXPORT Shader : public IResource
 	{
 	  public:
+		  using Ptr = std::shared_ptr<Shader>;
 		virtual ~Shader()                                                                        = default;
 		virtual auto bind() const -> void                                                        = 0;
 		virtual auto unbind() const -> void                                                      = 0;

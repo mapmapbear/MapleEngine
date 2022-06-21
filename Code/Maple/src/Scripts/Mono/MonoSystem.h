@@ -33,9 +33,9 @@ namespace maple
 
 	namespace mono
 	{
-		using MonoQuery = ecs::Chain
-			::Write<component::MonoComponent>
-			::To<ecs::Query>;
+		using MonoQuery = ecs::Registry
+			::Modify<component::MonoComponent>
+			::To<ecs::Group>;
 
 		auto callMonoStart(MonoQuery query) -> void;
 

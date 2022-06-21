@@ -16,19 +16,19 @@
 #include "RHI/UniformBuffer.h"
 #include "RHI/VertexBuffer.h"
 
-#include "Engine/Vertex.h"
+#include "2d/Sprite.h"
 #include "Engine/Camera.h"
 #include "Engine/Profiler.h"
-#include "2d/Sprite.h"
+#include "Engine/Vertex.h"
 #include "Scene/Component/Transform.h"
 
-#include "RendererData.h"
 #include "Application.h"
 #include "FileSystem/File.h"
+#include "RendererData.h"
 #include "Scene/Scene.h"
 
-#include <imgui.h>
 #include <ecs/ecs.h>
+#include <imgui.h>
 
 namespace maple
 {
@@ -48,7 +48,7 @@ namespace maple
 		glm::mat4     transform;
 	};
 
-	namespace component 
+	namespace component
 	{
 		struct Renderer2DData
 		{
@@ -70,17 +70,17 @@ namespace maple
 				glm::mat4 projView;
 			} systemBuffer;
 
-			int32_t   textureCount = 0;
+			int32_t   textureCount       = 0;
 			int32_t   batchDrawCallIndex = 0;
-			int32_t   indexCount = 0;
-			Vertex2D* buffer = nullptr;
+			int32_t   indexCount         = 0;
+			Vertex2D *buffer             = nullptr;
 
 			Renderer2DData()
 			{
 				textures.resize(16);
-				shader = Shader::create("shaders/Batch2D.shader");
-				projViewSet = DescriptorSet::create({ 0, shader.get() });
-				descriptorSet = DescriptorSet::create({ 1,shader.get() });
+				shader        = Shader::create("shaders/Batch2D.shader");
+				projViewSet   = DescriptorSet::create({0, shader.get()});
+				descriptorSet = DescriptorSet::create({1, shader.get()});
 				vertexBuffers.resize(config.maxBatchDrawCalls);
 
 				for (int32_t i = 0; i < config.maxBatchDrawCalls; i++)
@@ -93,7 +93,7 @@ namespace maple
 				uint32_t              offset = 0;
 				for (uint32_t i = 0; i < config.indiciesSize; i += 6)
 				{
-					indices[i] = offset + 0;
+					indices[i]     = offset + 0;
 					indices[i + 1] = offset + 1;
 					indices[i + 2] = offset + 2;
 
@@ -106,13 +106,13 @@ namespace maple
 				indexBuffer = IndexBuffer::create(indices.data(), config.indiciesSize);
 			}
 		};
-	}
+	}        // namespace component
 
 	namespace render2d
 	{
-		namespace common 
+		namespace common
 		{
-			inline auto present(component::Renderer2DData& data, Pipeline* pipeline, CommandBuffer* cmd) -> void
+			inline auto present(component::Renderer2DData &data, Pipeline *pipeline, CommandBuffer *cmd) -> void
 			{
 				PROFILE_FUNCTION();
 				if (data.indexCount == 0)
@@ -132,7 +132,7 @@ namespace maple
 				data.vertexBuffers[data.batchDrawCallIndex]->releasePointer();
 				data.vertexBuffers[data.batchDrawCallIndex]->bind(cmd, pipeline);
 
-				Renderer::bindDescriptorSets(pipeline, cmd, 0, { data.projViewSet, data.descriptorSet });
+				Renderer::bindDescriptorSets(pipeline, cmd, 0, {data.projViewSet, data.descriptorSet});
 				Renderer::drawIndexed(cmd, DrawType::Triangle, data.indexCount);
 
 				data.vertexBuffers[data.batchDrawCallIndex]->unbind();
@@ -144,7 +144,7 @@ namespace maple
 				pipeline->end(cmd);
 			}
 
-			inline auto flush(component::Renderer2DData& data, Pipeline* pipeline, CommandBuffer* cmd) -> void
+			inline auto flush(component::Renderer2DData &data, Pipeline *pipeline, CommandBuffer *cmd) -> void
 			{
 				PROFILE_FUNCTION();
 				present(data, pipeline, cmd);
@@ -153,12 +153,12 @@ namespace maple
 				data.buffer = data.vertexBuffers[data.batchDrawCallIndex]->getPointer<Vertex2D>();
 			}
 
-			inline auto submitTexture(component::Renderer2DData &data, const std::shared_ptr<Texture>& texture, Pipeline* pipeline, CommandBuffer* cmd) -> int32_t
+			inline auto submitTexture(component::Renderer2DData &data, const std::shared_ptr<Texture> &texture, Pipeline *pipeline, CommandBuffer *cmd) -> int32_t
 			{
 				PROFILE_FUNCTION();
 
 				float result = 0.0f;
-				bool  found = false;
+				bool  found  = false;
 
 				for (uint32_t i = 0; i < data.textureCount; i++)
 				{
@@ -170,43 +170,31 @@ namespace maple
 
 				if (data.textureCount >= config.maxTextures)
 				{
-					common::flush(data,pipeline,cmd);
+					common::flush(data, pipeline, cmd);
 				}
 				data.textures[data.textureCount] = texture;
 				data.textureCount++;
 				return data.textureCount;
 			}
-		}
+		}        // namespace common
 
 		namespace on_begin_scene
 		{
-			using Entity = ecs::Chain
-				::Write<component::Renderer2DData>
-				::Read<component::CameraView>
-				::Read<component::RendererData>
-				::To<ecs::Entity>;
+			using Entity = ecs::Registry ::Modify<component::Renderer2DData>::Fetch<component::CameraView>::Fetch<component::RendererData>::To<ecs::Entity>;
 
-			using SpriteDefine = ecs::Chain
-				::Write<component::Sprite>
-				::Write<component::Transform>;
+			using SpriteDefine = ecs::Registry ::Modify<component::Sprite>::Modify<component::Transform>;
 
-			using SpriteEntity = SpriteDefine
-				::To<ecs::Entity>;
+			using SpriteEntity = SpriteDefine ::To<ecs::Entity>;
 
-			using Query = SpriteDefine
-				::To<ecs::Query>;
+			using Group = SpriteDefine ::To<ecs::Group>;
 
-			using AnimatedSpriteDefine = ecs::Chain
-				::Write<component::AnimatedSprite>
-				::Write<component::Transform>;
+			using AnimatedSpriteDefine = ecs::Registry ::Modify<component::AnimatedSprite>::Modify<component::Transform>;
 
-			using AnimatedSpriteEntity = AnimatedSpriteDefine
-				::To<ecs::Entity>;
+			using AnimatedSpriteEntity = AnimatedSpriteDefine ::To<ecs::Entity>;
 
-			using AnimatedQuery = AnimatedSpriteDefine
-				::To<ecs::Query>;
+			using AnimatedQuery = AnimatedSpriteDefine ::To<ecs::Group>;
 
-			inline auto system(Entity entity, Query query, AnimatedQuery animatedQuery, ecs::World world)
+			inline auto system(Entity entity, Group query, AnimatedQuery animatedQuery, ecs::World world)
 			{
 				auto [data, camera, render] = entity;
 
@@ -214,15 +202,15 @@ namespace maple
 				data.commands.clear();
 				query.forEach([&](SpriteEntity spriteEntity) {
 					auto [sprite, trans] = spriteEntity;
-					data.commands.push_back({ &sprite.getQuad(), trans.getWorldMatrix() });
+					data.commands.push_back({&sprite.getQuad(), trans.getWorldMatrix()});
 				});
 
 				animatedQuery.forEach([&](AnimatedSpriteEntity spriteEntity) {
 					auto [sprite, trans] = spriteEntity;
-					data.commands.push_back({ &sprite.getQuad(), trans.getWorldMatrix() });
+					data.commands.push_back({&sprite.getQuad(), trans.getWorldMatrix()});
 				});
 
-				std::sort(data.commands.begin(), data.commands.end(), [](Command2D& a, Command2D& b) {
+				std::sort(data.commands.begin(), data.commands.end(), [](Command2D &a, Command2D &b) {
 					return a.transform[3][2] < b.transform[3][2];
 				});
 
@@ -232,15 +220,11 @@ namespace maple
 					data.projViewSet->update(render.commandBuffer);
 				}
 			}
-		}
+		}        // namespace on_begin_scene
 
 		namespace on_render
 		{
-			using Entity = ecs::Chain
-				::Write<component::Renderer2DData>
-				::Read<component::CameraView>
-				::Read<component::RendererData>
-				::To<ecs::Entity>;
+			using Entity = ecs::Registry ::Modify<component::Renderer2DData>::Fetch<component::CameraView>::Fetch<component::RendererData>::To<ecs::Entity>;
 
 			inline auto system(Entity entity, ecs::World world)
 			{
@@ -250,34 +234,34 @@ namespace maple
 					return;
 
 				PipelineInfo pipeInfo;
-				pipeInfo.shader = data.shader;
-				pipeInfo.cullMode = CullMode::None;
+				pipeInfo.shader              = data.shader;
+				pipeInfo.cullMode            = CullMode::None;
 				pipeInfo.transparencyEnabled = true;
-				pipeInfo.depthBiasEnabled = false;
-				pipeInfo.clearTargets = false;
+				pipeInfo.depthBiasEnabled    = false;
+				pipeInfo.clearTargets        = false;
 				if (data.enableDepth)
 					pipeInfo.depthTarget = render.gbuffer->getDepthBuffer();
 				pipeInfo.colorTargets[0] = render.gbuffer->getBuffer(GBufferTextures::SCREEN);
-				pipeInfo.blendMode = BlendMode::SrcAlphaOneMinusSrcAlpha;
-				auto pipeline = Pipeline::get(pipeInfo);
+				pipeInfo.blendMode       = BlendMode::SrcAlphaOneMinusSrcAlpha;
+				auto pipeline            = Pipeline::get(pipeInfo);
 
 				data.vertexBuffers[data.batchDrawCallIndex]->bind(render.commandBuffer, pipeline.get());
 				data.buffer = data.vertexBuffers[data.batchDrawCallIndex]->getPointer<Vertex2D>();
 
-				for (auto& command : data.commands)
+				for (auto &command : data.commands)
 				{
 					if (data.indexCount >= config.indiciesSize)
 					{
-						common::flush(data,pipeline.get(),render.commandBuffer);
+						common::flush(data, pipeline.get(), render.commandBuffer);
 					}
-					auto& quad2d = command.quad;
-					auto& transform = command.transform;
+					auto &quad2d    = command.quad;
+					auto &transform = command.transform;
 
 					glm::vec4 min = transform * glm::vec4(quad2d->getOffset(), 0, 1.f);
-					glm::vec4 max = transform * glm::vec4(quad2d->getOffset() + glm::vec2{ quad2d->getWidth(), quad2d->getHeight() }, 0, 1.f);
+					glm::vec4 max = transform * glm::vec4(quad2d->getOffset() + glm::vec2{quad2d->getWidth(), quad2d->getHeight()}, 0, 1.f);
 
-					const auto& color = quad2d->getColor();
-					const auto& uv = quad2d->getTexCoords();
+					const auto &color   = quad2d->getColor();
+					const auto &uv      = quad2d->getTexCoords();
 					const auto  texture = quad2d->getTexture();
 
 					int32_t textureSlot = -1;
@@ -285,23 +269,23 @@ namespace maple
 						textureSlot = common::submitTexture(data, texture, pipeline.get(), render.commandBuffer);
 
 					data.buffer->vertex = glm::vec3(min.x, min.y, 0.0f);
-					data.buffer->color = color;
-					data.buffer->uv = glm::vec3(uv[0], textureSlot);
+					data.buffer->color  = color;
+					data.buffer->uv     = glm::vec3(uv[0], textureSlot);
 					data.buffer++;
 
 					data.buffer->vertex = glm::vec3(max.x, min.y, 0.0f);
-					data.buffer->color = color;
-					data.buffer->uv = glm::vec3(uv[1], textureSlot);
+					data.buffer->color  = color;
+					data.buffer->uv     = glm::vec3(uv[1], textureSlot);
 					data.buffer++;
 
 					data.buffer->vertex = glm::vec3(max.x, max.y, 0.0f);
-					data.buffer->color = color;
-					data.buffer->uv = glm::vec3(uv[2], textureSlot);
+					data.buffer->color  = color;
+					data.buffer->uv     = glm::vec3(uv[2], textureSlot);
 					data.buffer++;
 
 					data.buffer->vertex = glm::vec3(min.x, max.y, 0.0f);
-					data.buffer->color = color;
-					data.buffer->uv = glm::vec3(uv[3], textureSlot);
+					data.buffer->color  = color;
+					data.buffer->uv     = glm::vec3(uv[3], textureSlot);
 					data.buffer++;
 					data.indexCount += 6;
 				}
@@ -310,14 +294,14 @@ namespace maple
 
 				data.batchDrawCallIndex = 0;
 			}
-		}
+		}        // namespace on_render
 
-		auto registerRenderer2D(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void
+		auto registerRenderer2D(ExecuteQueue &begin, ExecuteQueue &renderer, std::shared_ptr<ExecutePoint> executePoint) -> void
 		{
 			executePoint->registerGlobalComponent<component::Renderer2DData>();
 			executePoint->registerWithinQueue<on_begin_scene::system>(begin);
 			executePoint->registerWithinQueue<on_render::system>(renderer);
 		}
-	}
+	}        // namespace render2d
 
 };        // namespace maple

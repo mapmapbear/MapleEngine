@@ -108,35 +108,35 @@ namespace maple
 
 	namespace shadow_map_pass
 	{
-		using Entity = ecs::Chain
-			::Write<component::ShadowMapData>
-			::Read<component::CameraView>
-			::WriteIfExist<component::ReflectiveShadowData>
+		using Entity = ecs::Registry
+			::Modify<component::ShadowMapData>
+			::Fetch<component::CameraView>
+			::OptinalModify<component::ReflectiveShadowData>
 			::To<ecs::Entity>;
 
-		using LightQuery = ecs::Chain
-			::Write<component::Light>
-			::To<ecs::Query>;
+		using LightQuery = ecs::Registry
+			::Modify<component::Light>
+			::To<ecs::Group>;
 
-		using MeshQuery = ecs::Chain
-			::Write<component::MeshRenderer>
-			::Write<component::Transform>
-			::To<ecs::Query>;
+		using MeshQuery = ecs::Registry
+			::Modify<component::MeshRenderer>
+			::Modify<component::Transform>
+			::To<ecs::Group>;
 
-		using MeshEntity = ecs::Chain
-			::Write<component::MeshRenderer>
-			::Write<component::Transform>
+		using MeshEntity = ecs::Registry
+			::Modify<component::MeshRenderer>
+			::Modify<component::Transform>
 			::To<ecs::Entity>;
 
-		using BoneMeshQuery = ecs::Chain
-			::Write<component::BoneComponent>
-			::Write<component::Transform>
-			::To<ecs::Query>;
+		using BoneMeshQuery = ecs::Registry
+			::Modify<component::BoneComponent>
+			::Modify<component::Transform>
+			::To<ecs::Group>;
 
-		using SkinnedMeshQuery = ecs::Chain
-			::Write<component::SkinnedMeshRenderer>
-			::Write<component::Transform>
-			::To<ecs::Query>;
+		using SkinnedMeshQuery = ecs::Registry
+			::Modify<component::SkinnedMeshRenderer>
+			::Modify<component::Transform>
+			::To<ecs::Group>;
 
 		auto beginScene(Entity entity, LightQuery lightQuery, MeshQuery meshQuery, SkinnedMeshQuery skinnedQuery, BoneMeshQuery boneQuery, 
 			const global::component::SceneTransformChanged & sceneChanged,
@@ -234,10 +234,10 @@ namespace maple
 			}
 		}
 
-		using RenderEntity = ecs::Chain
-			::Write<component::ShadowMapData>
-			::Read<component::RendererData>
-			::Write<capture_graph::component::RenderGraph>
+		using RenderEntity = ecs::Registry
+			::Modify<component::ShadowMapData>
+			::Fetch<component::RendererData>
+			::Modify<capture_graph::component::RenderGraph>
 			::To<ecs::Entity>;
 
 		inline auto onRender(RenderEntity entity, const global::component::SceneTransformChanged &sceneChanged, ecs::World world)

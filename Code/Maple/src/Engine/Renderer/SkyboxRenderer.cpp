@@ -8,17 +8,17 @@
 #include "RHI/Shader.h"
 #include "RHI/Texture.h"
 
-#include "Engine/CaptureGraph.h"
 #include "Engine/Camera.h"
+#include "Engine/CaptureGraph.h"
 #include "Engine/GBuffer.h"
 #include "Engine/Mesh.h"
 #include "Engine/Profiler.h"
 #include "PrefilterRenderer.h"
 
+#include "Scene/Component/Environment.h"
 #include "Scene/Component/Light.h"
 #include "Scene/Component/Transform.h"
 #include "Scene/Component/VolumetricCloud.h"
-#include "Scene/Component/Environment.h"
 #include "Scene/Scene.h"
 
 #include "Others/Randomizer.h"
@@ -50,46 +50,37 @@ namespace maple
 			}
 			return "";
 		}
-	}        // namespace
+	}        // namespace component
 
 	namespace skybox_pass
 	{
-		using Entity = ecs::Chain
-			::Write<component::SkyboxData>
-			::Read<component::CameraView>
-			::Write<capture_graph::component::RenderGraph>
-			::To<ecs::Entity>;
+		using Entity = ecs::Registry ::Modify<component::SkyboxData>::Fetch<component::CameraView>::Modify<capture_graph::component::RenderGraph>::To<ecs::Entity>;
 
-		using Query = ecs::Chain
-			::Write<component::Environment>
-			::To<ecs::Query>;
+		using Group = ecs::Registry ::Modify<component::Environment>::To<ecs::Group>;
 
-		using SunLightQuery = ecs::Chain
-			::Read<component::Light>
-			::Read<component::Transform>
-			::To<ecs::Query>;
+		using SunLightQuery = ecs::Registry ::Fetch<component::Light>::Fetch<component::Transform>::To<ecs::Group>;
 
-		inline auto beginScene(Entity entity, Query query, SunLightQuery sunLightQuery, ecs::World world)
+		inline auto beginScene(Entity entity, Group query, SunLightQuery sunLightQuery, ecs::World world)
 		{
-			auto [skyboxData,cameraView,graph] = entity;
+			auto [skyboxData, cameraView, graph] = entity;
 
 			if (!query.empty())
 			{
-				auto entityHandle = *query.begin();
-				auto& envData = query.getComponent<component::Environment>(entityHandle);
+				auto  entityHandle = *query.begin();
+				auto &envData      = query.getComponent<component::Environment>(entityHandle);
 
 				skyboxData.pseudoSky = envData.pseudoSky;
 				if (envData.pseudoSky)
 				{
 					skyboxData.skyUniformObject.skyColorBottom = glm::vec4(envData.skyColorBottom, 1);
-					skyboxData.skyUniformObject.skyColorTop = glm::vec4(envData.skyColorTop, 1);
-					skyboxData.skyUniformObject.viewPos = glm::vec4(cameraView.cameraTransform->getWorldPosition(), 1.f);
-					skyboxData.skyUniformObject.invView = cameraView.cameraTransform->getWorldMatrix();
-					skyboxData.skyUniformObject.invProj = glm::inverse(cameraView.proj);
+					skyboxData.skyUniformObject.skyColorTop    = glm::vec4(envData.skyColorTop, 1);
+					skyboxData.skyUniformObject.viewPos        = glm::vec4(cameraView.cameraTransform->getWorldPosition(), 1.f);
+					skyboxData.skyUniformObject.invView        = cameraView.cameraTransform->getWorldMatrix();
+					skyboxData.skyUniformObject.invProj        = glm::inverse(cameraView.proj);
 
 					if (!sunLightQuery.empty())
 					{
-						auto [light, transform] = sunLightQuery.convert(*sunLightQuery.begin());
+						auto [light, transform]                    = sunLightQuery.convert(*sunLightQuery.begin());
 						skyboxData.skyUniformObject.lightDirection = light.lightData.direction;
 					}
 					skyboxData.pseudoSkydescriptorSet->setUniformBufferData("UniformBufferObject", &skyboxData.skyUniformObject);
@@ -101,12 +92,12 @@ namespace maple
 					if (skyboxData.skybox != envData.environment)
 					{
 						skyboxData.environmentMap = envData.prefilteredEnvironment;
-						skyboxData.irradianceMap = envData.irradianceMap;
-						skyboxData.skybox = envData.environment;
+						skyboxData.irradianceMap  = envData.irradianceMap;
+						skyboxData.skybox         = envData.environment;
 					}
 
-					auto inverseCamerm = cameraView.view;
-					inverseCamerm[3] = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+					auto inverseCamerm  = cameraView.view;
+					inverseCamerm[3]    = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 					skyboxData.projView = cameraView.proj * inverseCamerm;
 				}
 			}
@@ -115,41 +106,40 @@ namespace maple
 				if (skyboxData.skybox)
 				{
 					skyboxData.environmentMap = nullptr;
-					skyboxData.skybox = nullptr;
-					skyboxData.irradianceMap = nullptr;
+					skyboxData.skybox         = nullptr;
+					skyboxData.irradianceMap  = nullptr;
 				}
 			}
 		}
 
-		inline auto onRender(Entity entity, const component::RendererData& rendererData, ecs::World world)
+		inline auto onRender(Entity entity, const component::RendererData &rendererData, ecs::World world)
 		{
 			auto [skyboxData, cameraView, graph] = entity;
-
 
 			GPUProfile("SkyBox Pass");
 			if (skyboxData.pseudoSky)
 			{
 				skyboxData.pseudoSkydescriptorSet->update(rendererData.commandBuffer);
 				PipelineInfo info;
-				info.shader = skyboxData.pseudoSkyshader;
-				info.colorTargets[0] = rendererData.gbuffer->getBuffer(GBufferTextures::PSEUDO_SKY);
-				info.polygonMode = PolygonMode::Fill;
-				info.clearTargets = true;
+				info.shader              = skyboxData.pseudoSkyshader;
+				info.colorTargets[0]     = rendererData.gbuffer->getBuffer(GBufferTextures::PSEUDO_SKY);
+				info.polygonMode         = PolygonMode::Fill;
+				info.clearTargets        = true;
 				info.transparencyEnabled = false;
 
-				auto pipeline = Pipeline::get(info, { skyboxData.pseudoSkydescriptorSet },graph);
+				auto pipeline = Pipeline::get(info, {skyboxData.pseudoSkydescriptorSet}, graph);
 
 				skyboxData.pseudoSkydescriptorSet->setTexture("uPositionSampler", rendererData.gbuffer->getBuffer(GBufferTextures::POSITION));
 				skyboxData.pseudoSkydescriptorSet->update(rendererData.commandBuffer);
 
 				pipeline->bind(rendererData.commandBuffer);
-				Renderer::bindDescriptorSets(pipeline.get(), rendererData.commandBuffer, 0, { skyboxData.pseudoSkydescriptorSet });
+				Renderer::bindDescriptorSets(pipeline.get(), rendererData.commandBuffer, 0, {skyboxData.pseudoSkydescriptorSet});
 				Renderer::drawMesh(rendererData.commandBuffer, pipeline.get(), skyboxData.screenMesh.get());
 				pipeline->end(rendererData.commandBuffer);
 			}
 			else
 			{
-				skyboxData.prefilterRenderer->renderScene(rendererData.commandBuffer,graph);
+				skyboxData.prefilterRenderer->renderScene(rendererData.commandBuffer, graph);
 
 				if (skyboxData.skybox == nullptr)
 				{
@@ -159,12 +149,12 @@ namespace maple
 				PipelineInfo pipelineInfo{};
 				pipelineInfo.shader = skyboxData.skyboxShader;
 
-				pipelineInfo.polygonMode = PolygonMode::Fill;
-				pipelineInfo.cullMode = CullMode::Front;
+				pipelineInfo.polygonMode         = PolygonMode::Fill;
+				pipelineInfo.cullMode            = CullMode::Front;
 				pipelineInfo.transparencyEnabled = false;
 				//pipelineInfo.clearTargets        = false;
 
-				pipelineInfo.depthTarget = rendererData.gbuffer->getDepthBuffer();
+				pipelineInfo.depthTarget     = rendererData.gbuffer->getDepthBuffer();
 				pipelineInfo.colorTargets[0] = rendererData.gbuffer->getBuffer(GBufferTextures::SCREEN);
 
 				auto skyboxPipeline = Pipeline::get(pipelineInfo, {skyboxData.descriptorSet}, graph);
@@ -185,31 +175,30 @@ namespace maple
 				skyboxData.descriptorSet->setUniform("UniformBufferObjectLod", "lodLevel", &skyboxData.cubeMapLevel);
 				skyboxData.descriptorSet->update(rendererData.commandBuffer);
 
-				auto& constants = skyboxData.skyboxShader->getPushConstants();
+				auto &constants = skyboxData.skyboxShader->getPushConstants();
 				constants[0].setValue("projView", glm::value_ptr(skyboxData.projView));
 				skyboxData.skyboxShader->bindPushConstants(rendererData.commandBuffer, skyboxPipeline.get());
 
-				Renderer::bindDescriptorSets(skyboxPipeline.get(), rendererData.commandBuffer, 0, { skyboxData.descriptorSet });
+				Renderer::bindDescriptorSets(skyboxPipeline.get(), rendererData.commandBuffer, 0, {skyboxData.descriptorSet});
 				Renderer::drawMesh(rendererData.commandBuffer, skyboxPipeline.get(), skyboxData.skyboxMesh.get());
 				skyboxPipeline->end(rendererData.commandBuffer);
 			}
 		}
-	}
-
+	}        // namespace skybox_pass
 
 	namespace skybox_renderer
 	{
-		auto registerSkyboxRenderer(ExecuteQueue& begin, ExecuteQueue& renderer, std::shared_ptr<ExecutePoint> executePoint) -> void
+		auto registerSkyboxRenderer(ExecuteQueue &begin, ExecuteQueue &renderer, std::shared_ptr<ExecutePoint> executePoint) -> void
 		{
-			executePoint->registerGlobalComponent<component::SkyboxData>([](auto & skybox) {
-				skybox.pseudoSkyshader = Shader::create("shaders/PseudoSky.shader");
-				skybox.pseudoSkydescriptorSet = DescriptorSet::create({ 0,skybox.pseudoSkyshader.get() });
-				skybox.screenMesh = Mesh::createQuad(true);
-				skybox.skyboxShader = Shader::create("shaders/Skybox.shader");
-				skybox.descriptorSet = DescriptorSet::create({ 0, skybox.skyboxShader.get() });
-				skybox.skyboxMesh = Mesh::createCube();
+			executePoint->registerGlobalComponent<component::SkyboxData>([](auto &skybox) {
+				skybox.pseudoSkyshader        = Shader::create("shaders/PseudoSky.shader");
+				skybox.pseudoSkydescriptorSet = DescriptorSet::create({0, skybox.pseudoSkyshader.get()});
+				skybox.screenMesh             = Mesh::createQuad(true);
+				skybox.skyboxShader           = Shader::create("shaders/Skybox.shader");
+				skybox.descriptorSet          = DescriptorSet::create({0, skybox.skyboxShader.get()});
+				skybox.skyboxMesh             = Mesh::createCube();
 
-				skybox.irradianceMap = TextureCube::create(1);
+				skybox.irradianceMap  = TextureCube::create(1);
 				skybox.environmentMap = skybox.irradianceMap;
 
 				skybox.irradianceMap->setName("uIrradianceSampler");
@@ -222,5 +211,5 @@ namespace maple
 			executePoint->registerWithinQueue<skybox_pass::beginScene>(begin);
 			executePoint->registerWithinQueue<skybox_pass::onRender>(renderer);
 		}
-	};
-};        // namespace maple
+	};        // namespace skybox_renderer
+};            // namespace maple

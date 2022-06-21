@@ -118,8 +118,8 @@ namespace maple
 	{
 		namespace inject_light_pass 
 		{
-			using Entity = ecs::Chain
-				::Write<component::LPVGrid>
+			using Entity = ecs::Registry
+				::Modify<component::LPVGrid>
 				::To<ecs::Entity>;
 				
 			inline auto beginScene(Entity entity, 
@@ -200,13 +200,13 @@ namespace maple
 
 		namespace inject_geometry_pass
 		{
-			using Entity = ecs::Chain
-				::Read<component::LPVGrid>
-				::Write<component::InjectGeometryVolume>
-				::Read<component::BoundingBoxComponent>
-				::Read<component::ShadowMapData>
-				::Read<component::ReflectiveShadowData>
-				::Read<component::RendererData>
+			using Entity = ecs::Registry
+				::Fetch<component::LPVGrid>
+				::Modify<component::InjectGeometryVolume>
+				::Fetch<component::BoundingBoxComponent>
+				::Fetch<component::ShadowMapData>
+				::Fetch<component::ReflectiveShadowData>
+				::Fetch<component::RendererData>
 				::To<ecs::Entity>;
 
 			inline auto beginScene(Entity entity, 
@@ -267,11 +267,11 @@ namespace maple
 
 		namespace propagation_pass
 		{
-			using Entity = ecs::Chain
-				::Read<component::LPVGrid>
-				::Write<component::PropagationData>
-				::Read<component::BoundingBoxComponent>
-				::Write<component::RendererData>
+			using Entity = ecs::Registry
+				::Fetch<component::LPVGrid>
+				::Modify<component::PropagationData>
+				::Fetch<component::BoundingBoxComponent>
+				::Modify<component::RendererData>
 				::To<ecs::Entity>;
 
 			inline auto beginScene(Entity entity, 
@@ -347,12 +347,12 @@ namespace maple
 		
 		namespace aabb_debug 
 		{
-			using Entity = ecs::Chain
-				::Read<component::LPVGrid>
-				::Write<component::DebugAABBData>
-				::Read<component::BoundingBoxComponent>
-				::Write<component::RendererData>
-				::Read<component::CameraView>
+			using Entity = ecs::Registry
+				::Fetch<component::LPVGrid>
+				::Modify<component::DebugAABBData>
+				::Fetch<component::BoundingBoxComponent>
+				::Modify<component::RendererData>
+				::Fetch<component::CameraView>
 				::To<ecs::Entity>;
 
 			inline auto beginScene(Entity entity, ecs::World world)

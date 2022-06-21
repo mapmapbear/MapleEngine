@@ -36,8 +36,8 @@ namespace maple
 
 		namespace draw_voxel 
 		{
-			using Entity = ecs::Chain
-				::Write<vxgi::component::Voxelization>
+			using Entity = ecs::Registry
+				::Modify<vxgi::component::Voxelization>
 				::To<ecs::Entity>;
 
 			inline auto system(Entity entity,

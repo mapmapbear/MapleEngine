@@ -56,8 +56,8 @@ namespace maple
 {
 	namespace on_begin_renderer 
 	{
-		using Entity = ecs::Chain
-			::Read<component::RendererData>
+		using Entity = ecs::Registry
+			::Fetch<component::RendererData>
 			::To<ecs::Entity>;
 
 		inline auto system(Entity entity, ecs::World world)

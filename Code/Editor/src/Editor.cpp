@@ -12,38 +12,37 @@
 #include <imgui_internal.h>
 
 #include "AssetsWindow.h"
+#include "CurveWindow.h"
+#include "Devices/Input.h"
 #include "DisplayZeroWindow.h"
 #include "HierarchyWindow.h"
 #include "PreviewWindow.h"
 #include "PropertiesWindow.h"
-#include "VisualizeCacheWindow.h"
 #include "RenderGraphWindow.h"
 #include "SceneWindow.h"
-#include "CurveWindow.h"
-#include "Devices/Input.h"
+#include "VisualizeCacheWindow.h"
 
 #include "Engine/Camera.h"
 #include "Engine/Renderer/GeometryRenderer.h"
 #include "Engine/TextureAtlas.h"
 
-
+#include "2d/Sprite.h"
 #include "IconsMaterialDesignIcons.h"
 #include "ImGui/ImGuiHelpers.h"
-#include "2d/Sprite.h"
 
+#include "Scene/Component/BoundingBox.h"
 #include "Scene/Component/Component.h"
 #include "Scene/Component/Light.h"
+#include "Scene/Component/MeshRenderer.h"
 #include "Scene/Component/Transform.h"
-#include "Scene/Component/BoundingBox.h"
 #include "Scene/Entity/Entity.h"
 #include "Scene/Scene.h"
 #include "Scene/SceneManager.h"
-#include "Scene/Component/MeshRenderer.h"
 
-#include "Physics/RigidBody.h"
 #include "Physics/Collider.h"
 #include "Physics/PhysicsSystem.h"
 #include "Physics/PhysicsWorld.h"
+#include "Physics/RigidBody.h"
 
 #include "FileSystem/File.h"
 #include "Loaders/Loader.h"
@@ -56,8 +55,8 @@
 #include "Math/BoundingBox.h"
 #include "Math/MathUtils.h"
 #include "Math/Ray.h"
-#include "Scripts/Mono/MonoVirtualMachine.h"
 #include "Scripts/Mono/MonoComponent.h"
+#include "Scripts/Mono/MonoVirtualMachine.h"
 
 #include "ImGui/ImNotification.h"
 #include <ecs/ecs.h>
@@ -101,7 +100,6 @@ namespace maple
 
 		processIcons();
 
-
 		ImNotification::makeNotification("tips", "Compiling C# Assembly...", ImNotification::Type::Info);
 
 		MonoVirtualMachine::get()->compileAssembly([&](void *) {
@@ -137,7 +135,6 @@ namespace maple
 		auto currentScene = sceneManager->getCurrentScene();
 		if (getEditorState() == EditorState::Preview)
 		{
-
 			/*	if (isSceneActive())
 			{
 				
@@ -251,45 +248,44 @@ namespace maple
 
 		if (auto light = registry.try_get<component::Light>(selectedNode))
 		{
-			auto& transform = registry.get<component::Transform>(selectedNode);
-			auto  pos = transform.getWorldPosition();
+			auto &transform = registry.get<component::Transform>(selectedNode);
+			auto  pos       = transform.getWorldPosition();
 			GeometryRenderer::drawLight(light, transform.getWorldOrientation(), glm::vec4(glm::vec3(light->lightData.color), 0.2f));
 		}
 
 		if (auto render = registry.try_get<component::MeshRenderer>(selectedNode))
 		{
-			auto& transform = registry.get<component::Transform>(selectedNode);
+			auto &transform = registry.get<component::Transform>(selectedNode);
 
-			if (auto mesh = render->mesh) 
+			if (auto mesh = render->mesh)
 			{
 				auto bb = mesh->getBoundingBox()->transform(transform.getWorldMatrix());
-				GeometryRenderer::drawBox({}, bb, { 1,1,1,1 });
+				GeometryRenderer::drawBox({}, bb, {1, 1, 1, 1});
 			}
 		}
 
 		if (auto collider = registry.try_get<physics::component::Collider>(selectedNode))
 		{
-			auto& transform = registry.get<component::Transform>(selectedNode);
-			auto pos = transform.getWorldPosition();
+			auto &transform = registry.get<component::Transform>(selectedNode);
+			auto  pos       = transform.getWorldPosition();
 
-			if (collider->type == physics::ColliderType::BoxCollider) 
+			if (collider->type == physics::ColliderType::BoxCollider)
 			{
-				GeometryRenderer::drawBox({},collider->box, { 0,1,0,1 });
+				GeometryRenderer::drawBox({}, collider->box, {0, 1, 0, 1});
 			}
 
 			else if (collider->type == physics::ColliderType::SphereCollider)
 			{
-				GeometryRenderer::drawSphere(collider->radius, pos, { 0,1,0,1 });
+				GeometryRenderer::drawSphere(collider->radius, pos, {0, 1, 0, 1});
 			}
 			else if (collider->type == physics::ColliderType::CapsuleCollider)
 			{
 				GeometryRenderer::drawCapsule(
-					getEditorState() == EditorState::Play ? 
-					collider->box.center() : 
-					pos + collider->box.center(),
-					transform.getWorldOrientation(),
-					collider->height,collider->radius, { 0,1,0,1 }
-				);
+				    getEditorState() == EditorState::Play ?
+                        collider->box.center() :
+                        pos + collider->box.center(),
+				    transform.getWorldOrientation(),
+				    collider->height, collider->radius, {0, 1, 0, 1});
 			}
 		}
 	}
@@ -299,7 +295,7 @@ namespace maple
 		prevSelectedNode = selectedNode;
 		checkStencil(selectedNode, false);
 		checkStencil(node, true);
-		selectedNode   = node;
+		selectedNode = node;
 
 		cameraSelected = node != entt::null && getExecutePoint()->getRegistry().try_get<Camera>(selectedNode) != nullptr;
 	}
@@ -328,10 +324,10 @@ namespace maple
 			ImGuizmo::SetDrawlist();
 			ImGuizmo::SetOrthographic(camera->isOrthographic());
 
-			auto & registry = getExecutePoint()->getRegistry();
-			auto  transform = registry.try_get <component::Transform>(selectedNode);
-			auto  rigidBody = registry.try_get <physics::component::RigidBody>(selectedNode);
-			auto  collider = registry.try_get <physics::component::Collider>(selectedNode);
+			auto &registry  = getExecutePoint()->getRegistry();
+			auto  transform = registry.try_get<component::Transform>(selectedNode);
+			auto  rigidBody = registry.try_get<physics::component::RigidBody>(selectedNode);
+			auto  collider  = registry.try_get<physics::component::Collider>(selectedNode);
 
 			if (transform != nullptr)
 			{
@@ -341,15 +337,14 @@ namespace maple
 				float box[6] = {};
 
 				ImGuizmo::Manipulate(
-					glm::value_ptr(view),
-					glm::value_ptr(proj),
-					static_cast<ImGuizmo::OPERATION>(imGuizmoOperation),
-					ImGuizmo::LOCAL,
-					glm::value_ptr(model),
-					delta,
-					nullptr
-				);
-			
+				    glm::value_ptr(view),
+				    glm::value_ptr(proj),
+				    static_cast<ImGuizmo::OPERATION>(imGuizmoOperation),
+				    ImGuizmo::LOCAL,
+				    glm::value_ptr(model),
+				    delta,
+				    nullptr);
+
 				if (ImGuizmo::IsUsing())
 				{
 					if (static_cast<ImGuizmo::OPERATION>(imGuizmoOperation) == ImGuizmo::OPERATION::SCALE)
@@ -481,17 +476,17 @@ namespace maple
 
 			if (ImGui::BeginMenu("Window"))
 			{
-#define OPEN_WINDOW(T,WindowName)					\
-				if (ImGui::MenuItem(WindowName))	\
-				{									\
-					getEditorWindow<T>()->setActive(true); \
-				}
+#define OPEN_WINDOW(T, WindowName)             \
+	if (ImGui::MenuItem(WindowName))           \
+	{                                          \
+		getEditorWindow<T>()->setActive(true); \
+	}
 
 				OPEN_WINDOW(CurveWindow, "Curve Editor");
 
 				OPEN_WINDOW(RenderGraphWindow, "Render Graph");
 
-				if (ImGui::MenuItem(renderDoc.isEnabled()? "Disable RenderDoc" : "Enable RenderDoc"))
+				if (ImGui::MenuItem(renderDoc.isEnabled() ? "Disable RenderDoc" : "Enable RenderDoc"))
 				{
 					renderDoc.toggleEnable();
 				}
@@ -605,7 +600,7 @@ namespace maple
 
 	auto Editor::checkStencil(const entt::entity &selectedNode, bool enable) -> void
 	{
-		auto& registry = getExecutePoint()->getRegistry();
+		auto &registry = getExecutePoint()->getRegistry();
 
 		if (selectedNode == entt::null)
 		{
@@ -736,7 +731,7 @@ namespace maple
 				case maple::FileType::Shader:
 					break;
 				case maple::FileType::Material: {
-				/*	auto entity                       = scene->createEntity("Sphere");
+					/*	auto entity                       = scene->createEntity("Sphere");
 					entity.addComponent<component::Model>().type = component::PrimitiveType::Sphere;
 					auto  mesh                        = Mesh::createSphere();
 					auto &meshRender                  = entity.addComponent<component::MeshRenderer>(mesh);
@@ -760,7 +755,7 @@ namespace maple
 		{
 			LOGW("OpenFile file : {0} did not implement", filePath);
 		}
-		else if ( StringUtils::isModelFile(filePath) || loaderFactory->getSupportExtensions().count(ext) >= 1 )
+		else if (StringUtils::isModelFile(filePath) || loaderFactory->getSupportExtensions().count(ext) >= 1)
 		{
 			selectedNode = sceneManager->getCurrentScene()->addMesh(filePath).getHandle();
 		}
@@ -828,59 +823,52 @@ namespace maple
 		plugins.emplace_back(std::make_unique<FunctionalPlugin>(callback));
 	}
 
-	auto Editor::clickObject(const Ray& ray) -> void
+	auto Editor::clickObject(const Ray &ray) -> void
 	{
-		auto& registry = getExecutePoint()->getRegistry();
+		auto &registry = getExecutePoint()->getRegistry();
 
-		float        closestDist = INFINITY;
-		entt::entity closestEntity = entt::null;
-		auto frustum = camera->getFrustum(editorCameraTransform.getWorldMatrixInverse());
-		auto calculateClosest = [&](Mesh* mesh, component::Transform& trans, entt::entity entity)
-		{
-			if (mesh != nullptr)
-			{
-				auto& worldTransform = trans.getWorldMatrix();
+		float        closestDist      = INFINITY;
+		entt::entity closestEntity    = entt::null;
+		auto         frustum          = camera->getFrustum(editorCameraTransform.getWorldMatrixInverse());
+		auto         calculateClosest = [&](Mesh *mesh, component::Transform &trans, entt::entity entity) {
+            if (mesh != nullptr)
+            {
+                auto &worldTransform = trans.getWorldMatrix();
 
-				if (mesh->getBoundingBox() != nullptr)
-				{
-					auto  bbCopy = mesh->getBoundingBox()->transform(worldTransform);
+                if (mesh->getBoundingBox() != nullptr)
+                {
+                    auto bbCopy = mesh->getBoundingBox()->transform(worldTransform);
 
-					if (frustum.isInside(bbCopy)) 
-					{
-						float dist = ray.hit(bbCopy);
-						if (dist < INFINITY && dist < closestDist && dist != 0.0f)
-						{
-							closestDist = dist;
-							closestEntity = entity;
-						}
-					}
-				}
-			}
+                    if (frustum.isInside(bbCopy))
+                    {
+                        float dist = ray.hit(bbCopy);
+                        if (dist < INFINITY && dist < closestDist && dist != 0.0f)
+                        {
+                            closestDist   = dist;
+                            closestEntity = entity;
+                        }
+                    }
+                }
+            }
 		};
 
-		using Query = ecs::Chain
-			::Write<component::MeshRenderer>
-			::Write<component::Transform>
-			::To<ecs::Query>;
+		using Group = ecs::Registry ::Modify<component::MeshRenderer>::Modify<component::Transform>::To<ecs::Group>;
 
-		Query meshQuery(registry, entt::null);
+		Group meshGroup(registry, entt::null);
 
-		for (auto entity : meshQuery)
+		for (auto entity : meshGroup)
 		{
-			auto [mesh, trans] = meshQuery.convert(entity);
+			auto [mesh, trans] = meshGroup.convert(entity);
 			calculateClosest(mesh.mesh.get(), trans, entity);
 		}
 
-		using SkinnedQuery = ecs::Chain
-			::Write<component::SkinnedMeshRenderer>
-			::Write<component::Transform>
-			::To<ecs::Query>;
+		using SkinnedGroup = ecs::Registry ::Modify<component::SkinnedMeshRenderer>::Modify<component::Transform>::To<ecs::Group>;
 
-		SkinnedQuery skinedQuery(registry, entt::null);
+		SkinnedGroup skinnedGroup(registry, entt::null);
 
-		for (auto entity : skinedQuery)
+		for (auto entity : skinnedGroup)
 		{
-			auto [mesh, trans] = skinedQuery.convert(entity);
+			auto [mesh, trans] = skinnedGroup.convert(entity);
 			calculateClosest(mesh.mesh.get(), trans, entity);
 		}
 
@@ -895,11 +883,11 @@ namespace maple
 		{
 			if (timer.elapsed(timer.current(), lastClick) / 1000000.f < 1.f)
 			{
-				auto &trans = registry.get<component::Transform>(selectedNode);
-				auto model = registry.try_get<component::MeshRenderer>(selectedNode);
-				auto skinned = registry.try_get<component::SkinnedMeshRenderer>(selectedNode);
+				auto &trans   = registry.get<component::Transform>(selectedNode);
+				auto  model   = registry.try_get<component::MeshRenderer>(selectedNode);
+				auto  skinned = registry.try_get<component::SkinnedMeshRenderer>(selectedNode);
 
-				if (model) 
+				if (model)
 				{
 					if (auto mesh = model->mesh; mesh != nullptr)
 					{
@@ -907,7 +895,7 @@ namespace maple
 						focusCamera(trans.getWorldPosition(), glm::length(bb.max - bb.min));
 					}
 				}
-				if (skinned) 
+				if (skinned)
 				{
 					if (auto mesh = skinned->mesh; mesh != nullptr)
 					{
@@ -970,8 +958,8 @@ namespace maple
 
 		if (selectedNode != entt::null && selectedNode == closestEntity)
 		{
-			auto &  trans  = registry.get<component::Transform>(selectedNode);
-			auto sprite = registry.try_get<component::Sprite>(selectedNode);
+			auto &trans  = registry.get<component::Transform>(selectedNode);
+			auto  sprite = registry.try_get<component::Sprite>(selectedNode);
 			if (sprite == nullptr)
 			{
 				sprite = registry.try_get<component::AnimatedSprite>(selectedNode);

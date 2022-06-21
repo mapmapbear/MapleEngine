@@ -37,14 +37,20 @@ namespace maple
 	auto VulkanRenderDevice::init() -> void
 	{
 		PROFILE_FUNCTION();
-		std::array<VkDescriptorPoolSize, 6> poolSizes = {
-		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_SAMPLER, 500},
-		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 500},
-		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 500},
-		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 500},
+
+		std::vector<VkDescriptorPoolSize> poolSizes = {
+			VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_SAMPLER, 500},
+			VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 500},
+			VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 500},
+			VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 500},
 			VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 500},
-		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 500}
+			VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 500}
 		};
+
+		if (VulkanDevice::get()->getPhysicalDevice()->isRaytracingSupport()) 
+		{
+			poolSizes.push_back({ VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 16 });
+		}
 
 		// Create info
 		VkDescriptorPoolCreateInfo poolCreateInfo = {};

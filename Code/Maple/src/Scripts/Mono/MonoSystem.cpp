@@ -26,8 +26,8 @@ namespace maple
 {
 	namespace update 
 	{
-		using Entity = ecs::Chain
-			::Write<component::MonoComponent>
+		using Entity = ecs::Registry
+			::Modify<component::MonoComponent>
 			::To<ecs::Entity>;
 
 		inline auto system(Entity entity, const global::component::DeltaTime & dt, ecs::World world)

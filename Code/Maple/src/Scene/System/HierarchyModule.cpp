@@ -62,9 +62,9 @@ namespace maple
 		namespace update_hierarchy
 		{
 			// clang-format off
-			using Entity = ecs::Chain 
-				::Write<maple::component::Hierarchy>
-				::Write<maple::component::Transform>
+			using Entity = ecs::Registry 
+				::Modify<maple::component::Hierarchy>
+				::Modify<maple::component::Transform>
 				::To<ecs::Entity>;
 			// clang-format on
 			inline auto system(Entity entity, global::component::SceneTransformChanged *sceneChanged, ecs::World world)
@@ -81,9 +81,9 @@ namespace maple
 		namespace update_none_hierarchy
 		{
 			// clang-format off
-			using Entity = ecs::Chain 
-				::Without<maple::component::Hierarchy>
-				::Write<maple::component::Transform>
+			using Entity = ecs::Registry 
+				::Exclude<maple::component::Hierarchy>
+				::Modify<maple::component::Transform>
 				::To<ecs::Entity>;
 			// clang-format on
 			inline auto system(Entity entity, global::component::SceneTransformChanged *sceneChanged, ecs::World world)
@@ -101,8 +101,8 @@ namespace maple
 		namespace reset_update
 		{
 			// clang-format off
-			using Entity = ecs::Chain 
-				::Write<maple::component::Transform>
+			using Entity = ecs::Registry 
+				::Modify<maple::component::Transform>
 				::To<ecs::Entity>;
 			// clang-format on
 			inline auto system(Entity entity, global::component::SceneTransformChanged *sceneChanged, ecs::World world)

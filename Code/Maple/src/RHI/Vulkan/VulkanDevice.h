@@ -53,6 +53,8 @@ namespace maple
 		inline auto& getRayTracingPipelineProperties() const { return rayTracingPipelineProperties; }
 		inline auto& getAccelerationStructureProperties() const { return accelerationStructureProperties; }
 
+		inline auto isRaytracingSupport() const { return raytracingSupport; }
+
 	private:
 		std::vector<VkQueueFamilyProperties> queueFamilyProperties;
 		std::unordered_set<std::string>      supportedExtensions;

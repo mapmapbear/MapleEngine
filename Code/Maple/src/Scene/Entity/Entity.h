@@ -6,7 +6,7 @@
 #include "Others/Console.h"
 #include "Scene/Component/Component.h"
 #include "Scene/Component/Hierarchy.h"
-#include <ecs/ComponentChain.h>
+#include <ecs/ComponentRegistry.h>
 #include <ecs/Permission.h>
 #include <entt/entt.hpp>
 

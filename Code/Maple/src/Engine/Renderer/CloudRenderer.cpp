@@ -182,23 +182,23 @@ namespace maple
 	
 	namespace begin_scene 
 	{
-		using Entity = ecs::Chain
-			::Write<component::CloudRenderData>
-			::Read<component::CameraView>
-			::Read<component::RendererData>
-			::Write<component::WeatherPass>
-			::Write<Timer>
-			::Read<component::WindowSize>
-			::Write<capture_graph::component::RenderGraph>
+		using Entity = ecs::Registry
+			::Modify<component::CloudRenderData>
+			::Fetch<component::CameraView>
+			::Fetch<component::RendererData>
+			::Modify<component::WeatherPass>
+			::Modify<Timer>
+			::Fetch<component::WindowSize>
+			::Modify<capture_graph::component::RenderGraph>
 			::To<ecs::Entity>;
 
-		using Query = ecs::Chain
-			::Read<component::VolumetricCloud>
-			::Read<component::Light>
-			::Read<component::Transform>
-			::To<ecs::Query>;
+		using Group = ecs::Registry
+			::Fetch<component::VolumetricCloud>
+			::Fetch<component::Light>
+			::Fetch<component::Transform>
+			::To<ecs::Group>;
 
-		inline auto system(Entity entity, Query query, ecs::World world)
+		inline auto system(Entity entity, Group group, ecs::World world)
 		{
 			auto [data, camera, render, weather, timer, winSize,graph] = entity;
 			static auto begin = timer.current();
@@ -210,7 +210,7 @@ namespace maple
 				weather.generatedNoise = true;
 			}
 
-			if (query.empty() || winSize.height == 0 || winSize.width == 0)
+			if (group.empty() || winSize.height == 0 || winSize.width == 0)
 				return;
 
 			if (data.computeInputs.empty()) 
@@ -230,9 +230,9 @@ namespace maple
 			}
 	
 
-			for (auto entity : query)
+			for (auto entity : group)
 			{
-				auto [cloud, light, transform] = query.convert(entity);
+				auto [cloud, light, transform] = group.convert(entity);
 
 				data.uniformObject.invProj = glm::inverse(camera.proj);
 				data.uniformObject.invView = camera.cameraTransform->getWorldMatrix();
@@ -287,12 +287,12 @@ namespace maple
 
 	namespace compute_cloud 
 	{
-		using Entity = ecs::Chain
-			::Write<component::CloudRenderData>
-			::Read<component::CameraView>
-			::Read<component::RendererData>
-			::Read<component::WeatherPass>
-			::Write<capture_graph::component::RenderGraph>
+		using Entity = ecs::Registry
+			::Modify<component::CloudRenderData>
+			::Fetch<component::CameraView>
+			::Fetch<component::RendererData>
+			::Fetch<component::WeatherPass>
+			::Modify<capture_graph::component::RenderGraph>
 			::To<ecs::Entity>;
 
 		inline auto system(Entity entity, ecs::World world)
@@ -316,12 +316,12 @@ namespace maple
 
 	namespace on_render
 	{
-		using Entity = ecs::Chain
-			::Write<component::CloudRenderData>
-			::Read<component::CameraView>
-			::Read<component::RendererData>
-			::Read<component::WeatherPass>
-			::Write<capture_graph::component::RenderGraph>
+		using Entity = ecs::Registry
+			::Modify<component::CloudRenderData>
+			::Fetch<component::CameraView>
+			::Fetch<component::RendererData>
+			::Fetch<component::WeatherPass>
+			::Modify<capture_graph::component::RenderGraph>
 			::To<ecs::Entity>;
 
 		inline auto system(Entity entity, ecs::World world)

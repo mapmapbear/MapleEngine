@@ -59,11 +59,11 @@ namespace maple
 
 	namespace ssao_pass
 	{
-		using Entity = ecs::Chain
-			::Write<component::SSAOData>
-			::Read<component::RendererData>
-			::Write<capture_graph::component::RenderGraph>
-			::Read<component::CameraView>
+		using Entity = ecs::Registry
+			::Modify<component::SSAOData>
+			::Fetch<component::RendererData>
+			::Modify<capture_graph::component::RenderGraph>
+			::Fetch<component::CameraView>
 			::To<ecs::Entity>;
 
 		inline auto system(Entity entity, ecs::World world)
@@ -111,10 +111,10 @@ namespace maple
 
 	namespace ssao_blur_pass
 	{
-		using Entity = ecs::Chain
-			::Write<component::SSAOData>
-			::Read<component::RendererData>
-			::Write<capture_graph::component::RenderGraph>
+		using Entity = ecs::Registry
+			::Modify<component::SSAOData>
+			::Fetch<component::RendererData>
+			::Modify<capture_graph::component::RenderGraph>
 			::To<ecs::Entity>;
 
 		inline auto system(Entity entity, ecs::World world)
@@ -156,10 +156,10 @@ namespace maple
 
 	namespace ssr_pass 
 	{
-		using Entity = ecs::Chain
-			::Write<component::SSRData>
-			::Read<component::RendererData>
-			::Write<capture_graph::component::RenderGraph>
+		using Entity = ecs::Registry
+			::Modify<component::SSRData>
+			::Fetch<component::RendererData>
+			::Modify<capture_graph::component::RenderGraph>
 			::To<ecs::Entity>;
 
 		inline auto system(Entity entity, ecs::World world)
@@ -204,12 +204,12 @@ namespace maple
 
 	namespace bloom_pass
 	{
-		using Entity2 = ecs::Chain
-			::Read<component::BloomData>
-			::Write<component::ComputeBloom>
-			::Read<component::RendererData>
-			::Write<capture_graph::component::RenderGraph>
-			::Read<component::WindowSize>
+		using Entity2 = ecs::Registry
+			::Fetch<component::BloomData>
+			::Modify<component::ComputeBloom>
+			::Fetch<component::RendererData>
+			::Modify<capture_graph::component::RenderGraph>
+			::Fetch<component::WindowSize>
 			::To<ecs::Entity>;
 
 		inline auto computeBloom(Entity2 entity, ecs::World world)
@@ -250,11 +250,11 @@ namespace maple
 				pipeline->end(commandBuffer);
 		}
 
-		using Entity = ecs::Chain
-			::Write<component::BloomData>
-			::Read<component::RendererData>
-			::Write<capture_graph::component::RenderGraph>
-			::Read<component::WindowSize>
+		using Entity = ecs::Registry
+			::Modify<component::BloomData>
+			::Fetch<component::RendererData>
+			::Modify<capture_graph::component::RenderGraph>
+			::Fetch<component::WindowSize>
 			::To<ecs::Entity>;
 
 		inline auto gaussBlur(Entity entity, ecs::World world)

@@ -19,8 +19,8 @@ namespace maple
 {
 	namespace animation 
 	{
-		using Entity = ecs::Chain
-			::Write<component::Animator>
+		using Entity = ecs::Registry
+			::Modify<component::Animator>
 			::To<ecs::Entity>;
 
 		inline auto findByBoneIndex(maple::Entity entity, int32_t boneIdx) -> maple::Entity
