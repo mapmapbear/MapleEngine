@@ -39,11 +39,32 @@ namespace maple
 
 			vulkanBuffer->init(flags, size, data);
 		}
-		vulkanBuffer->setVkData(size, data);
+		else
+		{
+			vulkanBuffer->setVkData(size, data);
+		}
 	}
 
 	auto VulkanStorageBuffer::getHandle() -> VkBuffer &
 	{
 		return vulkanBuffer->getVkBuffer();
+	}
+
+	auto VulkanStorageBuffer::mapMemory(const std::function<void(void *)> &call) -> void
+	{
+		vulkanBuffer->map();
+		call(vulkanBuffer->getMapped());
+		vulkanBuffer->unmap();
+	}
+
+	auto VulkanStorageBuffer::unmap() -> void
+	{
+		vulkanBuffer->unmap();
+	}
+
+	auto VulkanStorageBuffer::map() -> void *
+	{
+		vulkanBuffer->map();
+		return vulkanBuffer->getMapped();
 	}
 }        // namespace maple

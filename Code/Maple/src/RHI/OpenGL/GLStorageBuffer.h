@@ -19,7 +19,9 @@ namespace maple
 		auto setData(uint32_t size, const void *data) -> void override;
 		auto bind(uint32_t slot) const -> void;
 		auto unbind() const -> void;
-
+		auto mapMemory(const std::function<void(void *)> &call) -> void override;
+		auto unmap() -> void override;
+		auto map() -> void * override;
 	  private:
 		uint32_t handle{};
 		uint32_t size = 0;

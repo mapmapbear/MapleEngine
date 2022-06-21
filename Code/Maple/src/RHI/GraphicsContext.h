@@ -36,6 +36,8 @@ namespace maple
 	class MAPLE_EXPORT GraphicsContext
 	{
 	  public:
+		using Ptr = std::shared_ptr<GraphicsContext>;
+
 		virtual ~GraphicsContext() = default;
 
 		inline static auto getGraphicsAPI()
@@ -81,4 +83,12 @@ namespace maple
 		std::unordered_map<std::size_t, CacheAsset<Pipeline>>    pipelineCache;
 		std::unordered_map<std::size_t, CacheAsset<FrameBuffer>> frameBufferCache;
 	};
+
+	namespace global::component
+	{
+		struct GraphicsContext
+		{
+			maple::GraphicsContext::Ptr context;
+		};
+	}        // namespace component
 }        // namespace maple

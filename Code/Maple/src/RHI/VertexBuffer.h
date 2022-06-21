@@ -14,6 +14,7 @@ namespace maple
 	class MAPLE_EXPORT VertexBuffer
 	{
 	  public:
+		using Ptr = std::shared_ptr<VertexBuffer>;
 		virtual ~VertexBuffer()                                                           = default;
 		virtual auto resize(uint32_t size) -> void                                        = 0;
 		virtual auto setData(uint32_t size, const void *data) -> void                     = 0;

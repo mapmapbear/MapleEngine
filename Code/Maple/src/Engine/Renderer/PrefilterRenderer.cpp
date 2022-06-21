@@ -190,7 +190,7 @@ namespace maple
 				constants[0].setValue("view", glm::value_ptr(captureViews[faceId]));
 				cubeMapShader->bindPushConstants(cmd, cubeMapPipeline.get());
 			}
-			Application::getRenderDevice()->bindDescriptorSets(cubeMapPipeline.get(), cmd, 0, {cubeMapSet});
+			Renderer::bindDescriptorSets(cubeMapPipeline.get(), cmd, 0, {cubeMapSet});
 			Renderer::drawMesh(cmd, cubeMapPipeline.get(), cube.get());
 			cubeMapPipeline->end(cmd);
 			skyboxCube->update(cmd, framebuffer, faceId);
@@ -263,7 +263,7 @@ namespace maple
 				constants[0].setValue("projView", glm::value_ptr(captureProjView[faceId]));
 				prefilterShader->bindPushConstants(cmd, pipeline.get());
 
-				Application::getRenderDevice()->bindDescriptorSets(pipeline.get(), cmd, 0, {prefilterSet});
+				Renderer::bindDescriptorSets(pipeline.get(), cmd, 0, {prefilterSet});
 				Renderer::drawMesh(cmd, pipeline.get(), cube.get());
 
 				pipeline->end(cmd);

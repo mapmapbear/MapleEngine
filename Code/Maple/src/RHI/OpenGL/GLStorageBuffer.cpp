@@ -61,4 +61,25 @@ namespace maple
 		GLCall(glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, handle));
 	}
 
+	auto GLStorageBuffer::mapMemory(const std::function<void(void *)> &call) -> void
+	{
+		PROFILE_FUNCTION();
+		GLCall(glBindBuffer(GL_SHADER_STORAGE_BUFFER, handle));
+
+		PROFILE_SCOPE("glMapBuffer");
+		call(glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY));
+		glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+	}
+
+	auto GLStorageBuffer::unmap() -> void
+	{
+		glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+	}
+
+	auto GLStorageBuffer::map() -> void *
+	{
+		PROFILE_SCOPE("glMapBuffer");
+		GLCall(glBindBuffer(GL_SHADER_STORAGE_BUFFER, handle));
+		return glMapBuffer(GL_SHADER_STORAGE_BUFFER, GL_WRITE_ONLY);
+	}
 }        // namespace maple

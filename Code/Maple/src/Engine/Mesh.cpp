@@ -17,10 +17,13 @@
 
 namespace maple
 {
+	static int32_t idGenerator = 0;
+
 	Mesh::Mesh(const std::shared_ptr<VertexBuffer> &vertexBuffer, const std::shared_ptr<IndexBuffer> &indexBuffer) :
 	    vertexBuffer(vertexBuffer),
 	    indexBuffer(indexBuffer)
 	{
+		meshId = idGenerator++;
 	}
 
 	Mesh::Mesh(const std::vector<uint32_t> &indices, const std::vector<Vertex> &vertices)
@@ -33,6 +36,7 @@ namespace maple
 		vertexBuffer = VertexBuffer::create();
 		vertexBuffer->setData(sizeof(Vertex) * vertices.size(), vertices.data());
 		indexBuffer = IndexBuffer::create(indices.data(), indices.size());
+		meshId      = idGenerator++;
 	}
 
 	Mesh::Mesh(const std::vector<uint32_t> &indices, const std::vector<SkinnedVertex> &vertices)
@@ -45,6 +49,7 @@ namespace maple
 		vertexBuffer = VertexBuffer::create();
 		vertexBuffer->setData(sizeof(SkinnedVertex) * vertices.size(), vertices.data());
 		indexBuffer = IndexBuffer::create(indices.data(), indices.size());
+		meshId      = idGenerator++;
 	}
 
 	auto Mesh::setIndicies(uint32_t range) -> void

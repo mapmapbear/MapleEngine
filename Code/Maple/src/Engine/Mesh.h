@@ -88,6 +88,12 @@ namespace maple
 		{
 			return materials;
 		}
+
+		inline auto &getMaterial(int32_t index)
+		{
+			return materials[index];
+		}
+
 		inline auto &getDescriptorSet()
 		{
 			return descriptorSet;
@@ -108,6 +114,11 @@ namespace maple
 		inline auto &getBoundingBox() const
 		{
 			return boundingBox;
+		}
+
+		inline auto getId() const
+		{
+			return meshId;
 		}
 
 		inline auto &getName() const
@@ -166,6 +177,7 @@ namespace maple
 
 		std::shared_ptr<BoundingBox> boundingBox;
 
+		int32_t               meshId = 0;
 		uint32_t              size   = 0;
 		bool                  active = true;
 		std::string           name;

@@ -17,6 +17,8 @@
 #include "Scene/Component/MeshRenderer.h"
 #include "Scene/Component/Transform.h"
 #include "Scene/Component/VolumetricCloud.h"
+#include "Scene/Component/IndirectDraw.h"
+
 #include "Scene/SystemBuilder.inl"
 
 #include "Others/Console.h"
@@ -82,6 +84,8 @@ namespace maple
 		executePoint->getGlobalComponent<global::component::AppState>();
 		executePoint->getGlobalComponent<global::physics::component::PhysicsWorld>();
 		executePoint->getGlobalComponent<global::component::SceneTransformChanged>();
+		executePoint->getGlobalComponent<global::component::IndirectDraw>();
+		executePoint->getGlobalComponent<global::component::GraphicsContext>().context = graphicsContext;
 
 		Input::create();
 		window->init();

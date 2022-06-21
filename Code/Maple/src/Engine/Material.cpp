@@ -19,6 +19,8 @@
 
 namespace maple
 {
+	static int32_t IdGenerator = 0;
+
 	Material::Material(const std::shared_ptr<Shader> &shader, const MaterialProperties &properties, const PBRMataterialTextures &textures) :
 	    pbrMaterialTextures(textures),
 	    shader(shader)
@@ -28,6 +30,7 @@ namespace maple
 		setRenderFlag(RenderFlags::DepthTest);
 		setRenderFlag(RenderFlags::DeferredRender);
 		setMaterialProperites(properties);
+		id = IdGenerator++;
 	}
 
 	Material::Material()
@@ -35,6 +38,7 @@ namespace maple
 		PROFILE_FUNCTION();
 		setRenderFlag(RenderFlags::DepthTest);
 		setRenderFlag(RenderFlags::DeferredRender);
+		id = IdGenerator++;
 	}
 
 	Material::Material(const std::string &materialId) :
@@ -43,6 +47,7 @@ namespace maple
 		PROFILE_FUNCTION();
 		Serialization::loadMaterial(this, materialId);
 		setRenderFlag(RenderFlags::DepthTest);
+		id = IdGenerator++;
 	}
 
 	Material::~Material()

@@ -12,6 +12,8 @@ namespace maple
 	class MAPLE_EXPORT IndexBuffer
 	{
 	  public:
+		using Ptr = std::shared_ptr<IndexBuffer>;
+
 		virtual ~IndexBuffer()                                                        = default;
 		virtual auto bind(const CommandBuffer *commandBuffer = nullptr) const -> void = 0;
 		virtual auto unbind() const -> void                                           = 0;

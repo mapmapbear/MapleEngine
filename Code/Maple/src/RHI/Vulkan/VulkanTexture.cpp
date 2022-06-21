@@ -21,6 +21,8 @@ namespace maple
 {
 #define DEBUG_IMAGE_ADDRESS(img) void();        //LOGI("{:x},function : {}, line : {}",(uint64_t)img,__FUNCTION__,__LINE__)
 
+	static std::atomic<uint32_t> IdGenerator = 0;
+
 	namespace tools
 	{
 		inline auto generateMipmaps(VkImage image, VkFormat imageFormat, uint32_t texWidth, uint32_t texHeight, uint32_t depth, uint32_t mipLevels, uint32_t faces = 1, VkCommandBuffer commandBuffer = nullptr, VkImageLayout initLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) -> void
@@ -174,6 +176,7 @@ namespace maple
 
 		buildTexture(parameters.format, width, height, false, false, false, loadOptions.generateMipMaps, false, 0);
 		update(0, 0, width, height, data);
+		id = IdGenerator++;
 	}
 
 	VulkanTexture2D::VulkanTexture2D(const std::string &name, const std::string &fileName, TextureParameters parameters, TextureLoadOptions loadOptions) :
@@ -185,7 +188,7 @@ namespace maple
 		deleteImage = load();
 		if (!deleteImage)
 			return;
-
+		id = IdGenerator++;
 		createSampler();
 	}
 
@@ -197,12 +200,14 @@ namespace maple
 	    vkFormat(format),
 	    imageLayout(VK_IMAGE_LAYOUT_UNDEFINED)
 	{
+		id = IdGenerator++;
 		deleteImage = false;
 		updateDescriptor();
 	}
 
 	VulkanTexture2D::VulkanTexture2D()
 	{
+		id = IdGenerator++;
 		deleteImage    = false;
 		textureSampler = VulkanHelper::createTextureSampler(
 		    VkConverter::textureFilterToVK(parameters.magFilter),
@@ -483,6 +488,8 @@ namespace maple
 	    width(width),
 	    height(height)
 	{
+		id = IdGenerator++;
+
 		init(commandBuffer);
 	}
 
@@ -589,16 +596,22 @@ namespace maple
 	VulkanTextureCube::VulkanTextureCube(const std::array<std::string, 6> &files)
 	{
 		LOGC("{0} did not implement", __FUNCTION__);
+		id = IdGenerator++;
+
 	}
 
 	VulkanTextureCube::VulkanTextureCube(const std::vector<std::string> &files, uint32_t mips, const TextureParameters &params, const TextureLoadOptions &loadOptions, const InputFormat &format)
 	{
 		LOGC("{0} did not implement", __FUNCTION__);
+		id = IdGenerator++;
+
 	}
 
 	VulkanTextureCube::VulkanTextureCube(const std::string &filePath) :
 	    size(0)
 	{
+		id = IdGenerator++;
+
 		files[0] = filePath;
 		load(1);
 		updateDescriptor();
@@ -611,6 +624,8 @@ namespace maple
 	    deleteImg(false),
 	    size(size)
 	{
+		id = IdGenerator++;
+
 		parameters.format = format;
 		init();
 	}
@@ -794,6 +809,8 @@ namespace maple
 	    height(height),
 	    count(count)
 	{
+		id = IdGenerator++;
+
 		init(commandBuffer);
 	}
 
@@ -904,6 +921,8 @@ namespace maple
 	    parameters(parameters),
 	    loadOptions(loadOptions)
 	{
+		id = IdGenerator++;
+
 		init(width, height, depth);
 	}
 
@@ -1164,6 +1183,8 @@ namespace maple
 	    format(format),
 	    parameters(parameters)
 	{
+		id = IdGenerator++;
+
 		init(commandBuffer);
 	}
 

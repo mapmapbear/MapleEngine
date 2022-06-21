@@ -49,6 +49,10 @@ namespace maple
 			return size;
 		}
 
+		inline auto getMapped()
+		{
+			return mapped;
+		}
 	  protected:
 		auto release() -> void;
 

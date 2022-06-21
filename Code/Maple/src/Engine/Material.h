@@ -272,6 +272,16 @@ namespace maple
 			return materialId;
 		}
 
+		inline auto getId() const
+		{
+			return id;
+		}
+
+		inline auto getMaterialTextures() const
+		{
+			return pbrMaterialTextures;
+		}
+
 		static auto create(const std::string &materialId) -> std::shared_ptr<Material>;
 		Material(const std::string &materialId);
 
@@ -289,5 +299,6 @@ namespace maple
 
 		bool texturesUpdated = false;
 		bool onlyAlbedoColor = false;
+		int32_t id = 0;
 	};
 }        // namespace maple

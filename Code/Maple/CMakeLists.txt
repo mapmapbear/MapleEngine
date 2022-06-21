@@ -235,6 +235,7 @@ endif()
 		${ENGINE_LIB_SRC_DIR}/bullet3/src
 		${ENGINE_LIB_SRC_DIR}/renderDoc
 		${ENGINE_LIB_SRC_DIR}/vulkan-mem
+		${ENGINE_LIB_SRC_DIR}/scope_guard
 		${Vulkan_INCLUDE_DIRS}
 	)
 

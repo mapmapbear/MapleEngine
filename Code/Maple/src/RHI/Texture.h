@@ -83,6 +83,12 @@ namespace maple
 			return 0;
 		};
 
+
+		inline auto getId() const
+		{
+			return id;
+		}
+
 	  public:
 		static auto getStrideFromFormat(TextureFormat format) -> uint8_t;
 		static auto bitsToTextureFormat(uint32_t bits) -> TextureFormat;
@@ -91,6 +97,7 @@ namespace maple
 	  protected:
 		uint16_t    flags = 0;
 		std::string name;
+		uint32_t    id = 0;
 	};
 
 	class MAPLE_EXPORT Texture2D : public Texture
