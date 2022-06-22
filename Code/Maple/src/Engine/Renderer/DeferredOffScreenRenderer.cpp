@@ -169,8 +169,8 @@ namespace maple
 
 			const int32_t lpvEnable =
 			    entity.hasComponent<component::LPVGrid>() ?
-			        entity.getComponent<component::LPVGrid>().enableIndirect :
-			        0;
+                    entity.getComponent<component::LPVGrid>().enableIndirect :
+                    0;
 
 			const glm::mat4 *shadowTransforms = shadowData.shadowProjView;
 			const glm::vec4 *splitDepth       = shadowData.splitDepth;
@@ -274,26 +274,9 @@ namespace maple
 						skinnedMesh->boneTransforms = cmd.boneTransforms;
 					}
 
-					if (mesh->getSubMeshCount() <= 1)
+					for (auto material : mesh->getMaterial())
 					{
-						cmd.material = !mesh->getMaterial().empty() ? mesh->getMaterial()[0].get() : data.defaultMaterial.get();
-						if (skinnedMesh)
-						{
-							cmd.material->setShader(data.deferredColorAnimShader);
-						}
-						else
-						{
-							cmd.material->setShader(data.deferredColorShader);
-						}
-						cmd.material->bind(renderData.commandBuffer);
-					}
-					else
-					{
-						cmd.material = nullptr;
-						for (auto material : mesh->getMaterial())
-						{
-							material->setShader(skinnedMesh ? data.deferredColorAnimShader : data.deferredColorShader);
-						}
+						material->setShader(skinnedMesh ? data.deferredColorAnimShader : data.deferredColorShader);
 					}
 
 					auto depthTest = data.depthTest;
@@ -409,8 +392,8 @@ namespace maple
 					pipeline->bind(renderData.commandBuffer);
 
 				auto shader = command.boneTransforms != nullptr ?
-				                  data.deferredColorAnimShader :
-				                  data.deferredColorShader;
+                                  data.deferredColorAnimShader :
+                                  data.deferredColorShader;
 
 				auto &pushConstants = shader->getPushConstants()[0];
 
@@ -423,55 +406,38 @@ namespace maple
 				pushConstants.setValue("transform", &command.transform);
 				shader->bindPushConstants(renderData.commandBuffer, pipeline.get());
 
-				if (command.mesh->getSubMeshCount() > 1)
+				auto &materials = command.mesh->getMaterial();
+				auto &indices   = command.mesh->getSubMeshIndex();
+				auto  start     = 0;
+				command.mesh->getVertexBuffer()->bind(renderData.commandBuffer, pipeline.get());
+				command.mesh->getIndexBuffer()->bind(renderData.commandBuffer);
+
+				for (auto i = 0; i < indices.size(); i++)
 				{
-					auto &materials = command.mesh->getMaterial();
-					auto &indices   = command.mesh->getSubMeshIndex();
-					auto  start     = 0;
-					command.mesh->getVertexBuffer()->bind(renderData.commandBuffer, pipeline.get());
-					command.mesh->getIndexBuffer()->bind(renderData.commandBuffer);
+					auto material = indices.size() > materials.size() ? data.defaultMaterial : materials[i];
+					auto end      = indices[i];
 
-					for (auto i = 0; i <= indices.size(); i++)
-					{
-						auto &material = materials[i];
-						auto  end      = i == indices.size() ? command.mesh->getIndexBuffer()->getCount() : indices[i];
-
-						if (command.boneTransforms != nullptr)
-						{
-							material->bind(renderData.commandBuffer);
-							data.descriptorAnimSet[1] = material->getDescriptorSet();
-							Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, data.descriptorAnimSet);
-						}
-						else
-						{
-							material->bind(renderData.commandBuffer);
-							data.descriptorColorSet[1] = material->getDescriptorSet();
-							Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, data.descriptorColorSet);
-						}
-
-						Renderer::drawIndexed(renderData.commandBuffer, DrawType::Triangle, end - start, start);
-
-						start = end;
-					}
-
-					command.mesh->getVertexBuffer()->unbind();
-					command.mesh->getIndexBuffer()->unbind();
-				}
-				else
-				{
 					if (command.boneTransforms != nullptr)
 					{
-						data.descriptorAnimSet[1] = command.material->getDescriptorSet();
+						material->bind(renderData.commandBuffer);
+						data.descriptorAnimSet[1] = material->getDescriptorSet();
 						Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, data.descriptorAnimSet);
 					}
 					else
 					{
-						data.descriptorColorSet[1] = command.material->getDescriptorSet();
+						material->bind(renderData.commandBuffer);
+						data.descriptorColorSet[1] = material->getDescriptorSet();
 						Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, data.descriptorColorSet);
 					}
 
-					Renderer::drawMesh(renderData.commandBuffer, pipeline.get(), command.mesh);
+					Renderer::drawIndexed(renderData.commandBuffer, DrawType::Triangle, end - start, start);
+
+					start = end;
 				}
+				command.mesh->getVertexBuffer()->unbind();
+				command.mesh->getIndexBuffer()->unbind();
+
+
 				/*if (command.stencilPipelineInfo.stencilTest)
 				{
 					auto stencilPipeline = Pipeline::get(command.stencilPipelineInfo);

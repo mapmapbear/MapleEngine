@@ -346,6 +346,16 @@ namespace maple
 #endif
 	}
 
+	auto StorageBuffer::create(uint32_t size, uint32_t flags, const BufferOptions &options) -> std::shared_ptr<StorageBuffer>
+	{
+#ifdef MAPLE_VULKAN
+		return std::make_shared<VulkanStorageBuffer>(size,flags,options);
+#endif
+#ifdef MAPLE_OPENGL
+		MAPLE_ASSERT(false, "Unsupported graphics API");
+#endif
+	}
+
 	auto StorageBuffer::create(uint32_t size, const void *data, const BufferOptions &options) -> std::shared_ptr<StorageBuffer>
 	{
 #ifdef MAPLE_VULKAN

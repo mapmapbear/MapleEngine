@@ -29,6 +29,7 @@ namespace maple
 			glm::mat4                                   projView;
 			glm::mat4                                   lightMatrix;
 			float                                       lightArea = 1.0f;
+			std::shared_ptr<Material>                   defaultMaterial;
 		};
 	}        // namespace component
 

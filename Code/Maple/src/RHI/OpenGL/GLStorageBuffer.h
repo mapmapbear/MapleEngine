@@ -22,7 +22,10 @@ namespace maple
 		auto mapMemory(const std::function<void(void *)> &call) -> void override;
 		auto unmap() -> void override;
 		auto map() -> void * override;
-
+		auto getDeviceAddress() const -> uint64_t override
+		{
+			return 0;
+		}
 	  private:
 		uint32_t handle{};
 		uint32_t size = 0;

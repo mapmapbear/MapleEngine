@@ -11,6 +11,7 @@ namespace maple
 	{
 	  public:
 		RayTracingProperties();
+
 		inline auto getMaxDescriptorSetAccelerationStructures() const
 		{
 			return accelProps.maxDescriptorSetAccelerationStructures;

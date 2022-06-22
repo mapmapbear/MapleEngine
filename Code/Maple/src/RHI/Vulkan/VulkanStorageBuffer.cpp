@@ -17,13 +17,18 @@ namespace maple
 			flags |= VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT;
 		}
 
-		vulkanBuffer = std::make_shared<VulkanBuffer>(flags, size, data, options.gpuOnly);
+		vulkanBuffer = std::make_shared<VulkanBuffer>(flags, size, data, options.vmaUsage, options.vmaCreateFlags);
 	}
 
 	VulkanStorageBuffer::VulkanStorageBuffer(const BufferOptions &options) :
 	    options(options)
 	{
 		vulkanBuffer = std::make_shared<VulkanBuffer>();
+	}
+
+	VulkanStorageBuffer::VulkanStorageBuffer(uint32_t size, uint32_t flags, const BufferOptions &options)
+	{
+		vulkanBuffer = std::make_shared<VulkanBuffer>(flags, size, nullptr, options.vmaUsage, options.vmaCreateFlags);
 	}
 
 	auto VulkanStorageBuffer::setData(uint32_t size, const void *data) -> void
@@ -37,7 +42,7 @@ namespace maple
 				flags |= VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT;
 			}
 
-			vulkanBuffer->init(flags, size, data);
+			vulkanBuffer->init(flags, size, data, options.vmaUsage, options.vmaCreateFlags);
 		}
 		else
 		{
@@ -67,4 +72,10 @@ namespace maple
 		vulkanBuffer->map();
 		return vulkanBuffer->getMapped();
 	}
+
+	auto VulkanStorageBuffer::getDeviceAddress() const -> uint64_t
+	{
+		return vulkanBuffer->getDeviceAddress();
+	}
+
 }        // namespace maple

@@ -3,6 +3,7 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include "PathIntegrator.h"
+#include "RHI/AccelerationStructure.h"
 #include "RHI/GraphicsContext.h"
 #include "RHI/Pipeline.h"
 #include "RHI/StorageBuffer.h"
@@ -24,6 +25,10 @@
 #define MAX_SCENE_MATERIAL_COUNT 4096
 #define MAX_SCENE_MATERIAL_TEXTURE_COUNT (MAX_SCENE_MATERIAL_COUNT * 4)
 
+#ifdef MAPLE_VULKAN
+#	include "RHI/Vulkan/Vk.h"
+#endif        // MAPLE_VULKAN
+
 namespace maple
 {
 	namespace component
@@ -37,6 +42,16 @@ namespace maple
 			StorageBuffer::Ptr materialBuffer;
 			StorageBuffer::Ptr transformBuffer;
 		};
+
+		struct AccelerationStructureData        // topLevel -> whole scene.
+		{
+			AccelerationStructure::Ptr tlas;
+			StorageBuffer::Ptr         instanceBufferHost;
+			StorageBuffer::Ptr         instanceBufferDevice;
+			StorageBuffer::Ptr         scratchBuffer;
+			bool                       built = false;
+		};
+
 	}        // namespace component
 
 	namespace init
@@ -56,6 +71,27 @@ namespace maple
 			pipeline.lightBuffer->setData(sizeof(component::LightData) * MAX_SCENE_LIGHT_COUNT, nullptr);
 			pipeline.materialBuffer->setData(sizeof(raytracing::MaterialData) * MAX_SCENE_MATERIAL_COUNT, nullptr);
 			pipeline.materialBuffer->setData(sizeof(raytracing::TransformData) * MAX_SCENE_MESH_INSTANCE_COUNT, nullptr);
+
+			auto &tlas = entity.addComponent<component::AccelerationStructureData>();
+
+#ifdef MAPLE_VULKAN
+			tlas.instanceBufferDevice = StorageBuffer::create(
+			    sizeof(VkAccelerationStructureInstanceKHR) * MAX_SCENE_MESH_INSTANCE_COUNT,
+			    VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
+			        VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
+			        VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+			    {false, VMA_MEMORY_USAGE_GPU_ONLY, 0});
+
+			tlas.instanceBufferHost = StorageBuffer::create(
+			    sizeof(VkAccelerationStructureInstanceKHR) * MAX_SCENE_MESH_INSTANCE_COUNT,
+			    VK_BUFFER_USAGE_TRANSFER_SRC_BIT, {false,VMA_MEMORY_USAGE_CPU_ONLY, VMA_ALLOCATION_CREATE_MAPPED_BIT});
+
+			tlas.tlas = AccelerationStructure::createTopLevel(tlas.instanceBufferDevice->getDeviceAddress(), MAX_SCENE_MESH_INSTANCE_COUNT);
+
+			tlas.scratchBuffer = StorageBuffer::create(tlas.tlas->getBuildScratchSize(),
+			                                           VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+			                                           {false, VMA_MEMORY_USAGE_GPU_ONLY, 0});
+#endif
 		}
 	}        // namespace init
 
@@ -82,7 +118,7 @@ namespace maple
 		    global::component::SceneTransformChanged *sceneChanged)
 		{
 			auto [integrator, pipeline] = entity;
-			if (sceneChanged->dirty)
+			if (sceneChanged && sceneChanged->dirty)
 			{
 				std::unordered_set<uint32_t>           processedMeshes;
 				std::unordered_set<uint32_t>           processedMaterials;
@@ -91,27 +127,34 @@ namespace maple
 				uint32_t                               meshCounter        = 0;
 				uint32_t                               gpuMaterialCounter = 0;
 
-				std::vector<VertexBuffer::Ptr> vbos;
-				std::vector<IndexBuffer::Ptr>  ibos;
-				std::vector<Texture::Ptr>      shaderTextures;
+				std::vector<VertexBuffer::Ptr>  vbos;
+				std::vector<IndexBuffer::Ptr>   ibos;
+				std::vector<Texture::Ptr>       shaderTextures;
+				std::vector<StorageBuffer::Ptr> materialIndices;
 
 				context.context->waitIdle();
 
-				auto meterialBuffer = (raytracing::MaterialData *) pipeline.materialBuffer->map();
-				auto guard          = sg::make_scope_guard([&]() {
-                    pipeline.materialBuffer->unmap();
-                });
+				auto meterialBuffer  = (raytracing::MaterialData *) pipeline.materialBuffer->map();
+				auto transformBuffer = (raytracing::MaterialData *) pipeline.transformBuffer->map();
+				auto lightBuffer     = (raytracing::MaterialData *) pipeline.lightBuffer->map();
+
+				auto guard = sg::make_scope_guard([&]() {
+					pipeline.materialBuffer->unmap();
+					pipeline.lightBuffer->unmap();
+					pipeline.transformBuffer->unmap();
+				});
 
 				for (auto meshEntity : meshGroup)
 				{
 					auto [mesh, transform] = meshGroup.convert(meshEntity);
+
 					if (processedMeshes.count(mesh.mesh->getId()) == 0)
 					{
 						processedMeshes.emplace(mesh.mesh->getId());
 						indirectDraw.meshIndices[mesh.mesh->getId()] = meshCounter++;
 						vbos.emplace_back(mesh.mesh->getVertexBuffer());
 						ibos.emplace_back(mesh.mesh->getIndexBuffer());
-						
+
 						for (auto i = 0; i < mesh.mesh->getSubMeshCount(); i++)
 						{
 							auto material = mesh.mesh->getMaterial(i);
@@ -190,7 +233,21 @@ namespace maple
 							}
 						}
 					}
-					//TODO update submesh offset.....
+
+					auto buffer  = mesh.mesh->getSubMeshesBuffer();
+					auto indices = (glm::uvec2 *) buffer->map();
+					materialIndices.emplace_back(buffer);
+
+					for (auto i = 0; i < mesh.mesh->getSubMeshCount(); i++)
+					{
+						auto        material = mesh.mesh->getMaterial(i);
+						const auto &subIndex = mesh.mesh->getSubMeshIndex();
+						indices[i]           = glm::uvec2(subIndex[i] / 3, indirectDraw.materialIndices[material->getId()]);
+					}
+
+					auto guard = sg::make_scope_guard([&]() {
+						buffer->unmap();
+					});
 				}
 			}
 		}

@@ -26,6 +26,7 @@ namespace maple
 	class BoundingBox;
 	class Material;
 	class ExecutePoint;
+	class StorageBuffer;
 
 	class MAPLE_EXPORT Mesh
 	{
@@ -166,6 +167,8 @@ namespace maple
 			blendWeights.resize(size);
 		}
 
+		auto getSubMeshesBuffer() -> std::shared_ptr<StorageBuffer>;
+
 	  protected:
 		static auto generateTangent(const glm::vec3 &a, const glm::vec3 &b, const glm::vec3 &c, const glm::vec2 &ta, const glm::vec2 &tb, const glm::vec2 &tc) -> glm::vec3;
 
@@ -181,13 +184,16 @@ namespace maple
 		uint32_t              size   = 0;
 		bool                  active = true;
 		std::string           name;
-		uint32_t              subMeshCount = 0;
+		uint32_t              subMeshCount = 1;
 		std::vector<uint32_t> subMeshIndex;
 
 		/// Skinned mesh blend indices (max 4 per bone)
 		std::vector<glm::ivec4> blendIndices;
 		/// Skinned mesh index buffer (max 4 per bone)
 		std::vector<glm::vec4> blendWeights;
+
+		std::shared_ptr<StorageBuffer> subMeshesBuffer;
+
 	};
 
 	template <typename T>

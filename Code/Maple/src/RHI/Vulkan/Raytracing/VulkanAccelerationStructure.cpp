@@ -2,7 +2,7 @@
 // This file is part of the Maple Engine                              		//
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
-#include "AccelerationStructure.h"
+#include "VulkanAccelerationStructure.h"
 #include "Others/Console.h"
 #include "RHI/Vulkan/VulkanDevice.h"
 #include "RayTracingProperties.h"
@@ -18,12 +18,12 @@ namespace maple
 		}
 	}        // namespace
 
-	AccelerationStructure::AccelerationStructure(const std::shared_ptr<RayTracingProperties> &rayTracingProperties) :
+	VulkanAccelerationStructure::VulkanAccelerationStructure(const std::shared_ptr<RayTracingProperties> &rayTracingProperties) :
 	    rayTracingProperties(rayTracingProperties)
 	{
 	}
 
-	AccelerationStructure::~AccelerationStructure()
+	VulkanAccelerationStructure::~VulkanAccelerationStructure()
 	{
 		if (accelerationStructure != nullptr)
 		{
@@ -32,7 +32,7 @@ namespace maple
 		}
 	}
 
-	auto AccelerationStructure::getBuildSizes(const uint32_t *maxPrimitiveCounts) const -> const VkAccelerationStructureBuildSizesInfoKHR
+	auto VulkanAccelerationStructure::getBuildSizes(const uint32_t *maxPrimitiveCounts) const -> const VkAccelerationStructureBuildSizesInfoKHR
 	{
 		// Query both the size of the finished acceleration structure and the amount of scratch memory needed.
 		VkAccelerationStructureBuildSizesInfoKHR sizeInfo = {};
@@ -55,7 +55,7 @@ namespace maple
 		return sizeInfo;
 	}
 
-	auto AccelerationStructure::memoryBarrier(VkCommandBuffer cmdBuffer) -> void
+	auto VulkanAccelerationStructure::memoryBarrier(VkCommandBuffer cmdBuffer) -> void
 	{
 		// Wait for the builder to complete by setting a barrier on the resulting buffer. This is
 		// particularly important as the construction of the top-level hierarchy may be called right
@@ -74,7 +74,7 @@ namespace maple
 		    0, 1, &memoryBarrier, 0, nullptr, 0, nullptr);
 	}
 
-	auto AccelerationStructure::createAccelerationStructure(const VulkanBuffer::Ptr &resultBuffer, VkDeviceSize resultOffset) -> void
+	auto VulkanAccelerationStructure::createAccelerationStructure(const VulkanBuffer::Ptr &resultBuffer, VkDeviceSize resultOffset) -> void
 	{
 		VkAccelerationStructureCreateInfoKHR createInfo = {};
 		createInfo.sType                                = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR;
@@ -87,7 +87,7 @@ namespace maple
 	}
 
 	BottomLevelAccelerationStructure::BottomLevelAccelerationStructure(const std::shared_ptr<RayTracingProperties> &rayTracingProperties, const BottomLevelGeometry &geometries) :
-	    AccelerationStructure(rayTracingProperties),
+	    VulkanAccelerationStructure(rayTracingProperties),
 	    geometries(geometries)
 	{
 	}
@@ -111,7 +111,7 @@ namespace maple
 	}
 
 	TopLevelAccelerationStructure::TopLevelAccelerationStructure(const std::shared_ptr<RayTracingProperties> &rayTracingProperties, VkDeviceAddress instanceAddress, uint32_t instancesCount) :
-	    AccelerationStructure(rayTracingProperties),
+	    VulkanAccelerationStructure(rayTracingProperties),
 	    instancesCount(instancesCount)
 	{
 		// Create VkAccelerationStructureGeometryInstancesDataKHR. This wraps a device pointer to the above uploaded instances.

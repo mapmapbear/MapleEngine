@@ -111,23 +111,9 @@ namespace maple
 									cmd.mesh      = mesh.mesh.get();
 									cmd.transform = trans.getWorldMatrix();
 
-									if (mesh.mesh->getSubMeshCount() <= 1)        // at least two subMeshes.
+									for (auto material : mesh.mesh->getMaterial())
 									{
-										cmd.material = !mesh.mesh->getMaterial().empty() ? mesh.mesh->getMaterial()[0].get() : nullptr;
-
-										if (cmd.material)
-										{
-											cmd.material->setShader(rsm.shader, true);
-										}
-										cmd.material->bind(renderData.commandBuffer);
-									}
-									else
-									{
-										cmd.material = nullptr;
-										for (auto material : mesh.mesh->getMaterial())
-										{
-											material->setShader(rsm.shader, true);
-										}
+										material->setShader(rsm.shader, true);
 									}
 								}
 							}
@@ -177,32 +163,23 @@ namespace maple
 
 				rsm.shader->bindPushConstants(commandBuffer, pipeline.get());
 
-				if (mesh->getSubMeshCount() > 1)
+				auto &materials = mesh->getMaterial();
+				auto &indices   = mesh->getSubMeshIndex();
+				auto  start     = 0;
+				mesh->getVertexBuffer()->bind(commandBuffer, pipeline.get());
+				mesh->getIndexBuffer()->bind(commandBuffer);
+				for (auto i = 0; i < indices.size(); i++)
 				{
-					auto &materials = mesh->getMaterial();
-					auto &indices   = mesh->getSubMeshIndex();
-					auto  start     = 0;
-					mesh->getVertexBuffer()->bind(commandBuffer, pipeline.get());
-					mesh->getIndexBuffer()->bind(commandBuffer);
-					for (auto i = 0; i <= indices.size(); i++)
-					{
-						auto &material = materials[i];
-						auto  end      = i == indices.size() ? command.mesh->getIndexBuffer()->getCount() : indices[i];
-						material->bind(renderData.commandBuffer);
-						rsm.descriptorSets[1] = material->getDescriptorSet();
-						Renderer::bindDescriptorSets(pipeline.get(), commandBuffer, 0, rsm.descriptorSets);
-						Renderer::drawIndexed(commandBuffer, DrawType::Triangle, end - start, start);
-						start = end;
-					}
-					mesh->getVertexBuffer()->unbind();
-					mesh->getIndexBuffer()->unbind();
-				}
-				else
-				{
-					rsm.descriptorSets[1] = command.material->getDescriptorSet(rsm.shader->getName());
+					auto material = indices.size() > materials.size() ? rsm.defaultMaterial : materials[i];
+					auto end      = indices[i];
+					material->bind(renderData.commandBuffer);
+					rsm.descriptorSets[1] = material->getDescriptorSet();
 					Renderer::bindDescriptorSets(pipeline.get(), commandBuffer, 0, rsm.descriptorSets);
-					Renderer::drawMesh(commandBuffer, pipeline.get(), mesh);
+					Renderer::drawIndexed(commandBuffer, DrawType::Triangle, end - start, start);
+					start = end;
 				}
+				mesh->getVertexBuffer()->unbind();
+				mesh->getIndexBuffer()->unbind();
 			}
 
 			if (commandBuffer)
@@ -237,6 +214,17 @@ namespace maple
 
 				data.fluxDepth = TextureDepth::create(component::ReflectiveShadowData::SHADOW_SIZE, component::ReflectiveShadowData::SHADOW_SIZE);
 				data.fluxDepth->setName("uFluxDepthSampler");
+
+				MaterialProperties properties;
+				properties.albedoColor       = glm::vec4(1.f, 1.f, 1.f, 1.f);
+				properties.roughnessColor    = glm::vec4(0);
+				properties.metallicColor     = glm::vec4(0);
+				properties.usingAlbedoMap    = 0.0f;
+				properties.usingRoughnessMap = 0.0f;
+				properties.usingNormalMap    = 0.0f;
+				properties.usingMetallicMap  = 0.0f;
+				data.defaultMaterial          = std::make_shared<Material>(data.shader, properties);
+				data.defaultMaterial->createDescriptorSet();
 			});
 		}
 

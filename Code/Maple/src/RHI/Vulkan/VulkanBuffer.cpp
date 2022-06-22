@@ -14,11 +14,11 @@ namespace maple
 	{
 	}
 
-	VulkanBuffer::VulkanBuffer(VkBufferUsageFlags usage, uint32_t size, const void *data, bool gpuOnly) :
+	VulkanBuffer::VulkanBuffer(VkBufferUsageFlags usage, uint32_t size, const void *data, uint32_t vmaUsage, uint32_t vmaCreateFlags):
 	    usage(usage),
 	    size(size)
 	{
-		init(usage, size, data, gpuOnly);
+		init(usage, size, data, vmaUsage, vmaCreateFlags);
 	}
 
 	VulkanBuffer::~VulkanBuffer()
@@ -26,7 +26,7 @@ namespace maple
 		release();
 	}
 
-	auto VulkanBuffer::init(VkBufferUsageFlags usage, uint32_t size, const void *data, bool gpuOnly) -> void
+	auto VulkanBuffer::init(VkBufferUsageFlags usage, uint32_t size, const void *data, uint32_t vmaUsage, uint32_t vmaCreateFlags) -> void
 	{
 		PROFILE_FUNCTION();
 		//param for creating
@@ -40,7 +40,8 @@ namespace maple
 
 #ifdef USE_VMA_ALLOCATOR
 		VmaAllocationCreateInfo vmaAllocInfo = {};
-		vmaAllocInfo.usage                   = gpuOnly ? VMA_MEMORY_USAGE_GPU_ONLY : VMA_MEMORY_USAGE_CPU_TO_GPU;
+		vmaAllocInfo.flags                   = vmaCreateFlags;
+		vmaAllocInfo.usage                   = (VmaMemoryUsage) vmaUsage;
 		vmaCreateBuffer(VulkanDevice::get()->getAllocator(), &bufferInfo, &vmaAllocInfo, &buffer, &allocation, nullptr);
 #else
 		VK_CHECK_RESULT(vkCreateBuffer(*VulkanDevice::get(), &bufferInfo, nullptr, &buffer));

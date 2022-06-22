@@ -8,6 +8,7 @@
 #include <Scene/System/ExecutePoint.h>
 #include <ecs/World.h>
 
+#include "RHI/StorageBuffer.h"
 #include "Application.h"
 #include "Mesh.h"
 #include "Vertex.h"
@@ -24,6 +25,7 @@ namespace maple
 	    indexBuffer(indexBuffer)
 	{
 		meshId = idGenerator++;
+		subMeshIndex.emplace_back(indexBuffer->getCount());
 	}
 
 	Mesh::Mesh(const std::vector<uint32_t> &indices, const std::vector<Vertex> &vertices)
@@ -37,6 +39,7 @@ namespace maple
 		vertexBuffer->setData(sizeof(Vertex) * vertices.size(), vertices.data());
 		indexBuffer = IndexBuffer::create(indices.data(), indices.size());
 		meshId      = idGenerator++;
+		subMeshIndex.emplace_back(indexBuffer->getCount());
 	}
 
 	Mesh::Mesh(const std::vector<uint32_t> &indices, const std::vector<SkinnedVertex> &vertices)
@@ -50,6 +53,7 @@ namespace maple
 		vertexBuffer->setData(sizeof(SkinnedVertex) * vertices.size(), vertices.data());
 		indexBuffer = IndexBuffer::create(indices.data(), indices.size());
 		meshId      = idGenerator++;
+		subMeshIndex.emplace_back(indexBuffer->getCount());
 	}
 
 	auto Mesh::setIndicies(uint32_t range) -> void
@@ -626,6 +630,15 @@ namespace maple
 		    2, 3, 0};
 
 		return std::make_shared<Mesh>(indices, data);
+	}
+
+	auto Mesh::getSubMeshesBuffer() -> std::shared_ptr<StorageBuffer>
+	{
+		if (subMeshesBuffer == nullptr)
+		{
+			subMeshesBuffer = StorageBuffer::create(sizeof(glm::uvec2) * subMeshCount, nullptr);
+		}
+		return subMeshesBuffer;
 	}
 
 	auto Mesh::generateTangent(const glm::vec3 &a, const glm::vec3 &b, const glm::vec3 &c, const glm::vec2 &ta, const glm::vec2 &tb, const glm::vec2 &tc) -> glm::vec3

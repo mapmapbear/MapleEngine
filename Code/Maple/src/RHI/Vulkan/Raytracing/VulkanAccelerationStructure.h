@@ -5,6 +5,7 @@
 
 #include "BottomLevelGeometry.h"
 #include "RHI/Vulkan/Vk.h"
+#include "RHI/AccelerationStructure.h"
 
 #include "Engine/Core.h"
 #include <glm/glm.hpp>
@@ -14,16 +15,21 @@ namespace maple
 	class RayTracingProperties;
 	class BottomLevelGeometry;
 
-	class AccelerationStructure
+	class VulkanAccelerationStructure : public AccelerationStructure
 	{
 	  public:
-		NO_COPYABLE(AccelerationStructure);
+		NO_COPYABLE(VulkanAccelerationStructure);
 
-		virtual ~AccelerationStructure();
+		virtual ~VulkanAccelerationStructure();
 
 		inline auto &getBuildSizes() const
 		{
 			return buildSizesInfo;
+		}
+
+		virtual auto getBuildScratchSize() const -> uint64_t override
+		{
+			return buildSizesInfo.buildScratchSize;
 		}
 
 		static auto memoryBarrier(VkCommandBuffer cmdBuffer) -> void;
@@ -34,7 +40,7 @@ namespace maple
 		}
 
 	  protected:
-		explicit AccelerationStructure(const std::shared_ptr<RayTracingProperties> &rayTracingProperties);
+		explicit VulkanAccelerationStructure(const std::shared_ptr<RayTracingProperties> &rayTracingProperties);
 		auto getBuildSizes(const uint32_t *maxPrimitiveCounts) const -> const VkAccelerationStructureBuildSizesInfoKHR;
 		auto createAccelerationStructure(const VulkanBuffer::Ptr &buffer, VkDeviceSize resultOffset) -> void;
 
@@ -46,7 +52,7 @@ namespace maple
 		std::shared_ptr<RayTracingProperties> rayTracingProperties;
 	};
 
-	class BottomLevelAccelerationStructure final : public AccelerationStructure
+	class BottomLevelAccelerationStructure final : public VulkanAccelerationStructure
 	{
 	  public:
 		NO_COPYABLE(BottomLevelAccelerationStructure);
@@ -66,7 +72,7 @@ namespace maple
 		BottomLevelGeometry geometries;
 	};
 
-	class TopLevelAccelerationStructure final : public AccelerationStructure
+	class TopLevelAccelerationStructure final : public VulkanAccelerationStructure
 	{
 	  public:
 		NO_COPYABLE(TopLevelAccelerationStructure);

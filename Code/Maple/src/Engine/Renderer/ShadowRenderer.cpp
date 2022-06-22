@@ -172,23 +172,19 @@ namespace maple
 						for (int32_t i = 0; i < shadowData.shadowMapNum; i++)
 						{
 							meshQuery.forEach([&, i](MeshEntity meshEntity) {
-							auto [mesh, trans] = meshEntity;
-							if (mesh.castShadow && mesh.active && mesh.mesh != nullptr)
-							{
-								auto bb = mesh.mesh->getBoundingBox()->transform(trans.getWorldMatrix());
-								auto inside = shadowData.cascadeFrustums[i].isInside(bb);
-								if (inside)
+								auto [mesh, trans] = meshEntity;
+								if (mesh.castShadow && mesh.active && mesh.mesh != nullptr)
 								{
-									auto& cmd = shadowData.cascadeCommandQueue[i].emplace_back();
-									cmd.mesh = mesh.mesh.get();
-									cmd.transform = trans.getWorldMatrix();
-
-									if (mesh.mesh->getSubMeshCount() <= 1) // at least two subMeshes.
+									auto bb     = mesh.mesh->getBoundingBox()->transform(trans.getWorldMatrix());
+									auto inside = shadowData.cascadeFrustums[i].isInside(bb);
+									if (inside)
 									{
-										cmd.material = !mesh.mesh->getMaterial().empty() ? mesh.mesh->getMaterial()[0].get() : nullptr;
+										auto &cmd     = shadowData.cascadeCommandQueue[i].emplace_back();
+										cmd.mesh      = mesh.mesh.get();
+										cmd.transform = trans.getWorldMatrix();
 									}
 								}
-							} });
+							});
 						}
 
 						for (auto skinEntity : skinnedQuery)
