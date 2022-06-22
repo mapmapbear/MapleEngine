@@ -7,7 +7,7 @@
 #include "Engine/Profiler.h"
 
 #include <Scene/Entity/Entity.h>
-#include <ecs/SystemBuilder.h>
+#include <ecs/SystemAssembler.h>
 #include <ecs/TypeList.h>
 #include <ecs/World.h>
 
@@ -56,43 +56,43 @@ namespace maple
 		template <auto System>
 		inline auto registerFactorySystem() -> void
 		{
-			expand(ecs::FunctionConstant<System>{}, factoryQueue);
+			expand(ecs::SystemFunction<System>{}, factoryQueue);
 		}
 
 		template <auto System>
 		inline auto registerSystem() -> void
 		{
-			expand(ecs::FunctionConstant<System>{}, updateQueue);
+			expand(ecs::SystemFunction<System>{}, updateQueue);
 		}
 
 		template <auto System>
 		inline auto registerSystemInFrameEnd() -> void
 		{
-			expand(ecs::FunctionConstant<System>{}, frameEndQueue);
+			expand(ecs::SystemFunction<System>{}, frameEndQueue);
 		}
 
 		template <auto System>
 		inline auto registerGameStart() -> void
 		{
-			expand(ecs::FunctionConstant<System>{}, gameStartQueue);
+			expand(ecs::SystemFunction<System>{}, gameStartQueue);
 		}
 
 		template <auto System>
 		inline auto registerGameEnded() -> void
 		{
-			expand(ecs::FunctionConstant<System>{}, gameEndedQueue);
+			expand(ecs::SystemFunction<System>{}, gameEndedQueue);
 		}
 
 		template <auto System>
 		inline auto registerOnImGui() -> void
 		{
-			expand(ecs::FunctionConstant<System>{}, imGuiQueue);
+			expand(ecs::SystemFunction<System>{}, imGuiQueue);
 		}
 
 		template <auto System>
 		inline auto registerWithinQueue(ExecuteQueue &queue)
 		{
-			expand(ecs::FunctionConstant<System>{}, queue);
+			expand(ecs::SystemFunction<System>{}, queue);
 		}
 
 		template <typename R, typename... T>
@@ -126,7 +126,7 @@ namespace maple
 		}
 
 		template <typename Component, typename... Args>
-		inline auto &getGlobalComponent(Args &&... args)
+		inline auto &getGlobalComponent(Args &&...args)
 		{
 			return registry.template get_or_emplace<Component>(globalEntity, std::forward<Args>(args)...);
 		}
@@ -221,7 +221,7 @@ namespace maple
 		}
 
 		template <auto System>
-		inline auto expand(ecs::FunctionConstant<System> system, ExecuteQueue &queue) -> void
+		inline auto expand(ecs::SystemFunction<System> system, ExecuteQueue &queue) -> void
 		{
 			build(system, queue);
 		}
@@ -230,11 +230,10 @@ namespace maple
 		inline auto build(TSystem, ExecuteQueue &queue) -> void
 		{
 			queue.jobs.emplace_back([&](entt::registry &reg) {
-				auto           call       = ecs::CallBuilder::template buildCall(TSystem{});
-				constexpr auto reflectStr = ecs::CallBuilder::template buildFullCallName(TSystem{});
+				auto           call       = ecs::SystemAssembler::template assembleSystem(TSystem{});
+				constexpr auto reflectStr = ecs::SystemAssembler::template getSystemFullName(TSystem{});
 				PROFILE_SCOPE(reflectStr.c_str());
-				auto dependency = ecs::CallBuilder::template buildDependency(reg, globalEntity, TSystem{});
-				call(TSystem{}, reg, dependency);
+				call(TSystem{}, reg, ecs::SystemAssembler::template reflectVariables(reg, globalEntity, TSystem{}));
 			});
 		}
 

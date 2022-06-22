@@ -53,6 +53,7 @@ namespace maple
 		{
 			return mapped;
 		}
+
 	  protected:
 		auto release() -> void;
 

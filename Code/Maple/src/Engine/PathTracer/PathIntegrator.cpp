@@ -13,6 +13,8 @@
 #include "Scene/Component/MeshRenderer.h"
 #include "Scene/Component/Transform.h"
 
+#include "Engine/Renderer/SkyboxRenderer.h"
+
 #include "TracedData.h"
 
 #include <scope_guard.hpp>
@@ -59,27 +61,17 @@ namespace maple
 
 	namespace gather_scene
 	{
-		// clang-format off
-		using Entity = ecs::Registry 
-			::Fetch<component::PathIntegrator>
-			::Fetch<component::PathTracePipeline>
-			::To<ecs::Entity>;
+		using Entity = ecs::Registry ::Fetch<component::PathIntegrator>::Fetch<component::PathTracePipeline>::To<ecs::Entity>;
 
-		using LightDefine = ecs::Registry 
-			::Fetch<component::Transform>
-			::Modify<component::Light>;
+		using LightDefine = ecs::Registry ::Fetch<component::Transform>::Modify<component::Light>;
 
-		using LightEntity = LightDefine 
-			::To<ecs::Entity>;
+		using LightEntity = LightDefine ::To<ecs::Entity>;
 
-		using LightGroup = LightDefine 
-			::To<ecs::Group>;
+		using LightGroup = LightDefine::To<ecs::Group>;
 
-		using MeshQuery = ecs::Registry 
-			::Modify<component::MeshRenderer>
-			::Modify<component::Transform>
-			::To<ecs::Group>;
-		// clang-format on
+		using MeshQuery = ecs::Registry ::Modify<component::MeshRenderer>::Modify<component::Transform>::To<ecs::Group>;
+
+		using SkyboxGroup = ecs::Registry::Fetch<component::SkyboxData>::To<ecs::Group>;
 
 		inline auto system(
 		    Entity                                    entity,

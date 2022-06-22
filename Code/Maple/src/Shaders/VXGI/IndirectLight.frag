@@ -10,7 +10,8 @@ layout(binding = 7)  uniform sampler2D uColorSampler;
 layout(binding = 8)  uniform sampler2D uPositionSampler;
 layout(binding = 9)  uniform sampler2D uNormalSampler;
 layout(binding = 10) uniform sampler2D uPBRSampler;
-layout(binding = 11) uniform UniformBufferVXGI
+layout(binding = 11) uniform samplerCube uSkyBox;
+layout(binding = 12) uniform UniformBufferVXGI
 {
 	float voxelScale;
 	float maxTracingDistanceGlobal;
@@ -150,6 +151,11 @@ vec4 traceCone(vec3 position, vec3 normal, vec3 direction, float aperture, bool 
         }
         // move further into volume
         dst += diameter * uboVXGI.samplingFactor;
+    }
+
+    if( all(equal(vec4(coneSample.rgb, occlusion),vec4(0))) )
+    {
+        return texture(uSkyBox,direction);
     }
 
     return vec4(coneSample.rgb, occlusion);

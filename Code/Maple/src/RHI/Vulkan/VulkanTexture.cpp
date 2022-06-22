@@ -200,14 +200,14 @@ namespace maple
 	    vkFormat(format),
 	    imageLayout(VK_IMAGE_LAYOUT_UNDEFINED)
 	{
-		id = IdGenerator++;
+		id          = IdGenerator++;
 		deleteImage = false;
 		updateDescriptor();
 	}
 
 	VulkanTexture2D::VulkanTexture2D()
 	{
-		id = IdGenerator++;
+		id             = IdGenerator++;
 		deleteImage    = false;
 		textureSampler = VulkanHelper::createTextureSampler(
 		    VkConverter::textureFilterToVK(parameters.magFilter),
@@ -597,14 +597,12 @@ namespace maple
 	{
 		LOGC("{0} did not implement", __FUNCTION__);
 		id = IdGenerator++;
-
 	}
 
 	VulkanTextureCube::VulkanTextureCube(const std::vector<std::string> &files, uint32_t mips, const TextureParameters &params, const TextureLoadOptions &loadOptions, const InputFormat &format)
 	{
 		LOGC("{0} did not implement", __FUNCTION__);
 		id = IdGenerator++;
-
 	}
 
 	VulkanTextureCube::VulkanTextureCube(const std::string &filePath) :

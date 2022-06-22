@@ -61,12 +61,7 @@ namespace maple
 
 		namespace update_hierarchy
 		{
-			// clang-format off
-			using Entity = ecs::Registry 
-				::Modify<maple::component::Hierarchy>
-				::Modify<maple::component::Transform>
-				::To<ecs::Entity>;
-			// clang-format on
+			using Entity = ecs::Registry ::Modify<maple::component::Hierarchy>::Modify<maple::component::Transform>::To<ecs::Entity>;
 			inline auto system(Entity entity, global::component::SceneTransformChanged *sceneChanged, ecs::World world)
 			{
 				auto [hierarchy, transform] = entity;
@@ -80,12 +75,7 @@ namespace maple
 
 		namespace update_none_hierarchy
 		{
-			// clang-format off
-			using Entity = ecs::Registry 
-				::Exclude<maple::component::Hierarchy>
-				::Modify<maple::component::Transform>
-				::To<ecs::Entity>;
-			// clang-format on
+			using Entity = ecs::Registry ::Exclude<maple::component::Hierarchy>::Modify<maple::component::Transform>::To<ecs::Entity>;
 			inline auto system(Entity entity, global::component::SceneTransformChanged *sceneChanged, ecs::World world)
 			{
 				auto [transform] = entity;
@@ -100,11 +90,7 @@ namespace maple
 
 		namespace reset_update
 		{
-			// clang-format off
-			using Entity = ecs::Registry 
-				::Modify<maple::component::Transform>
-				::To<ecs::Entity>;
-			// clang-format on
+			using Entity = ecs::Registry ::Modify<maple::component::Transform>::To<ecs::Entity>;
 			inline auto system(Entity entity, global::component::SceneTransformChanged *sceneChanged, ecs::World world)
 			{
 				auto [transform] = entity;

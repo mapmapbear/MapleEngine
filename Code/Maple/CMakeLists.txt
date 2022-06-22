@@ -192,7 +192,7 @@ endif()
 	set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 
 	
-if(MAPLE_VULKAN)
+
 	find_package(Vulkan REQUIRED)
 	IF (NOT Vulkan_FOUND)
 		message(FATAL_ERROR "Could not find Vulkan library!")
@@ -201,7 +201,6 @@ if(MAPLE_VULKAN)
 	ENDIF()
 
  	target_link_libraries(MapleEngine ${Vulkan_LIBRARY})
-endif()
 
 	target_include_directories(MapleEngine PUBLIC
 		src

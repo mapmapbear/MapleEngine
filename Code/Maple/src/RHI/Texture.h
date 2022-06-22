@@ -83,7 +83,6 @@ namespace maple
 			return 0;
 		};
 
-
 		inline auto getId() const
 		{
 			return id;

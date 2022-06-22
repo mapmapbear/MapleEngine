@@ -297,8 +297,8 @@ namespace maple
 
 		std::unordered_map<std::string, std::shared_ptr<DescriptorSet>> cachedDescriptorSet;
 
-		bool texturesUpdated = false;
-		bool onlyAlbedoColor = false;
-		int32_t id = 0;
+		bool    texturesUpdated = false;
+		bool    onlyAlbedoColor = false;
+		int32_t id              = 0;
 	};
 }        // namespace maple

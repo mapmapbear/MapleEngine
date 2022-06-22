@@ -10,6 +10,7 @@
 #include "Engine/Renderer/Renderer.h"
 #include "Engine/Renderer/RendererData.h"
 #include "Engine/Renderer/ShadowRenderer.h"
+#include "Engine/Renderer/SkyboxRenderer.h"
 
 #include "Scene/Component/BoundingBox.h"
 #include "Scene/Component/Light.h"
@@ -605,9 +606,12 @@ namespace maple
 
 		namespace compute_indirect_light
 		{
-			using Entity = ecs::Registry ::Modify<component::Voxelization>::To<ecs::Entity>;
+			using Entity = ecs::Registry::Modify<component::Voxelization>::To<ecs::Entity>;
+
+			using SkyboxGroup = ecs::Registry::Fetch<maple::component::SkyboxData>::To<ecs::Group>;
 
 			inline auto system(Entity                                    entity,
+			                   SkyboxGroup                               skyboxGroup,
 			                   const global::component::VoxelBuffer &    voxelBuffer,
 			                   global::component::IndirectLightPipeline &indirectPipeline,
 			                   maple::component::BoundingBoxComponent &  box,
@@ -624,6 +628,16 @@ namespace maple
 				indirectPipeline.descriptors[0]->setTexture("uPositionSampler", rendererData.gbuffer->getBuffer(GBufferTextures::POSITION));
 				indirectPipeline.descriptors[0]->setTexture("uNormalSampler", rendererData.gbuffer->getBuffer(GBufferTextures::NORMALS));
 				indirectPipeline.descriptors[0]->setTexture("uPBRSampler", rendererData.gbuffer->getBuffer(GBufferTextures::PBR));
+				indirectPipeline.descriptors[0]->setTexture("uSkyBox", rendererData.unitCube);
+				if (!skyboxGroup.empty())
+				{
+					for (auto sky : skyboxGroup)
+					{
+						auto [skybox] = skyboxGroup.convert(sky);
+						indirectPipeline.descriptors[0]->setTexture("uSkyBox", skybox.skybox);
+					}
+				}
+
 				indirectPipeline.descriptors[0]->update(rendererData.commandBuffer);
 
 				PipelineInfo pipelineInfo;

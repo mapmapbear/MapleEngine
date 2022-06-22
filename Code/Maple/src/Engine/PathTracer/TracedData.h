@@ -14,7 +14,7 @@ namespace maple::raytracing
 		glm::vec4  albedo;
 		glm::vec4  roughness;
 		glm::vec4  metalic;
-		glm::vec4  emissive;// w -> workflow 
+		glm::vec4  emissive;        // w -> workflow
 	};
 
 	struct TransformData
@@ -24,4 +24,4 @@ namespace maple::raytracing
 		float     padding[3];
 	};
 
-}        // namespace maple
+}        // namespace maple::raytracing

@@ -90,5 +90,5 @@ namespace maple
 		{
 			maple::GraphicsContext::Ptr context;
 		};
-	}        // namespace component
+	}        // namespace global::component
 }        // namespace maple

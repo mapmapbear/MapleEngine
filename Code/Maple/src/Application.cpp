@@ -12,12 +12,12 @@
 #include "2d/Sprite.h"
 #include "Scene/Component/BoundingBox.h"
 #include "Scene/Component/CameraControllerComponent.h"
+#include "Scene/Component/IndirectDraw.h"
 #include "Scene/Component/Light.h"
 #include "Scene/Component/LightProbe.h"
 #include "Scene/Component/MeshRenderer.h"
 #include "Scene/Component/Transform.h"
 #include "Scene/Component/VolumetricCloud.h"
-#include "Scene/Component/IndirectDraw.h"
 
 #include "Scene/SystemBuilder.inl"
 
