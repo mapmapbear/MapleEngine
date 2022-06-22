@@ -114,7 +114,7 @@ namespace maple
 	auto VulkanRenderDevice::drawIndexedInternal(const CommandBuffer *commandBuffer, const DrawType type, uint32_t count, uint32_t start) const -> void
 	{
 		PROFILE_FUNCTION();
-		vkCmdDrawIndexed(static_cast<const VulkanCommandBuffer *>(commandBuffer)->getCommandBuffer(), count, 1, 0, 0, 0);
+		vkCmdDrawIndexed(static_cast<const VulkanCommandBuffer *>(commandBuffer)->getCommandBuffer(), count, 1, start, 0, 0);
 	}
 
 	auto VulkanRenderDevice::bindDescriptorSetsInternal(Pipeline *pipeline, const CommandBuffer *commandBuffer, uint32_t dynamicOffset, const std::vector<std::shared_ptr<DescriptorSet>> &descriptorSets) -> void

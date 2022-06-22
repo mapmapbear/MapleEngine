@@ -111,7 +111,7 @@ namespace maple
 						indirectDraw.meshIndices[mesh.mesh->getId()] = meshCounter++;
 						vbos.emplace_back(mesh.mesh->getVertexBuffer());
 						ibos.emplace_back(mesh.mesh->getIndexBuffer());
-
+						
 						for (auto i = 0; i < mesh.mesh->getSubMeshCount(); i++)
 						{
 							auto material = mesh.mesh->getMaterial(i);
@@ -190,6 +190,7 @@ namespace maple
 							}
 						}
 					}
+					//TODO update submesh offset.....
 				}
 			}
 		}
