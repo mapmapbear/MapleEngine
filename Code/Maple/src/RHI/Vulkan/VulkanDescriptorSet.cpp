@@ -6,6 +6,7 @@
 #include "Others/Console.h"
 #include "VulkanBuffer.h"
 #include "VulkanCommandBuffer.h"
+#include "VulkanDescriptorPool.h"
 #include "VulkanDevice.h"
 #include "VulkanHelper.h"
 #include "VulkanPipeline.h"
@@ -69,11 +70,33 @@ namespace maple
 		framesInFlight = uint32_t(Application::getGraphicsContext()->getSwapChain()->getSwapChainBufferCount());
 
 		VkDescriptorSetAllocateInfo descriptorSetAllocateInfo;
-		descriptorSetAllocateInfo.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		descriptorSetAllocateInfo.descriptorPool     = std::static_pointer_cast<VulkanRenderDevice>(Application::getRenderDevice())->getDescriptorPool();
+		descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+
+		if (info.pool == nullptr)
+		{
+			auto pool = std::static_pointer_cast<VulkanRenderDevice>(
+			                Application::getRenderDevice())
+			                ->getDescriptorPool();
+			descriptorSetAllocateInfo.descriptorPool = std::static_pointer_cast<VulkanDescriptorPool>(pool)->getHandle();
+		}
+		else
+		{
+			descriptorSetAllocateInfo.descriptorPool = static_cast<const VulkanDescriptorPool *>(info.pool)->getHandle();
+		}
+
 		descriptorSetAllocateInfo.pSetLayouts        = static_cast<VulkanShader *>(info.shader)->getDescriptorLayout(info.layoutIndex);
 		descriptorSetAllocateInfo.descriptorSetCount = info.count;
 		descriptorSetAllocateInfo.pNext              = nullptr;
+
+		if (info.variableCount > 0)
+		{
+			VkDescriptorSetVariableDescriptorCountAllocateInfo variableInfo{};
+			variableInfo.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO;
+			variableInfo.descriptorSetCount = 1;
+			variableInfo.pDescriptorCounts  = &info.variableCount;
+
+			descriptorSetAllocateInfo.pNext = &variableInfo;
+		}
 
 		shader      = info.shader;
 		descriptors = shader->getDescriptorInfo(info.layoutIndex);

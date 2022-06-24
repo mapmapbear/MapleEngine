@@ -1179,6 +1179,10 @@ namespace maple
 					return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
 				case DescriptorType::Buffer:
 					return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+				case DescriptorType::BufferDynamic:
+					return VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC;
+				case DescriptorType::AccelerationStructure:
+					return VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR;
 			}
 			MAPLE_ASSERT(false, "Unknown DescriptorType");
 			return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;

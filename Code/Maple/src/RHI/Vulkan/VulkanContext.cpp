@@ -195,8 +195,6 @@ namespace maple
 			getDeletionQueue(i).flush();
 		}
 
-		vkDestroyDescriptorPool(*VulkanDevice::get(), std::static_pointer_cast<VulkanRenderDevice>(Application::getRenderDevice())->getDescriptorPool(), VK_NULL_HANDLE);
-
 		if (reportCallback)
 		{
 			PFN_vkDestroyDebugReportCallbackEXT destoryCallback = (PFN_vkDestroyDebugReportCallbackEXT) vkGetInstanceProcAddr(vkInstance, "vkDestroyDebugReportCallbackEXT");

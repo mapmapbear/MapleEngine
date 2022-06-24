@@ -15,6 +15,7 @@ namespace maple
 	class UniformBuffer;
 	class StorageBuffer;
 	class CommandBuffer;
+	class DescriptorPool;
 
 	enum class TextureType : int32_t;
 	enum class ShaderType : int32_t;
@@ -26,7 +27,9 @@ namespace maple
 		UniformBufferDynamic,
 		ImageSampler,
 		Image,
-		Buffer
+		Buffer,
+		BufferDynamic,
+		AccelerationStructure
 	};
 
 	enum class Format
@@ -93,9 +96,10 @@ namespace maple
 	{
 		DescriptorType type;
 		ShaderType     stage;
-		uint32_t       binding = 0;
-		uint32_t       setID   = 0;
-		uint32_t       count   = 1;
+		uint32_t       binding       = 0;
+		uint32_t       setID         = 0;
+		uint32_t       count         = 1;
+		bool           variableSized = false;
 	};
 
 	struct DescriptorLayout
@@ -106,9 +110,11 @@ namespace maple
 
 	struct DescriptorInfo
 	{
-		uint32_t layoutIndex;
-		Shader * shader;
-		uint32_t count = 1;        //used in vulkan
+		uint32_t        layoutIndex;
+		Shader *        shader;
+		uint32_t        count         = 1;        //used in vulkan
+		DescriptorPool *pool          = nullptr;
+		uint32_t        variableCount = 0;        // designed for bindless in vulkan
 	};
 
 	struct Descriptor

@@ -347,7 +347,18 @@ namespace maple
 				setLayoutBinding.descriptorCount = info.count;
 
 				bool isArray = info.count > 1;
-				layoutBindingFlags.emplace_back(isArray ? VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT : 0);
+
+				if (isArray)
+				{
+					layoutBindingFlags.emplace_back(info.variableSized ? 
+						VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT | VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT : 
+						VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT);
+				}
+				else
+				{
+					layoutBindingFlags.emplace_back(0);
+				}
+
 				setLayoutBindings.emplace_back(setLayoutBinding);
 			}
 

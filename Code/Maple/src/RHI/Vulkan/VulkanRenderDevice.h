@@ -5,6 +5,7 @@
 
 #include "RHI/Pipeline.h"
 #include "RHI/RenderDevice.h"
+#include "RHI/DescriptorPool.h"
 #include "VulkanSwapChain.h"
 
 namespace maple
@@ -44,7 +45,9 @@ namespace maple
 		const std::string rendererName = "Vulkan-Renderer";
 
 		uint32_t         currentSemaphoreIndex = 0;
-		VkDescriptorPool descriptorPool;
+		//VkDescriptorPool descriptorPool;
 		VkDescriptorSet  descriptorSetPool[16] = {};
+
+		DescriptorPool::Ptr descriptorPool;
 	};
 }        // namespace maple

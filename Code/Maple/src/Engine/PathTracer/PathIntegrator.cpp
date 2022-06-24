@@ -4,12 +4,13 @@
 
 #include "PathIntegrator.h"
 #include "RHI/AccelerationStructure.h"
+#include "RHI/DescriptorPool.h"
 #include "RHI/GraphicsContext.h"
 #include "RHI/Pipeline.h"
 #include "RHI/StorageBuffer.h"
 
 #include "Engine/Mesh.h"
-#include "Scene/Component/IndirectDraw.h"
+#include "Scene/Component/Bindless.h"
 #include "Scene/Component/Light.h"
 #include "Scene/Component/MeshRenderer.h"
 #include "Scene/Component/Transform.h"
@@ -20,17 +21,20 @@
 
 #include <scope_guard.hpp>
 
-#define MAX_SCENE_MESH_INSTANCE_COUNT 1024
-#define MAX_SCENE_LIGHT_COUNT 300
-#define MAX_SCENE_MATERIAL_COUNT 4096
-#define MAX_SCENE_MATERIAL_TEXTURE_COUNT (MAX_SCENE_MATERIAL_COUNT * 4)
-
 #ifdef MAPLE_VULKAN
 #	include "RHI/Vulkan/Vk.h"
 #endif        // MAPLE_VULKAN
 
 namespace maple
 {
+	namespace
+	{
+		constexpr uint32_t MAX_SCENE_MESH_INSTANCE_COUNT    = 1024;
+		constexpr uint32_t MAX_SCENE_LIGHT_COUNT            = 300;
+		constexpr uint32_t MAX_SCENE_MATERIAL_COUNT         = 4096;
+		constexpr uint32_t MAX_SCENE_MATERIAL_TEXTURE_COUNT = MAX_SCENE_MATERIAL_COUNT * 4;
+	}        // namespace
+
 	namespace component
 	{
 		struct PathTracePipeline
@@ -38,9 +42,16 @@ namespace maple
 			Pipeline::Ptr pipeline;
 			Shader::Ptr   shader;
 
-			StorageBuffer::Ptr lightBuffer;
-			StorageBuffer::Ptr materialBuffer;
-			StorageBuffer::Ptr transformBuffer;
+			StorageBuffer::Ptr  lightBuffer;
+			StorageBuffer::Ptr  materialBuffer;
+			StorageBuffer::Ptr  transformBuffer;
+			DescriptorPool::Ptr descriptorPool;
+
+			DescriptorSet::Ptr sceneDescriptor;
+			DescriptorSet::Ptr vboDescriptor;
+			DescriptorSet::Ptr iboDescriptor;
+			DescriptorSet::Ptr materialDescriptor;
+			DescriptorSet::Ptr textureDescriptor;
 		};
 
 		struct AccelerationStructureData        // topLevel -> whole scene.
@@ -72,6 +83,13 @@ namespace maple
 			pipeline.materialBuffer->setData(sizeof(raytracing::MaterialData) * MAX_SCENE_MATERIAL_COUNT, nullptr);
 			pipeline.materialBuffer->setData(sizeof(raytracing::TransformData) * MAX_SCENE_MESH_INSTANCE_COUNT, nullptr);
 
+			pipeline.descriptorPool = DescriptorPool::create({25,
+			                                                  {{DescriptorType::UniformBufferDynamic, 10},
+			                                                   {DescriptorType::ImageSampler, MAX_SCENE_MATERIAL_TEXTURE_COUNT},
+			                                                   {DescriptorType::Buffer, 5 * MAX_SCENE_MESH_INSTANCE_COUNT},
+			                                                   {DescriptorType::AccelerationStructure, 10}}});
+
+
 			auto &tlas = entity.addComponent<component::AccelerationStructureData>();
 
 #ifdef MAPLE_VULKAN
@@ -84,7 +102,7 @@ namespace maple
 
 			tlas.instanceBufferHost = StorageBuffer::create(
 			    sizeof(VkAccelerationStructureInstanceKHR) * MAX_SCENE_MESH_INSTANCE_COUNT,
-			    VK_BUFFER_USAGE_TRANSFER_SRC_BIT, {false,VMA_MEMORY_USAGE_CPU_ONLY, VMA_ALLOCATION_CREATE_MAPPED_BIT});
+			    VK_BUFFER_USAGE_TRANSFER_SRC_BIT, {false, VMA_MEMORY_USAGE_CPU_ONLY, VMA_ALLOCATION_CREATE_MAPPED_BIT});
 
 			tlas.tlas = AccelerationStructure::createTopLevel(tlas.instanceBufferDevice->getDeviceAddress(), MAX_SCENE_MESH_INSTANCE_COUNT);
 
@@ -113,7 +131,7 @@ namespace maple
 		    Entity                                    entity,
 		    LightGroup                                lightGroup,
 		    MeshQuery                                 meshGroup,
-		    global::component::IndirectDraw &         indirectDraw,
+		    global::component::Bindless &         indirectDraw,
 		    global::component::GraphicsContext &      context,
 		    global::component::SceneTransformChanged *sceneChanged)
 		{

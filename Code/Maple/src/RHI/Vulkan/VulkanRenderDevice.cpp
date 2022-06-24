@@ -13,6 +13,7 @@
 #include "Engine/Profiler.h"
 #include "Others/Console.h"
 
+#include "VulkanDescriptorPool.h"
 #include "VulkanDescriptorSet.h"
 #include "VulkanFramebuffer.h"
 
@@ -31,14 +32,22 @@ namespace maple
 	VulkanRenderDevice::~VulkanRenderDevice()
 	{
 		PROFILE_FUNCTION();
-		vkDestroyDescriptorPool(*VulkanDevice::get(), descriptorPool, VK_NULL_HANDLE);
 	}
 
 	auto VulkanRenderDevice::init() -> void
 	{
 		PROFILE_FUNCTION();
 
-		std::vector<VkDescriptorPoolSize> poolSizes = {
+		descriptorPool = DescriptorPool::create({MAX_DESCRIPTOR_SET_COUNT,
+		                                         {{DescriptorType::Image, 500},
+		                                          {DescriptorType::ImageSampler, 500},
+		                                          {DescriptorType::Buffer, 500},
+		                                          {DescriptorType::BufferDynamic, 500},
+		                                          {DescriptorType::UniformBuffer, 500},
+		                                          {DescriptorType::UniformBufferDynamic, 500}}});
+
+
+		/*	std::vector<VkDescriptorPoolSize> poolSizes = {
 		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_SAMPLER, 500},
 		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 500},
 		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 500},
@@ -58,9 +67,10 @@ namespace maple
 		poolCreateInfo.poolSizeCount              = poolSizes.size();
 		poolCreateInfo.pPoolSizes                 = poolSizes.data();
 		poolCreateInfo.maxSets                    = MAX_DESCRIPTOR_SET_COUNT;
+		
 
 		// Pool
-		VK_CHECK_RESULT(vkCreateDescriptorPool(*VulkanDevice::get(), &poolCreateInfo, nullptr, &descriptorPool));
+		VK_CHECK_RESULT(vkCreateDescriptorPool(*VulkanDevice::get(), &poolCreateInfo, nullptr, &descriptorPool));*/
 	}
 
 	auto VulkanRenderDevice::begin() -> void

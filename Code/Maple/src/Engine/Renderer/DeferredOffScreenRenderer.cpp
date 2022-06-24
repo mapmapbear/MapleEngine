@@ -274,9 +274,13 @@ namespace maple
 						skinnedMesh->boneTransforms = cmd.boneTransforms;
 					}
 
+					cmd.material = data.defaultMaterial.get();
+
 					for (auto material : mesh->getMaterial())
 					{
 						material->setShader(skinnedMesh ? data.deferredColorAnimShader : data.deferredColorShader);
+						material->bind(renderData.commandBuffer);
+						cmd.material = material.get();
 					}
 
 					auto depthTest = data.depthTest;
@@ -419,13 +423,13 @@ namespace maple
 
 					if (command.boneTransforms != nullptr)
 					{
-						material->bind(renderData.commandBuffer);
+						//material->bind(renderData.commandBuffer);
 						data.descriptorAnimSet[1] = material->getDescriptorSet();
 						Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, data.descriptorAnimSet);
 					}
 					else
 					{
-						material->bind(renderData.commandBuffer);
+						//material->bind(renderData.commandBuffer);
 						data.descriptorColorSet[1] = material->getDescriptorSet();
 						Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, data.descriptorColorSet);
 					}

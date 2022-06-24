@@ -157,7 +157,6 @@ namespace maple
 		VkQueue  presentQueue;
 		VkQueue  computeQueue;
 
-		VkDescriptorPool         descriptorPool;
 		VkPhysicalDeviceFeatures enabledFeatures;
 		VkPipelineCache          pipelineCache;
 
