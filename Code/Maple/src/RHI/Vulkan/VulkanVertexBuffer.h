@@ -28,7 +28,10 @@ namespace maple
 			return size;
 		}
 		auto getPointerInternal() -> void * override;
-
+		inline auto getAddress() const -> uint64_t override
+		{
+			return getDeviceAddress();
+		};
 	  protected:
 		bool        mappedBuffer = false;
 		BufferUsage bufferUsage  = BufferUsage::Static;

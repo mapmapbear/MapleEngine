@@ -26,10 +26,12 @@ namespace maple
 	{
 		meshId = idGenerator++;
 		subMeshIndex.emplace_back(indexBuffer->getCount());
+		vertexCount = vertexBuffer->getSize() / sizeof(Vertex);
 	}
 
 	Mesh::Mesh(const std::vector<uint32_t> &indices, const std::vector<Vertex> &vertices)
 	{
+		vertexCount = vertices.size();
 		boundingBox = std::make_shared<BoundingBox>();
 		for (auto &vertex : vertices)
 		{
@@ -44,6 +46,7 @@ namespace maple
 
 	Mesh::Mesh(const std::vector<uint32_t> &indices, const std::vector<SkinnedVertex> &vertices)
 	{
+		vertexCount = vertices.size();
 		boundingBox = std::make_shared<BoundingBox>();
 		for (auto &vertex : vertices)
 		{
@@ -628,7 +631,7 @@ namespace maple
 		std::vector<uint32_t> indices{
 		    0, 1, 2,
 		    2, 3, 0};
-
+	
 		return std::make_shared<Mesh>(indices, data);
 	}
 
@@ -639,6 +642,13 @@ namespace maple
 			subMeshesBuffer = StorageBuffer::create(sizeof(glm::uvec2) * subMeshCount, nullptr);
 		}
 		return subMeshesBuffer;
+	}
+
+	auto Mesh::getAccelerationStructure(BatchTask::Ptr task) -> AccelerationStructure::Ptr
+	{
+		if(bottomAs == nullptr)
+			bottomAs = AccelerationStructure::createBottomLevel(vertexBuffer, indexBuffer, vertexCount, task);
+		return bottomAs;
 	}
 
 	auto Mesh::generateTangent(const glm::vec3 &a, const glm::vec3 &b, const glm::vec3 &c, const glm::vec2 &ta, const glm::vec2 &tb, const glm::vec2 &tc) -> glm::vec3

@@ -33,6 +33,11 @@ namespace maple
 			return static_cast<T *>(getPointerInternal());
 		}
 
+		virtual auto getAddress() const -> uint64_t
+		{
+			return 0;
+		};
+
 	  protected:
 		virtual void *getPointerInternal() = 0;
 

@@ -3,24 +3,101 @@
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
 #include "VulkanAccelerationStructure.h"
+#include "Engine/Vertex.h"
 #include "Others/Console.h"
+#include "RHI/Vulkan/VulkanBatchTask.h"
 #include "RHI/Vulkan/VulkanDevice.h"
 #include "RayTracingProperties.h"
 
 namespace maple
 {
-	namespace
+	VulkanAccelerationStructure::VulkanAccelerationStructure(const uint32_t maxInstanceCount)
 	{
-		inline auto roundUp(uint64_t size, uint64_t granularity)
-		{
-			const auto divUp = (size + granularity - 1) / granularity;
-			return divUp * granularity;
-		}
-	}        // namespace
+		instanceBufferDevice = std::make_shared<VulkanBuffer>(VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
+		                                                          VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
+		                                                          VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+		                                                      sizeof(VkAccelerationStructureInstanceKHR) * maxInstanceCount, nullptr, VMA_MEMORY_USAGE_GPU_ONLY, 0);
 
-	VulkanAccelerationStructure::VulkanAccelerationStructure(const std::shared_ptr<RayTracingProperties> &rayTracingProperties) :
-	    rayTracingProperties(rayTracingProperties)
+		instanceBufferHost = std::make_shared<VulkanBuffer>(VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		                                                    sizeof(VkAccelerationStructureInstanceKHR) * maxInstanceCount, nullptr, VMA_MEMORY_USAGE_CPU_ONLY, VMA_ALLOCATION_CREATE_MAPPED_BIT);
+
+		VkDeviceOrHostAddressConstKHR instanceDeviceAddress{};
+		instanceDeviceAddress.deviceAddress = instanceBufferDevice->getDeviceAddress();
+
+		VkAccelerationStructureGeometryKHR tlasGeometry;
+		tlasGeometry.sType                              = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
+		tlasGeometry.geometryType                       = VK_GEOMETRY_TYPE_INSTANCES_KHR;
+		tlasGeometry.geometry.instances.sType           = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR;
+		tlasGeometry.geometry.instances.arrayOfPointers = VK_FALSE;
+		tlasGeometry.geometry.instances.data            = instanceDeviceAddress;
+
+		// Create TLAS
+		Desc desc;
+		create(desc.setGeometryCount(1)
+		           .setGeometries({tlasGeometry})
+		           .setMaxPrimitiveCounts({maxInstanceCount})
+		           .setType(VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR)
+		           .setFlags(VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR | VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR));
+
+		scratchBuffer = std::make_shared<VulkanBuffer>(
+			VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | 
+			VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, 
+			getBuildScratchSize(), nullptr, VMA_MEMORY_USAGE_GPU_ONLY, 0);
+	}
+
+	VulkanAccelerationStructure::VulkanAccelerationStructure(uint64_t vertexAddress, uint64_t indexAddress,
+	                                                         uint32_t vertexCount, uint32_t indexCount,
+	                                                         std::shared_ptr<BatchTask> batch, bool opaque)
 	{
+		std::vector<VkAccelerationStructureBuildRangeInfoKHR> buildRanges;
+		std::vector<VkAccelerationStructureGeometryKHR>       geometries;
+		std::vector<uint32_t>                                 maxPrimitiveCounts;
+
+		auto vkBatch = std::static_pointer_cast<VulkanBatchTask>(batch);
+
+		for (auto i = 0; i < 1; i++)        //TODO With subMeshes.
+		{
+			VkAccelerationStructureGeometryKHR geometry{};
+			VkGeometryFlagsKHR                 geometryFlags = 0;
+
+			if (opaque)
+				geometryFlags = VK_GEOMETRY_OPAQUE_BIT_KHR;
+
+			geometry.sType                                       = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
+			geometry.pNext                                       = nullptr;
+			geometry.geometryType                                = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
+			geometry.geometry.triangles.sType                    = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR;
+			geometry.geometry.triangles.pNext                    = nullptr;
+			geometry.geometry.triangles.vertexData.deviceAddress = vertexAddress;
+			geometry.geometry.triangles.vertexStride             = sizeof(maple::Vertex);
+			geometry.geometry.triangles.maxVertex                = vertexCount;
+			geometry.geometry.triangles.vertexFormat             = VK_FORMAT_R32G32B32_SFLOAT;
+			geometry.geometry.triangles.indexData.deviceAddress  = indexAddress;
+			geometry.geometry.triangles.indexType                = VK_INDEX_TYPE_UINT32;
+			geometry.flags                                       = geometryFlags;
+
+			geometries.push_back(geometry);
+			maxPrimitiveCounts.push_back(indexCount / 3);
+
+			VkAccelerationStructureBuildRangeInfoKHR buildRange{};
+			buildRange.primitiveCount  = indexCount / 3;
+			buildRange.primitiveOffset = 0;
+			buildRange.firstVertex     = 0;
+			buildRange.transformOffset = 0;
+
+			buildRanges.push_back(buildRange);
+		}
+
+		// Create BLAS
+		Desc desc;
+		create(desc
+		           .setGeometryCount(geometries.size())
+		           .setGeometries(geometries)
+		           .setMaxPrimitiveCounts(maxPrimitiveCounts)
+		           .setType(VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR)
+		           .setFlags(VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR));
+
+		vkBatch->buildBlas(this, geometries, buildRanges);
 	}
 
 	VulkanAccelerationStructure::~VulkanAccelerationStructure()
@@ -32,153 +109,112 @@ namespace maple
 		}
 	}
 
-	auto VulkanAccelerationStructure::getBuildSizes(const uint32_t *maxPrimitiveCounts) const -> const VkAccelerationStructureBuildSizesInfoKHR
+	auto VulkanAccelerationStructure::updateTLAS(void *buffer, const glm::mat3x4 &transform, uint32_t instanceId, uint64_t instanceAddress) -> void
 	{
-		// Query both the size of the finished acceleration structure and the amount of scratch memory needed.
-		VkAccelerationStructureBuildSizesInfoKHR sizeInfo = {};
-		sizeInfo.sType                                    = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
+		VkAccelerationStructureInstanceKHR *geometryBuffer = (VkAccelerationStructureInstanceKHR *) buffer;
+		VkAccelerationStructureInstanceKHR &vkASInstance   = geometryBuffer[instanceId];
+
+		vkASInstance.instanceCustomIndex                    = instanceId;
+		vkASInstance.mask                                   = 0xFF;
+		vkASInstance.instanceShaderBindingTableRecordOffset = 0;
+		vkASInstance.flags                                  = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
+		vkASInstance.accelerationStructureReference         = instanceAddress;
+	}
+
+	auto VulkanAccelerationStructure::create(const Desc &desc) -> void
+	{
+		flags = desc.buildGeometryInfo.flags;
+
+		buildSizesInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
 
 		vkGetAccelerationStructureBuildSizesKHR(
 		    *VulkanDevice::get(),
 		    VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
-		    &buildGeometryInfo,
-		    maxPrimitiveCounts,
-		    &sizeInfo);
+		    &desc.buildGeometryInfo,
+		    desc.maxPrimitiveCounts.data(),
+		    &buildSizesInfo);
 
-		// AccelerationStructure offset needs to be 256 bytes aligned (official Vulkan specs, don't ask me why).
-		constexpr uint64_t accelerationStructureAlignment = 256;
-		const uint64_t     scratchAlignment               = rayTracingProperties->getMinAccelerationStructureScratchOffsetAlignment();
+		buffer = std::make_shared<VulkanBuffer>(
+		    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+		    buildSizesInfo.accelerationStructureSize, nullptr, VMA_MEMORY_USAGE_GPU_ONLY, 0);
 
-		sizeInfo.accelerationStructureSize = roundUp(sizeInfo.accelerationStructureSize, accelerationStructureAlignment);
-		sizeInfo.buildScratchSize          = roundUp(sizeInfo.buildScratchSize, scratchAlignment);
+		auto createInfo = desc.createInfo;
 
-		return sizeInfo;
-	}
+		createInfo.buffer = buffer->getVkBuffer();
+		createInfo.size   = buildSizesInfo.accelerationStructureSize;
 
-	auto VulkanAccelerationStructure::memoryBarrier(VkCommandBuffer cmdBuffer) -> void
-	{
-		// Wait for the builder to complete by setting a barrier on the resulting buffer. This is
-		// particularly important as the construction of the top-level hierarchy may be called right
-		// afterwards, before executing the command list.
-
-		VkMemoryBarrier memoryBarrier = {};
-		memoryBarrier.sType           = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
-		memoryBarrier.pNext           = nullptr;
-		memoryBarrier.srcAccessMask   = VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR | VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
-		memoryBarrier.dstAccessMask   = VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR | VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
-
-		vkCmdPipelineBarrier(
-		    cmdBuffer,
-		    VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR,
-		    VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR,
-		    0, 1, &memoryBarrier, 0, nullptr, 0, nullptr);
-	}
-
-	auto VulkanAccelerationStructure::createAccelerationStructure(const VulkanBuffer::Ptr &resultBuffer, VkDeviceSize resultOffset) -> void
-	{
-		VkAccelerationStructureCreateInfoKHR createInfo = {};
-		createInfo.sType                                = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR;
-		createInfo.pNext                                = nullptr;
-		createInfo.type                                 = buildGeometryInfo.type;
-		createInfo.size                                 = getBuildSizes().accelerationStructureSize;
-		createInfo.buffer                               = resultBuffer->getVkBuffer();
-		createInfo.offset                               = resultOffset;
 		VK_CHECK_RESULT(vkCreateAccelerationStructureKHR(*VulkanDevice::get(), &createInfo, nullptr, &accelerationStructure));
+
+		VkAccelerationStructureDeviceAddressInfoKHR addressInfo;
+
+		addressInfo.sType                 = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
+		addressInfo.accelerationStructure = accelerationStructure;
+
+		deviceAddress = vkGetAccelerationStructureDeviceAddressKHR(*VulkanDevice::get(), &addressInfo);
+
+		if (deviceAddress == 0)
+		{
+			throw std::runtime_error("(Vulkan) Failed to create Acceleration Structure.");
+		}
 	}
 
-	BottomLevelAccelerationStructure::BottomLevelAccelerationStructure(const std::shared_ptr<RayTracingProperties> &rayTracingProperties, const BottomLevelGeometry &geometries) :
-	    VulkanAccelerationStructure(rayTracingProperties),
-	    geometries(geometries)
+	VulkanAccelerationStructure::Desc::Desc()
 	{
+		createInfo       = {};
+		createInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR;
+		createInfo.pNext = nullptr;
+
+		buildGeometryInfo       = {};
+		buildGeometryInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
+		buildGeometryInfo.pNext = nullptr;
 	}
 
-	BottomLevelAccelerationStructure::~BottomLevelAccelerationStructure()
+	auto VulkanAccelerationStructure::Desc::setType(VkAccelerationStructureTypeKHR type) -> Desc &
 	{
+		createInfo.type        = type;
+		buildGeometryInfo.type = type;
+		return *this;
 	}
 
-	auto BottomLevelAccelerationStructure::generate(VkCommandBuffer commandBuffer, const VulkanBuffer::Ptr &scratchBuffer, VkDeviceSize scratchOffset, const VulkanBuffer::Ptr &resultBuffer, VkDeviceSize resultOffset) -> void
+	auto VulkanAccelerationStructure::Desc::setGeometries(const std::vector<VkAccelerationStructureGeometryKHR> &geometrys) -> Desc &
 	{
-		// Create the acceleration structure.
-		createAccelerationStructure(resultBuffer, resultOffset);
-
-		// Build the actual bottom-level acceleration structure
-		const VkAccelerationStructureBuildRangeInfoKHR *pBuildOffsetInfo = geometries.getBuildOffsetInfo().data();
-
-		buildGeometryInfo.dstAccelerationStructure  = accelerationStructure;
-		buildGeometryInfo.scratchData.deviceAddress = scratchBuffer->getDeviceAddress() + scratchOffset;
-
-		vkCmdBuildAccelerationStructuresKHR(commandBuffer, 1, &buildGeometryInfo, &pBuildOffsetInfo);
+		geometries                    = geometrys;
+		buildGeometryInfo.pGeometries = geometries.data();
+		return *this;
 	}
 
-	TopLevelAccelerationStructure::TopLevelAccelerationStructure(const std::shared_ptr<RayTracingProperties> &rayTracingProperties, VkDeviceAddress instanceAddress, uint32_t instancesCount) :
-	    VulkanAccelerationStructure(rayTracingProperties),
-	    instancesCount(instancesCount)
+	auto VulkanAccelerationStructure::Desc::setMaxPrimitiveCounts(const std::vector<uint32_t> &primitiveCounts) -> Desc &
 	{
-		// Create VkAccelerationStructureGeometryInstancesDataKHR. This wraps a device pointer to the above uploaded instances.
-		instancesVk.sType              = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR;
-		instancesVk.arrayOfPointers    = VK_FALSE;
-		instancesVk.data.deviceAddress = instanceAddress;
-
-		// Put the above into a VkAccelerationStructureGeometryKHR. We need to put the
-		// instances struct in a union and label it as instance data.
-		topASGeometry.sType              = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
-		topASGeometry.geometryType       = VK_GEOMETRY_TYPE_INSTANCES_KHR;
-		topASGeometry.geometry.instances = instancesVk;
-
-		buildGeometryInfo.sType                    = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
-		buildGeometryInfo.flags                    = flags;
-		buildGeometryInfo.geometryCount            = 1;
-		buildGeometryInfo.pGeometries              = &topASGeometry;
-		buildGeometryInfo.mode                     = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
-		buildGeometryInfo.type                     = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
-		buildGeometryInfo.srcAccelerationStructure = nullptr;
-
-		buildSizesInfo = getBuildSizes(&instancesCount);
+		maxPrimitiveCounts = primitiveCounts;
+		return *this;
 	}
 
-	TopLevelAccelerationStructure::~TopLevelAccelerationStructure()
-	{}
-
-	auto TopLevelAccelerationStructure::generate(VkCommandBuffer commandBuffer, const VulkanBuffer::Ptr &scratchBuffer, VkDeviceSize scratchOffset, const VulkanBuffer::Ptr &resultBuffer, VkDeviceSize resultOffset) -> void
+	auto VulkanAccelerationStructure::Desc::setGeometryCount(uint32_t count) -> Desc &
 	{
-		createAccelerationStructure(resultBuffer, resultOffset);
-
-		// Build the actual bottom-level acceleration structure
-		VkAccelerationStructureBuildRangeInfoKHR buildOffsetInfo = {};
-		buildOffsetInfo.primitiveCount                           = instancesCount;
-
-		const VkAccelerationStructureBuildRangeInfoKHR *pBuildOffsetInfo = &buildOffsetInfo;
-
-		buildGeometryInfo.dstAccelerationStructure  = accelerationStructure;
-		buildGeometryInfo.scratchData.deviceAddress = scratchBuffer->getDeviceAddress() + scratchOffset;
-
-		vkCmdBuildAccelerationStructuresKHR(commandBuffer, 1, &buildGeometryInfo, &pBuildOffsetInfo);
+		buildGeometryInfo.geometryCount = count;
+		return *this;
 	}
 
-	auto TopLevelAccelerationStructure::createInstance(
-	    const BottomLevelAccelerationStructure &bottomLevelAs,
-	    const glm::mat4 &                       transform,
-	    uint32_t                                instanceId,
-	    uint32_t                                hitGroupId) -> VkAccelerationStructureInstanceKHR
+	auto VulkanAccelerationStructure::Desc::setFlags(VkBuildAccelerationStructureFlagsKHR flags) -> Desc &
 	{
-		VkAccelerationStructureDeviceAddressInfoKHR addressInfo = {};
-		addressInfo.sType                                       = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
-		addressInfo.accelerationStructure                       = bottomLevelAs.getAccelerationStructure();
+		buildGeometryInfo.flags = flags;
+		return *this;
+	}
 
-		const auto address = vkGetAccelerationStructureDeviceAddressKHR(*VulkanDevice::get(), &addressInfo);
+	auto VulkanAccelerationStructure::Desc::setDeviceAddress(VkDeviceAddress address) -> Desc &
+	{
+		createInfo.deviceAddress = address;
+		return *this;
+	}
 
-		VkAccelerationStructureInstanceKHR instance     = {};
-		instance.instanceCustomIndex                    = instanceId;
-		instance.mask                                   = 0xFF;                                                             // The visibility mask is always set of 0xFF, but if some instances would need to be ignored in some cases, this flag should be passed by the application.
-		instance.instanceShaderBindingTableRecordOffset = hitGroupId;                                                       // Set the hit group index, that will be used to find the shader code to execute when hitting the geometry.
-		instance.flags                                  = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;        // Disable culling - more fine control could be provided by the application
-		instance.accelerationStructureReference         = address;
+	auto VulkanAccelerationStructure::mapHost() -> void *
+	{
+		instanceBufferHost->map();
+		return instanceBufferHost->getMapped();
+	}
 
-		// The instance.transform value only contains 12 values, corresponding to a 4x3 matrix,
-		// hence saving the last row that is anyway always (0,0,0,1).
-		// Since the matrix is row-major, we simply copy the first 12 values of the original 4x4 matrix
-		std::memcpy(&instance.transform, &transform, sizeof(instance.transform));
-
-		return instance;
+	auto VulkanAccelerationStructure::unmap() -> void
+	{
+		return instanceBufferHost->unmap();
 	}
 }        // namespace maple

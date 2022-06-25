@@ -9,16 +9,30 @@
 #	include "RHI/Vulkan/VulkanContext.h"
 #	include "RHI/Vulkan/Raytracing/RayTracingProperties.h"
 #	include "RHI/Vulkan/Raytracing/VulkanAccelerationStructure.h"
+#	include "RHI/Vulkan/VulkanBuffer.h"
+#	include "RHI/Vulkan/VulkanVertexBuffer.h"
+#	include "RHI/Vulkan/VulkanIndexBuffer.h"
 #else
 #endif        // MAPLE_VULKAN
 
 namespace maple
 {
-	auto AccelerationStructure::createTopLevel(uint64_t address, uint32_t instancesCount) -> Ptr
+	auto AccelerationStructure::createTopLevel(const uint32_t maxInstanceCount) -> Ptr
 	{
 #ifdef MAPLE_VULKAN
-		auto rayTracingProperties = std::make_shared<RayTracingProperties>();
-		return std::make_shared<TopLevelAccelerationStructure>(rayTracingProperties, address, instancesCount);
+		return std::make_shared<VulkanAccelerationStructure>(maxInstanceCount);
+#else
+		return std::make_shared<NullAccelerationStructure>();
 #endif        // MAPLE_VULKAN
 	}
+
+	auto AccelerationStructure::createBottomLevel(const VertexBuffer::Ptr &vertexBuffer, const IndexBuffer::Ptr &indexBuffer, uint32_t vertexCount, BatchTask::Ptr batchTask) -> Ptr
+	{
+#ifdef MAPLE_VULKAN
+		return std::make_shared<VulkanAccelerationStructure>(vertexBuffer->getAddress(), indexBuffer->getAddress(), vertexCount, indexBuffer->getCount(), batchTask);
+#else
+		return std::make_shared<NullAccelerationStructure>();
+#endif
+	}
+
 }        // namespace maple

@@ -8,6 +8,7 @@
 #include "RHI/IndexBuffer.h"
 #include "RHI/Texture.h"
 #include "RHI/VertexBuffer.h"
+#include "RHI/AccelerationStructure.h"
 
 #include "Timestep.h"
 #include <memory>
@@ -169,6 +170,8 @@ namespace maple
 
 		auto getSubMeshesBuffer() -> std::shared_ptr<StorageBuffer>;
 
+		auto getAccelerationStructure(BatchTask::Ptr task) -> AccelerationStructure::Ptr;
+
 	  protected:
 		static auto generateTangent(const glm::vec3 &a, const glm::vec3 &b, const glm::vec3 &c, const glm::vec2 &ta, const glm::vec2 &tb, const glm::vec2 &tc) -> glm::vec3;
 
@@ -185,15 +188,16 @@ namespace maple
 		bool                  active = true;
 		std::string           name;
 		uint32_t              subMeshCount = 1;
+		uint32_t              vertexCount  = 0;
 		std::vector<uint32_t> subMeshIndex;
-
+		
 		/// Skinned mesh blend indices (max 4 per bone)
 		std::vector<glm::ivec4> blendIndices;
 		/// Skinned mesh index buffer (max 4 per bone)
 		std::vector<glm::vec4> blendWeights;
 
 		std::shared_ptr<StorageBuffer> subMeshesBuffer;
-
+		AccelerationStructure::Ptr     bottomAs;
 	};
 
 	template <typename T>

@@ -3,21 +3,38 @@
 //////////////////////////////////////////////////////////////////////////////
 #pragma once
 
-#include "BottomLevelGeometry.h"
-#include "RHI/Vulkan/Vk.h"
-#include "RHI/AccelerationStructure.h"
-
 #include "Engine/Core.h"
+#include "RHI/AccelerationStructure.h"
+#include "RHI/Vulkan/VulkanBuffer.h"
 #include <glm/glm.hpp>
 
 namespace maple
 {
 	class RayTracingProperties;
-	class BottomLevelGeometry;
+	class BatchTask;
 
 	class VulkanAccelerationStructure : public AccelerationStructure
 	{
 	  public:
+		struct Desc
+		{
+			VkAccelerationStructureCreateInfoKHR            createInfo;
+			VkAccelerationStructureBuildGeometryInfoKHR     buildGeometryInfo;
+			std::vector<VkAccelerationStructureGeometryKHR> geometries;
+			std::vector<uint32_t>                           maxPrimitiveCounts;
+
+			Desc();
+			auto setType(VkAccelerationStructureTypeKHR type) -> Desc &;
+			auto setGeometries(const std::vector<VkAccelerationStructureGeometryKHR> &geometrys) -> Desc &;
+			auto setMaxPrimitiveCounts(const std::vector<uint32_t> &primitiveCounts) -> Desc &;
+			auto setGeometryCount(uint32_t count) -> Desc &;
+			auto setFlags(VkBuildAccelerationStructureFlagsKHR flags) -> Desc &;
+			auto setDeviceAddress(VkDeviceAddress address) -> Desc &;
+		};
+
+		VulkanAccelerationStructure(const uint32_t maxInstanceCount);
+		VulkanAccelerationStructure(uint64_t vertexAddress, uint64_t indexAddress, uint32_t vertexCount, uint32_t indexCount, std::shared_ptr<BatchTask> batch, bool opaque = false);
+
 		NO_COPYABLE(VulkanAccelerationStructure);
 
 		virtual ~VulkanAccelerationStructure();
@@ -32,71 +49,39 @@ namespace maple
 			return buildSizesInfo.buildScratchSize;
 		}
 
-		static auto memoryBarrier(VkCommandBuffer cmdBuffer) -> void;
-
 		inline auto getAccelerationStructure() const
 		{
 			return accelerationStructure;
 		}
 
+		virtual auto getDeviceAddress() const -> uint64_t override
+		{
+			return deviceAddress;
+		}
+
+		inline auto getFlags() const
+		{
+			return flags;
+		}
+
+		auto updateTLAS(void *buffer, const glm::mat3x4 &transform, uint32_t instanceId, uint64_t instanceAddress) -> void override;
+
+		auto mapHost() -> void * override;
+
+		auto unmap() -> void override;
+		
 	  protected:
-		explicit VulkanAccelerationStructure(const std::shared_ptr<RayTracingProperties> &rayTracingProperties);
-		auto getBuildSizes(const uint32_t *maxPrimitiveCounts) const -> const VkAccelerationStructureBuildSizesInfoKHR;
-		auto createAccelerationStructure(const VulkanBuffer::Ptr &buffer, VkDeviceSize resultOffset) -> void;
+		auto create(const Desc &desc) -> void;
 
-		VkBuildAccelerationStructureFlagsKHR        flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
-		VkAccelerationStructureBuildGeometryInfoKHR buildGeometryInfo{};
-		VkAccelerationStructureBuildSizesInfoKHR    buildSizesInfo{};
-
-		VkAccelerationStructureKHR            accelerationStructure = nullptr;
-		std::shared_ptr<RayTracingProperties> rayTracingProperties;
-	};
-
-	class BottomLevelAccelerationStructure final : public VulkanAccelerationStructure
-	{
-	  public:
-		NO_COPYABLE(BottomLevelAccelerationStructure);
-
-		BottomLevelAccelerationStructure(const std::shared_ptr<RayTracingProperties> &properties, const BottomLevelGeometry &geometries);
-
-		~BottomLevelAccelerationStructure();
-
-		auto generate(
-		    VkCommandBuffer          commandBuffer,
-		    const VulkanBuffer::Ptr &scratchBuffer,
-		    VkDeviceSize             scratchOffset,
-		    const VulkanBuffer::Ptr &resultBuffer,
-		    VkDeviceSize             resultOffset) -> void;
+		VulkanBuffer::Ptr                        buffer;
+		VkDeviceAddress                          deviceAddress = 0;
+		VkBuildAccelerationStructureFlagsKHR     flags         = VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
+		VkAccelerationStructureBuildSizesInfoKHR buildSizesInfo{};
+		VkAccelerationStructureKHR               accelerationStructure = nullptr;
 
 	  private:
-		BottomLevelGeometry geometries;
+		VulkanBuffer::Ptr instanceBufferHost;
+		VulkanBuffer::Ptr instanceBufferDevice;
+		VulkanBuffer::Ptr scratchBuffer;
 	};
-
-	class TopLevelAccelerationStructure final : public VulkanAccelerationStructure
-	{
-	  public:
-		NO_COPYABLE(TopLevelAccelerationStructure);
-
-		TopLevelAccelerationStructure(const std::shared_ptr<RayTracingProperties> &rayTracingProperties, VkDeviceAddress instanceAddress, uint32_t instancesCount);
-		virtual ~TopLevelAccelerationStructure();
-
-		auto generate(
-		    VkCommandBuffer          commandBuffer,
-		    const VulkanBuffer::Ptr &scratchBuffer,
-		    VkDeviceSize             scratchOffset,
-		    const VulkanBuffer::Ptr &resultBuffer,
-		    VkDeviceSize             resultOffset) -> void;
-
-		static auto createInstance(
-		    const BottomLevelAccelerationStructure &bottomLevelAs,
-		    const glm::mat4 &                       transform,
-		    uint32_t                                instanceId,
-		    uint32_t                                hitGroupId) -> VkAccelerationStructureInstanceKHR;
-
-	  private:
-		uint32_t                                        instancesCount;
-		VkAccelerationStructureGeometryInstancesDataKHR instancesVk{};
-		VkAccelerationStructureGeometryKHR              topASGeometry{};
-	};
-
 }        // namespace maple

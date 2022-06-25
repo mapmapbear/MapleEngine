@@ -169,9 +169,8 @@ namespace maple
 
 		const auto vkCmd = static_cast<const VulkanCommandBuffer *>(commandBuffer);
 
-		auto compute = vkCmd->getCommandBuffeType() == CommandBufferType::Compute;
 
-		currentFrame = compute ? 0 : Application::getGraphicsContext()->getSwapChain()->getCurrentBufferIndex();
+		currentFrame = Application::getGraphicsContext()->getSwapChain()->getCurrentBufferIndex();
 
 		for (auto &bufferInfo : uniformBuffersData)
 		{
@@ -185,6 +184,7 @@ namespace maple
 				bufferInfo.second.hasUpdated[currentFrame] = false;
 			}
 		}
+		//currentFrame = Application::getGraphicsContext()->getSwapChain()->getCurrentBufferIndex();
 
 		if (descriptorDirty[currentFrame])
 		{

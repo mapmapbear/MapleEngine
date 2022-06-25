@@ -33,6 +33,11 @@ namespace maple
 			return static_cast<T *>(getPointerInternal());
 		}
 
+		virtual auto getAddress() const -> uint64_t
+		{
+			return 0;
+		};
+
 	  public:
 		static auto create(const uint16_t *data, uint32_t count, BufferUsage bufferUsage = BufferUsage::Static) -> std::shared_ptr<IndexBuffer>;
 		static auto create(const uint32_t *data, uint32_t count, BufferUsage bufferUsage = BufferUsage::Static) -> std::shared_ptr<IndexBuffer>;

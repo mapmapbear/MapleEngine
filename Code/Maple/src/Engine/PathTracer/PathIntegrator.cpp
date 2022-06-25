@@ -57,10 +57,6 @@ namespace maple
 		struct AccelerationStructureData        // topLevel -> whole scene.
 		{
 			AccelerationStructure::Ptr tlas;
-			StorageBuffer::Ptr         instanceBufferHost;
-			StorageBuffer::Ptr         instanceBufferDevice;
-			StorageBuffer::Ptr         scratchBuffer;
-			bool                       built = false;
 		};
 
 	}        // namespace component
@@ -89,33 +85,15 @@ namespace maple
 			                                                   {DescriptorType::Buffer, 5 * MAX_SCENE_MESH_INSTANCE_COUNT},
 			                                                   {DescriptorType::AccelerationStructure, 10}}});
 
-
 			auto &tlas = entity.addComponent<component::AccelerationStructureData>();
 
-#ifdef MAPLE_VULKAN
-			tlas.instanceBufferDevice = StorageBuffer::create(
-			    sizeof(VkAccelerationStructureInstanceKHR) * MAX_SCENE_MESH_INSTANCE_COUNT,
-			    VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
-			        VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
-			        VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-			    {false, VMA_MEMORY_USAGE_GPU_ONLY, 0});
-
-			tlas.instanceBufferHost = StorageBuffer::create(
-			    sizeof(VkAccelerationStructureInstanceKHR) * MAX_SCENE_MESH_INSTANCE_COUNT,
-			    VK_BUFFER_USAGE_TRANSFER_SRC_BIT, {false, VMA_MEMORY_USAGE_CPU_ONLY, VMA_ALLOCATION_CREATE_MAPPED_BIT});
-
-			tlas.tlas = AccelerationStructure::createTopLevel(tlas.instanceBufferDevice->getDeviceAddress(), MAX_SCENE_MESH_INSTANCE_COUNT);
-
-			tlas.scratchBuffer = StorageBuffer::create(tlas.tlas->getBuildScratchSize(),
-			                                           VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-			                                           {false, VMA_MEMORY_USAGE_GPU_ONLY, 0});
-#endif
+			tlas.tlas = AccelerationStructure::createTopLevel(MAX_SCENE_MESH_INSTANCE_COUNT);
 		}
 	}        // namespace init
 
 	namespace gather_scene
 	{
-		using Entity = ecs::Registry ::Fetch<component::PathIntegrator>::Fetch<component::PathTracePipeline>::To<ecs::Entity>;
+		using Entity = ecs::Registry ::Fetch<component::PathIntegrator>::Fetch<component::PathTracePipeline>::Modify<component::AccelerationStructureData>::To<ecs::Entity>;
 
 		using LightDefine = ecs::Registry ::Fetch<component::Transform>::Modify<component::Light>;
 
@@ -131,11 +109,11 @@ namespace maple
 		    Entity                                    entity,
 		    LightGroup                                lightGroup,
 		    MeshQuery                                 meshGroup,
-		    global::component::Bindless &         indirectDraw,
+		    global::component::Bindless &             indirectDraw,
 		    global::component::GraphicsContext &      context,
 		    global::component::SceneTransformChanged *sceneChanged)
 		{
-			auto [integrator, pipeline] = entity;
+			auto [integrator, pipeline,tlas] = entity;
 			if (sceneChanged && sceneChanged->dirty)
 			{
 				std::unordered_set<uint32_t>           processedMeshes;
@@ -153,8 +131,8 @@ namespace maple
 				context.context->waitIdle();
 
 				auto meterialBuffer  = (raytracing::MaterialData *) pipeline.materialBuffer->map();
-				auto transformBuffer = (raytracing::MaterialData *) pipeline.transformBuffer->map();
-				auto lightBuffer     = (raytracing::MaterialData *) pipeline.lightBuffer->map();
+				auto transformBuffer = (raytracing::TransformData *) pipeline.transformBuffer->map();
+				auto lightBuffer     = (component::LightData *) pipeline.lightBuffer->map();
 
 				auto guard = sg::make_scope_guard([&]() {
 					pipeline.materialBuffer->unmap();
@@ -162,6 +140,11 @@ namespace maple
 					pipeline.transformBuffer->unmap();
 				});
 
+				auto tasks = BatchTask::create();
+
+				auto instanceBuffer = tlas.tlas->mapHost(); //Copy to CPU side.
+
+				uint32_t meshCount = 0;
 				for (auto meshEntity : meshGroup)
 				{
 					auto [mesh, transform] = meshGroup.convert(meshEntity);
@@ -253,6 +236,7 @@ namespace maple
 					}
 
 					auto buffer  = mesh.mesh->getSubMeshesBuffer();
+
 					auto indices = (glm::uvec2 *) buffer->map();
 					materialIndices.emplace_back(buffer);
 
@@ -263,10 +247,26 @@ namespace maple
 						indices[i]           = glm::uvec2(subIndex[i] / 3, indirectDraw.materialIndices[material->getId()]);
 					}
 
+					auto blas = mesh.mesh->getAccelerationStructure(tasks);
+
+					tlas.tlas->updateTLAS(instanceBuffer, glm::mat3x4(glm::transpose(transform.getWorldMatrix())), meshCount++, blas->getDeviceAddress());
+
 					auto guard = sg::make_scope_guard([&]() {
 						buffer->unmap();
 					});
 				}
+
+				uint32_t lightIndicator = 0;
+
+				for (auto lightEntity : lightGroup)
+				{
+					auto [transform, light]       = lightGroup.convert(lightEntity);
+					light.lightData.position      = {transform.getWorldPosition(), 1.f};
+					light.lightData.direction     = {glm::normalize(transform.getWorldOrientation() * maple::FORWARD), 1.f};
+					lightBuffer[lightIndicator++] = light.lightData;
+				}
+
+				tasks->execute();
 			}
 		}
 	}        // namespace gather_scene

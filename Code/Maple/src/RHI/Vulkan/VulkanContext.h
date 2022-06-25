@@ -11,6 +11,8 @@
 
 namespace maple
 {
+	class UniformBuffer;
+
 	class MAPLE_EXPORT VulkanContext : public GraphicsContext
 	{
 	  public:
@@ -88,6 +90,8 @@ namespace maple
 		auto createInstance() -> void;
 
 		VkDebugUtilsMessengerEXT debugMessenger;
+
+		std::unordered_map<size_t, std::shared_ptr<UniformBuffer>> uniformBuffer;
 	};
 
 };        // namespace maple

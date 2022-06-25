@@ -44,7 +44,10 @@ namespace maple
 		{
 			return count;
 		}
-
+		inline auto getAddress() const -> uint64_t override
+		{
+			return getDeviceAddress();
+		};
 	  private:
 		uint32_t    count = 0;
 		uint32_t    size  = 0;
