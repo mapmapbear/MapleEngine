@@ -226,8 +226,8 @@ namespace maple
 
 	}        // namespace
 
-	VulkanShader::VulkanShader(const std::string &path) :
-	    filePath(path)
+	VulkanShader::VulkanShader(const std::string &path, const VariableArraySize &size) :
+	    filePath(path), arraySize(size)
 	{
 		name       = StringUtils::getFileName(filePath);
 		auto bytes = File::read(filePath);
@@ -350,9 +350,9 @@ namespace maple
 
 				if (isArray)
 				{
-					layoutBindingFlags.emplace_back(info.variableSized ? 
-						VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT | VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT : 
-						VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT);
+					layoutBindingFlags.emplace_back(info.variableSized ?
+                                                        VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT | VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT :
+                                                        VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT);
 				}
 				else
 				{
@@ -589,7 +589,20 @@ namespace maple
 			auto &type = comp.get_type(u.type_id);
 			LOGI("Found Sampled Texture {0} at set = {1}, binding = {2}", u.name.c_str(), set, binding);
 
-			descriptorLayoutInfo.push_back({DescriptorType::ImageSampler, shaderType, binding, set, type.array.size() ? uint32_t(type.array[0]) : 1});
+			uint32_t size         = 1;
+			bool     variableSize = false;
+			if (type.array.size() > 0)
+			{
+				size = uint32_t(type.array[0]);
+			}
+
+			if (auto s = arraySize[u.name]; s > 0)
+			{
+				size         = s;
+				variableSize = true;
+			}
+
+			descriptorLayoutInfo.push_back({DescriptorType::ImageSampler, shaderType, binding, set, size, variableSize});
 			descriptor.binding    = binding;
 			descriptor.name       = u.name;
 			descriptor.offset     = 0;
@@ -604,7 +617,20 @@ namespace maple
 			uint32_t binding = comp.get_decoration(u.id, spv::DecorationBinding);
 
 			LOGI("Buffer {0} at set = {1}, binding = {2}", u.name, set, binding);
-			descriptorLayoutInfo.push_back({DescriptorType::Buffer, shaderType, binding, set, 1});
+			auto &type = comp.get_type(u.type_id);
+
+			uint32_t size         = 1;
+			bool     variableSize = false;
+			if (type.array.size() > 0)
+			{
+				size = uint32_t(type.array[0]);
+			}
+			if (auto s = arraySize[u.name]; s > 0)
+			{
+				size         = s;
+				variableSize = true;
+			}
+			descriptorLayoutInfo.push_back({DescriptorType::Buffer, shaderType, binding, set, size, variableSize});
 
 			auto &descriptorInfo = descriptorInfos[set];
 			auto &descriptor     = descriptorInfo.emplace_back();
@@ -615,6 +641,28 @@ namespace maple
 			descriptor.shaderType = shaderType;
 			descriptor.type       = DescriptorType::Buffer;
 			descriptor.buffer     = nullptr;
+			descriptor.size       = VK_WHOLE_SIZE;
+		}
+
+		for (auto &u : resources.acceleration_structures)
+		{
+			uint32_t set     = comp.get_decoration(u.id, spv::DecorationDescriptorSet);
+			uint32_t binding = comp.get_decoration(u.id, spv::DecorationBinding);
+
+			LOGI("Acceleration Structures {0} at set = {1}, binding = {2}", u.name, set, binding);
+
+			descriptorLayoutInfo.push_back({DescriptorType::AccelerationStructure, shaderType, binding, set, 1});
+
+			auto &descriptorInfo = descriptorInfos[set];
+			auto &descriptor     = descriptorInfo.emplace_back();
+
+			descriptor.binding    = binding;
+			descriptor.name       = u.name;
+			descriptor.offset     = 0;
+			descriptor.shaderType = shaderType;
+			descriptor.type       = DescriptorType::AccelerationStructure;
+			descriptor.buffer     = nullptr;
+			descriptor.size       = VK_WHOLE_SIZE;
 		}
 
 		shaderStages[currentShaderStage].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;

@@ -94,6 +94,8 @@ namespace maple
 		}
 	};
 
+	using VariableArraySize = std::unordered_map<std::string, size_t>;
+
 	class CommandBuffer;
 	class Pipeline;
 	class DescriptorSet;
@@ -158,7 +160,7 @@ namespace maple
 		auto parseSource(const std::vector<std::string> &lines, std::unordered_map<ShaderType, std::string> &shaders) -> void;
 
 	  public:
-		static auto create(const std::string &filepath) -> std::shared_ptr<Shader>;
+		static auto create(const std::string &filepath, const VariableArraySize &size = {}) -> std::shared_ptr<Shader>;
 		static auto create(const std::vector<uint32_t> &vertData, const std::vector<uint32_t> &fragData) -> std::shared_ptr<Shader>;
 
 	  protected:

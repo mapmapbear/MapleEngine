@@ -49,7 +49,7 @@ namespace maple
 			return buildSizesInfo.buildScratchSize;
 		}
 
-		inline auto getAccelerationStructure() const
+		inline auto& getAccelerationStructure() const
 		{
 			return accelerationStructure;
 		}

@@ -20,7 +20,7 @@ namespace maple
 	class MAPLE_EXPORT VulkanShader : public Shader
 	{
 	  public:
-		VulkanShader(const std::string &path);
+		VulkanShader(const std::string &path, const VariableArraySize &size);
 		VulkanShader(const std::vector<uint32_t> &vertData, const std::vector<uint32_t> &fragData);
 		~VulkanShader();
 		NO_COPYABLE(VulkanShader);
@@ -122,5 +122,6 @@ namespace maple
 		std::vector<VkDescriptorSetLayout>                    descriptorSetLayouts;
 		std::vector<VkVertexInputAttributeDescription>        vertexInputAttributeDescriptions;
 		std::unordered_map<uint32_t, std::vector<Descriptor>> descriptorInfos;
+		VariableArraySize                                     arraySize;
 	};
 };        // namespace maple

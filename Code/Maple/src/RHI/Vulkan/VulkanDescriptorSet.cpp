@@ -9,12 +9,15 @@
 #include "VulkanDescriptorPool.h"
 #include "VulkanDevice.h"
 #include "VulkanHelper.h"
+#include "VulkanIndexBuffer.h"
 #include "VulkanPipeline.h"
 #include "VulkanRenderDevice.h"
 #include "VulkanShader.h"
 #include "VulkanStorageBuffer.h"
 #include "VulkanTexture.h"
 #include "VulkanUniformBuffer.h"
+#include "VulkanVertexBuffer.h"
+#include "RHI/Vulkan/Raytracing/VulkanAccelerationStructure.h"
 
 #include "Application.h"
 
@@ -101,7 +104,6 @@ namespace maple
 		shader      = info.shader;
 		descriptors = shader->getDescriptorInfo(info.layoutIndex);
 		uniformBuffers.resize(framesInFlight);
-		ssbos.resize(framesInFlight);
 
 		for (auto &descriptor : descriptors)
 		{
@@ -129,18 +131,6 @@ namespace maple
 			}
 			else if (descriptor.type == DescriptorType::Buffer)
 			{
-				for (uint32_t frame = 0; frame < framesInFlight; frame++)
-				{
-					ssbos[frame][descriptor.name] = StorageBuffer::create();
-				}
-
-				SSBOInfo info;
-				info.localStorage  = {};
-				info.hasUpdated[0] = false;
-				info.hasUpdated[1] = false;
-				info.hasUpdated[2] = false;
-
-				ssboData[descriptor.name] = info;
 			}
 		}
 
@@ -168,7 +158,6 @@ namespace maple
 		int32_t descriptorWritesCount = 0;
 
 		const auto vkCmd = static_cast<const VulkanCommandBuffer *>(commandBuffer);
-
 
 		currentFrame = Application::getGraphicsContext()->getSwapChain()->getCurrentBufferIndex();
 
@@ -255,11 +244,17 @@ namespace maple
 				}
 				else if (imageInfo.type == DescriptorType::Buffer)
 				{
-					auto buffer = std::static_pointer_cast<VulkanStorageBuffer>(ssbos[currentFrame][imageInfo.name]);
+					auto &buffers = ssbos[imageInfo.name];
 
-					bufferInfoPool[index].buffer = buffer->getHandle();
-					bufferInfoPool[index].offset = imageInfo.offset;
-					bufferInfoPool[index].range  = imageInfo.size;
+					int32_t i = 0;
+
+					for (auto &ssbo : buffers)
+					{
+						bufferInfoPool[index + i].buffer = ssbo;
+						bufferInfoPool[index + i].offset = imageInfo.offset;
+						bufferInfoPool[index + i].range  = imageInfo.size;
+						i++;
+					}
 
 					VkWriteDescriptorSet writeDescriptorSet{};
 					writeDescriptorSet.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -267,11 +262,35 @@ namespace maple
 					writeDescriptorSet.descriptorType  = VkConverter::descriptorTypeToVK(imageInfo.type);
 					writeDescriptorSet.dstBinding      = imageInfo.binding;
 					writeDescriptorSet.pBufferInfo     = &bufferInfoPool[index];
-					writeDescriptorSet.descriptorCount = 1;
+					writeDescriptorSet.descriptorCount = i;
 
 					writeDescriptorSetPool[descriptorWritesCount] = writeDescriptorSet;
-					index++;
+					index += i;
 					descriptorWritesCount++;
+				}
+				else if (imageInfo.type == DescriptorType::AccelerationStructure)
+				{
+					auto acc = std::static_pointer_cast<VulkanAccelerationStructure>(accelerationStructures[imageInfo.name]);
+
+					VkWriteDescriptorSetAccelerationStructureKHR descriptorAs;
+					descriptorAs.sType                      = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
+					descriptorAs.pNext                      = nullptr;
+					descriptorAs.accelerationStructureCount = 1;
+					descriptorAs.pAccelerationStructures    = &acc->getAccelerationStructure();
+					
+					
+					VkWriteDescriptorSet writeDescriptorSet{};
+					writeDescriptorSet.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+					writeDescriptorSet.dstSet          = descriptorSet[currentFrame];
+					writeDescriptorSet.descriptorType  = VkConverter::descriptorTypeToVK(imageInfo.type);
+					writeDescriptorSet.dstBinding      = imageInfo.binding;
+					writeDescriptorSet.pBufferInfo     = &bufferInfoPool[index];
+					writeDescriptorSet.descriptorCount = 1;
+					writeDescriptorSet.pNext           = &descriptorAs;
+
+					writeDescriptorSetPool[descriptorWritesCount] = writeDescriptorSet;
+					descriptorWritesCount++;
+					index++;
 				}
 			}
 
@@ -371,25 +390,56 @@ namespace maple
 		LOGW("Uniform not found {0}.{1}", bufferName);
 	}
 
-	auto VulkanDescriptorSet::setSSBO(const std::string &name, uint32_t size, const void *data) -> void
+	auto VulkanDescriptorSet::setStorageBuffer(const std::string &name, std::shared_ptr<StorageBuffer> buffer) -> void
 	{
-		PROFILE_FUNCTION();
-
-		if (auto iter = ssboData.find(name); iter != ssboData.end())
-		{
-			if (iter->second.localStorage.getSize() == 0)
-			{
-				iter->second.localStorage.allocate(size);
-				iter->second.localStorage.initializeEmpty();
-			}
-			iter->second.localStorage.write(data, size);
-			iter->second.hasUpdated[0] = true;
-			iter->second.hasUpdated[1] = true;
-			iter->second.hasUpdated[2] = true;
-			return;
-		}
-
-		LOGW("SSBO not found {0}", name);
+		auto vkBuffer = std::static_pointer_cast<VulkanStorageBuffer>(buffer);
+		ssbos[name]   = {vkBuffer->getHandle()};
 	}
 
+	auto VulkanDescriptorSet::setStorageBuffer(const std::string &name, std::shared_ptr<VertexBuffer> buffer) -> void
+	{
+		auto vkBuffer = std::static_pointer_cast<VulkanVertexBuffer>(buffer);
+		ssbos[name]   = {vkBuffer->getVkBuffer()};
+	}
+
+	auto VulkanDescriptorSet::setStorageBuffer(const std::string &name, std::shared_ptr<IndexBuffer> buffer) -> void
+	{
+		auto vkBuffer = std::static_pointer_cast<VulkanIndexBuffer>(buffer);
+		ssbos[name]   = {vkBuffer->getVkBuffer()};
+	}
+
+	auto VulkanDescriptorSet::setStorageBuffer(const std::string &name, const std::vector<std::shared_ptr<StorageBuffer>> &buffers) -> void
+	{
+		ssbos[name].clear();
+		for (auto &buffer : buffers)
+		{
+			auto vkBuffer = std::static_pointer_cast<VulkanStorageBuffer>(buffer);
+			ssbos[name].emplace_back(vkBuffer->getHandle());
+		}
+	}
+
+	auto VulkanDescriptorSet::setStorageBuffer(const std::string &name, const std::vector<std::shared_ptr<IndexBuffer>> &buffers) -> void
+	{
+		ssbos[name].clear();
+		for (auto &buffer : buffers)
+		{
+			auto vkBuffer = std::static_pointer_cast<VulkanIndexBuffer>(buffer);
+			ssbos[name].emplace_back(vkBuffer->getVkBuffer());
+		}
+	}
+
+	auto VulkanDescriptorSet::setStorageBuffer(const std::string &name, const std::vector<std::shared_ptr<VertexBuffer>> &buffers) -> void
+	{
+		ssbos[name].clear();
+		for (auto &buffer : buffers)
+		{
+			auto vkBuffer = std::static_pointer_cast<VulkanVertexBuffer>(buffer);
+			ssbos[name].emplace_back(vkBuffer->getVkBuffer());
+		}
+	}
+
+	auto VulkanDescriptorSet::setAccelerationStructure(const std::string &name, const std::shared_ptr<AccelerationStructure> &structure) -> void
+	{
+		accelerationStructures[name] = structure;
+	}
 };        // namespace maple

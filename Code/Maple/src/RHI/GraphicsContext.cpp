@@ -91,10 +91,10 @@ namespace maple
 #endif
 	}
 
-	auto Shader::create(const std::string &filePath) -> std::shared_ptr<Shader>
+	auto Shader::create(const std::string &filePath, const VariableArraySize &size) -> std::shared_ptr<Shader>
 	{
 #ifdef MAPLE_VULKAN
-		return Application::getAssetsLoaderFactory()->emplace<VulkanShader>(filePath, filePath);
+		return Application::getAssetsLoaderFactory()->emplace<VulkanShader>(filePath, filePath, size);
 #endif
 
 #ifdef MAPLE_OPENGL

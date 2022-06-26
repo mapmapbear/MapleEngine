@@ -9,11 +9,12 @@
 
 namespace maple
 {
-	constexpr int32_t MAX_BUFFER_INFOS      = 32;
-	constexpr int32_t MAX_IMAGE_INFOS       = 32;
+	constexpr int32_t MAX_BUFFER_INFOS      = 1024;
+	constexpr int32_t MAX_IMAGE_INFOS       = 1024;
 	constexpr int32_t MAX_WRITE_DESCTIPTORS = 32;
 
 	class StorageBuffer;
+	class VulkanBuffer;
 
 	class VulkanDescriptorSet final : public DescriptorSet
 	{
@@ -47,6 +48,16 @@ namespace maple
 		auto setUniform(const std::string &bufferName, const std::string &uniformName, const void *data, uint32_t size, bool dynamic) -> void override;
 		auto setUniformBufferData(const std::string &bufferName, const void *data) -> void override;
 
+		auto setStorageBuffer(const std::string &name, std::shared_ptr<StorageBuffer> buffer) -> void override;
+		auto setStorageBuffer(const std::string &name, std::shared_ptr<VertexBuffer> buffer) -> void override;
+		auto setStorageBuffer(const std::string &name, std::shared_ptr<IndexBuffer> buffer) -> void override;
+
+		auto setStorageBuffer(const std::string &name, const std::vector<std::shared_ptr<StorageBuffer>> &buffer) -> void override;
+		auto setStorageBuffer(const std::string &name, const std::vector<std::shared_ptr<VertexBuffer>> &buffer) -> void override;
+		auto setStorageBuffer(const std::string &name, const std::vector<std::shared_ptr<IndexBuffer>> &buffer) -> void override;
+
+		auto setAccelerationStructure(const std::string &name, const std::shared_ptr<AccelerationStructure> &structure) -> void override;
+
 		inline auto getDescriptors() const -> const std::vector<Descriptor> & override
 		{
 			return descriptors;
@@ -55,8 +66,6 @@ namespace maple
 		{
 			return (uint64_t) descriptorSet[currentFrame];
 		};
-
-		auto setSSBO(const std::string &name, uint32_t size, const void *data) -> void override;
 
 	  private:
 		uint32_t dynamicOffset      = 0;
@@ -80,19 +89,11 @@ namespace maple
 			bool                          hasUpdated[10] = {};
 		};
 
-		struct SSBOInfo
-		{
-			Buffer localStorage;
-			bool   dynamic        = false;
-			bool   hasUpdated[10] = {};
-		};
-
 		std::vector<VkDescriptorSet>                                                 descriptorSet;
 		std::vector<std::unordered_map<std::string, std::shared_ptr<UniformBuffer>>> uniformBuffers;
-		std::vector<std::unordered_map<std::string, std::shared_ptr<StorageBuffer>>> ssbos;
-
+		std::unordered_map<std::string, std::vector<VkBuffer>>                       ssbos;
+		std::unordered_map<std::string, std::shared_ptr<AccelerationStructure>>      accelerationStructures;
 		std::unordered_map<std::string, UniformBufferInfo> uniformBuffersData;
-		std::unordered_map<std::string, SSBOInfo>          ssboData;
 
 		uint32_t currentFrame = 0;
 	};

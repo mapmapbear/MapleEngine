@@ -16,6 +16,9 @@ namespace maple
 	class StorageBuffer;
 	class CommandBuffer;
 	class DescriptorPool;
+	class VertexBuffer;
+	class IndexBuffer;
+	class AccelerationStructure;
 
 	enum class TextureType : int32_t;
 	enum class ShaderType : int32_t;
@@ -121,7 +124,6 @@ namespace maple
 	{
 		std::vector<std::shared_ptr<Texture>> textures;
 		std::shared_ptr<UniformBuffer>        buffer;
-		std::shared_ptr<StorageBuffer>        ssbo;
 
 		uint32_t    offset;
 		uint32_t    size;
@@ -153,11 +155,17 @@ namespace maple
 		virtual auto setTexture(const std::string &name, const std::shared_ptr<Texture> &textures, int32_t mipLevel = -1) -> void                             = 0;
 		virtual auto setBuffer(const std::string &name, const std::shared_ptr<UniformBuffer> &buffer) -> void                                                 = 0;
 		virtual auto getUnifromBuffer(const std::string &name) -> std::shared_ptr<UniformBuffer>                                                              = 0;
+		virtual auto setStorageBuffer(const std::string &name, std::shared_ptr<StorageBuffer> buffer) -> void                                                 = 0;
+		virtual auto setStorageBuffer(const std::string &name, std::shared_ptr<VertexBuffer> buffer) -> void                                                  = 0;
+		virtual auto setStorageBuffer(const std::string &name, std::shared_ptr<IndexBuffer> buffer) -> void                                                   = 0;
+		virtual auto setStorageBuffer(const std::string &name, const std::vector<std::shared_ptr<StorageBuffer>> &buffer) -> void                             = 0;
+		virtual auto setStorageBuffer(const std::string &name, const std::vector<std::shared_ptr<VertexBuffer>> &buffer) -> void                              = 0;
+		virtual auto setStorageBuffer(const std::string &name, const std::vector<std::shared_ptr<IndexBuffer>> &buffer) -> void                               = 0;
 		virtual auto setUniform(const std::string &bufferName, const std::string &uniformName, const void *data, bool dynamic = false) -> void                = 0;
 		virtual auto setUniform(const std::string &bufferName, const std::string &uniformName, const void *data, uint32_t size, bool dynamic = false) -> void = 0;
 		virtual auto setUniformBufferData(const std::string &bufferName, const void *data) -> void                                                            = 0;
-		virtual auto setSSBO(const std::string &name, uint32_t size, const void *data) -> void                                                                = 0;
 		virtual auto getDescriptors() const -> const std::vector<Descriptor> &                                                                                = 0;
+		virtual auto setAccelerationStructure(const std::string &name, const std::shared_ptr<AccelerationStructure> &structure) -> void                       = 0;
 		virtual auto toIntID() const -> const uint64_t                                                                                                        = 0;
 
 		static auto canUpdate() -> bool;

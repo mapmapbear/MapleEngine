@@ -41,17 +41,6 @@ namespace maple
 			}
 			else if (descriptor.type == DescriptorType::Buffer)
 			{
-				descriptor.ssbo = StorageBuffer::create();
-
-				Buffer localStorage;
-				localStorage.allocate(descriptor.size);
-				localStorage.initializeEmpty();
-
-				SSBOInfo info;
-				info.ssbo         = descriptor.ssbo;
-				info.localStorage = localStorage;
-				info.dirty        = false;
-				ssboBuffers.emplace(descriptor.name, info);
 			}
 		}
 	}
@@ -65,15 +54,6 @@ namespace maple
 			if (bufferInfo.second.dirty)
 			{
 				bufferInfo.second.uniformBuffer->setData(bufferInfo.second.localStorage.data);
-				bufferInfo.second.dirty = false;
-			}
-		}
-
-		for (auto &bufferInfo : ssboBuffers)
-		{
-			if (bufferInfo.second.dirty)
-			{
-				bufferInfo.second.ssbo->setData(bufferInfo.second.localStorage.size, bufferInfo.second.localStorage.data);
 				bufferInfo.second.dirty = false;
 			}
 		}
@@ -155,22 +135,29 @@ namespace maple
 		LOGW("Uniform not found {0}.{1}", bufferName, uniformName);
 	}
 
-	auto GLDescriptorSet::setSSBO(const std::string &bufferName, uint32_t size, const void *data) -> void
+
+	auto GLDescriptorSet::setStorageBuffer(const std::string &name, std::shared_ptr<StorageBuffer> buffer) -> void
 	{
-		PROFILE_FUNCTION();
+	}
 
-		if (auto iter = ssboBuffers.find(bufferName); iter != ssboBuffers.end())
-		{
-			if (iter->second.localStorage.getSize() == 0)
-			{
-				iter->second.localStorage.allocate(size);
-				iter->second.localStorage.initializeEmpty();
-			}
-			iter->second.localStorage.write(data, size);
-			iter->second.dirty = true;
-		}
+	auto GLDescriptorSet::setStorageBuffer(const std::string &name, std::shared_ptr<VertexBuffer> buffer) -> void
+	{
+	}
 
-		LOGW("SSBO not found {0}", bufferName);
+	auto GLDescriptorSet::setStorageBuffer(const std::string &name, std::shared_ptr<IndexBuffer> buffer) -> void
+	{
+	}
+
+	auto GLDescriptorSet::setStorageBuffer(const std::string &name, const std::vector<std::shared_ptr<StorageBuffer>> &buffer) -> void
+	{
+	}
+
+	auto GLDescriptorSet::setStorageBuffer(const std::string &name, const std::vector<std::shared_ptr<VertexBuffer>> &buffer) -> void
+	{
+	}
+
+	auto GLDescriptorSet::setStorageBuffer(const std::string &name, const std::vector<std::shared_ptr<IndexBuffer>> &buffer) -> void
+	{
 	}
 
 	auto GLDescriptorSet::setUniformBufferData(const std::string &bufferName, const void *data) -> void
@@ -308,12 +295,7 @@ namespace maple
 			}
 			else if (descriptor.type == DescriptorType::Buffer)
 			{
-				auto buffer = std::static_pointer_cast<GLStorageBuffer>(descriptor.ssbo);
-
-				if (!buffer)
-					break;
-
-				buffer->bind(descriptor.binding);
+				
 			}
 			else
 			{

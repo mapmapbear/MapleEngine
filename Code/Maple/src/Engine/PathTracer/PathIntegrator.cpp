@@ -10,6 +10,8 @@
 #include "RHI/StorageBuffer.h"
 
 #include "Engine/Mesh.h"
+#include "Engine/Renderer/RendererData.h"
+
 #include "Scene/Component/Bindless.h"
 #include "Scene/Component/Light.h"
 #include "Scene/Component/MeshRenderer.h"
@@ -66,7 +68,10 @@ namespace maple
 		inline auto initPathIntegrator(component::PathIntegrator &path, Entity entity, ecs::World world)
 		{
 			auto &pipeline  = entity.addComponent<component::PathTracePipeline>();
-			pipeline.shader = Shader::create("shaders/PathTrace/PathTrace.shader");
+			pipeline.shader = Shader::create("shaders/PathTrace/PathTrace.shader", {{"Vertices", MAX_SCENE_MESH_INSTANCE_COUNT},
+			                                                                        {"Indices", MAX_SCENE_MESH_INSTANCE_COUNT},
+			                                                                        {"SubmeshInfo", MAX_SCENE_MESH_INSTANCE_COUNT},
+			                                                                        {"uSamplers", MAX_SCENE_MATERIAL_TEXTURE_COUNT}});
 			PipelineInfo info;
 			info.shader = pipeline.shader;
 
@@ -84,6 +89,12 @@ namespace maple
 			                                                   {DescriptorType::ImageSampler, MAX_SCENE_MATERIAL_TEXTURE_COUNT},
 			                                                   {DescriptorType::Buffer, 5 * MAX_SCENE_MESH_INSTANCE_COUNT},
 			                                                   {DescriptorType::AccelerationStructure, 10}}});
+
+			pipeline.sceneDescriptor    = DescriptorSet::create({0, pipeline.shader.get(), 1, pipeline.descriptorPool.get()});
+			pipeline.vboDescriptor      = DescriptorSet::create({1, pipeline.shader.get(), 1, pipeline.descriptorPool.get(), MAX_SCENE_MESH_INSTANCE_COUNT});
+			pipeline.iboDescriptor      = DescriptorSet::create({2, pipeline.shader.get(), 1, pipeline.descriptorPool.get(), MAX_SCENE_MESH_INSTANCE_COUNT});
+			pipeline.materialDescriptor = DescriptorSet::create({3, pipeline.shader.get(), 1, pipeline.descriptorPool.get(), MAX_SCENE_MATERIAL_COUNT});
+			pipeline.textureDescriptor  = DescriptorSet::create({4, pipeline.shader.get(), 1, pipeline.descriptorPool.get(), MAX_SCENE_MATERIAL_TEXTURE_COUNT});
 
 			auto &tlas = entity.addComponent<component::AccelerationStructureData>();
 
@@ -109,11 +120,13 @@ namespace maple
 		    Entity                                    entity,
 		    LightGroup                                lightGroup,
 		    MeshQuery                                 meshGroup,
+		    SkyboxGroup                               skyboxGroup,
+		    const maple::component::RendererData &    rendererData,
 		    global::component::Bindless &             indirectDraw,
 		    global::component::GraphicsContext &      context,
 		    global::component::SceneTransformChanged *sceneChanged)
 		{
-			auto [integrator, pipeline,tlas] = entity;
+			auto [integrator, pipeline, tlas] = entity;
 			if (sceneChanged && sceneChanged->dirty)
 			{
 				std::unordered_set<uint32_t>           processedMeshes;
@@ -142,7 +155,7 @@ namespace maple
 
 				auto tasks = BatchTask::create();
 
-				auto instanceBuffer = tlas.tlas->mapHost(); //Copy to CPU side.
+				auto instanceBuffer = tlas.tlas->mapHost();        //Copy to CPU side.
 
 				uint32_t meshCount = 0;
 				for (auto meshEntity : meshGroup)
@@ -235,7 +248,7 @@ namespace maple
 						}
 					}
 
-					auto buffer  = mesh.mesh->getSubMeshesBuffer();
+					auto buffer = mesh.mesh->getSubMeshesBuffer();
 
 					auto indices = (glm::uvec2 *) buffer->map();
 					materialIndices.emplace_back(buffer);
@@ -267,6 +280,16 @@ namespace maple
 				}
 
 				tasks->execute();
+
+				pipeline.sceneDescriptor->setTexture("uSkyBox", rendererData.unitCube);
+				if (!skyboxGroup.empty())
+				{
+					for (auto sky : skyboxGroup)
+					{
+						auto [skybox] = skyboxGroup.convert(sky);
+						pipeline.sceneDescriptor->setTexture("uSkyBox", skybox.skybox);
+					}
+				}
 			}
 		}
 	}        // namespace gather_scene
