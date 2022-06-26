@@ -290,6 +290,9 @@ namespace maple
 						pipeline.sceneDescriptor->setTexture("uSkyBox", skybox.skybox);
 					}
 				}
+
+				pipeline.sceneDescriptor
+
 			}
 		}
 	}        // namespace gather_scene

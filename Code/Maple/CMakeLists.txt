@@ -71,6 +71,7 @@ file(GLOB_RECURSE SHADERS_GLSL
 	src/Shaders/*.task 
 	src/Shaders/*.rgen
 	src/Shaders/*.rchit 
+	src/Shaders/*.rahit 
 	src/Shaders/*.rmiss
 	src/Shaders/*.shader
 )
