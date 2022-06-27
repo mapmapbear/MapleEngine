@@ -10,6 +10,8 @@
 #define VISIBILITY_MISS_SHADER_IDX 1
 #define RADIANCE_CLAMP_COLOR vec3(1.0f)
 
+#define LIGHT_DIRECTIONAL 0
+
 #define M_PI 3.14159265359
 
 struct Vertex
@@ -31,6 +33,7 @@ struct Triangle
 struct Transform
 {
     mat4 modelMatrix;
+    mat3 normalMatrix;
     uint meshIdx;
 };
 
@@ -59,6 +62,17 @@ struct Material
     vec4  emissive;        // w -> workflow
 };
 
+struct SurfaceMaterial
+{
+    Vertex vertex;
+    vec4 albedo;
+    vec3 emissive;
+    vec3 normal;
+    vec3 F0;
+    float metallic;
+    float roughness;   
+};
+
 Vertex interpolatedVertex(in Triangle tri, in vec3 barycentrics)
 {
     Vertex o;
@@ -69,6 +83,11 @@ Vertex interpolatedVertex(in Triangle tri, in vec3 barycentrics)
     o.tangent.xyz = normalize(tri.v0.tangent.xyz * barycentrics.x + tri.v1.tangent.xyz * barycentrics.y + tri.v2.tangent.xyz * barycentrics.z);
 
     return o;
+}
+
+bool isBlack(vec3 c)
+{
+    return c.x == 0.0f && c.y == 0.0f && c.z == 0.0f;
 }
 
 #endif

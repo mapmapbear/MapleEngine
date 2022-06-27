@@ -291,8 +291,6 @@ namespace maple
 					}
 				}
 
-				pipeline.sceneDescriptor
-
 			}
 		}
 	}        // namespace gather_scene

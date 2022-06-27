@@ -146,6 +146,8 @@ namespace maple
 			data.descriptorAnimSet[2]->setUniform("UBO", "nearPlane", &cameraView.nearPlane);
 			data.descriptorAnimSet[2]->setUniform("UBO", "farPlane", &cameraView.farPlane);
 
+			data.defaultMaterial->bind(renderData.commandBuffer);
+
 			component::Light *directionaLight = nullptr;
 
 			component::LightData lights[32] = {};
@@ -424,13 +426,13 @@ namespace maple
 					if (command.boneTransforms != nullptr)
 					{
 						//material->bind(renderData.commandBuffer);
-						data.descriptorAnimSet[1] = material->getDescriptorSet();
+						data.descriptorAnimSet[1] = material->getDescriptorSet(pipeline->getShader()->getName());
 						Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, data.descriptorAnimSet);
 					}
 					else
 					{
 						//material->bind(renderData.commandBuffer);
-						data.descriptorColorSet[1] = material->getDescriptorSet();
+						data.descriptorColorSet[1] = material->getDescriptorSet(pipeline->getShader()->getName());
 						Renderer::bindDescriptorSets(pipeline.get(), renderData.commandBuffer, 0, data.descriptorColorSet);
 					}
 
