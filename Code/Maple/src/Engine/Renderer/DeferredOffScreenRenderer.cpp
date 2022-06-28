@@ -15,6 +15,7 @@
 #include "Engine/GBuffer.h"
 #include "Engine/Mesh.h"
 #include "Engine/Profiler.h"
+#include "Engine/PathTracer/PathIntegrator.h"
 
 #include "Scene/Component/Component.h"
 #include "Scene/Component/Environment.h"
@@ -119,6 +120,7 @@ namespace maple
 		                       MeshQuery        meshQuery,
 		                       SkinnedMeshQuery skinnedMeshQuery,
 		                       BoneMeshQuery    boneQuery,
+		                       const component::PathIntegrator *path,
 		                       ecs::World       world)
 		{
 			auto [data, shadowData, cameraView, renderData, ssao] = entity;
@@ -127,6 +129,10 @@ namespace maple
 
 			if (cameraView.cameraTransform == nullptr)
 				return;
+
+			if (path != nullptr)
+				return;
+
 
 			data.stencilDescriptorSet->setUniform("UniformBufferObject", "projView", &cameraView.projView);
 
@@ -374,8 +380,14 @@ namespace maple
 
 		using RenderEntity = ecs::Registry ::Modify<component::DeferredData>::Fetch<component::ShadowMapData>::Fetch<component::CameraView>::Fetch<component::RendererData>::Fetch<component::SSAOData>::Modify<capture_graph::component::RenderGraph>::To<ecs::Entity>;
 
-		inline auto onRender(RenderEntity entity, ecs::World world)
+		inline auto onRender(RenderEntity entity, 
+			 const component::PathIntegrator *path,
+			ecs::World world)
 		{
+
+			if (path != nullptr)
+				return;
+
 			auto [data, shadowData, cameraView, renderData, ssao, graph] = entity;
 
 			data.descriptorColorSet[0]->update(renderData.commandBuffer);
@@ -492,11 +504,12 @@ namespace maple
 		    EnvQuery                                              envQuery,
 		    const vxgi_debug::global::component::DrawVoxelRender *voxelDebug,
 		    const vxgi::global::component::VoxelBuffer *          voxelBuffer,
+		    const component::PathIntegrator *                     path,
 		    ecs::World                                            world)
 		{
 			auto [data, shadow, cameraView, rendererData, graph] = entity;
 
-			if (voxelDebug && voxelDebug->enable)
+			if (voxelDebug && voxelDebug->enable || path != nullptr) 
 				return;
 
 			auto descriptorSet = data.descriptorLightSet[0];

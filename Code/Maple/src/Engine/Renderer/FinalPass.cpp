@@ -5,9 +5,9 @@
 #include "FinalPass.h"
 
 #include "Engine/CaptureGraph.h"
-
 #include "Engine/Renderer/PostProcessRenderer.h"
 #include "Engine/Renderer/Renderer.h"
+#include "Engine/PathTracer/PathIntegrator.h"
 
 #include "RHI/CommandBuffer.h"
 #include "RHI/DescriptorSet.h"
@@ -27,11 +27,14 @@ namespace maple
 {
 	namespace final_screen_pass
 	{
-		using Entity = ecs::Registry ::OptinalFetch<component::BloomData>::Fetch<component::FinalPass>::Fetch<component::RendererData>::Modify<capture_graph::component::RenderGraph>::To<ecs::Entity>;
+		using Entity = ecs::Registry ::OptinalFetch<component::BloomData>::Fetch<component::FinalPass>::To<ecs::Entity>;
 
-		inline auto system(Entity entity, ecs::World world)
+		inline auto system(Entity entity, 
+			capture_graph::component::RenderGraph & graph,
+			const component::RendererData& renderData,
+			const component::PathIntegrator *path)
 		{
-			auto [finalData, renderData, graph] = entity;
+			auto [finalData] = entity;
 			float gamma                         = 2.2;
 
 			finalData.finalDescriptorSet->setUniform("UniformBuffer", "gamma", &gamma);
@@ -53,7 +56,8 @@ namespace maple
 			finalData.finalDescriptorSet->setUniform("UniformBuffer", "reflectEnable", &reflectEnable);
 			finalData.finalDescriptorSet->setUniform("UniformBuffer", "cloudEnable", &cloudEnable);
 
-			finalData.finalDescriptorSet->setTexture("uScreenSampler", renderData.gbuffer->getBuffer(GBufferTextures::SCREEN));
+
+			finalData.finalDescriptorSet->setTexture("uScreenSampler", path ? path->images[1 - path->readIndex] : renderData.gbuffer->getBuffer(GBufferTextures::SCREEN));
 
 			//if (reflectEnable)
 			{

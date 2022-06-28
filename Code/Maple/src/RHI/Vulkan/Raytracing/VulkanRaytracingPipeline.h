@@ -57,6 +57,8 @@ namespace maple
 			return buffer;
 		}
 
+		auto traceRays(const CommandBuffer *commandBuffer, uint32_t width, uint32_t height, uint32_t depth) -> void override;
+
 	  private:
 		std::shared_ptr<ShaderBindingTable>   sbt;
 		std::shared_ptr<RayTracingProperties> rayTracingProperties;

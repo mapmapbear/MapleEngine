@@ -18,16 +18,14 @@ layout(push_constant) uniform PushConsts
     vec4 cameraPos;
     vec4 upDirection;
     vec4 rightDirection;
-    vec4 focalPlane;
-    uvec4 launchIdSize;
     uint numFrames;
-    uint debugVis;
     uint maxBounces;
     uint numLights;
     float accumulation;
     float shadowRayBias;
-    float focalLength;
-    float apertureRadius;
+    float padding0;
+    float padding1;
+    float padding2;
 } pushConsts;
 
 struct Ray
@@ -51,7 +49,7 @@ Ray generateRay(in uvec2 launchId, in uvec2 launchSize)
     ray.direction = normalize(target.xyz - ray.origin);
 
     // Aperture Offset
-    float angle = nextFloat(outPayload.random) * 2.0f * M_PI;
+   /* float angle = nextFloat(outPayload.random) * 2.0f * M_PI;
     float radius = sqrt(nextFloat(outPayload.random));
     vec2 offset = vec2(cos(angle), sin(angle)) * radius * pushConsts.apertureRadius;
 
@@ -64,7 +62,7 @@ Ray generateRay(in uvec2 launchId, in uvec2 launchSize)
     vec3 focusPos = rstart + rdir * t;
     
     ray.origin = aperturePos;
-    ray.direction = normalize(focusPos - aperturePos);
+    ray.direction = normalize(focusPos - aperturePos);*/
 
     return ray;
 }

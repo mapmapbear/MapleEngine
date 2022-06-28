@@ -18,6 +18,7 @@
 #include "Engine/Core.h"
 #include "Engine/Material.h"
 #include "Engine/Mesh.h"
+#include "Engine/PathTracer/PathIntegrator.h"
 #include "Engine/Profiler.h"
 #include "Engine/Renderer/GeometryRenderer.h"
 #include "Engine/Renderer/RendererData.h"
@@ -122,10 +123,15 @@ namespace maple
 
 		auto beginScene(Entity entity, LightQuery lightQuery, MeshQuery meshQuery, SkinnedMeshQuery skinnedQuery, BoneMeshQuery boneQuery,
 		                const global::component::SceneTransformChanged &sceneChanged,
-
-		                ecs::World world)
+		                const component::PathIntegrator *               path,
+		                ecs::World                                      world)
 		{
 			auto [shadowData, cameraView] = entity;
+
+			if (path != nullptr)
+			{
+				return;
+			}
 
 			if (sceneChanged.dirty || shadowData.dirty)
 			{
@@ -214,9 +220,15 @@ namespace maple
 
 		using RenderEntity = ecs::Registry ::Modify<component::ShadowMapData>::Fetch<component::RendererData>::Modify<capture_graph::component::RenderGraph>::To<ecs::Entity>;
 
-		inline auto onRender(RenderEntity entity, const global::component::SceneTransformChanged &sceneChanged, ecs::World world)
+		inline auto onRender(RenderEntity                                    entity,
+		                     const global::component::SceneTransformChanged &sceneChanged,
+		                     const component::PathIntegrator *               path,
+		                     ecs::World                                      world)
 		{
 			auto [shadowData, rendererData, renderGraph] = entity;
+
+			if (path != nullptr)
+				return;
 
 			if (sceneChanged.dirty)
 			{
@@ -259,9 +271,15 @@ namespace maple
 			}
 		}
 
-		inline auto onRenderAnim(RenderEntity entity, const global::component::SceneTransformChanged &sceneChanged, ecs::World world)
+		inline auto onRenderAnim(RenderEntity                     entity,
+		                         const component::PathIntegrator *path,
+		                         const global::component::SceneTransformChanged &sceneChanged,
+		                         ecs::World                                      world)
 		{
 			auto [shadowData, rendererData, renderGraph] = entity;
+
+			if (path != nullptr)
+				return;
 
 			if (sceneChanged.dirty)
 			{

@@ -11,6 +11,7 @@
 #include "Engine/LPVGI/ReflectiveShadowMap.h"
 #include "Engine/Material.h"
 #include "Engine/Mesh.h"
+#include "Engine/PathTracer/PathIntegrator.h"
 #include "Engine/Profiler.h"
 #include "Engine/Quad2D.h"
 #include "Engine/VXGI/DrawVoxel.h"
@@ -123,6 +124,8 @@ namespace maple
 		light_propagation_volume::registerLPV(beginQ, renderQ, executePoint);
 		lpv_indirect_lighting::registerLPVIndirectLight(renderQ, executePoint);
 		light_propagation_volume::registerLPVDebug(beginQ, renderQ, executePoint);
+
+		path_integrator::registerPathIntegrator(beginQ, renderQ, executePoint);
 	}
 
 	auto RenderGraph::beginScene(Scene *scene) -> void

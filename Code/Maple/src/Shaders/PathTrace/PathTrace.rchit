@@ -65,16 +65,14 @@ layout(push_constant) uniform PushConsts
     vec4 cameraPos;
     vec4 upDirection;
     vec4 rightDirection;
-    vec4 focalPlane;
-    uvec4 launchIdSize;
     uint numFrames;
-    uint debugVis;
     uint maxBounces;
     uint numLights;
     float accumulation;
     float shadowRayBias;
-    float focalLength;
-    float apertureRadius;
+    float padding0;
+    float padding1;
+    float padding2;
 } pushConsts;
 
 rayPayloadInEXT PathTracePayload inPayload;

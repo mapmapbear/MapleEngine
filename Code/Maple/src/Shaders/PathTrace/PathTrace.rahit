@@ -39,25 +39,6 @@ layout (set = 3, binding = 0) readonly buffer SubmeshInfoBuffer
 layout (set = 4, binding = 0) uniform sampler2D uSamplers[];
 
 
-layout(push_constant) uniform PushConsts
-{
-    mat4 invViewProj;
-    vec4 cameraPos;
-    vec4 upDirection;
-    vec4 rightDirection;
-    vec4 focalPlane;
-    uvec4 launchIdSize;
-    uint numFrames;
-    uint debugVis;
-    uint maxBounces;
-    uint numLights;
-    float accumulation;
-    float shadowRayBias;
-    float focalLength;
-    float apertureRadius;
-} pushConsts;
-
-
 HitInfo getHitInfo()
 {
     uvec2 primitiveOffsetMatIdx = SubmeshInfo[nonuniformEXT(gl_InstanceCustomIndexEXT)].data[gl_GeometryIndexEXT];

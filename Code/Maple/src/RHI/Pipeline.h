@@ -18,6 +18,8 @@ namespace maple
 		};
 	}        // namespace capture_graph
 
+	class ShaderBindingTable;
+
 	class DescriptorSet;
 
 	class MAPLE_EXPORT Pipeline
@@ -36,6 +38,8 @@ namespace maple
 		virtual auto bind(const CommandBuffer *commandBuffer, uint32_t layer = 0, int32_t cubeFace = -1, int32_t mipMapLevel = 0) -> FrameBuffer * = 0;
 		virtual auto end(const CommandBuffer *commandBuffer) -> void                                                                               = 0;
 		virtual auto clearRenderTargets(const CommandBuffer *commandBuffer) -> void{};
+
+		virtual auto traceRays(const CommandBuffer *commandBuffer, uint32_t width, uint32_t height, uint32_t depth) -> void{};
 
 	  protected:
 		PipelineInfo description;

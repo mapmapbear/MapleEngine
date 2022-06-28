@@ -14,7 +14,7 @@ namespace maple
 	{
 	}
 
-	VulkanBuffer::VulkanBuffer(VkBufferUsageFlags usage, uint32_t size, const void *data, uint32_t vmaUsage, uint32_t vmaCreateFlags):
+	VulkanBuffer::VulkanBuffer(VkBufferUsageFlags usage, uint32_t size, const void *data, uint32_t vmaUsage, uint32_t vmaCreateFlags) :
 	    usage(usage),
 	    size(size)
 	{
@@ -39,10 +39,38 @@ namespace maple
 		bufferInfo.sharingMode        = VK_SHARING_MODE_EXCLUSIVE;
 
 #ifdef USE_VMA_ALLOCATOR
-		VmaAllocationCreateInfo vmaAllocInfo = {};
-		vmaAllocInfo.flags                   = vmaCreateFlags;
-		vmaAllocInfo.usage                   = (VmaMemoryUsage) vmaUsage;
-		vmaCreateBuffer(VulkanDevice::get()->getAllocator(), &bufferInfo, &vmaAllocInfo, &buffer, &allocation, nullptr);
+
+		VkMemoryPropertyFlags memoryPropFlags = 0;
+
+		if (vmaUsage == VMA_MEMORY_USAGE_CPU_ONLY)
+		{
+			memoryPropFlags |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+			memoryPropFlags |= VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+			usage |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+		}
+		else if (vmaUsage == VMA_MEMORY_USAGE_GPU_ONLY)
+		{
+			memoryPropFlags |= VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+			usage |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+		}
+		else if (vmaUsage == VMA_MEMORY_USAGE_CPU_TO_GPU)
+		{
+			memoryPropFlags |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+			memoryPropFlags |= VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+		}
+		else if (vmaUsage == VMA_MEMORY_USAGE_GPU_TO_CPU)
+		{
+			memoryPropFlags |= VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+		}
+		bufferInfo.usage = usage;
+
+		VmaAllocationCreateInfo vmaCreateInfo = {};
+		vmaCreateInfo.flags                   = vmaCreateFlags;
+		vmaCreateInfo.usage                   = (VmaMemoryUsage) vmaUsage;
+		vmaCreateInfo.requiredFlags           = memoryPropFlags;
+
+		vmaCreateBuffer(VulkanDevice::get()->getAllocator(), &bufferInfo, &vmaCreateInfo, &buffer, &allocation, nullptr);
+
 #else
 		VK_CHECK_RESULT(vkCreateBuffer(*VulkanDevice::get(), &bufferInfo, nullptr, &buffer));
 
@@ -63,6 +91,14 @@ namespace maple
 #endif
 		if (data != nullptr)
 			setVkData(size, data);
+
+		VkBufferDeviceAddressInfoKHR addressInfo;
+
+		addressInfo.sType  = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO_KHR;
+		addressInfo.buffer = buffer;
+
+		if ((usage & VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT) == VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT)
+			address = vkGetBufferDeviceAddress(*VulkanDevice::get(), &addressInfo);
 	}
 
 	/**
@@ -137,11 +173,8 @@ namespace maple
 
 	auto VulkanBuffer::getDeviceAddress() const -> VkDeviceAddress
 	{
-		VkBufferDeviceAddressInfo info = {};
-		info.sType                     = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
-		info.pNext                     = nullptr;
-		info.buffer                    = buffer;
-		return vkGetBufferDeviceAddress(*VulkanDevice::get(), &info);
+		MAPLE_ASSERT(address != 0, "address should be not zero");
+		return address;
 	}
 
 	auto VulkanBuffer::resize(uint32_t size, const void *data) -> void

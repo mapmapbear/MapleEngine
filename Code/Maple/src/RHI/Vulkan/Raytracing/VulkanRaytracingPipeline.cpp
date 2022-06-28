@@ -136,7 +136,11 @@ namespace maple
 		    sbtSize,
 		    mem.data()));
 
-		buffer = std::make_shared<VulkanBuffer>(VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT, sbtSize, mem.data());
+		buffer = std::make_shared<VulkanBuffer>(
+			VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, 
+			sbtSize,
+			mem.data(), 
+			VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT);
 		//TODO, I'm not sure if I should use alignment for Buffer.
 		//so just copy it now.
 
@@ -151,4 +155,20 @@ namespace maple
 		                  pipeline);
 		return nullptr;
 	}
+
+	auto VulkanRaytracingPipeline::traceRays(const CommandBuffer *commandBuffer, uint32_t width, uint32_t height, uint32_t depth) -> void
+	{
+		VkDeviceSize groupSize   = alignedSize(rayTracingProperties->getShaderGroupHandleSize(), rayTracingProperties->getShaderGroupBaseAlignment());
+		VkDeviceSize groupStride = groupSize;
+		//TODO ....
+		const VkStridedDeviceAddressRegionKHR raygenSbt   = {buffer->getDeviceAddress(), groupStride, groupSize};
+		const VkStridedDeviceAddressRegionKHR missSbt     = {buffer->getDeviceAddress() + sbt->getMissGroupOffset(), groupStride, groupSize * 2};
+		const VkStridedDeviceAddressRegionKHR hitSbt      = {buffer->getDeviceAddress() + sbt->getHitGroupOffset(), groupStride, groupSize * 2};
+		const VkStridedDeviceAddressRegionKHR callableSbt = {0, 0, 0};
+
+		vkCmdTraceRaysKHR(static_cast<const VulkanCommandBuffer *>(commandBuffer)->getCommandBuffer(),
+		                  &raygenSbt, &missSbt, &hitSbt, &callableSbt, width, height, depth);
+
+	}
+
 };        // namespace maple

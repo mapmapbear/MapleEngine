@@ -3,31 +3,31 @@
 //////////////////////////////////////////////////////////////////////////////
 #include "HierarchyWindow.h"
 #include "Editor.h"
-#include "Engine/GBuffer.h"
 #include "Engine/Camera.h"
+#include "Engine/GBuffer.h"
 #include "Engine/Mesh.h"
 
 #include "2d/Sprite.h"
-#include "Scene/Scene.h"
 #include "Scene/Component/BoundingBox.h"
 #include "Scene/Component/Component.h"
 #include "Scene/Component/Light.h"
-#include "Scene/Component/MeshRenderer.h"
-#include "Scene/System/HierarchyModule.h"
 #include "Scene/Component/LightProbe.h"
+#include "Scene/Component/MeshRenderer.h"
 #include "Scene/Entity/Entity.h"
 #include "Scene/Scene.h"
 #include "Scene/SceneManager.h"
+#include "Scene/System/HierarchyModule.h"
 
-#include "Engine/VXGI/Voxelization.h"
-#include "Engine/LPVGI/LightPropagationVolume.h"
+#include "Engine/PathTracer/PathIntegrator.h"
 #include "Engine/LPVGI/LPVIndirectLighting.h"
+#include "Engine/LPVGI/LightPropagationVolume.h"
 #include "Engine/LPVGI/ReflectiveShadowMap.h"
+#include "Engine/VXGI/Voxelization.h"
 
+#include "Engine/IconsDefine.inl"
 #include "ImGui/ImGuiHelpers.h"
 #include "Others/Console.h"
 #include "imgui_internal.h"
-#include "Engine/IconsDefine.inl"
 
 constexpr size_t INPUT_BUFFER = 256;
 
@@ -35,7 +35,6 @@ namespace maple
 {
 	HierarchyWindow::HierarchyWindow()
 	{
-	
 	}
 
 	auto HierarchyWindow::onImGui() -> void
@@ -59,7 +58,7 @@ namespace maple
 	auto HierarchyWindow::drawName() -> void
 	{
 		auto  scene    = Application::get()->getSceneManager()->getCurrentScene();
-		auto& registry = Application::getExecutePoint()->getRegistry();
+		auto &registry = Application::getExecutePoint()->getRegistry();
 
 		const auto &sceneName = scene->getName();
 
@@ -75,7 +74,8 @@ namespace maple
 	auto HierarchyWindow::popupWindow() -> void
 	{
 		auto  scene    = Application::get()->getSceneManager()->getCurrentScene();
-		auto &registry = Application::getExecutePoint()->getRegistry();;
+		auto &registry = Application::getExecutePoint()->getRegistry();
+		;
 		ImGui::PushStyleVar(ImGuiStyleVar_PopupRounding, 10.f);
 		if (ImGui::BeginPopupContextWindow("HierarchyWindow::PopupWindow"))
 		{
@@ -112,11 +112,11 @@ namespace maple
 			if (ImGui::Selectable("Add Light Probe"))
 			{
 				auto entity = scene->createEntity("Light Probe");
-			//	entity.addComponent<component::LightProbe>();
-			//	entity.getOrAddComponent<component::Transform>();
+				//	entity.addComponent<component::LightProbe>();
+				//	entity.getOrAddComponent<component::Transform>();
 			}
 
-			constexpr char* shapes[] = { "Sphere", "Cube", "Pyramid", "Capsule", "Cylinder", "Terrain", "Quad" };
+			constexpr char *shapes[] = {"Sphere", "Cube", "Pyramid", "Capsule", "Cylinder", "Terrain", "Quad"};
 
 			ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 10.f);
 			if (ImGui::BeginMenu("Add 3D Object"))
@@ -127,36 +127,36 @@ namespace maple
 					{
 						if (strcmp("Cube", name) == 0)
 						{
-							auto entity = scene->createEntity(name);
-							auto& meshRender = entity.addComponent<component::MeshRenderer>();
-							meshRender.type = component::PrimitiveType::Cube;
-							meshRender.mesh = Mesh::createCube();
+							auto  entity     = scene->createEntity(name);
+							auto &meshRender = entity.addComponent<component::MeshRenderer>();
+							meshRender.type  = component::PrimitiveType::Cube;
+							meshRender.mesh  = Mesh::createCube();
 							entity.addComponent<physics::component::Collider>(physics::ColliderType::BoxCollider);
 						}
 
 						if (strcmp("Sphere", name) == 0)
 						{
-							auto entity = scene->createEntity(name);
-							auto& meshRender = entity.addComponent<component::MeshRenderer>();
-							meshRender.type = component::PrimitiveType::Sphere;
-							meshRender.mesh = Mesh::createSphere();
+							auto  entity     = scene->createEntity(name);
+							auto &meshRender = entity.addComponent<component::MeshRenderer>();
+							meshRender.type  = component::PrimitiveType::Sphere;
+							meshRender.mesh  = Mesh::createSphere();
 							entity.addComponent<physics::component::Collider>(physics::ColliderType::SphereCollider);
 						}
 
 						if (strcmp("Pyramid", name) == 0)
 						{
-							auto entity = scene->createEntity(name);
-							auto& meshRender = entity.addComponent<component::MeshRenderer>();
-							meshRender.mesh = Mesh::createPyramid();
-							meshRender.type = component::PrimitiveType::Pyramid;
+							auto  entity     = scene->createEntity(name);
+							auto &meshRender = entity.addComponent<component::MeshRenderer>();
+							meshRender.mesh  = Mesh::createPyramid();
+							meshRender.type  = component::PrimitiveType::Pyramid;
 						}
 
 						if (strcmp("Capsule", name) == 0)
 						{
-							auto entity = scene->createEntity(name);
-							auto& meshRender = entity.addComponent<component::MeshRenderer>();
-							meshRender.mesh = Mesh::createCapsule();
-							meshRender.type = component::PrimitiveType::Capsule;
+							auto  entity     = scene->createEntity(name);
+							auto &meshRender = entity.addComponent<component::MeshRenderer>();
+							meshRender.mesh  = Mesh::createCapsule();
+							meshRender.type  = component::PrimitiveType::Capsule;
 							entity.addComponent<physics::component::Collider>(physics::ColliderType::CapsuleCollider);
 						}
 					}
@@ -164,7 +164,7 @@ namespace maple
 				ImGui::EndMenu();
 			}
 
-			constexpr char* gi[] = { "VX-GI", "LPV-GI" };
+			constexpr char *gi[] = {"VX-GI", "LPV-GI"};
 
 			if (ImGui::BeginMenu("Add GI Component"))
 			{
@@ -192,6 +192,14 @@ namespace maple
 				}
 				ImGui::EndMenu();
 			}
+
+			if (ImGui::Selectable("Add Path Trace"))
+			{
+				auto entity = scene->createEntity("PathTrace");
+				entity.addComponent<component::PathIntegrator>();
+				Application::getExecutePoint()->getGlobalComponent<global::component::SceneTransformChanged>().dirty = true;
+			}
+
 			ImGui::PopStyleVar();
 
 			ImGui::EndPopup();
@@ -223,7 +231,7 @@ namespace maple
 				auto hierarchyComponent = registry.try_get<component::Hierarchy>(entity);
 				if (hierarchyComponent)
 				{
-					hierarchy::reparent(entity, entt::null, *hierarchyComponent, ecs::World{ registry, entt::null });
+					hierarchy::reparent(entity, entt::null, *hierarchyComponent, ecs::World{registry, entt::null});
 				}
 			}
 			ImGui::EndDragDropTarget();
@@ -274,7 +282,7 @@ namespace maple
 					auto hierarchyComponent = registry.try_get<component::Hierarchy>(entity);
 					if (hierarchyComponent)
 					{
-						hierarchy::reparent(entity, entt::null, *hierarchyComponent, ecs::World{ registry, entt::null });
+						hierarchy::reparent(entity, entt::null, *hierarchyComponent, ecs::World{registry, entt::null});
 						Entity e(entity, Application::getExecutePoint()->getRegistry());
 						e.removeComponent<component::Hierarchy>();
 					}
@@ -343,7 +351,6 @@ namespace maple
 				recentDroppedEntity = entt::null;
 			}
 
-
 			std::string icon = ICON_MDI_CUBE;
 
 			if (registry.has<component::Light>(node))
@@ -354,7 +361,7 @@ namespace maple
 			{
 				icon = ICON<Camera>;
 			}
-			else if (registry.has<component::SkinnedMeshRenderer>(node)) 
+			else if (registry.has<component::SkinnedMeshRenderer>(node))
 			{
 				icon = ICON<component::SkinnedMeshRenderer>;
 			}
@@ -422,7 +429,7 @@ namespace maple
 
 				if (ImGui::Selectable("Duplicate"))
 				{
-					scene->duplicateEntity({node,Application::getExecutePoint()->getRegistry()});
+					scene->duplicateEntity({node, Application::getExecutePoint()->getRegistry()});
 				}
 				if (ImGui::Selectable("Delete"))
 					deleteEntity = true;
@@ -435,7 +442,7 @@ namespace maple
 
 				if (ImGui::Selectable("Add Child"))
 				{
-					auto child =  Application::getExecutePoint()->create();
+					auto child = Application::getExecutePoint()->create();
 
 					child.setParent({node, Application::getExecutePoint()->getRegistry()});
 				}
@@ -477,7 +484,7 @@ namespace maple
 						if (acceptable)
 						{
 							if (hierarchyComponent)
-								hierarchy::reparent(entity, node, *hierarchyComponent, ecs::World{ registry, entt::null });
+								hierarchy::reparent(entity, node, *hierarchyComponent, ecs::World{registry, entt::null});
 							else
 							{
 								registry.emplace<component::Hierarchy>(entity, node);

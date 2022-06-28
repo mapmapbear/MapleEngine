@@ -58,7 +58,7 @@ namespace maple
 
 	  protected:
 		auto release() -> void;
-
+		VkDeviceAddress        address = 0;
 		VkDescriptorBufferInfo desciptorBufferInfo{};
 		VkBuffer               buffer    = VK_NULL_HANDLE;
 		VkDeviceMemory         memory    = VK_NULL_HANDLE;

@@ -7,11 +7,18 @@
 
 namespace maple
 {
+	class Texture2D;
+
 	namespace component
 	{
 		struct PathIntegrator
 		{
-			int32_t depth = 8;
+			int32_t                    readIndex = 0;
+			int32_t                    depth     = 8;
+			int32_t                    maxBounces = 2;
+			uint32_t                   accumulatedSamples = 0;
+			float                      shadowRayBias      = 0.0000;
+			std::shared_ptr<Texture2D> images[2];
 		};
 	}        // namespace component
 

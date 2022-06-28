@@ -315,6 +315,7 @@ namespace maple
 	auto VulkanShader::createPipelineLayout() -> void
 	{
 		std::vector<std::vector<DescriptorLayoutInfo>> layouts;
+		std::vector<std::unordered_set<ShaderType>>    stages;
 
 		auto it = std::max_element(
 		    std::begin(descriptorLayoutInfo),
@@ -323,10 +324,28 @@ namespace maple
 		    });
 
 		layouts.resize(it->setID + 1);
+		stages.resize(it->setID + 1);
 
 		for (auto &descriptorLayout : descriptorLayoutInfo)
 		{
-			layouts[descriptorLayout.setID].emplace_back(descriptorLayout);
+			if (raytracingShader)        //raytracing shader usually shares same pipeline layout
+			{
+				auto iter = std::find_if(layouts[descriptorLayout.setID].begin(), layouts[descriptorLayout.setID].end(), [&](const DescriptorLayoutInfo &info) {
+					return info.binding == descriptorLayout.binding &&
+					       info.setID == descriptorLayout.setID &&
+					       info.count == descriptorLayout.count &&
+					       info.type == descriptorLayout.type;
+				});
+				stages[descriptorLayout.setID].emplace(descriptorLayout.stage);
+				if (iter == layouts[descriptorLayout.setID].end())
+				{
+					layouts[descriptorLayout.setID].emplace_back(descriptorLayout);
+				}
+			}
+			else
+			{
+				layouts[descriptorLayout.setID].emplace_back(descriptorLayout);
+			}
 		}
 
 		for (auto &l : layouts)
@@ -341,8 +360,17 @@ namespace maple
 				auto &info = l[i];
 
 				VkDescriptorSetLayoutBinding setLayoutBinding{};
-				setLayoutBinding.descriptorType  = VkConverter::descriptorTypeToVK(info.type);
-				setLayoutBinding.stageFlags      = VkConverter::shaderTypeToVK(info.stage);
+				setLayoutBinding.descriptorType = VkConverter::descriptorTypeToVK(info.type);
+				setLayoutBinding.stageFlags     = VkConverter::shaderTypeToVK(info.stage);
+				
+				if (raytracingShader)
+				{
+					for (auto stage : stages[i])
+					{
+						setLayoutBinding.stageFlags |= VkConverter::shaderTypeToVK(stage);
+					}
+				}
+
 				setLayoutBinding.binding         = info.binding;
 				setLayoutBinding.descriptorCount = info.count;
 

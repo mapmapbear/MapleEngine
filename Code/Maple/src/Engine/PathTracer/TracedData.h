@@ -20,6 +20,7 @@ namespace maple::raytracing
 	struct TransformData
 	{
 		glm::mat4 model;
+		glm::mat4 normalMatrix;
 		uint32_t  meshIndex;
 		float     padding[3];
 	};

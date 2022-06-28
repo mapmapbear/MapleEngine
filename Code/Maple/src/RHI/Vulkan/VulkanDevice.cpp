@@ -270,8 +270,21 @@ namespace maple
 	{
 		physicalDevice = std::make_shared<VulkanPhysicalDevice>();
 
-		VkPhysicalDeviceFeatures physicalDeviceFeatures;
-		vkGetPhysicalDeviceFeatures(*physicalDevice, &physicalDeviceFeatures);
+		VkPhysicalDeviceVulkan11Features features11{};
+		VkPhysicalDeviceVulkan12Features features12{};
+
+		features11.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
+		features11.pNext = &features12;
+		features12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
+		features12.pNext = nullptr;
+
+		// Physical Device Features 2
+		VkPhysicalDeviceFeatures2 physicalDeviceFeatures2{};
+
+		physicalDeviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+		physicalDeviceFeatures2.pNext = &features11;
+
+		vkGetPhysicalDeviceFeatures2(*physicalDevice, &physicalDeviceFeatures2);
 
 		std::vector<const char *> deviceExtensions = {
 		    VK_KHR_SWAPCHAIN_EXTENSION_NAME,
@@ -286,9 +299,22 @@ namespace maple
 			deviceExtensions.emplace_back(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
 			deviceExtensions.emplace_back(VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME);
 			deviceExtensions.emplace_back(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME);
-			deviceExtensions.emplace_back(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
 			physicalDevice->raytracingSupport = true;
+
+			VkPhysicalDeviceAccelerationStructureFeaturesKHR accelerationStructure{};
+			accelerationStructure.sType                 = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
+			accelerationStructure.pNext                 = nullptr;
+			accelerationStructure.accelerationStructure = VK_TRUE;
+
+			// Ray Tracing Features
+			VkPhysicalDeviceRayTracingPipelineFeaturesKHR raytracing{};
+			raytracing.sType              = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
+			raytracing.pNext              = &accelerationStructure;
+			raytracing.rayTracingPipeline = VK_TRUE;
+			features12.pNext              = &raytracing;
 		}
+		deviceExtensions.emplace_back(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
+
 		deviceExtensions.emplace_back(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
 		deviceExtensions.emplace_back(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
 		deviceExtensions.emplace_back(VK_KHR_MAINTENANCE3_EXTENSION_NAME);
@@ -301,10 +327,12 @@ namespace maple
 			enableDebugMarkers = true;
 		}
 
+		/*
 		VkPhysicalDeviceDescriptorIndexingFeatures indexingFeatures{};
 		indexingFeatures.sType                           = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
 		indexingFeatures.runtimeDescriptorArray          = VK_TRUE;
 		indexingFeatures.descriptorBindingPartiallyBound = VK_TRUE;
+		indexingFeatures.pNext                           = &address;*/
 
 #if defined(PLATFORM_MACOS) || defined(PLATFORM_IOS)
 		// https://vulkan.lunarg.com/doc/view/1.2.162.0/mac/1.2-extensions/vkspec.html#VUID-VkDeviceCreateInfo-pProperties-04451
@@ -321,9 +349,10 @@ namespace maple
 		deviceCreateInfo.pQueueCreateInfos       = physicalDevice->queueCreateInfos.data();
 		deviceCreateInfo.enabledExtensionCount   = static_cast<uint32_t>(deviceExtensions.size());
 		deviceCreateInfo.ppEnabledExtensionNames = deviceExtensions.data();
-		deviceCreateInfo.pEnabledFeatures        = &physicalDeviceFeatures;
-		deviceCreateInfo.enabledLayerCount       = 0;
-		deviceCreateInfo.pNext                   = (void *) &indexingFeatures;
+		//deviceCreateInfo.pEnabledFeatures        = &physicalDeviceFeatures;
+
+		deviceCreateInfo.enabledLayerCount = 0;
+		deviceCreateInfo.pNext             = (void *) &physicalDeviceFeatures2;
 
 		auto result = vkCreateDevice(*physicalDevice, &deviceCreateInfo, VK_NULL_HANDLE, &device);
 		if (result != VK_SUCCESS)
@@ -338,6 +367,7 @@ namespace maple
 
 #ifdef USE_VMA_ALLOCATOR
 		VmaAllocatorCreateInfo allocatorInfo = {};
+		allocatorInfo.flags                  = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
 		allocatorInfo.physicalDevice         = *physicalDevice;
 		allocatorInfo.device                 = device;
 		allocatorInfo.instance               = VulkanContext::get()->getVkInstance();
