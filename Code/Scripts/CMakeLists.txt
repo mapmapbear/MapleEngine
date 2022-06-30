@@ -42,7 +42,7 @@ set_property(
 	"System;System.Core;System.Numerics;System.Runtime;System.Runtime.CompilerServices.Unsafe"
 )
 
-set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR})
+set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 
 endif()
 
