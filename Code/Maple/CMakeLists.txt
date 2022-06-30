@@ -190,7 +190,7 @@ else()
 	add_library(MapleEngine STATIC ${VK_APP_SRC} ${KTX_SOURCES} ${SHADERS_GLSL} ${IMGUI_SRC})
 endif()
 
-	set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR})
+	set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 
 	
 
