@@ -272,7 +272,7 @@ namespace maple
 				{
 					auto acc = std::static_pointer_cast<VulkanAccelerationStructure>(accelerationStructures[imageInfo.name]);
 
-					VkWriteDescriptorSetAccelerationStructureKHR descriptorAs;
+					VkWriteDescriptorSetAccelerationStructureKHR descriptorAs{};
 					descriptorAs.sType                      = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
 					descriptorAs.pNext                      = nullptr;
 					descriptorAs.accelerationStructureCount = 1;
@@ -284,13 +284,11 @@ namespace maple
 					writeDescriptorSet.dstSet          = descriptorSet[currentFrame];
 					writeDescriptorSet.descriptorType  = VkConverter::descriptorTypeToVK(imageInfo.type);
 					writeDescriptorSet.dstBinding      = imageInfo.binding;
-					writeDescriptorSet.pBufferInfo     = &bufferInfoPool[index];
 					writeDescriptorSet.descriptorCount = 1;
 					writeDescriptorSet.pNext           = &descriptorAs;
 
 					writeDescriptorSetPool[descriptorWritesCount] = writeDescriptorSet;
 					descriptorWritesCount++;
-					index++;
 				}
 			}
 

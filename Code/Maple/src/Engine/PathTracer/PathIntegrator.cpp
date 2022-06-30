@@ -76,6 +76,8 @@ namespace maple
 				float     padding1;
 				float     padding2;
 			} constants;
+
+			Material::Ptr defaultMaterial;
 		};
 	}        // namespace component
 
@@ -84,21 +86,17 @@ namespace maple
 		inline auto initPathIntegrator(component::PathIntegrator &path, Entity entity, ecs::World world)
 		{
 			auto &pipeline  = entity.addComponent<component::PathTracePipeline>();
-			pipeline.shader = Shader::create("shaders/PathTrace/PathTrace.shader", {{"Vertices", MAX_SCENE_MESH_INSTANCE_COUNT},
-			                                                                        {"Indices", MAX_SCENE_MESH_INSTANCE_COUNT},
-			                                                                        {"SubmeshInfo", MAX_SCENE_MESH_INSTANCE_COUNT},
+			pipeline.shader = Shader::create("shaders/PathTrace/PathTrace.shader", {{"VertexBuffer", MAX_SCENE_MESH_INSTANCE_COUNT},
+			                                                                        {"IndexBuffer", MAX_SCENE_MESH_INSTANCE_COUNT},
+			                                                                        {"SubmeshInfoBuffer", MAX_SCENE_MESH_INSTANCE_COUNT},
 			                                                                        {"uSamplers", MAX_SCENE_MATERIAL_TEXTURE_COUNT}});
 			PipelineInfo info;
 			info.shader = pipeline.shader;
 
 			pipeline.pipeline        = Pipeline::get(info);
-			pipeline.lightBuffer     = StorageBuffer::create();
-			pipeline.materialBuffer  = StorageBuffer::create();
-			pipeline.transformBuffer = StorageBuffer::create();
-
-			pipeline.lightBuffer->setData(sizeof(component::LightData) * MAX_SCENE_LIGHT_COUNT, nullptr);
-			pipeline.materialBuffer->setData(sizeof(raytracing::MaterialData) * MAX_SCENE_MATERIAL_COUNT, nullptr);
-			pipeline.materialBuffer->setData(sizeof(raytracing::TransformData) * MAX_SCENE_MESH_INSTANCE_COUNT, nullptr);
+			pipeline.lightBuffer     = StorageBuffer::create(sizeof(component::LightData) * MAX_SCENE_LIGHT_COUNT, nullptr, BufferOptions{false, (int32_t) MemoryUsage::MEMORY_USAGE_CPU_TO_GPU, 0});
+			pipeline.materialBuffer  = StorageBuffer::create(sizeof(raytracing::MaterialData) * MAX_SCENE_MATERIAL_COUNT, nullptr, BufferOptions{false, (int32_t) MemoryUsage::MEMORY_USAGE_CPU_TO_GPU, 0});
+			pipeline.transformBuffer = StorageBuffer::create(sizeof(raytracing::TransformData) * MAX_SCENE_MESH_INSTANCE_COUNT, nullptr, BufferOptions{false, (int32_t) MemoryUsage::MEMORY_USAGE_CPU_TO_GPU, 0});
 
 			pipeline.descriptorPool = DescriptorPool::create({25,
 			                                                  {{DescriptorType::UniformBufferDynamic, 10},
@@ -109,16 +107,27 @@ namespace maple
 			pipeline.sceneDescriptor    = DescriptorSet::create({0, pipeline.shader.get(), 1, pipeline.descriptorPool.get()});
 			pipeline.vboDescriptor      = DescriptorSet::create({1, pipeline.shader.get(), 1, pipeline.descriptorPool.get(), MAX_SCENE_MESH_INSTANCE_COUNT});
 			pipeline.iboDescriptor      = DescriptorSet::create({2, pipeline.shader.get(), 1, pipeline.descriptorPool.get(), MAX_SCENE_MESH_INSTANCE_COUNT});
-			pipeline.materialDescriptor = DescriptorSet::create({3, pipeline.shader.get(), 1, pipeline.descriptorPool.get(), MAX_SCENE_MATERIAL_COUNT});
+			pipeline.materialDescriptor = DescriptorSet::create({3, pipeline.shader.get(), 1, pipeline.descriptorPool.get(), MAX_SCENE_MESH_INSTANCE_COUNT});
 			pipeline.textureDescriptor  = DescriptorSet::create({4, pipeline.shader.get(), 1, pipeline.descriptorPool.get(), MAX_SCENE_MATERIAL_TEXTURE_COUNT});
 			pipeline.readDescriptor     = DescriptorSet::create({5, pipeline.shader.get()});
 			pipeline.writeDescriptor    = DescriptorSet::create({6, pipeline.shader.get()});
 
 			pipeline.tlas = AccelerationStructure::createTopLevel(MAX_SCENE_MESH_INSTANCE_COUNT);
 
-			auto & winSize = world.getComponent<component::WindowSize>();
+			pipeline.defaultMaterial = std::make_shared<Material>();
+			MaterialProperties properties;
+			properties.albedoColor       = glm::vec4(1.f, 1.f, 1.f, 1.f);
+			properties.roughnessColor    = glm::vec4(0);
+			properties.metallicColor     = glm::vec4(0);
+			properties.usingAlbedoMap    = 0.0f;
+			properties.usingRoughnessMap = 0.0f;
+			properties.usingNormalMap    = 0.0f;
+			properties.usingMetallicMap  = 0.0f;
+			pipeline.defaultMaterial->setMaterialProperites(properties);
 
-			for (auto i = 0;i<2;i++)
+			auto &winSize = world.getComponent<component::WindowSize>();
+
+			for (auto i = 0; i < 2; i++)
 			{
 				path.images[i] = Texture2D::create();
 				path.images[i]->buildTexture(TextureFormat::RGBA32, winSize.width, winSize.height);
@@ -196,6 +205,11 @@ namespace maple
 						for (auto i = 0; i < mesh.mesh->getSubMeshCount(); i++)
 						{
 							auto material = mesh.mesh->getMaterial(i);
+
+							if (material == nullptr)
+							{
+								material = pipeline.defaultMaterial.get();
+							}
 
 							if (processedMaterials.count(material->getId()) == 0)
 							{
@@ -279,7 +293,11 @@ namespace maple
 
 					for (auto i = 0; i < mesh.mesh->getSubMeshCount(); i++)
 					{
-						auto        material = mesh.mesh->getMaterial(i);
+						auto material = mesh.mesh->getMaterial(i);
+						if (material == nullptr)
+						{
+							material = pipeline.defaultMaterial.get();
+						}
 						const auto &subIndex = mesh.mesh->getSubMeshIndex();
 						indices[i]           = glm::uvec2(subIndex[i] / 3, bindless.materialIndices[material->getId()]);
 					}
@@ -330,7 +348,7 @@ namespace maple
 				pipeline.sceneDescriptor->setAccelerationStructure("uTopLevelAS", pipeline.tlas);
 
 				pipeline.vboDescriptor->setStorageBuffer("VertexBuffer", vbos);
-				pipeline.vboDescriptor->setStorageBuffer("IndexBuffer", ibos);
+				pipeline.iboDescriptor->setStorageBuffer("IndexBuffer", ibos);
 
 				pipeline.materialDescriptor->setStorageBuffer("SubmeshInfoBuffer", materialIndices);
 				pipeline.textureDescriptor->setTexture("uSamplers", shaderTextures);
@@ -351,7 +369,15 @@ namespace maple
 			auto [integrator, pipeline] = entity;
 
 			pipeline.readDescriptor->setTexture("uPreviousColor", integrator.images[integrator.readIndex]);
-			pipeline.readDescriptor->setTexture("uCurrentColor", integrator.images[1 - integrator.readIndex]);
+			pipeline.writeDescriptor->setTexture("uCurrentColor", integrator.images[1 - integrator.readIndex]);
+
+			pipeline.sceneDescriptor->update(rendererData.commandBuffer);
+			pipeline.vboDescriptor->update(rendererData.commandBuffer);
+			pipeline.iboDescriptor->update(rendererData.commandBuffer);
+			pipeline.materialDescriptor->update(rendererData.commandBuffer);
+			pipeline.textureDescriptor->update(rendererData.commandBuffer);
+			pipeline.readDescriptor->update(rendererData.commandBuffer);
+			pipeline.writeDescriptor->update(rendererData.commandBuffer);
 
 			pipeline.pipeline->bind(rendererData.commandBuffer);
 

@@ -24,7 +24,7 @@ namespace maple
 		VkDeviceOrHostAddressConstKHR instanceDeviceAddress{};
 		instanceDeviceAddress.deviceAddress = instanceBufferDevice->getDeviceAddress();
 
-		VkAccelerationStructureGeometryKHR tlasGeometry;
+		VkAccelerationStructureGeometryKHR tlasGeometry{};
 		tlasGeometry.sType                              = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
 		tlasGeometry.geometryType                       = VK_GEOMETRY_TYPE_INSTANCES_KHR;
 		tlasGeometry.geometry.instances.sType           = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR;
@@ -40,9 +40,9 @@ namespace maple
 		           .setFlags(VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR | VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR));
 
 		scratchBuffer = std::make_shared<VulkanBuffer>(
-			VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | 
-			VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, 
-			getBuildScratchSize(), nullptr, VMA_MEMORY_USAGE_GPU_ONLY, 0);
+		    VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
+		        VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+		    getBuildScratchSize(), nullptr, VMA_MEMORY_USAGE_GPU_ONLY, 0);
 	}
 
 	VulkanAccelerationStructure::VulkanAccelerationStructure(uint64_t vertexAddress, uint64_t indexAddress,
@@ -123,14 +123,15 @@ namespace maple
 
 	auto VulkanAccelerationStructure::create(const Desc &desc) -> void
 	{
-		flags = desc.buildGeometryInfo.flags;
+		buildGeometryInfo = desc.buildGeometryInfo;
+		flags             = desc.buildGeometryInfo.flags;
 
 		buildSizesInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
 
 		vkGetAccelerationStructureBuildSizesKHR(
 		    *VulkanDevice::get(),
 		    VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
-		    &desc.buildGeometryInfo,
+		    &buildGeometryInfo,
 		    desc.maxPrimitiveCounts.data(),
 		    &buildSizesInfo);
 
@@ -145,7 +146,7 @@ namespace maple
 
 		VK_CHECK_RESULT(vkCreateAccelerationStructureKHR(*VulkanDevice::get(), &createInfo, nullptr, &accelerationStructure));
 
-		VkAccelerationStructureDeviceAddressInfoKHR addressInfo;
+		VkAccelerationStructureDeviceAddressInfoKHR addressInfo{};
 
 		addressInfo.sType                 = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
 		addressInfo.accelerationStructure = accelerationStructure;

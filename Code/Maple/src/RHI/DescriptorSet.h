@@ -126,7 +126,7 @@ namespace maple
 		std::shared_ptr<UniformBuffer>        buffer;
 
 		uint32_t    offset;
-		uint32_t    size;
+		uint64_t    size;
 		uint32_t    binding;
 		std::string name;
 

@@ -5,6 +5,7 @@
 #include "DescriptorSet.h"
 #include "Engine/Core.h"
 #include "FileSystem/IResource.h"
+#include <unordered_set>
 
 namespace spv
 {
@@ -59,11 +60,11 @@ namespace maple
 
 	struct PushConstant
 	{
-		uint32_t             size;
-		ShaderType           shaderStage;
-		std::vector<uint8_t> data;
-		uint32_t             offset = 0;
-		std::string          name;
+		uint32_t                       size;
+		std::unordered_set<ShaderType> shaderStages;
+		std::vector<uint8_t>           data;
+		uint32_t                       offset = 0;
+		std::string                    name;
 
 		std::vector<BufferMemberInfo> members;
 

@@ -4,14 +4,28 @@
 #include "VulkanVertexBuffer.h"
 #include "Engine/Profiler.h"
 #include "VulkanCommandBuffer.h"
+#include "VulkanContext.h"
+#include "VulkanDevice.h"
 #include "VulkanPipeline.h"
 
 namespace maple
 {
-	VulkanVertexBuffer::VulkanVertexBuffer(const BufferUsage &usage) :
-	    bufferUsage(usage)
+	VulkanVertexBuffer::VulkanVertexBuffer(const BufferUsage &usage)
 	{
-		VulkanBuffer::setUsage(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+		auto flags = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+
+		if (VulkanDevice::get()->getPhysicalDevice()->isRaytracingSupport())
+		{
+			flags |= VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR;
+		}
+		VulkanBuffer::setUsage(flags);
+	}
+
+	VulkanVertexBuffer::VulkanVertexBuffer(const void *data, uint32_t size) :
+	    VulkanBuffer(VulkanDevice::get()->getPhysicalDevice()->isRaytracingSupport()?
+                         VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR :
+                         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,size,data)
+	{
 	}
 
 	VulkanVertexBuffer::~VulkanVertexBuffer()

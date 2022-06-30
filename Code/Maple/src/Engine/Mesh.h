@@ -91,9 +91,9 @@ namespace maple
 			return materials;
 		}
 
-		inline auto &getMaterial(int32_t index)
+		inline auto getMaterial(int32_t index) -> Material*
 		{
-			return materials[index];
+			return index < materials.size() ? materials[index].get() : nullptr;
 		}
 
 		inline auto &getDescriptorSet()

@@ -253,10 +253,17 @@ namespace maple
 		uint32_t index = 0;
 		for (auto &pc : pushConstants)
 		{
+			uint32_t bits = 0;
+
+			for (auto stage : pc.shaderStages)
+			{
+				bits |= VkConverter::shaderTypeToVK(stage);
+			}
+
 			vkCmdPushConstants(
 			    static_cast<const VulkanCommandBuffer *>(cmdBuffer)->getCommandBuffer(),
 			    static_cast<VulkanPipeline *>(pipeline)->getPipelineLayout(),
-			    VkConverter::shaderTypeToVK(pc.shaderStage), index, pc.size, pc.data.data());
+			    bits, index, pc.size, pc.data.data());
 		}
 	}
 
@@ -315,7 +322,7 @@ namespace maple
 	auto VulkanShader::createPipelineLayout() -> void
 	{
 		std::vector<std::vector<DescriptorLayoutInfo>> layouts;
-		std::vector<std::unordered_set<ShaderType>>    stages;
+		std::unordered_set<ShaderType>                 stages;
 
 		auto it = std::max_element(
 		    std::begin(descriptorLayoutInfo),
@@ -324,7 +331,6 @@ namespace maple
 		    });
 
 		layouts.resize(it->setID + 1);
-		stages.resize(it->setID + 1);
 
 		for (auto &descriptorLayout : descriptorLayoutInfo)
 		{
@@ -336,7 +342,7 @@ namespace maple
 					       info.count == descriptorLayout.count &&
 					       info.type == descriptorLayout.type;
 				});
-				stages[descriptorLayout.setID].emplace(descriptorLayout.stage);
+				stages.emplace(descriptorLayout.stage);
 				if (iter == layouts[descriptorLayout.setID].end())
 				{
 					layouts[descriptorLayout.setID].emplace_back(descriptorLayout);
@@ -346,6 +352,12 @@ namespace maple
 			{
 				layouts[descriptorLayout.setID].emplace_back(descriptorLayout);
 			}
+		}
+
+		uint32_t stageFlags = 0;
+		for (auto & s : shaderStages)
+		{
+			stageFlags |= s.stage;
 		}
 
 		for (auto &l : layouts)
@@ -362,13 +374,10 @@ namespace maple
 				VkDescriptorSetLayoutBinding setLayoutBinding{};
 				setLayoutBinding.descriptorType = VkConverter::descriptorTypeToVK(info.type);
 				setLayoutBinding.stageFlags     = VkConverter::shaderTypeToVK(info.stage);
-				
+
 				if (raytracingShader)
 				{
-					for (auto stage : stages[i])
-					{
-						setLayoutBinding.stageFlags |= VkConverter::shaderTypeToVK(stage);
-					}
+					setLayoutBinding.stageFlags = stageFlags;
 				}
 
 				setLayoutBinding.binding         = info.binding;
@@ -412,7 +421,13 @@ namespace maple
 
 		for (auto &pushConst : pushConstants)
 		{
-			pushConstantRanges.push_back(VulkanHelper::pushConstantRange(VkConverter::shaderTypeToVK(pushConst.shaderStage), pushConst.size, pushConst.offset));
+			uint32_t bits = 0;
+
+			for (auto stage : pushConst.shaderStages)
+			{
+				bits |= VkConverter::shaderTypeToVK(stage);
+			}
+			pushConstantRanges.push_back(VulkanHelper::pushConstantRange(bits, pushConst.size, pushConst.offset));
 		}
 
 		VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo{};
@@ -499,22 +514,29 @@ namespace maple
 				uint32_t    set     = comp.get_decoration(resource.id, spv::DecorationDescriptorSet);
 				uint32_t    binding = comp.get_decoration(resource.id, spv::DecorationBinding);
 
-				LOGI("Load Image, type {0}, set {1}, binding {2}, name {3}", fmt, set, binding, resource.name);
-				auto &type = comp.get_type(resource.type_id);
-				descriptorLayoutInfo.push_back({DescriptorType::Image, shaderType, binding, set, type.array.size() ? uint32_t(type.array[0]) : 1});
+				auto iter = std::find_if(descriptorInfos[set].begin(), descriptorInfos[set].end(), [&](const Descriptor &info) {
+					return info.type == DescriptorType::Image && info.binding == binding && info.name == resource.name;
+				});
 
-				auto &descriptorInfo = descriptorInfos[set];
-				auto &descriptor     = descriptorInfo.emplace_back();
+				if (iter == descriptorInfos[set].end())
+				{
+					LOGI("Load Image, type {0}, set {1}, binding {2}, name {3}", fmt, set, binding, resource.name);
+					auto &type = comp.get_type(resource.type_id);
+					descriptorLayoutInfo.push_back({DescriptorType::Image, shaderType, binding, set, type.array.size() ? uint32_t(type.array[0]) : 1});
 
-				descriptor.offset     = 0;
-				descriptor.size       = 0;
-				descriptor.binding    = binding;
-				descriptor.name       = resource.name;
-				descriptor.shaderType = shaderType;
-				descriptor.type       = DescriptorType::Image;
-				//descriptor.accessFlag = glslType.image.access;
-				descriptor.accessFlag = spv::AccessQualifierReadWrite;
-				descriptor.format     = spirvTypeToTextureType(glslType.image.format);
+					auto &descriptorInfo = descriptorInfos[set];
+					auto &descriptor     = descriptorInfo.emplace_back();
+
+					descriptor.offset     = 0;
+					descriptor.size       = 0;
+					descriptor.binding    = binding;
+					descriptor.name       = resource.name;
+					descriptor.shaderType = shaderType;
+					descriptor.type       = DescriptorType::Image;
+					//descriptor.accessFlag = glslType.image.access;
+					descriptor.accessFlag = spv::AccessQualifierReadWrite;
+					descriptor.format     = spirvTypeToTextureType(glslType.image.format);
+				}
 			}
 		}
 		//Descriptor Layout
@@ -567,7 +589,7 @@ namespace maple
 
 			auto &type = comp.get_type(u.type_id);
 
-			auto ranges = comp.get_active_buffer_ranges(u.id);
+			/*	auto ranges = comp.get_active_buffer_ranges(u.id);
 
 			uint32_t size = 0;
 			for (auto &range : ranges)
@@ -575,34 +597,46 @@ namespace maple
 				LOGI("Accessing Member {0} offset {1}, size {2}", range.index, range.offset, range.range);
 				size += uint32_t(range.range);
 			}
+*/
 
-			LOGI("Push Constant {0} at set = {1}, binding = {2}", u.name.c_str(), set, binding);
+			auto &bufferType = comp.get_type(u.base_type_id);
+			auto  bufferSize = comp.get_declared_struct_size(bufferType);
 
-			auto &push       = pushConstants.emplace_back();
-			push.size        = size;
-			push.shaderStage = shaderType;
-			push.data.resize(size);
-			push.name = u.name;
+			auto iter = std::find_if(pushConstants.begin(), pushConstants.end(), [&](const PushConstant &consts) {
+				return consts.name == u.name && bufferSize == consts.size;
+			});
 
-			auto &  bufferType  = comp.get_type(u.base_type_id);
-			auto    bufferSize  = comp.get_declared_struct_size(bufferType);
-			int32_t memberCount = (int32_t) bufferType.member_types.size();
-
-			for (int32_t i = 0; i < memberCount; i++)
+			if (iter == pushConstants.end())
 			{
-				auto        type       = comp.get_type(bufferType.member_types[i]);
-				const auto &memberName = comp.get_member_name(bufferType.self, i);
-				auto        size       = comp.get_declared_struct_member_size(bufferType, i);
-				auto        offset     = comp.type_struct_member_offset(bufferType, i);
+				auto &push = pushConstants.emplace_back();
+				push.name  = u.name;
+				push.shaderStages.emplace(shaderType);
+				int32_t  memberCount = (int32_t) bufferType.member_types.size();
+				uint32_t totalSize   = 0;
+				for (int32_t i = 0; i < memberCount; i++)
+				{
+					auto        type       = comp.get_type(bufferType.member_types[i]);
+					const auto &memberName = comp.get_member_name(bufferType.self, i);
+					auto        size       = comp.get_declared_struct_member_size(bufferType, i);
+					auto        offset     = comp.type_struct_member_offset(bufferType, i);
 
-				std::string uniformName = u.name + "." + memberName;
+					std::string uniformName = u.name + "." + memberName;
 
-				auto &member    = push.members.emplace_back();
-				member.size     = (uint32_t) size;
-				member.offset   = offset;
-				member.type     = sprivTypeToDataType(type);
-				member.fullName = uniformName;
-				member.name     = memberName;
+					auto &member    = push.members.emplace_back();
+					member.size     = (uint32_t) size;
+					member.offset   = offset;
+					member.type     = sprivTypeToDataType(type);
+					member.fullName = uniformName;
+					member.name     = memberName;
+				}
+
+				push.size = bufferSize;
+				push.data.resize(bufferSize);
+				LOGI("Push Constant {0} at set = {1}, binding = {2}, size = {3}", u.name.c_str(), set, binding, totalSize);
+			}
+			else
+			{
+				iter->shaderStages.emplace(shaderType);
 			}
 		}
 
@@ -611,32 +645,39 @@ namespace maple
 			uint32_t set     = comp.get_decoration(u.id, spv::DecorationDescriptorSet);
 			uint32_t binding = comp.get_decoration(u.id, spv::DecorationBinding);
 
-			auto &descriptorInfo = descriptorInfos[set];
-			auto &descriptor     = descriptorInfo.emplace_back();
+			auto iter = std::find_if(descriptorInfos[set].begin(), descriptorInfos[set].end(), [&](const Descriptor &info) {
+				return info.type == DescriptorType::ImageSampler && info.binding == binding && info.name == u.name;
+			});
 
-			auto &type = comp.get_type(u.type_id);
-			LOGI("Found Sampled Texture {0} at set = {1}, binding = {2}", u.name.c_str(), set, binding);
-
-			uint32_t size         = 1;
-			bool     variableSize = false;
-			if (type.array.size() > 0)
+			if (iter == descriptorInfos[set].end())
 			{
-				size = uint32_t(type.array[0]);
-			}
+				auto &descriptorInfo = descriptorInfos[set];
+				auto &descriptor     = descriptorInfo.emplace_back();
 
-			if (auto s = arraySize[u.name]; s > 0)
-			{
-				size         = s;
-				variableSize = true;
-			}
+				auto &type = comp.get_type(u.type_id);
+				LOGI("Found Sampled Texture {0} at set = {1}, binding = {2}", u.name.c_str(), set, binding);
 
-			descriptorLayoutInfo.push_back({DescriptorType::ImageSampler, shaderType, binding, set, size, variableSize});
-			descriptor.binding    = binding;
-			descriptor.name       = u.name;
-			descriptor.offset     = 0;
-			descriptor.size       = 0;
-			descriptor.shaderType = shaderType;
-			descriptor.format     = TextureFormat::NONE;
+				uint32_t size         = 1;
+				bool     variableSize = false;
+				if (type.array.size() > 0)
+				{
+					size = uint32_t(type.array[0]);
+				}
+
+				if (auto s = arraySize[u.name]; s > 0)
+				{
+					size         = s;
+					variableSize = true;
+				}
+
+				descriptorLayoutInfo.push_back({DescriptorType::ImageSampler, shaderType, binding, set, size, variableSize});
+				descriptor.binding    = binding;
+				descriptor.name       = u.name;
+				descriptor.offset     = 0;
+				descriptor.size       = 0;
+				descriptor.shaderType = shaderType;
+				descriptor.format     = TextureFormat::NONE;
+			}
 		}
 		//ssbos
 		for (auto &u : resources.storage_buffers)
@@ -658,18 +699,26 @@ namespace maple
 				size         = s;
 				variableSize = true;
 			}
-			descriptorLayoutInfo.push_back({DescriptorType::Buffer, shaderType, binding, set, size, variableSize});
 
-			auto &descriptorInfo = descriptorInfos[set];
-			auto &descriptor     = descriptorInfo.emplace_back();
+			auto iter = std::find_if(descriptorInfos[set].begin(), descriptorInfos[set].end(), [&](const Descriptor &info) {
+				return info.type == DescriptorType::Buffer && info.binding == binding && info.name == u.name;
+			});
 
-			descriptor.binding    = binding;
-			descriptor.name       = u.name;
-			descriptor.offset     = 0;
-			descriptor.shaderType = shaderType;
-			descriptor.type       = DescriptorType::Buffer;
-			descriptor.buffer     = nullptr;
-			descriptor.size       = VK_WHOLE_SIZE;
+			if (iter == descriptorInfos[set].end())
+			{
+				descriptorLayoutInfo.push_back({DescriptorType::Buffer, shaderType, binding, set, size, variableSize});
+
+				auto &descriptorInfo = descriptorInfos[set];
+				auto &descriptor     = descriptorInfo.emplace_back();
+
+				descriptor.binding    = binding;
+				descriptor.name       = u.name;
+				descriptor.offset     = 0;
+				descriptor.shaderType = shaderType;
+				descriptor.type       = DescriptorType::Buffer;
+				descriptor.buffer     = nullptr;
+				descriptor.size       = VK_WHOLE_SIZE;
+			}
 		}
 
 		for (auto &u : resources.acceleration_structures)
@@ -679,18 +728,24 @@ namespace maple
 
 			LOGI("Acceleration Structures {0} at set = {1}, binding = {2}", u.name, set, binding);
 
-			descriptorLayoutInfo.push_back({DescriptorType::AccelerationStructure, shaderType, binding, set, 1});
+			auto iter = std::find_if(descriptorInfos[set].begin(), descriptorInfos[set].end(), [&](const Descriptor &info) {
+				return info.type == DescriptorType::AccelerationStructure && info.binding == binding && info.name == u.name;
+			});
 
-			auto &descriptorInfo = descriptorInfos[set];
-			auto &descriptor     = descriptorInfo.emplace_back();
+			if (iter == descriptorInfos[set].end())
+			{
+				descriptorLayoutInfo.push_back({DescriptorType::AccelerationStructure, shaderType, binding, set, 1});
+				auto &descriptorInfo = descriptorInfos[set];
+				auto &descriptor     = descriptorInfo.emplace_back();
 
-			descriptor.binding    = binding;
-			descriptor.name       = u.name;
-			descriptor.offset     = 0;
-			descriptor.shaderType = shaderType;
-			descriptor.type       = DescriptorType::AccelerationStructure;
-			descriptor.buffer     = nullptr;
-			descriptor.size       = VK_WHOLE_SIZE;
+				descriptor.binding    = binding;
+				descriptor.name       = u.name;
+				descriptor.offset     = 0;
+				descriptor.shaderType = shaderType;
+				descriptor.type       = DescriptorType::AccelerationStructure;
+				descriptor.buffer     = nullptr;
+				descriptor.size       = VK_WHOLE_SIZE;
+			}
 		}
 
 		shaderStages[currentShaderStage].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;

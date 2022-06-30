@@ -8,9 +8,9 @@
 #include <Scene/System/ExecutePoint.h>
 #include <ecs/World.h>
 
-#include "RHI/StorageBuffer.h"
 #include "Application.h"
 #include "Mesh.h"
+#include "RHI/StorageBuffer.h"
 #include "Vertex.h"
 #define _USE_MATH_DEFINES
 #include "Math/BoundingBox.h"
@@ -37,10 +37,9 @@ namespace maple
 		{
 			boundingBox->merge(vertex.pos);
 		}
-		vertexBuffer = VertexBuffer::create();
-		vertexBuffer->setData(sizeof(Vertex) * vertices.size(), vertices.data());
-		indexBuffer = IndexBuffer::create(indices.data(), indices.size());
-		meshId      = idGenerator++;
+		vertexBuffer = VertexBuffer::create(vertices.data(), sizeof(Vertex) * vertices.size());
+		indexBuffer  = IndexBuffer::create(indices.data(), indices.size());
+		meshId       = idGenerator++;
 		subMeshIndex.emplace_back(indexBuffer->getCount());
 	}
 
@@ -52,10 +51,9 @@ namespace maple
 		{
 			boundingBox->merge(vertex.pos);
 		}
-		vertexBuffer = VertexBuffer::create();
-		vertexBuffer->setData(sizeof(SkinnedVertex) * vertices.size(), vertices.data());
-		indexBuffer = IndexBuffer::create(indices.data(), indices.size());
-		meshId      = idGenerator++;
+		vertexBuffer = VertexBuffer::create(vertices.data(), sizeof(SkinnedVertex) * vertices.size());
+		indexBuffer  = IndexBuffer::create(indices.data(), indices.size());
+		meshId       = idGenerator++;
 		subMeshIndex.emplace_back(indexBuffer->getCount());
 	}
 
@@ -631,7 +629,7 @@ namespace maple
 		std::vector<uint32_t> indices{
 		    0, 1, 2,
 		    2, 3, 0};
-	
+
 		return std::make_shared<Mesh>(indices, data);
 	}
 
@@ -639,14 +637,14 @@ namespace maple
 	{
 		if (subMeshesBuffer == nullptr)
 		{
-			subMeshesBuffer = StorageBuffer::create(sizeof(glm::uvec2) * subMeshCount, nullptr);
+			subMeshesBuffer = StorageBuffer::create(sizeof(glm::uvec2) * subMeshCount, nullptr, {false, (int32_t) MemoryUsage::MEMORY_USAGE_CPU_TO_GPU, 0});
 		}
 		return subMeshesBuffer;
 	}
 
 	auto Mesh::getAccelerationStructure(BatchTask::Ptr task) -> AccelerationStructure::Ptr
 	{
-		if(bottomAs == nullptr)
+		if (bottomAs == nullptr)
 			bottomAs = AccelerationStructure::createBottomLevel(vertexBuffer, indexBuffer, vertexCount, task);
 		return bottomAs;
 	}

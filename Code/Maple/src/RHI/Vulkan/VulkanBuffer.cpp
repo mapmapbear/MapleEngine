@@ -92,7 +92,7 @@ namespace maple
 		if (data != nullptr)
 			setVkData(size, data);
 
-		VkBufferDeviceAddressInfoKHR addressInfo;
+		VkBufferDeviceAddressInfoKHR addressInfo{};
 
 		addressInfo.sType  = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO_KHR;
 		addressInfo.buffer = buffer;

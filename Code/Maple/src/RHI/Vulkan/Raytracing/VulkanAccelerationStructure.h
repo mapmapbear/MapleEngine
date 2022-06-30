@@ -18,10 +18,10 @@ namespace maple
 	  public:
 		struct Desc
 		{
-			VkAccelerationStructureCreateInfoKHR            createInfo;
-			VkAccelerationStructureBuildGeometryInfoKHR     buildGeometryInfo;
-			std::vector<VkAccelerationStructureGeometryKHR> geometries;
-			std::vector<uint32_t>                           maxPrimitiveCounts;
+			VkAccelerationStructureCreateInfoKHR            createInfo{};
+			VkAccelerationStructureBuildGeometryInfoKHR     buildGeometryInfo{};
+			std::vector<VkAccelerationStructureGeometryKHR> geometries{};
+			std::vector<uint32_t>                           maxPrimitiveCounts{};
 
 			Desc();
 			auto setType(VkAccelerationStructureTypeKHR type) -> Desc &;
@@ -49,7 +49,7 @@ namespace maple
 			return buildSizesInfo.buildScratchSize;
 		}
 
-		inline auto& getAccelerationStructure() const
+		inline auto &getAccelerationStructure() const
 		{
 			return accelerationStructure;
 		}
@@ -69,15 +69,16 @@ namespace maple
 		auto mapHost() -> void * override;
 
 		auto unmap() -> void override;
-		
+
 	  protected:
 		auto create(const Desc &desc) -> void;
 
-		VulkanBuffer::Ptr                        buffer;
-		VkDeviceAddress                          deviceAddress = 0;
-		VkBuildAccelerationStructureFlagsKHR     flags         = VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
-		VkAccelerationStructureBuildSizesInfoKHR buildSizesInfo{};
-		VkAccelerationStructureKHR               accelerationStructure = nullptr;
+		VulkanBuffer::Ptr                           buffer;
+		VkDeviceAddress                             deviceAddress = 0;
+		VkBuildAccelerationStructureFlagsKHR        flags         = VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
+		VkAccelerationStructureBuildSizesInfoKHR    buildSizesInfo{};
+		VkAccelerationStructureKHR                  accelerationStructure = nullptr;
+		VkAccelerationStructureBuildGeometryInfoKHR buildGeometryInfo{};
 
 	  private:
 		VulkanBuffer::Ptr instanceBufferHost;

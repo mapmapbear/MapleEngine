@@ -43,5 +43,6 @@ namespace maple
 
 	  public:
 		static auto create(const BufferUsage &usage = BufferUsage::Static) -> std::shared_ptr<VertexBuffer>;
+		static auto create(const void *data, uint32_t size) -> std::shared_ptr<VertexBuffer>;
 	};
 }        // namespace maple

@@ -14,6 +14,7 @@ namespace maple
 	{
 	  public:
 		VulkanVertexBuffer(const BufferUsage &usage);
+		VulkanVertexBuffer(const void *data, uint32_t size);
 		~VulkanVertexBuffer();
 
 		auto bind(const CommandBuffer *commandBuffer, Pipeline *pipeline) -> void override;

@@ -81,6 +81,8 @@ namespace maple
 		int32_t renderFlags = 0;
 
 	  public:
+		using Ptr = std::shared_ptr<Material>;
+
 		Material(const std::shared_ptr<Shader> &shader, const MaterialProperties &properties = MaterialProperties(), const PBRMataterialTextures &textures = PBRMataterialTextures());
 		Material();
 

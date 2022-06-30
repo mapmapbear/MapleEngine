@@ -533,7 +533,7 @@ namespace maple
 			auto &pushConst = pushConstants.emplace_back();
 
 			pushConst.size        = rangeSizes;
-			pushConst.shaderStage = type;
+			pushConst.shaderStages.emplace( type );
 			pushConst.data.resize(rangeSizes);
 
 			for (int i = 0; i < memberCount; i++)

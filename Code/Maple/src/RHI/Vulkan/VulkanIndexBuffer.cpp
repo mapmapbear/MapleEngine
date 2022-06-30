@@ -4,11 +4,14 @@
 #include "VulkanIndexBuffer.h"
 #include "Engine/Profiler.h"
 #include "VulkanCommandBuffer.h"
-
+#include "VulkanDevice.h"
 namespace maple
 {
 	VulkanIndexBuffer::VulkanIndexBuffer(const uint16_t *data, uint32_t initCount, BufferUsage bufferUsage) :
-	    VulkanBuffer(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, initCount * sizeof(uint16_t), data),
+	    VulkanBuffer(VulkanDevice::get()->getPhysicalDevice()->isRaytracingSupport() ?
+                         VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR :
+                         VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+	                 initCount * sizeof(uint16_t), data),
 	    size(initCount * sizeof(uint16_t)),
 	    count(initCount),
 	    usage(bufferUsage)
@@ -16,7 +19,11 @@ namespace maple
 	}
 
 	VulkanIndexBuffer::VulkanIndexBuffer(const uint32_t *data, uint32_t initCount, BufferUsage bufferUsage) :
-	    VulkanBuffer(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, initCount * sizeof(uint32_t), data),
+	    VulkanBuffer(
+	        VulkanDevice::get()->getPhysicalDevice()->isRaytracingSupport() ?
+                VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR :
+                VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+	        initCount * sizeof(uint32_t), data),
 	    size(initCount * sizeof(uint32_t)),
 	    count(initCount),
 	    usage(bufferUsage)
