@@ -287,7 +287,7 @@ foreach(GLSL ${SHADERS_GLSL})
 
 	string(REPLACE ${CMAKE_CURRENT_LIST_DIR}/src/Shaders "" DIR_NAME ${GLSL})
 
-    set(SPIRV "${LIBRARY_OUTPUT_PATH}/../../Assets/shaders/spv${DIR_NAME}.spv")
+    set(SPIRV "${LIBRARY_OUTPUT_PATH}/../../../Assets/shaders/spv${DIR_NAME}.spv")
 
 	get_filename_component(FILE_NAME ${GLSL} NAME)
 
@@ -295,7 +295,7 @@ foreach(GLSL ${SHADERS_GLSL})
 
     add_custom_command(
         OUTPUT ${SPIRV}
-        COMMAND ${CMAKE_COMMAND} -E make_directory "${LIBRARY_OUTPUT_PATH}/../../Assets/shaders/spv${DIR_NAME}"
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${LIBRARY_OUTPUT_PATH}/../../../Assets/shaders/spv${DIR_NAME}"
         COMMAND ${GLSL_VALIDATOR} --target-env vulkan1.2 -V ${GLSL} -o ${SPIRV}
         DEPENDS ${GLSL})
     list(APPEND SPIRV_BINARY_FILES ${SPIRV})
