@@ -277,6 +277,8 @@ namespace maple
 		std::unordered_multimap<ShaderType, std::string> sources;
 		parseSource(lines, sources);
 
+		
+
 		for (auto &source : sources)
 		{
 			switch (source.first)
@@ -312,6 +314,8 @@ namespace maple
 				auto size   = buffer->size() / sizeof(uint32_t);
 				loadShader({reinterpret_cast<uint32_t *>(buffer->data()), reinterpret_cast<uint32_t *>(buffer->data()) + size}, source.first, currentShaderStage);
 			}
+			auto out = StringUtils::split(source.second, ".");
+			shaderGroups.emplace(out[0], shaderStages[currentShaderStage]);
 			currentShaderStage++;
 		}
 
