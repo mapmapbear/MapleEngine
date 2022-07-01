@@ -42,7 +42,7 @@ namespace maple
 
 	auto VulkanRaytracingPipeline::init(const PipelineInfo &info) -> bool
 	{
-		PROFILE_FUNCTION();
+			PROFILE_FUNCTION();
 		shader         = info.shader;
 		auto vkShader  = std::static_pointer_cast<VulkanShader>(info.shader);
 		description    = info;
@@ -52,39 +52,44 @@ namespace maple
 		std::vector<VkShaderModule>                                             missGens;
 		std::vector<std::tuple<VkShaderModule, VkShaderModule, VkShaderModule>> hitsGen;
 
+		std::unordered_map<std::string, int32_t> map;
 
-		bool nextGroup = false;
-
-		for (auto &stage : vkShader->getShaderStages())
+		for (auto &stage : vkShader->getShaderGroups())
 		{
-			switch (stage.stage)
+			if (auto iter = map.find(stage.first);iter == map.end())
+			{
+				map[stage.first] = map.size();
+			}
+		}
+
+		hitsGen.resize(map.size());
+
+		for (auto &stage : vkShader->getShaderGroups())
+		{
+			switch (stage.second.stage)
 			{
 				case VK_SHADER_STAGE_MISS_BIT_KHR:
-					missGens.emplace_back(stage.module);
+					missGens.emplace_back(stage.second.module);
 					break;
 				case VK_SHADER_STAGE_RAYGEN_BIT_KHR:
-					rayGens.emplace_back(stage.module);
+					rayGens.emplace_back(stage.second.module);
 					break;
-				case VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR:
-				{
-					//hits[0].emplace_back(stage.module);
+				case VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR: {
+					std::get<0>(hitsGen[map[stage.first]]) = stage.second.module;
 				}
 				break;
 
-				case VK_SHADER_STAGE_ANY_HIT_BIT_KHR:
-				{
-					//hits[1].emplace_back(stage.module);
+				case VK_SHADER_STAGE_ANY_HIT_BIT_KHR: {
+					std::get<1>(hitsGen[map[stage.first]]) = stage.second.module;
 				}
 				break;
 
-				case VK_SHADER_STAGE_INTERSECTION_BIT_KHR:
-				{
-					//hits[2].emplace_back(stage.module);
+				case VK_SHADER_STAGE_INTERSECTION_BIT_KHR: {
+					std::get<2>(hitsGen[map[stage.first]]) = stage.second.module;
 				}
 				break;
 			}
 		}
-
 
 		if (!rayGens.empty() || !missGens.empty() || !hitsGen.empty())
 		{
@@ -110,7 +115,9 @@ namespace maple
 
 		VK_CHECK_RESULT(vkCreateRayTracingPipelinesKHR(*VulkanDevice::get(), VK_NULL_HANDLE, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &pipeline));
 
-		auto alignSize = alignedSize(rayTracingProperties->getShaderGroupHandleSize(), rayTracingProperties->getShaderGroupBaseAlignment());
+		auto groupHandleSize = rayTracingProperties->getShaderGroupHandleSize();
+
+		auto alignSize = alignedSize(groupHandleSize, rayTracingProperties->getShaderGroupBaseAlignment());
 
 		const size_t groupCount = sbt->getGroups().size();
 		size_t       sbtSize    = groupCount * alignSize;
@@ -126,12 +133,22 @@ namespace maple
 		    mem.data()));
 
 		buffer = std::make_shared<VulkanBuffer>(
-			VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, 
-			sbtSize,
-			mem.data(), 
-			VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT);
-		//TODO, I'm not sure if I should use alignment for Buffer.
-		//so just copy it now.
+		    VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+		    sbtSize,
+		    nullptr,
+		    VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT);
+
+		buffer->map();
+		auto dst = (uint8_t*)buffer->getMapped();
+		auto src = mem.data();
+
+		for (int32_t i = 0; i < groupCount; i++)
+		{
+			memcpy(dst, src, groupHandleSize);
+
+			dst += alignSize;
+			src += groupHandleSize;
+		}
 
 		return true;
 	}
