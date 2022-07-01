@@ -99,7 +99,12 @@ namespace maple
 		{
 			return shaderStages;
 		}
-
+		
+		inline auto &getShaderGroups() const
+		{
+			return shaderGroups;
+		}
+		
 	  private:
 		auto loadShader(const std::vector<uint32_t> &spvCode, ShaderType type, int32_t currentShaderStage) -> void;
 		auto init() -> void;
@@ -122,5 +127,6 @@ namespace maple
 		std::vector<VkVertexInputAttributeDescription>        vertexInputAttributeDescriptions;
 		std::unordered_map<uint32_t, std::vector<Descriptor>> descriptorInfos;
 		VariableArraySize                                     arraySize;
+		std::unordered_multimap<std::string, VkPipelineShaderStageCreateInfo> shaderGroups;
 	};
 };        // namespace maple
