@@ -14,8 +14,8 @@
 #include "Engine/CaptureGraph.h"
 #include "Engine/GBuffer.h"
 #include "Engine/Mesh.h"
-#include "Engine/Profiler.h"
 #include "Engine/PathTracer/PathIntegrator.h"
+#include "Engine/Profiler.h"
 
 #include "Scene/Component/Component.h"
 #include "Scene/Component/Environment.h"
@@ -114,13 +114,15 @@ namespace maple
 
 		using BoneMeshQuery = ecs::Registry ::Modify<component::BoneComponent>::Modify<component::Transform>::To<ecs::Group>;
 
+		using PathTraceGroup = ecs::Registry::Fetch<component::PathIntegrator>::To<ecs::Group>;
+
 		inline auto beginScene(Entity           entity,
 		                       Group            lightQuery,
 		                       EnvQuery         env,
 		                       MeshQuery        meshQuery,
 		                       SkinnedMeshQuery skinnedMeshQuery,
 		                       BoneMeshQuery    boneQuery,
-		                       const component::PathIntegrator *path,
+		                       PathTraceGroup   pathGroup,
 		                       ecs::World       world)
 		{
 			auto [data, shadowData, cameraView, renderData, ssao] = entity;
@@ -130,9 +132,8 @@ namespace maple
 			if (cameraView.cameraTransform == nullptr)
 				return;
 
-			if (path != nullptr)
+			if (!pathGroup.empty())
 				return;
-
 
 			data.stencilDescriptorSet->setUniform("UniformBufferObject", "projView", &cameraView.projView);
 
@@ -380,12 +381,9 @@ namespace maple
 
 		using RenderEntity = ecs::Registry ::Modify<component::DeferredData>::Fetch<component::ShadowMapData>::Fetch<component::CameraView>::Fetch<component::RendererData>::Fetch<component::SSAOData>::Modify<capture_graph::component::RenderGraph>::To<ecs::Entity>;
 
-		inline auto onRender(RenderEntity entity, 
-			 const component::PathIntegrator *path,
-			ecs::World world)
+		inline auto onRender(RenderEntity entity, PathTraceGroup pathGroup, ecs::World world)
 		{
-
-			if (path != nullptr)
+			if (!pathGroup.empty())
 				return;
 
 			auto [data, shadowData, cameraView, renderData, ssao, graph] = entity;
@@ -455,7 +453,6 @@ namespace maple
 				command.mesh->getVertexBuffer()->unbind();
 				command.mesh->getIndexBuffer()->unbind();
 
-
 				/*if (command.stencilPipelineInfo.stencilTest)
 				{
 					auto stencilPipeline = Pipeline::get(command.stencilPipelineInfo);
@@ -499,17 +496,22 @@ namespace maple
 
 		using EnvQuery = ecs::Registry ::Fetch<component::Environment>::To<ecs::Group>;
 
+		using PathTraceGroup = ecs::Registry::Fetch<component::PathIntegrator>::To<ecs::Group>;
+
 		inline auto onRender(
 		    Entity                                                entity,
 		    EnvQuery                                              envQuery,
+		    PathTraceGroup                                        pathGroup,
 		    const vxgi_debug::global::component::DrawVoxelRender *voxelDebug,
 		    const vxgi::global::component::VoxelBuffer *          voxelBuffer,
-		    const component::PathIntegrator *                     path,
 		    ecs::World                                            world)
 		{
 			auto [data, shadow, cameraView, rendererData, graph] = entity;
 
-			if (voxelDebug && voxelDebug->enable || path != nullptr) 
+			if (!pathGroup.empty())
+				return;
+
+			if (voxelDebug && voxelDebug->enable)
 				return;
 
 			auto descriptorSet = data.descriptorLightSet[0];

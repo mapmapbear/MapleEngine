@@ -64,11 +64,16 @@ namespace maple
 			return flags;
 		}
 
-		auto updateTLAS(void *buffer, const glm::mat3x4 &transform, uint32_t instanceId, uint64_t instanceAddress) -> void override;
+		auto updateTLAS(void *buffer, const glm::mat4 &transform, uint32_t instanceId, uint64_t instanceAddress) -> void override;
 
 		auto mapHost() -> void * override;
 
 		auto unmap() -> void override;
+
+		auto copyToGPU(const CommandBuffer *cmd, uint32_t instanceSize) -> void override;
+
+		auto build(const CommandBuffer *cmd, uint32_t instanceSize) -> void override;
+
 
 	  protected:
 		auto create(const Desc &desc) -> void;
@@ -79,8 +84,9 @@ namespace maple
 		VkAccelerationStructureBuildSizesInfoKHR    buildSizesInfo{};
 		VkAccelerationStructureKHR                  accelerationStructure = nullptr;
 		VkAccelerationStructureBuildGeometryInfoKHR buildGeometryInfo{};
-
+		
 	  private:
+		bool              built = false;
 		VulkanBuffer::Ptr instanceBufferHost;
 		VulkanBuffer::Ptr instanceBufferDevice;
 		VulkanBuffer::Ptr scratchBuffer;

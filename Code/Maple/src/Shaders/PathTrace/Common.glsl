@@ -33,8 +33,9 @@ struct Triangle
 struct Transform
 {
     mat4 modelMatrix;
-    mat3 normalMatrix;
+    mat4 normalMatrix;
     uint meshIdx;
+    float padding[3];
 };
 
 struct HitInfo

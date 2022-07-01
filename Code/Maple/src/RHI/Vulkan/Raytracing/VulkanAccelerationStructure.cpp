@@ -6,6 +6,7 @@
 #include "Engine/Vertex.h"
 #include "Others/Console.h"
 #include "RHI/Vulkan/VulkanBatchTask.h"
+#include "RHI/Vulkan/VulkanCommandBuffer.h"
 #include "RHI/Vulkan/VulkanDevice.h"
 #include "RayTracingProperties.h"
 
@@ -13,13 +14,15 @@ namespace maple
 {
 	VulkanAccelerationStructure::VulkanAccelerationStructure(const uint32_t maxInstanceCount)
 	{
-		instanceBufferDevice = std::make_shared<VulkanBuffer>(VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
-		                                                          VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
-		                                                          VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-		                                                      sizeof(VkAccelerationStructureInstanceKHR) * maxInstanceCount, nullptr, VMA_MEMORY_USAGE_GPU_ONLY, 0);
+		instanceBufferDevice = std::make_shared<VulkanBuffer>(
+		    VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
+		        VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
+		        VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+		    sizeof(VkAccelerationStructureInstanceKHR) * maxInstanceCount, nullptr, VMA_MEMORY_USAGE_GPU_ONLY, 0);
 
-		instanceBufferHost = std::make_shared<VulkanBuffer>(VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		                                                    sizeof(VkAccelerationStructureInstanceKHR) * maxInstanceCount, nullptr, VMA_MEMORY_USAGE_CPU_ONLY, VMA_ALLOCATION_CREATE_MAPPED_BIT);
+		instanceBufferHost = std::make_shared<VulkanBuffer>(
+		    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		    sizeof(VkAccelerationStructureInstanceKHR) * maxInstanceCount, nullptr, VMA_MEMORY_USAGE_CPU_ONLY, VMA_ALLOCATION_CREATE_MAPPED_BIT);
 
 		VkDeviceOrHostAddressConstKHR instanceDeviceAddress{};
 		instanceDeviceAddress.deviceAddress = instanceBufferDevice->getDeviceAddress();
@@ -109,7 +112,7 @@ namespace maple
 		}
 	}
 
-	auto VulkanAccelerationStructure::updateTLAS(void *buffer, const glm::mat3x4 &transform, uint32_t instanceId, uint64_t instanceAddress) -> void
+	auto VulkanAccelerationStructure::updateTLAS(void *buffer, const glm::mat4 &transform, uint32_t instanceId, uint64_t instanceAddress) -> void
 	{
 		VkAccelerationStructureInstanceKHR *geometryBuffer = (VkAccelerationStructureInstanceKHR *) buffer;
 		VkAccelerationStructureInstanceKHR &vkASInstance   = geometryBuffer[instanceId];
@@ -119,6 +122,8 @@ namespace maple
 		vkASInstance.instanceShaderBindingTableRecordOffset = 0;
 		vkASInstance.flags                                  = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
 		vkASInstance.accelerationStructureReference         = instanceAddress;
+		auto trans                                          = glm::transpose(transform);
+		std::memcpy(&vkASInstance.transform, &trans, sizeof(vkASInstance.transform));
 	}
 
 	auto VulkanAccelerationStructure::create(const Desc &desc) -> void
@@ -218,4 +223,76 @@ namespace maple
 	{
 		return instanceBufferHost->unmap();
 	}
+
+	auto VulkanAccelerationStructure::copyToGPU(const CommandBuffer *cmd, uint32_t instanceSize) -> void
+	{
+		if (instanceBufferHost != nullptr && instanceBufferDevice != nullptr)
+		{
+			VkBufferCopy copyRegion{};
+
+			copyRegion.dstOffset = 0;
+			copyRegion.size      = sizeof(VkAccelerationStructureInstanceKHR) * instanceSize;
+
+			auto vkCmd = static_cast<const VulkanCommandBuffer *>(cmd);
+
+			vkCmdCopyBuffer(vkCmd->getCommandBuffer(), instanceBufferHost->getVkBuffer(), instanceBufferDevice->getVkBuffer(), 1, &copyRegion);
+		}
+	}
+
+	auto VulkanAccelerationStructure::build(const CommandBuffer *cmd, uint32_t instanceSize) -> void
+	{
+		if (instanceBufferDevice)
+		{
+			auto vkCmd = static_cast<const VulkanCommandBuffer *>(cmd);
+			{
+				VkMemoryBarrier memoryBarrier;
+				memoryBarrier.sType         = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+				memoryBarrier.pNext         = nullptr;
+				memoryBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+				memoryBarrier.dstAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR;
+				vkCmdPipelineBarrier(vkCmd->getCommandBuffer(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, 0, 1, &memoryBarrier, 0, nullptr, 0, nullptr);
+			}
+
+			VkAccelerationStructureGeometryKHR geometry{};
+			geometry.sType                                 = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
+			geometry.geometryType                          = VK_GEOMETRY_TYPE_INSTANCES_KHR;
+			geometry.geometry.instances.sType              = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR;
+			geometry.geometry.instances.arrayOfPointers    = VK_FALSE;
+			geometry.geometry.instances.data.deviceAddress = instanceBufferDevice->getDeviceAddress();
+
+			VkAccelerationStructureBuildGeometryInfoKHR buildInfo{};
+
+			buildInfo.sType                     = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
+			buildInfo.type                      = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
+			buildInfo.flags                     = flags;
+			buildInfo.srcAccelerationStructure  = built ? accelerationStructure : VK_NULL_HANDLE;
+			buildInfo.dstAccelerationStructure  = accelerationStructure;
+			buildInfo.geometryCount             = 1;
+			buildInfo.pGeometries               = &geometry;
+			buildInfo.scratchData.deviceAddress = scratchBuffer->getDeviceAddress();
+
+			VkAccelerationStructureBuildRangeInfoKHR buildRangeInfo;
+
+			buildRangeInfo.primitiveCount  = instanceSize;
+			buildRangeInfo.primitiveOffset = 0;
+			buildRangeInfo.firstVertex     = 0;
+			buildRangeInfo.transformOffset = 0;
+
+			const VkAccelerationStructureBuildRangeInfoKHR *ptrBuildRangeInfo = &buildRangeInfo;
+
+			vkCmdBuildAccelerationStructuresKHR(vkCmd->getCommandBuffer(), 1, &buildInfo, &ptrBuildRangeInfo);
+
+			{
+				VkMemoryBarrier memoryBarrier;
+				memoryBarrier.sType         = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+				memoryBarrier.pNext         = nullptr;
+				memoryBarrier.srcAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR | VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
+				memoryBarrier.dstAccessMask = VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR | VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
+				vkCmdPipelineBarrier(vkCmd->getCommandBuffer(), VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, 0, 1, &memoryBarrier, 0, 0, 0, 0);
+			}
+
+			built = true;
+		}
+	}
+
 }        // namespace maple

@@ -50,9 +50,10 @@ namespace maple
 
 		std::vector<VkShaderModule>                                             rayGens;
 		std::vector<VkShaderModule>                                             missGens;
-		std::vector<std::tuple<VkShaderModule, VkShaderModule, VkShaderModule>> hits;
+		std::vector<std::tuple<VkShaderModule, VkShaderModule, VkShaderModule>> hitsGen;
 
-		int32_t idx = 0;
+
+		bool nextGroup = false;
 
 		for (auto &stage : vkShader->getShaderStages())
 		{
@@ -66,42 +67,30 @@ namespace maple
 					break;
 				case VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR:
 				{
-					if (idx++ == 0)
-						hits.emplace_back();
-
-					std::get<0>(hits.back()) = stage.module;
+					//hits[0].emplace_back(stage.module);
 				}
 				break;
 
 				case VK_SHADER_STAGE_ANY_HIT_BIT_KHR:
 				{
-					if (idx++ == 0)
-						hits.emplace_back();
-
-					std::get<1>(hits.back()) = stage.module;
+					//hits[1].emplace_back(stage.module);
 				}
 				break;
 
 				case VK_SHADER_STAGE_INTERSECTION_BIT_KHR:
 				{
-					if (idx++ == 0)
-						hits.emplace_back();
-					std::get<2>(hits.back()) = stage.module;
+					//hits[2].emplace_back(stage.module);
 				}
 				break;
 			}
-
-			if (idx == 3)
-			{
-				idx = 0;
-			}
 		}
 
-		if (!rayGens.empty() || !missGens.empty() || !hits.empty())
+
+		if (!rayGens.empty() || !missGens.empty() || !hitsGen.empty())
 		{
 			rayTracingProperties = std::make_shared<RayTracingProperties>();
 			sbt                  = std::make_shared<ShaderBindingTable>(rayTracingProperties);
-			sbt->addShader(rayGens, missGens, hits);
+			sbt->addShader(rayGens, missGens, hitsGen);
 		}
 
 		VkRayTracingPipelineCreateInfoKHR pipelineCreateInfo = {};

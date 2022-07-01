@@ -299,7 +299,7 @@ namespace maple
 							material = pipeline.defaultMaterial.get();
 						}
 						const auto &subIndex = mesh.mesh->getSubMeshIndex();
-						indices[i]           = glm::uvec2(subIndex[i] / 3, bindless.materialIndices[material->getId()]);
+						indices[i]           = glm::uvec2(i == 0 ? 0 : subIndex [ i - 1 ] / 3, bindless.materialIndices[material->getId()]);
 					}
 
 					auto blas = mesh.mesh->getAccelerationStructure(tasks);
@@ -308,7 +308,7 @@ namespace maple
 					transformBuffer[meshCount].model        = transform.getWorldMatrix();
 					transformBuffer[meshCount].normalMatrix = glm::transpose(glm::inverse(glm::mat3(transform.getWorldMatrix())));
 
-					pipeline.tlas->updateTLAS(instanceBuffer, glm::mat3x4(glm::transpose(transform.getWorldMatrix())), meshCount++, blas->getDeviceAddress());
+					pipeline.tlas->updateTLAS(instanceBuffer, transform.getWorldMatrix(), meshCount++, blas->getDeviceAddress());
 
 					auto guard = sg::make_scope_guard([&]() {
 						buffer->unmap();
@@ -316,6 +316,8 @@ namespace maple
 				}
 
 				pipeline.tlas->unmap();
+
+		
 
 				uint32_t lightIndicator = 0;
 
@@ -332,13 +334,14 @@ namespace maple
 
 				tasks->execute();
 
-				pipeline.sceneDescriptor->setTexture("uSkyBox", rendererData.unitCube);
+				pipeline.sceneDescriptor->setTexture("uSkybox", rendererData.unitCube);
 				if (!skyboxGroup.empty())
 				{
 					for (auto sky : skyboxGroup)
 					{
 						auto [skybox] = skyboxGroup.convert(sky);
-						pipeline.sceneDescriptor->setTexture("uSkyBox", skybox.skybox);
+						if (skybox.skybox!=nullptr)
+							pipeline.sceneDescriptor->setTexture("uSkybox", skybox.skybox);
 					}
 				}
 
@@ -352,6 +355,10 @@ namespace maple
 
 				pipeline.materialDescriptor->setStorageBuffer("SubmeshInfoBuffer", materialIndices);
 				pipeline.textureDescriptor->setTexture("uSamplers", shaderTextures);
+
+
+				pipeline.tlas->copyToGPU(rendererData.commandBuffer, meshCount);//TODO, should move to render pass...
+				pipeline.tlas->build(rendererData.commandBuffer, meshCount);
 			}
 		}
 	}        // namespace gather_scene
@@ -371,6 +378,8 @@ namespace maple
 			pipeline.readDescriptor->setTexture("uPreviousColor", integrator.images[integrator.readIndex]);
 			pipeline.writeDescriptor->setTexture("uCurrentColor", integrator.images[1 - integrator.readIndex]);
 
+			integrator.readIndex = 1 - integrator.readIndex;
+
 			pipeline.sceneDescriptor->update(rendererData.commandBuffer);
 			pipeline.vboDescriptor->update(rendererData.commandBuffer);
 			pipeline.iboDescriptor->update(rendererData.commandBuffer);
@@ -378,6 +387,8 @@ namespace maple
 			pipeline.textureDescriptor->update(rendererData.commandBuffer);
 			pipeline.readDescriptor->update(rendererData.commandBuffer);
 			pipeline.writeDescriptor->update(rendererData.commandBuffer);
+
+			
 
 			pipeline.pipeline->bind(rendererData.commandBuffer);
 

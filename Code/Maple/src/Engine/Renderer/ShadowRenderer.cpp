@@ -121,14 +121,16 @@ namespace maple
 
 		using SkinnedMeshQuery = ecs::Registry ::Modify<component::SkinnedMeshRenderer>::Modify<component::Transform>::To<ecs::Group>;
 
+		using PathTraceGroup = ecs::Registry::Fetch<component::PathIntegrator>::To<ecs::Group>;
+
 		auto beginScene(Entity entity, LightQuery lightQuery, MeshQuery meshQuery, SkinnedMeshQuery skinnedQuery, BoneMeshQuery boneQuery,
 		                const global::component::SceneTransformChanged &sceneChanged,
-		                const component::PathIntegrator *               path,
+		                PathTraceGroup pathGroup,
 		                ecs::World                                      world)
 		{
 			auto [shadowData, cameraView] = entity;
 
-			if (path != nullptr)
+			if (!pathGroup.empty())
 			{
 				return;
 			}
@@ -221,13 +223,13 @@ namespace maple
 		using RenderEntity = ecs::Registry ::Modify<component::ShadowMapData>::Fetch<component::RendererData>::Modify<capture_graph::component::RenderGraph>::To<ecs::Entity>;
 
 		inline auto onRender(RenderEntity                                    entity,
+		                     PathTraceGroup                                  pathGroup,
 		                     const global::component::SceneTransformChanged &sceneChanged,
-		                     const component::PathIntegrator *               path,
 		                     ecs::World                                      world)
 		{
 			auto [shadowData, rendererData, renderGraph] = entity;
 
-			if (path != nullptr)
+			if (!pathGroup.empty())
 				return;
 
 			if (sceneChanged.dirty)
@@ -271,8 +273,8 @@ namespace maple
 			}
 		}
 
-		inline auto onRenderAnim(RenderEntity                     entity,
-		                         const component::PathIntegrator *path,
+		inline auto onRenderAnim(RenderEntity                                    entity,
+		                         const component::PathIntegrator *               path,
 		                         const global::component::SceneTransformChanged &sceneChanged,
 		                         ecs::World                                      world)
 		{

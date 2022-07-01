@@ -178,7 +178,7 @@ namespace maple
 
 		std::vector<std::string> lines;
 		StringUtils::split(source, "\n", lines);
-		std::unordered_map<ShaderType, std::string> sources;
+		std::unordered_multimap<ShaderType, std::string> sources;
 		parseSource(lines, sources);
 
 		GLCall(handle = glCreateProgram());

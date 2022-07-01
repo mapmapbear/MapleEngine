@@ -81,6 +81,7 @@ file(GLOB VK_APP_SRC
 	src/*.h	
 	src/Engine/*.h
 	src/Engine/*.cpp
+	src/Engine/*.inl
 	src/Engine/Renderer/*.cpp
 	src/Engine/Renderer/*.h
 	src/Engine/LPVGI/*.cpp

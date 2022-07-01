@@ -158,7 +158,7 @@ namespace maple
 		}
 
 	  protected:
-		auto parseSource(const std::vector<std::string> &lines, std::unordered_map<ShaderType, std::string> &shaders) -> void;
+		auto parseSource(const std::vector<std::string> &lines, std::unordered_multimap<ShaderType, std::string> &shaders) -> void;
 
 	  public:
 		static auto create(const std::string &filepath, const VariableArraySize &size = {}) -> std::shared_ptr<Shader>;

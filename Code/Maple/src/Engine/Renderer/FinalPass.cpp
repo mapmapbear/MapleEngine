@@ -29,10 +29,11 @@ namespace maple
 	{
 		using Entity = ecs::Registry ::OptinalFetch<component::BloomData>::Fetch<component::FinalPass>::To<ecs::Entity>;
 
-		inline auto system(Entity entity, 
+		using PathTraceGroup = ecs::Registry::Fetch<component::PathIntegrator>::To<ecs::Group>;
+
+		inline auto system(Entity entity, PathTraceGroup group,
 			capture_graph::component::RenderGraph & graph,
-			const component::RendererData& renderData,
-			const component::PathIntegrator *path)
+			const component::RendererData& renderData)
 		{
 			auto [finalData] = entity;
 			float gamma                         = 2.2;
@@ -56,8 +57,16 @@ namespace maple
 			finalData.finalDescriptorSet->setUniform("UniformBuffer", "reflectEnable", &reflectEnable);
 			finalData.finalDescriptorSet->setUniform("UniformBuffer", "cloudEnable", &cloudEnable);
 
-
-			finalData.finalDescriptorSet->setTexture("uScreenSampler", path ? path->images[1 - path->readIndex] : renderData.gbuffer->getBuffer(GBufferTextures::SCREEN));
+			finalData.finalDescriptorSet->setTexture("uScreenSampler", renderData.gbuffer->getBuffer(GBufferTextures::SCREEN));
+			
+			if (!group.empty())
+			{
+				for (auto ent : group)
+				{
+					auto [path] = group.convert(ent);
+					finalData.finalDescriptorSet->setTexture("uScreenSampler", path.images[1 - path.readIndex]);
+				}
+			}
 
 			//if (reflectEnable)
 			{

@@ -8,6 +8,7 @@
 #include "Engine/Renderer/PostProcessRenderer.h"
 #include "Engine/Renderer/SkyboxRenderer.h"
 #include "Engine/Renderer/ShadowRenderer.h"
+#include "Engine/PathTracer/PathIntegrator.h"
 #include "Engine/Camera.h"
 #include "Engine/Material.h"
 #include "Engine/Mesh.h"
@@ -111,6 +112,26 @@ namespace MM
 		ImGuiHelper::property("Bounce Strength", voxel.bounceStrength,0,10);
 		ImGuiHelper::property("AO Alpha", voxel.aoAlpha);
 		ImGuiHelper::property("Trace Shadow Hit", voxel.traceShadowHit);
+		ImGui::Separator();
+		ImGui::Columns(1);
+	}
+
+	template<>
+	inline auto ComponentEditorWidget<component::PathIntegrator>(entt::registry &reg, entt::registry::entity_type e) -> void
+	{
+		auto &path = reg.get<component::PathIntegrator>(e);
+
+		ImGui::Columns(2);
+		ImGui::Separator();
+
+		ImGuiHelper::showProperty("Accumulated Samples", std::to_string(path.accumulatedSamples));
+
+		ImGuiHelper::property("Shadow Ray Bias", path.shadowRayBias);
+
+		
+		ImGuiHelper::image(path.images[0].get(), {80, 45});
+		ImGuiHelper::image(path.images[1].get(), {80, 45});
+
 		ImGui::Separator();
 		ImGui::Columns(1);
 	}

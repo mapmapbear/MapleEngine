@@ -99,7 +99,7 @@ namespace maple
 		MAPLE_ASSERT(false, "unsupported spv::ImageFormat");
 	}
 
-	auto Shader::parseSource(const std::vector<std::string> &lines, std::unordered_map<ShaderType, std::string> &shaders) -> void
+	auto Shader::parseSource(const std::vector<std::string> &lines, std::unordered_multimap<ShaderType, std::string> &shaders) -> void
 	{
 		for (uint32_t i = 0; i < lines.size(); i++)
 		{
@@ -111,7 +111,7 @@ namespace maple
 				if (type != ShaderType::Unknown)
 				{
 					StringUtils::trim(path[1], "\r");
-					shaders[type] = path[1];
+					shaders.emplace(type, path[1]);
 					LOGV("{0} : {1}", path[0], path[1]);
 				}
 			}

@@ -325,6 +325,10 @@ void main()
     
     inPayload.L += directLighting(surface);
 
+    inPayload.L = vec3(1.0f,0,0);
+
     /*if ((inPayload.depth + 1) < pushConsts.maxBounces)
        inPayload.L += indirectLighting(p);*/
+
+  
 }

@@ -313,8 +313,10 @@ namespace maple
 				descriptorDirty[0]     = true;
 				descriptorDirty[1]     = true;
 				descriptorDirty[2]     = true;
+				return;
 			}
 		}
+		LOGW("did not find texture {0} in Descriptor",name);
 	}
 
 	auto VulkanDescriptorSet::setTexture(const std::string &name, const std::shared_ptr<Texture> &texture, int32_t mipLevel) -> void

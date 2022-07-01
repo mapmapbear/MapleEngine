@@ -47,23 +47,6 @@ Ray generateRay(in uvec2 launchId, in uvec2 launchSize)
     vec4 target =  pushConsts.invViewProj * vec4(texCoord, 0.0f, 1.0f);
     target /= target.w;
     ray.direction = normalize(target.xyz - ray.origin);
-
-    // Aperture Offset
-   /* float angle = nextFloat(outPayload.random) * 2.0f * M_PI;
-    float radius = sqrt(nextFloat(outPayload.random));
-    vec2 offset = vec2(cos(angle), sin(angle)) * radius * pushConsts.apertureRadius;
-
-    // Aperture Pos
-    vec3 aperturePos = pushConsts.cameraPos.xyz + pushConsts.rightDirection.xyz * offset.x + pushConsts.upDirection.xyz * offset.y;
-
-    vec3 rstart = pushConsts.cameraPos.xyz;
-    vec3 rdir = -normalize(target.xyz - pushConsts.cameraPos.xyz);
-    float t = -(dot(rstart, pushConsts.focalPlane.xyz) + pushConsts.focalPlane.w) / dot(rdir, pushConsts.focalPlane.xyz);
-    vec3 focusPos = rstart + rdir * t;
-    
-    ray.origin = aperturePos;
-    ray.direction = normalize(focusPos - aperturePos);*/
-
     return ray;
 }
 
@@ -98,7 +81,6 @@ void main()
                 tmax,                               // ray max range
                 0                                   // payload (location = 0)
                 ); 
-
 
     // Blend current frames' result with the previous frame
     vec3 clampedColor = min(outPayload.L, RADIANCE_CLAMP_COLOR);

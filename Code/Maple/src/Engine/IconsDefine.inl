@@ -23,6 +23,7 @@
 #include "Engine/LPVGI/LightPropagationVolume.h"
 #include "Engine/VXGI/DrawVoxel.h"
 #include "Engine/VXGI/Voxelization.h"
+#include "Engine/PathTracer/PathIntegrator.h"
 
 #include "Scripts/Lua/LuaComponent.h"
 #include "Scripts/Mono/MonoComponent.h"
@@ -71,6 +72,7 @@ COMP_ICON(component::AnimatedSprite,						ICON_MDI_IMAGE_AREA);
 COMP_ICON(component::LuaComponent,							ICON_MDI_LANGUAGE_LUA);
 COMP_ICON(component::MonoComponent,							ICON_MDI_LANGUAGE_CSHARP);
 COMP_ICON(component::BloomData,								ICON_MDI_BRIGHTNESS_AUTO);
+COMP_ICON(component::PathIntegrator,						ICON_MDI_RAY_START);
 COMP_ICON(global::component::DeltaTime,						ICON_MDI_TIMELAPSE);
 COMP_ICON(physics::component::RigidBody,					ICON_MDI_NATURE_PEOPLE);
 COMP_ICON(physics::component::Collider,						ICON_MDI_BOOMBOX);

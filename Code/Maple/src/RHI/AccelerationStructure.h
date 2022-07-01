@@ -12,6 +12,7 @@
 namespace maple
 {
 	class StorageBuffer;
+	class CommandBuffer;
 
 	class AccelerationStructure
 	{
@@ -24,13 +25,17 @@ namespace maple
 
 		virtual auto getBuildScratchSize() const -> uint64_t = 0;
 
-		virtual auto updateTLAS(void *buffer, const glm::mat3x4 &transform, uint32_t instanceId, uint64_t instanceAddress) -> void = 0;
+		virtual auto updateTLAS(void *buffer, const glm::mat4 &transform, uint32_t instanceId, uint64_t instanceAddress) -> void = 0;
 
 		virtual auto getDeviceAddress() const -> uint64_t = 0;
 
 		virtual auto mapHost() -> void * = 0;
 
 		virtual auto unmap() -> void = 0;
+
+		virtual auto copyToGPU(const CommandBuffer *cmd, uint32_t instanceSize) -> void = 0;
+		
+		virtual auto build(const CommandBuffer *cmd, uint32_t instanceSize) -> void = 0;
 	};
 
 	class NullAccelerationStructure : public AccelerationStructure
@@ -41,7 +46,7 @@ namespace maple
 			return 0;
 		}
 
-		virtual auto updateTLAS(void *buffer, const glm::mat3x4 &transform, uint32_t instanceId, uint64_t instanceAddress) -> void
+		virtual auto updateTLAS(void *buffer, const glm::mat4 &transform, uint32_t instanceId, uint64_t instanceAddress) -> void
 		{}
 
 		virtual auto getDeviceAddress() const -> uint64_t
@@ -57,6 +62,11 @@ namespace maple
 		virtual auto unmap() -> void
 		{
 		}
+
+		virtual auto copyToGPU(const CommandBuffer *cmd, uint32_t instanceSize) -> void
+		{}
+
+		virtual auto build(const CommandBuffer *cmd, uint32_t instanceSize) -> void{};
 	};        // namespace maple
 
 }        // namespace maple
