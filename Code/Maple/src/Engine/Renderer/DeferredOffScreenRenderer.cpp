@@ -287,10 +287,11 @@ namespace maple
 
 					for (auto material : mesh->getMaterial())
 					{
-						material->setShader(skinnedMesh ? data.deferredColorAnimShader : data.deferredColorShader);
-						material->bind(renderData.commandBuffer);
 						cmd.material = material.get();
 					}
+					
+					cmd.material->setShader(skinnedMesh != nullptr ? data.deferredColorAnimShader : data.deferredColorShader);
+					cmd.material->bind(renderData.commandBuffer);
 
 					auto depthTest = data.depthTest;
 

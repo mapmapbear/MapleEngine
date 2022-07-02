@@ -24,7 +24,7 @@ namespace maple
 		auto releasePointer() -> void override;
 		auto unbind() -> void override;
 
-		inline auto getSize() -> uint32_t override
+		inline auto getSize() -> uint64_t override
 		{
 			return size;
 		}

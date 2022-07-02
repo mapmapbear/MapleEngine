@@ -12,6 +12,7 @@ namespace maple
 	{
 	  public:
 		explicit GLVertexBuffer(BufferUsage usage);
+		explicit GLVertexBuffer(const void *data, uint32_t size);
 		~GLVertexBuffer();
 
 		auto resize(uint32_t size) -> void override;
@@ -20,7 +21,7 @@ namespace maple
 		auto releasePointer() -> void override;
 		auto bind(const CommandBuffer *commandBuffer, Pipeline *pipeline) -> void override;
 		auto unbind() -> void override;
-		auto getSize() -> uint32_t override
+		auto getSize() -> uint64_t override
 		{
 			return size;
 		}

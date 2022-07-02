@@ -12,6 +12,7 @@
 #include "RHI/GraphicsContext.h"
 #include "RHI/Pipeline.h"
 #include "RHI/StorageBuffer.h"
+#include "RHI/RenderDevice.h"
 
 #include "Scene/Component/Bindless.h"
 #include "Scene/Component/Light.h"
@@ -23,6 +24,8 @@
 #include "TracedData.h"
 
 #include <scope_guard.hpp>
+
+#include "Application.h"
 
 #ifdef MAPLE_VULKAN
 #	include "RHI/Vulkan/Vk.h"
@@ -375,10 +378,12 @@ namespace maple
 		{
 			auto [integrator, pipeline] = entity;
 
-			pipeline.readDescriptor->setTexture("uPreviousColor", integrator.images[integrator.readIndex]);
+			Application::getRenderDevice()->clearRenderTarget(integrator.images[1 - integrator.readIndex], rendererData.commandBuffer, {0, 0, 0, 0});
+
+			//pipeline.readDescriptor->setTexture("uPreviousColor", integrator.images[integrator.readIndex]);
 			pipeline.writeDescriptor->setTexture("uCurrentColor", integrator.images[1 - integrator.readIndex]);
 
-			integrator.readIndex = 1 - integrator.readIndex;
+			//integrator.readIndex = 1 - integrator.readIndex;
 
 			pipeline.sceneDescriptor->update(rendererData.commandBuffer);
 			pipeline.vboDescriptor->update(rendererData.commandBuffer);

@@ -27,6 +27,7 @@
 
 namespace maple
 {
+#ifdef MAPLE_VULKAN
 	namespace
 	{
 		inline auto alignedSize(uint32_t value, uint32_t alignment) -> uint32_t
@@ -176,5 +177,5 @@ namespace maple
 		                  &raygenSbt, &missSbt, &hitSbt, &callableSbt, width, height, depth);
 
 	}
-
+#endif
 };        // namespace maple

@@ -12,6 +12,7 @@
 
 namespace maple
 {
+#ifdef MAPLE_VULKAN
 	VulkanAccelerationStructure::VulkanAccelerationStructure(const uint32_t maxInstanceCount)
 	{
 		instanceBufferDevice = std::make_shared<VulkanBuffer>(
@@ -294,5 +295,5 @@ namespace maple
 			built = true;
 		}
 	}
-
+#endif
 }        // namespace maple

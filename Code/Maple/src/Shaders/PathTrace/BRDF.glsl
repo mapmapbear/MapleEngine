@@ -35,20 +35,19 @@ vec3 fresnelSchlick(vec3 F0, float cosTheta)
   	return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 }
 
-vec3 BRDF(in SurfaceMaterial p, in vec3 Wo, in vec3 Wh, in vec3 Wi)
+vec3 BRDF(in SurfaceMaterial p, in vec3 view, in vec3 halfV, in vec3 lightDir)
 {
-    float NdotL = max(dot(p.normal, Wi), 0.0);
-    float NdotV = max(dot(p.normal, Wo), 0.0);
-    float NdotH = max(dot(p.normal, Wh), 0.0);
-    float VdotH = max(dot(Wi, Wh), 0.0);
+	float cosLi = max(0.0, dot(p.normal, lightDir));
+    float cosLh = max(0.0, dot(p.normal, halfV));
+    float NdotV = max(0.0, dot(p.normal, view));
 
-    vec3 F  = fresnelSchlick(p.F0, VdotH);
-    float D = ndfGGX(NdotH,p.roughness);
-    float G = gaSchlickGGX(NdotL,NdotV,p.roughness);
+    vec3 F  = fresnelSchlick(p.F0, max(dot(halfV, view), 0.0));
+    float D = ndfGGX(cosLh,p.roughness);
+    float G = gaSchlickGGX(cosLi,NdotV,p.roughness);
 
     vec3 kd = (1.0 - F) * (1.0 - p.metallic);
 	vec3 diffuseBRDF = kd * p.albedo.xyz / M_PI;
-    vec3 specularBRDF = (F * D * G) / max(EPSILON, 4.0 * NdotL * NdotV);
+    vec3 specularBRDF = (F * D * G) / max(EPSILON, 4.0 * cosLi * NdotV);
     return diffuseBRDF + specularBRDF;
 }
 

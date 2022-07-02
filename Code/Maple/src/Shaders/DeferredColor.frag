@@ -28,7 +28,18 @@ layout(set = 1, binding = 4) uniform sampler2D uAOMap;
 layout(set = 1, binding = 5) uniform sampler2D uEmissiveMap;
 layout(set = 1, binding = 6) uniform UniformMaterialData
 {
-	Material material;
+	vec4  albedoColor;
+	vec4  roughnessColor;
+	vec4  metallicColor;
+	vec4  emissiveColor;
+	float usingAlbedoMap;
+	float usingMetallicMap;
+	float usingRoughnessMap;
+	float usingNormalMap;
+	float usingAOMap;
+	float usingEmissiveMap;
+	float workflow;
+	float padding;
 } materialProperties;
 
 
@@ -63,44 +74,44 @@ vec3 gammaCorrectTextureRGB(vec4 samp)
 
 vec4 getAlbedo()
 {
-	return (1.0 - materialProperties.material.usingAlbedoMap) * materialProperties.material.albedoColor + materialProperties.material.usingAlbedoMap * texture(uAlbedoMap, fragTexCoord);
+	return (1.0 - materialProperties.usingAlbedoMap) * materialProperties.albedoColor + materialProperties.usingAlbedoMap * texture(uAlbedoMap, fragTexCoord);
 }
 
 vec3 getMetallic()
 {
-	return (1.0 - materialProperties.material.usingMetallicMap) * materialProperties.material.metallicColor.rgb + materialProperties.material.usingMetallicMap * texture(uMetallicMap, fragTexCoord).rgb;
+	return (1.0 - materialProperties.usingMetallicMap) * materialProperties.metallicColor.rgb + materialProperties.usingMetallicMap * texture(uMetallicMap, fragTexCoord).rgb;
 }
 
 float getRoughness()
 {
-	return (1.0 - materialProperties.material.usingRoughnessMap) *  materialProperties.material.roughnessColor.r + materialProperties.material.usingRoughnessMap * texture(uRoughnessMap, fragTexCoord).r;
+	return (1.0 - materialProperties.usingRoughnessMap) *  materialProperties.roughnessColor.r + materialProperties.usingRoughnessMap * texture(uRoughnessMap, fragTexCoord).r;
 }
 
 float getAO()
 {
-	return (1.0 - materialProperties.material.usingAOMap) + materialProperties.material.usingAOMap * gammaCorrectTextureRGB(texture(uAOMap, fragTexCoord)).r;
+	return (1.0 - materialProperties.usingAOMap) + materialProperties.usingAOMap * gammaCorrectTextureRGB(texture(uAOMap, fragTexCoord)).r;
 }
 
 vec3 getEmissive()
 {
-	return (1.0 - materialProperties.material.usingEmissiveMap) * materialProperties.material.emissiveColor.rgb + materialProperties.material.usingEmissiveMap * gammaCorrectTextureRGB(texture(uEmissiveMap, fragTexCoord));
+	return (1.0 - materialProperties.usingEmissiveMap) * materialProperties.emissiveColor.rgb + materialProperties.usingEmissiveMap * gammaCorrectTextureRGB(texture(uEmissiveMap, fragTexCoord));
 }
 
 vec3 getNormalFromMap()
 {
-	if (materialProperties.material.usingNormalMap < 0.1)
+	if (materialProperties.usingNormalMap < 0.1)
 		return normalize(fragNormal);
 	
 	vec3 tangentNormal = texture(uNormalMap, fragTexCoord).xyz * 2.0 - 1.0;
 	
-	/*vec3 Q1 = dFdx(fragPosition.xyz);
+	vec3 Q1 = dFdx(fragPosition.xyz);
 	vec3 Q2 = dFdy(fragPosition.xyz);
 	vec2 st1 = dFdx(fragTexCoord);
-	vec2 st2 = dFdy(fragTexCoord);*/
+	vec2 st2 = dFdy(fragTexCoord);
 	
 	vec3 N = normalize(fragNormal);
-	//vec3 T = normalize(Q1*st2.t - Q2*st1.t);
-	vec3 T = fragTangent;
+	vec3 T = normalize(Q1*st2.t - Q2*st1.t);
+	//vec3 T = fragTangent;
 	vec3 B = -normalize(cross(N, T));
 	mat3 TBN = mat3(T, B, N);
 	
@@ -125,23 +136,23 @@ void main()
 	float roughness = 0.0;
 	float ao		= getAO();
 
-	if(materialProperties.material.workflow == PBR_WORKFLOW_SEPARATE_TEXTURES)
+	if(materialProperties.workflow == PBR_WORKFLOW_SEPARATE_TEXTURES)
 	{
 		metallic  = getMetallic().x;
 		roughness = getRoughness();
 	}
-	else if( materialProperties.material.workflow == PBR_WORKFLOW_METALLIC_ROUGHNESS)
+	else if( materialProperties.workflow == PBR_WORKFLOW_METALLIC_ROUGHNESS)
 	{
 		vec3 tex = texture(uMetallicMap, fragTexCoord).rgb;
 		//ao  	  = tex.r;
 		metallic  = tex.b;
  		roughness = tex.g;
 	}
-	else if( materialProperties.material.workflow == PBR_WORKFLOW_SPECULAR_GLOSINESS)
+	else if( materialProperties.workflow == PBR_WORKFLOW_SPECULAR_GLOSINESS)
 	{
 		vec3 tex = texture(uMetallicMap, fragTexCoord).rgb;
 		metallic = tex.b;
-		roughness = tex.g * materialProperties.material.roughnessColor.r;
+		roughness = tex.g * materialProperties.roughnessColor.r;
 	}
 
 	vec3 emissive   = getEmissive();

@@ -146,16 +146,11 @@ vec3 sampleLight(in SurfaceMaterial p, in Light light, out vec3 Wi, out float pd
 
     vec3 Li = vec3(0.0f);
 
-    uint type = lightType(light);
-
-    if (type == LIGHT_DIRECTIONAL)
+    if (light.type == LIGHT_DIRECTIONAL)
     {
-        vec2 rng = nextVec2(inPayload.random);
-
         vec3 lightDir = -light.direction.xyz;
-
         Wi = lightDir;
-        Li =  light.color.xyz * pow(light.intensity,1.4) + 0.1;;
+        Li =  light.color.xyz * (pow(light.intensity,1.4) + 0.1);
         pdf = 0.0f;
     }
 
@@ -172,7 +167,7 @@ vec3 sampleLight(in SurfaceMaterial p, in Light light, out vec3 Wi, out float pd
                 tmax, 
                 2);
 
-    return Li * float(visibility);
+    return Li ;//* float(visibility);
 }
 
 
@@ -183,24 +178,24 @@ vec3 directLighting(in SurfaceMaterial p)
     uint lightIdx = nextUInt(inPayload.random, pushConsts.numLights);
     const Light light = Lights.data[lightIdx];
 
-    vec3 Wo = -gl_WorldRayDirectionEXT;
-    vec3 Wi = vec3(0.0f);
-    vec3 Wh = vec3(0.0f);
+    vec3 view = -gl_WorldRayDirectionEXT;
+    vec3 lightDir = vec3(0.0f);
+    vec3 halfV = vec3(0.0f);
     float pdf = 0.0f;
 
-    vec3 Li = sampleLight(p, light, Wi, pdf);
+    vec3 Li = sampleLight(p, light, lightDir, pdf);
 
-    Wh = normalize(Wo + Wi);
+    halfV = normalize(lightDir + view);
 
-    vec3 brdf = BRDF(p, Wo, Wh, Wi);
-    float cos_theta = clamp(dot(p.normal, Wi), 0.0, 1.0);
+    vec3 brdf = BRDF(p, view, halfV, lightDir);
+    float cosTheta = clamp(dot(p.normal, lightDir), 0.0, 1.0);
 
     if (!isBlack(Li))
     {
         if (pdf == 0.0f)
-            L = inPayload.T * brdf * cos_theta * Li;
+            L = inPayload.T * brdf * cosTheta * Li;
         else
-            L = (inPayload.T * brdf * cos_theta * Li) / pdf;
+            L = (inPayload.T * brdf * cosTheta * Li) / pdf;
     }
     return L * float( pushConsts.numLights );
 }
@@ -323,12 +318,7 @@ void main()
     if (inPayload.depth == 0 && !isBlack(surface.emissive.rgb))
         inPayload.L += surface.emissive.rgb;
     
-    inPayload.L += directLighting(surface);
-
-    inPayload.L = vec3(1.0f,0,0);
-
+    inPayload.L += surface.albedo.xyz; //directLighting(surface);
     /*if ((inPayload.depth + 1) < pushConsts.maxBounces)
        inPayload.L += indirectLighting(p);*/
-
-  
 }

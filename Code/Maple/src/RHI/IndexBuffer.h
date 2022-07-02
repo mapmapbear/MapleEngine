@@ -22,7 +22,7 @@ namespace maple
 
 		virtual auto releasePointer() -> void{};
 
-		virtual auto getSize() const -> uint32_t
+		virtual auto getSize() const -> uint64_t
 		{
 			return 0;
 		}

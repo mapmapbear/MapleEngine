@@ -36,6 +36,12 @@ namespace maple
 		GLCall(glGenBuffers(1, &handle));
 	}
 
+	 GLVertexBuffer::GLVertexBuffer(const void *data, uint32_t size) :
+	    GLVertexBuffer(BufferUsage::Static)
+	{
+		 setData(size, data);
+	}
+
 	GLVertexBuffer::~GLVertexBuffer()
 	{
 		PROFILE_FUNCTION();

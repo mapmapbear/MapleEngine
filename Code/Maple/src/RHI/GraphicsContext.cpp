@@ -362,7 +362,7 @@ namespace maple
 		return std::make_shared<VulkanStorageBuffer>(size, flags, options);
 #endif
 #ifdef MAPLE_OPENGL
-		MAPLE_ASSERT(false, "Unsupported graphics API");
+		return std::make_shared<GLStorageBuffer>(size, nullptr);
 #endif
 	}
 

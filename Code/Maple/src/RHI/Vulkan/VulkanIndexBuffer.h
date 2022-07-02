@@ -31,7 +31,7 @@ namespace maple
 
 		auto getPointerInternal() -> void * override;
 
-		inline auto getSize() const -> uint32_t override
+		inline auto getSize() const -> uint64_t override
 		{
 			return size;
 		}

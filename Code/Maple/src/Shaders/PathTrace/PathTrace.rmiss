@@ -10,11 +10,9 @@ rayPayloadInEXT PathTracePayload inPayload;
 
 void main()
 {
-    /*vec3 envSample = texture(uSkybox, gl_WorldRayDirectionEXT).rgb; 
+    vec3 envSample = texture(uSkybox, gl_WorldRayDirectionEXT).rgb; 
     if (inPayload.depth == 0)
         inPayload.L = envSample;
     else
-        inPayload.L = inPayload.T * envSample;*/
-
-    inPayload.L = vec3(0.3,0.3,0.3);    
+        inPayload.L = inPayload.T * envSample;
 }

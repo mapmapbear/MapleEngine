@@ -22,7 +22,7 @@ namespace maple
 		virtual auto releasePointer() -> void                                             = 0;
 		virtual auto bind(const CommandBuffer *commandBuffer, Pipeline *pipeline) -> void = 0;
 		virtual auto unbind() -> void                                                     = 0;
-		virtual auto getSize() -> uint32_t
+		virtual auto getSize() -> uint64_t
 		{
 			return 0;
 		}

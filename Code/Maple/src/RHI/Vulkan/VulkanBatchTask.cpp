@@ -7,6 +7,7 @@
 
 namespace maple
 {
+#ifdef MAPLE_VULKAN
 	auto VulkanBatchTask::execute() -> void
 	{
 		auto cmd = VulkanHelper::beginSingleTimeCommands();
@@ -65,4 +66,5 @@ namespace maple
 			throw std::runtime_error("(Vulkan) Building a BLAS fail.");
 		}
 	}
+#endif        // MAPLE_VULKAN
 }        // namespace maple
