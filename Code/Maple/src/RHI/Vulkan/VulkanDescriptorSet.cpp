@@ -324,6 +324,7 @@ namespace maple
 	auto VulkanDescriptorSet::setTexture(const std::string &name, const std::shared_ptr<Texture> &texture, int32_t mipLevel) -> void
 	{
 		PROFILE_FUNCTION();
+		MAPLE_ASSERT(texture != nullptr, "Texture should not be null");
 		setTexture(name, std::vector<std::shared_ptr<Texture>>{texture}, mipLevel);
 	}
 

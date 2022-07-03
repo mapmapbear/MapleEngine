@@ -114,12 +114,13 @@ namespace maple
 
 		if (!onlyAlbedoColor)
 		{
+/*
 			descriptorSet->setTexture("uAlbedoMap", pbrMaterialTextures.albedo);
 			descriptorSet->setTexture("uMetallicMap", pbrMaterialTextures.albedo);
 			descriptorSet->setTexture("uRoughnessMap", pbrMaterialTextures.albedo);
 			descriptorSet->setTexture("uNormalMap", pbrMaterialTextures.albedo);
 			descriptorSet->setTexture("uAOMap", pbrMaterialTextures.albedo);
-			descriptorSet->setTexture("uEmissiveMap", pbrMaterialTextures.albedo);
+			descriptorSet->setTexture("uEmissiveMap", pbrMaterialTextures.albedo);*/
 
 			if (pbrMaterialTextures.albedo != nullptr)
 			{

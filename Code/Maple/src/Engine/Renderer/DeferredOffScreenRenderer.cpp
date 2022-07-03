@@ -216,8 +216,8 @@ namespace maple
 			if (!env.empty())
 			{
 				auto [evnData] = env.convert(*env.begin());
-				data.descriptorLightSet[0]->setTexture("uPrefilterMap", evnData.prefilteredEnvironment);
-				data.descriptorLightSet[0]->setTexture("uIrradianceMap", evnData.irradianceMap);
+				data.descriptorLightSet[0]->setTexture("uPrefilterMap", evnData.prefilteredEnvironment == nullptr ? renderData.unitCube : evnData.prefilteredEnvironment);
+				data.descriptorLightSet[0]->setTexture("uIrradianceMap", evnData.irradianceMap == nullptr ? renderData.unitCube : evnData.irradianceMap);
 				if (evnData.prefilteredEnvironment != nullptr)
 				{
 					int32_t cubeMapMipLevels = evnData.prefilteredEnvironment->getMipMapLevels() - 1;
@@ -289,7 +289,7 @@ namespace maple
 					{
 						cmd.material = material.get();
 					}
-					
+
 					cmd.material->setShader(skinnedMesh != nullptr ? data.deferredColorAnimShader : data.deferredColorShader);
 					cmd.material->bind(renderData.commandBuffer);
 
@@ -528,8 +528,8 @@ namespace maple
 			if (!envQuery.empty())
 			{
 				auto [envData] = envQuery.convert(*envQuery.begin());
-				descriptorSet->setTexture("uIrradianceMap", envData.irradianceMap);
-				descriptorSet->setTexture("uPrefilterMap", envData.prefilteredEnvironment);
+				descriptorSet->setTexture("uIrradianceMap", envData.irradianceMap == nullptr ? rendererData.unitCube : envData.irradianceMap);
+				descriptorSet->setTexture("uPrefilterMap", envData.prefilteredEnvironment == nullptr ? rendererData.unitCube : envData.prefilteredEnvironment);
 				descriptorSet->setTexture("uPreintegratedFG", data.preintegratedFG);
 			}
 			descriptorSet->update(rendererData.commandBuffer);

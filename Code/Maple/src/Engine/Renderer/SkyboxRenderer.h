@@ -11,6 +11,23 @@ namespace maple
 {
 	class PrefilterRenderer;
 
+	namespace SkyboxId
+	{
+		enum Id
+		{
+			CubeMap,
+			Prefilter,
+			Irradiance,
+			Length
+		};
+
+		static const char *Names[] ={
+		        "CubeMap",
+		        "Prefilter",
+		        "Irradiance",
+		        nullptr};
+	}// namespace skybox
+
 	namespace component
 	{
 		struct SkyboxData

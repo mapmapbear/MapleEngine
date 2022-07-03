@@ -311,6 +311,11 @@ namespace MM
 		ImGui::Columns(2);
 		ImGui::Separator();
 		ImGuiHelper::property("CubeMap Level", skyData.cubeMapLevel, 0, 4);
+
+		if(auto id = ImGuiHelper::combox("Cube Map", SkyboxId::Names, SkyboxId::Length, skyData.cubeMapMode); id != -1)
+		{
+			skyData.cubeMapMode = id;
+		}
 		ImGui::Columns(1);
 	}
 

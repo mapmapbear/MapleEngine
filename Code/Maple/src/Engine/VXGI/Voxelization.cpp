@@ -634,7 +634,8 @@ namespace maple
 					for (auto sky : skyboxGroup)
 					{
 						auto [skybox] = skyboxGroup.convert(sky);
-						indirectPipeline.descriptors[0]->setTexture("uSkyBox", skybox.skybox);
+						if (skybox.skybox != nullptr)
+							indirectPipeline.descriptors[0]->setTexture("uSkyBox", skybox.skybox);
 					}
 				}
 

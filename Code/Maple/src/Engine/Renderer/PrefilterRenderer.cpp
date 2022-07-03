@@ -95,7 +95,10 @@ namespace maple
 
 		irradianceSet = DescriptorSet::create({0, irradianceShader.get()});
 
-		prefilterSet = DescriptorSet::create({0, prefilterShader.get()});
+		for (auto i = 0;i<5;i++)
+		{
+			prefilterSets.emplace_back(DescriptorSet::create({0, prefilterShader.get()}));
+		}
 
 		skyboxDepth = TextureDepth::create(SkyboxSize, SkyboxSize);
 		createPipeline();
@@ -155,8 +158,11 @@ namespace maple
 	{
 		if (envComponent)
 		{
-			prefilterSet->setTexture("uCubeMapSampler", skyboxCube);
-			prefilterSet->update(cmd);
+			for (auto set : prefilterSets)
+			{
+				set->setTexture("uCubeMapSampler", skyboxCube);
+				set->update(cmd);
+			}
 		}
 	}
 
@@ -232,7 +238,7 @@ namespace maple
 
 	auto PrefilterRenderer::generatePrefilterMap(const CommandBuffer *cmd, capture_graph::component::RenderGraph &graph) -> void
 	{
-		cubeMapSet->update(cmd);
+		//cubeMapSet->update(cmd);
 
 		PipelineInfo pipeInfo;
 		pipeInfo.shader   = prefilterShader;
@@ -245,16 +251,15 @@ namespace maple
 		pipeInfo.colorTargets[0] = prefilterCaptureColor;
 		pipeInfo.colorTargets[1] = envComponent->prefilteredEnvironment;
 
-		auto pipeline = Pipeline::get(pipeInfo, {prefilterSet}, graph);
+		auto pipeline = Pipeline::get(pipeInfo);
 
 		auto maxMips = 5;        // std::pow(component::Environment::PrefilterMapSize, 2);
 
 		for (auto mip = 0; mip < maxMips; ++mip)
 		{
 			auto roughness = (float) mip / (float) (maxMips - 1);
-
-			prefilterSet->setUniform("UniformBufferRoughness", "constRoughness", &roughness, true);
-
+			prefilterSets[mip]->setUniform("UniformBufferRoughness", "constRoughness", &roughness);
+			prefilterSets[mip]->update(cmd);
 			for (auto faceId = 0; faceId < 6; faceId++)
 			{
 				auto fb = pipeline->bind(cmd, 0, faceId, mip);
@@ -263,7 +268,7 @@ namespace maple
 				constants[0].setValue("projView", glm::value_ptr(captureProjView[faceId]));
 				prefilterShader->bindPushConstants(cmd, pipeline.get());
 
-				Renderer::bindDescriptorSets(pipeline.get(), cmd, 0, {prefilterSet});
+				Renderer::bindDescriptorSets(pipeline.get(), cmd, 0, {prefilterSets[mip]});
 				Renderer::drawMesh(cmd, pipeline.get(), cube.get());
 
 				pipeline->end(cmd);

@@ -3,6 +3,7 @@
 #extension GL_EXT_ray_tracing : require
 #extension GL_EXT_nonuniform_qualifier : require
 #extension GL_GOOGLE_include_directive : require
+#extension GL_EXT_scalar_block_layout : enable
 
 #include "../Common/Light.h"
 
@@ -34,7 +35,7 @@ layout (set = 0, binding = 3) uniform accelerationStructureEXT uTopLevelAS;
 layout (set = 0, binding = 4) uniform samplerCube uSkybox;
 /////////////////////////////////////////////////////////////////
 
-layout (set = 1, binding = 0, std430) readonly buffer VertexBuffer 
+layout (set = 1, binding = 0, scalar) readonly buffer VertexBuffer 
 {
     Vertex data[];
 } Vertices[];
@@ -125,12 +126,6 @@ void transformVertex(in Transform transform, inout Vertex v)
     v.tangent.xyz   = normalMat * v.tangent.xyz;
 }
 
-
-uint lightType(in Light light)
-{
-    return uint(light.type);
-}
-
 vec3 sampleLight(in SurfaceMaterial p, in Light light, out vec3 Wi, out float pdf)
 {
     uint rayFlags = gl_RayFlagsOpaqueEXT | gl_RayFlagsTerminateOnFirstHitEXT;
@@ -155,7 +150,7 @@ vec3 sampleLight(in SurfaceMaterial p, in Light light, out vec3 Wi, out float pd
     }
 
     // Trace Ray
-    traceRayEXT(uTopLevelAS, 
+    /*traceRayEXT(uTopLevelAS, 
                 rayFlags, 
                 cullMask, 
                 VISIBILITY_CLOSEST_HIT_SHADER_IDX, 
@@ -165,9 +160,9 @@ vec3 sampleLight(in SurfaceMaterial p, in Light light, out vec3 Wi, out float pd
                 tmin, 
                 Wi, 
                 tmax, 
-                2);
+                2);*/
 
-    return Li ;//* float(visibility);
+    return Li;// * float(visibility);
 }
 
 
@@ -318,7 +313,7 @@ void main()
     if (inPayload.depth == 0 && !isBlack(surface.emissive.rgb))
         inPayload.L += surface.emissive.rgb;
     
-    inPayload.L += surface.albedo.xyz; //directLighting(surface);
+    inPayload.L += directLighting(surface);
     /*if ((inPayload.depth + 1) < pushConsts.maxBounces)
        inPayload.L += indirectLighting(p);*/
 }

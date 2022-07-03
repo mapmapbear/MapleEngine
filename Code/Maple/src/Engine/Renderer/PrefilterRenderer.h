@@ -67,7 +67,7 @@ namespace maple
 		std::shared_ptr<Shader> cubeMapShader;
 
 		std::shared_ptr<DescriptorSet> irradianceSet;
-		std::shared_ptr<DescriptorSet> prefilterSet;
+		std::vector<std::shared_ptr<DescriptorSet>> prefilterSets;
 
 		std::shared_ptr<DescriptorSet> cubeMapSet;
 
