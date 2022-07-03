@@ -8,6 +8,7 @@
 #include "Scene/Scene.h"
 #include "Scene/System/HierarchyModule.h"
 #include "Scripts/Mono/MonoSystem.h"
+#include "Scene/System/BindlessModule.h"
 
 namespace maple
 {
@@ -19,5 +20,6 @@ namespace maple
 		mono::registerMonoModule(executePoint);
 		physics::registerPhysicsModule(executePoint);
 		mesh::registerMeshModule(executePoint);
+		bindless::registerBindless(executePoint);
 	}
 }        // namespace maple

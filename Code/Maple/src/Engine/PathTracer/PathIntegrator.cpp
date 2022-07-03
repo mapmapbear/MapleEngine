@@ -11,8 +11,8 @@
 #include "RHI/DescriptorPool.h"
 #include "RHI/GraphicsContext.h"
 #include "RHI/Pipeline.h"
-#include "RHI/StorageBuffer.h"
 #include "RHI/RenderDevice.h"
+#include "RHI/StorageBuffer.h"
 
 #include "Scene/Component/Bindless.h"
 #include "Scene/Component/Light.h"
@@ -81,6 +81,10 @@ namespace maple
 			} constants;
 
 			Material::Ptr defaultMaterial;
+
+			std::vector<Texture::Ptr> shaderTextures;
+
+			glm::mat4 projView;
 		};
 	}        // namespace component
 
@@ -152,6 +156,119 @@ namespace maple
 
 		using SkyboxGroup = ecs::Registry::Fetch<component::SkyboxData>::To<ecs::Group>;
 
+		inline auto updateMaterial(raytracing::MaterialData &              materialData,
+		                           Material *                              material,
+		                           global::component::Bindless &           bindless,
+		                           std::vector<Texture::Ptr> &             shaderTextures,
+		                           std::unordered_map<uint32_t, uint32_t> &textureIndices)
+		{
+			materialData.textureIndices0 = glm::ivec4(-1);
+			materialData.textureIndices1 = glm::ivec4(-1);
+
+			materialData.albedo    = material->getProperties().albedoColor;
+			materialData.roughness = material->getProperties().roughnessColor;
+			materialData.metalic   = material->getProperties().metallicColor;
+			materialData.emissive  = material->getProperties().emissiveColor;
+
+			materialData.usingValue0 = {
+			    material->getProperties().usingAlbedoMap,
+			    material->getProperties().usingMetallicMap,
+			    material->getProperties().usingRoughnessMap,
+			    0};
+
+			materialData.usingValue1 = {
+			    material->getProperties().usingNormalMap,
+			    material->getProperties().usingAOMap,
+			    material->getProperties().usingEmissiveMap,
+			    material->getProperties().workflow};
+
+			auto textures = material->getMaterialTextures();
+
+			if (textures.albedo)
+			{
+				if (textureIndices.count(textures.albedo->getId()) == 0)
+				{
+					materialData.textureIndices0.x = shaderTextures.size();
+					shaderTextures.emplace_back(textures.albedo);
+					textureIndices.emplace(textures.albedo->getId(), materialData.textureIndices0.x);
+				}
+				else
+				{
+					materialData.textureIndices0.x = bindless.textureIndices[textures.albedo->getId()];
+				}
+			}
+
+			if (textures.normal)
+			{
+				if (textureIndices.count(textures.normal->getId()) == 0)
+				{
+					materialData.textureIndices0.y = shaderTextures.size();
+					shaderTextures.emplace_back(textures.normal);
+					textureIndices.emplace(textures.normal->getId(), materialData.textureIndices0.y);
+				}
+				else
+				{
+					materialData.textureIndices0.y = bindless.textureIndices[textures.normal->getId()];
+				}
+			}
+
+			if (textures.roughness)
+			{
+				if (textureIndices.count(textures.roughness->getId()) == 0)
+				{
+					materialData.textureIndices0.z = shaderTextures.size();
+					shaderTextures.emplace_back(textures.roughness);
+					textureIndices.emplace(textures.roughness->getId(), materialData.textureIndices0.z);
+				}
+				else
+				{
+					materialData.textureIndices0.z = bindless.textureIndices[textures.roughness->getId()];
+				}
+			}
+
+			if (textures.metallic)
+			{
+				if (textureIndices.count(textures.metallic->getId()) == 0)
+				{
+					materialData.textureIndices0.w = shaderTextures.size();
+					shaderTextures.emplace_back(textures.metallic);
+					textureIndices.emplace(textures.metallic->getId(), materialData.textureIndices0.w);
+				}
+				else
+				{
+					materialData.textureIndices0.w = bindless.textureIndices[textures.metallic->getId()];
+				}
+			}
+
+			if (textures.emissive)
+			{
+				if (textureIndices.count(textures.emissive->getId()) == 0)
+				{
+					materialData.textureIndices1.x = shaderTextures.size();
+					shaderTextures.emplace_back(textures.emissive);
+					textureIndices.emplace(textures.emissive->getId(), materialData.textureIndices1.x);
+				}
+				else
+				{
+					materialData.textureIndices1.x = bindless.textureIndices[textures.emissive->getId()];
+				}
+			}
+
+			if (textures.ao)
+			{
+				if (textureIndices.count(textures.ao->getId()) == 0)
+				{
+					materialData.textureIndices1.y = shaderTextures.size();
+					shaderTextures.emplace_back(textures.ao);
+					textureIndices.emplace(textures.ao->getId(), materialData.textureIndices1.y);
+				}
+				else
+				{
+					materialData.textureIndices1.y = bindless.textureIndices[textures.ao->getId()];
+				}
+			}
+		}
+
 		inline auto system(
 		    Entity                                    entity,
 		    LightGroup                                lightGroup,
@@ -160,21 +277,22 @@ namespace maple
 		    const maple::component::RendererData &    rendererData,
 		    global::component::Bindless &             bindless,
 		    global::component::GraphicsContext &      context,
-		    global::component::SceneTransformChanged *sceneChanged)
+		    global::component::SceneTransformChanged *sceneChanged,
+		    global::component::MaterialChanged *      materialChanged)
 		{
 			auto [integrator, pipeline] = entity;
 			if (sceneChanged && sceneChanged->dirty)
 			{
-				std::unordered_set<uint32_t>           processedMeshes;
-				std::unordered_set<uint32_t>           processedMaterials;
-				std::unordered_set<uint32_t>           processedTextures;
+				std::unordered_set<uint32_t> processedMeshes;
+				std::unordered_set<uint32_t> processedMaterials;
+				//std::unordered_set<uint32_t>           processedTextures;
 				std::unordered_map<uint32_t, uint32_t> globalMaterialIndices;
 				uint32_t                               meshCounter        = 0;
 				uint32_t                               gpuMaterialCounter = 0;
 
-				std::vector<VertexBuffer::Ptr>  vbos;
-				std::vector<IndexBuffer::Ptr>   ibos;
-				std::vector<Texture::Ptr>       shaderTextures;
+				std::vector<VertexBuffer::Ptr> vbos;
+				std::vector<IndexBuffer::Ptr>  ibos;
+				//std::vector<Texture::Ptr>       shaderTextures;
 				std::vector<StorageBuffer::Ptr> materialIndices;
 
 				context.context->waitIdle();
@@ -217,71 +335,10 @@ namespace maple
 							if (processedMaterials.count(material->getId()) == 0)
 							{
 								processedMaterials.emplace(material->getId());
-								auto &materialData           = meterialBuffer[gpuMaterialCounter++];
-								materialData.textureIndices0 = glm::ivec4(-1);
-								materialData.textureIndices1 = glm::ivec4(-1);
 
-								materialData.albedo     = material->getProperties().albedoColor;
-								materialData.roughness  = material->getProperties().roughnessColor;
-								materialData.metalic    = material->getProperties().metallicColor;
-								materialData.emissive   = material->getProperties().emissiveColor;
-								materialData.emissive.a = material->getProperties().workflow;
+								auto &materialData = meterialBuffer[gpuMaterialCounter++];
 
-								auto textures = material->getMaterialTextures();
-
-								if (textures.albedo)
-								{
-									if (processedTextures.count(textures.albedo->getId()) == 0)
-									{
-										materialData.textureIndices0.x = shaderTextures.size();
-										shaderTextures.emplace_back(textures.albedo);
-									}
-								}
-
-								if (textures.normal)
-								{
-									if (processedTextures.count(textures.normal->getId()) == 0)
-									{
-										materialData.textureIndices0.y = shaderTextures.size();
-										shaderTextures.emplace_back(textures.normal);
-									}
-								}
-
-								if (textures.roughness)
-								{
-									if (processedTextures.count(textures.roughness->getId()) == 0)
-									{
-										materialData.textureIndices0.z = shaderTextures.size();
-										shaderTextures.emplace_back(textures.roughness);
-									}
-								}
-
-								if (textures.metallic)
-								{
-									if (processedTextures.count(textures.metallic->getId()) == 0)
-									{
-										materialData.textureIndices0.w = shaderTextures.size();
-										shaderTextures.emplace_back(textures.metallic);
-									}
-								}
-
-								if (textures.emissive)
-								{
-									if (processedTextures.count(textures.emissive->getId()) == 0)
-									{
-										materialData.textureIndices1.x = shaderTextures.size();
-										shaderTextures.emplace_back(textures.emissive);
-									}
-								}
-
-								if (textures.ao)
-								{
-									if (processedTextures.count(textures.ao->getId()) == 0)
-									{
-										materialData.textureIndices1.y = shaderTextures.size();
-										shaderTextures.emplace_back(textures.ao);
-									}
-								}
+								updateMaterial(materialData, material, bindless, pipeline.shaderTextures, bindless.textureIndices);
 
 								bindless.materialIndices[material->getId()] = gpuMaterialCounter - 1;
 								//TODO if current is emissive, add an extra light here.
@@ -302,7 +359,7 @@ namespace maple
 							material = pipeline.defaultMaterial.get();
 						}
 						const auto &subIndex = mesh.mesh->getSubMeshIndex();
-						indices[i]           = glm::uvec2(i == 0 ? 0 : subIndex [ i - 1 ] / 3, bindless.materialIndices[material->getId()]);
+						indices[i]           = glm::uvec2(i == 0 ? 0 : subIndex[i - 1] / 3, bindless.materialIndices[material->getId()]);
 					}
 
 					auto blas = mesh.mesh->getAccelerationStructure(tasks);
@@ -320,8 +377,6 @@ namespace maple
 
 				pipeline.tlas->unmap();
 
-		
-
 				uint32_t lightIndicator = 0;
 
 				for (auto lightEntity : lightGroup)
@@ -332,21 +387,24 @@ namespace maple
 					lightBuffer[lightIndicator++] = light.lightData;
 				}
 
-				pipeline.constants.numLights  = lightIndicator;
-				pipeline.constants.maxBounces = integrator.maxBounces;
-
-				tasks->execute();
-
 				pipeline.sceneDescriptor->setTexture("uSkybox", rendererData.unitCube);
 				if (!skyboxGroup.empty())
 				{
 					for (auto sky : skyboxGroup)
 					{
 						auto [skybox] = skyboxGroup.convert(sky);
-						if (skybox.skybox!=nullptr)
+						if (skybox.skybox != nullptr)
+						{
 							pipeline.sceneDescriptor->setTexture("uSkybox", skybox.skybox);
+							lightBuffer[lightIndicator++].type = (float) component::LightType::EnvironmentLight;
+						}
 					}
 				}
+
+				pipeline.constants.numLights  = lightIndicator;
+				pipeline.constants.maxBounces = integrator.maxBounces;
+
+				tasks->execute();
 
 				pipeline.sceneDescriptor->setStorageBuffer("MaterialBuffer", pipeline.materialBuffer);
 				pipeline.sceneDescriptor->setStorageBuffer("TransformBuffer", pipeline.transformBuffer);
@@ -357,12 +415,33 @@ namespace maple
 				pipeline.iboDescriptor->setStorageBuffer("IndexBuffer", ibos);
 
 				pipeline.materialDescriptor->setStorageBuffer("SubmeshInfoBuffer", materialIndices);
-				pipeline.textureDescriptor->setTexture("uSamplers", shaderTextures);
+				pipeline.textureDescriptor->setTexture("uSamplers", pipeline.shaderTextures);
 
-
-				pipeline.tlas->copyToGPU(rendererData.commandBuffer, meshCount);//TODO, should move to render pass...
+				pipeline.tlas->copyToGPU(rendererData.commandBuffer, meshCount);        //TODO, should move to render pass...
 				pipeline.tlas->build(rendererData.commandBuffer, meshCount);
 			}
+
+			/*if (materialChanged && pipeline.tlas->isBuilt() && materialChanged->updateQueue.size() > 0)
+			{
+				auto meterialBuffer = (raytracing::MaterialData *) pipeline.materialBuffer->map();
+
+				for (auto material : materialChanged->updateQueue)
+				{
+					if (auto iter = bindless.materialIndices.find(material->getId()); iter == bindless.materialIndices.end())
+					{
+						bindless.materialIndices[material->getId()] = bindless.materialIndices.size();
+					}
+
+					auto  index = bindless.materialIndices[material->getId()];
+					auto &data  = meterialBuffer[index];
+					updateMaterial(data, material, bindless, pipeline.shaderTextures, bindless.textureIndices);
+				}
+
+				pipeline.textureDescriptor->setTexture("uSamplers", pipeline.shaderTextures);
+				pipeline.sceneDescriptor->setStorageBuffer("MaterialBuffer", pipeline.materialBuffer);
+
+				pipeline.materialBuffer->unmap();
+			}*/
 		}
 	}        // namespace gather_scene
 
@@ -378,12 +457,16 @@ namespace maple
 		{
 			auto [integrator, pipeline] = entity;
 
-			Application::getRenderDevice()->clearRenderTarget(integrator.images[1 - integrator.readIndex], rendererData.commandBuffer, {0, 0, 0, 0});
+			if (cameraView.projView != pipeline.projView)
+			{
+				pipeline.projView = cameraView.projView;
+				integrator.accumulatedSamples = 0;
+			}
 
-			//pipeline.readDescriptor->setTexture("uPreviousColor", integrator.images[integrator.readIndex]);
+			pipeline.readDescriptor->setTexture("uPreviousColor", integrator.images[integrator.readIndex]);
 			pipeline.writeDescriptor->setTexture("uCurrentColor", integrator.images[1 - integrator.readIndex]);
 
-			//integrator.readIndex = 1 - integrator.readIndex;
+			integrator.readIndex = 1 - integrator.readIndex;
 
 			pipeline.sceneDescriptor->update(rendererData.commandBuffer);
 			pipeline.vboDescriptor->update(rendererData.commandBuffer);
@@ -392,8 +475,6 @@ namespace maple
 			pipeline.textureDescriptor->update(rendererData.commandBuffer);
 			pipeline.readDescriptor->update(rendererData.commandBuffer);
 			pipeline.writeDescriptor->update(rendererData.commandBuffer);
-
-			
 
 			pipeline.pipeline->bind(rendererData.commandBuffer);
 

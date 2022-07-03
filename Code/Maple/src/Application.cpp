@@ -85,6 +85,7 @@ namespace maple
 		executePoint->getGlobalComponent<global::physics::component::PhysicsWorld>();
 		executePoint->getGlobalComponent<global::component::SceneTransformChanged>();
 		executePoint->getGlobalComponent<global::component::Bindless>();
+		executePoint->getGlobalComponent<global::component::MaterialChanged>();
 		executePoint->getGlobalComponent<global::component::GraphicsContext>().context = graphicsContext;
 
 		Input::create();

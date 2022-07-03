@@ -109,7 +109,7 @@ namespace maple
 		pipelineCreateInfo.pGroups    = sbt->getGroups().data();
 		pipelineCreateInfo.groupCount = sbt->getGroups().size();
 
-		pipelineCreateInfo.maxPipelineRayRecursionDepth = 1;
+		pipelineCreateInfo.maxPipelineRayRecursionDepth = info.maxRayRecursionDepth;
 		pipelineCreateInfo.layout                       = pipelineLayout;
 		pipelineCreateInfo.basePipelineHandle           = nullptr;
 		pipelineCreateInfo.basePipelineIndex            = 0;

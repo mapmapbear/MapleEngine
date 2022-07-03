@@ -81,7 +81,7 @@ rayPayloadInEXT PathTracePayload inPayload;
 hitAttributeEXT vec2 hitAttribs;
 
 layout(location = 1) rayPayloadEXT PathTracePayload indirectPayload;
-layout(location = 2) rayPayloadEXT bool visibility;
+layout(location = 2) rayPayloadEXT float visibility;
 
 
 HitInfo getHitInfo()
@@ -145,12 +145,19 @@ vec3 sampleLight(in SurfaceMaterial p, in Light light, out vec3 Wi, out float pd
     {
         vec3 lightDir = -light.direction.xyz;
         Wi = lightDir;
-        Li =  light.color.xyz * (pow(light.intensity,1.4) + 0.1);
+        Li = light.color.xyz * (pow(light.intensity,1.4) + 0.1);
         pdf = 0.0f;
+    } 
+    else if (light.type == LIGHT_ENV)
+    {
+        vec2 randValue = nextVec2(inPayload.random);
+        Wi = sampleCosineLobe(p.normal, randValue);
+        Li = texture(uSkybox, Wi).rgb;
+        pdf = pdfCosineLobe(dot(p.normal, Wi)); 
     }
 
     // Trace Ray
-    /*traceRayEXT(uTopLevelAS, 
+    traceRayEXT(uTopLevelAS, 
                 rayFlags, 
                 cullMask, 
                 VISIBILITY_CLOSEST_HIT_SHADER_IDX, 
@@ -160,9 +167,9 @@ vec3 sampleLight(in SurfaceMaterial p, in Light light, out vec3 Wi, out float pd
                 tmin, 
                 Wi, 
                 tmax, 
-                2);*/
-
-    return Li;// * float(visibility);
+                2);
+    //visibility = 1.0;
+    return Li * visibility;
 }
 
 
@@ -195,20 +202,17 @@ vec3 directLighting(in SurfaceMaterial p)
     return L * float( pushConsts.numLights );
 }
 
-
 void getAlbedo(in Material material, inout SurfaceMaterial p)
 {
-    if (material.textureIndices0.x == -1)
-        p.albedo = material.albedo;
+    if (material.textureIndices0.x >= 0)
+        p.albedo =  (1.0 - material.usingValue0.x) * material.albedo + material.usingValue0.x *  textureLod(uSamplers[nonuniformEXT(material.textureIndices0.x)], p.vertex.texCoord.xy, 0.0);
     else
-        p.albedo = textureLod(uSamplers[nonuniformEXT(material.textureIndices0.x)], p.vertex.texCoord.xy, 0.0);
+        p.albedo =  material.albedo;
 }
+
 
 vec3 getNormalFromMap(in Vertex vertex, uint normalMapIndex)
 {
-	if (normalMapIndex < 0)
-		return normalize(vertex.normal);
-	
 	vec3 tangentNormal = texture(uSamplers[nonuniformEXT(normalMapIndex)] , vertex.texCoord).xyz * 2.0 - 1.0;
 	
 	vec3 N = normalize(vertex.normal);
@@ -218,7 +222,6 @@ vec3 getNormalFromMap(in Vertex vertex, uint normalMapIndex)
 	
 	return normalize(TBN * tangentNormal);
 }
-
 
 void getNormal(in Material material, inout SurfaceMaterial p)
 {
@@ -230,23 +233,23 @@ void getNormal(in Material material, inout SurfaceMaterial p)
 
 void getRoughness(in Material material, inout SurfaceMaterial p)
 {
-    if (material.textureIndices0.z == -1 && material.emissive.w == PBR_WORKFLOW_SEPARATE_TEXTURES)
+    if (material.textureIndices0.z == -1 && material.usingValue1.w == PBR_WORKFLOW_SEPARATE_TEXTURES)
     {
         p.roughness = material.roughness.r;
     }
     else
     {
-        if(material.emissive.w == PBR_WORKFLOW_SEPARATE_TEXTURES)
+        if(material.usingValue1.w == PBR_WORKFLOW_SEPARATE_TEXTURES)
         {
-            p.roughness = textureLod(uSamplers[nonuniformEXT(material.textureIndices0.z)], p.vertex.texCoord.xy, 0.0).r;
+            p.roughness = (1 - material.usingValue0.z ) * material.roughness.r +  ( material.usingValue0.z ) * textureLod(uSamplers[nonuniformEXT(material.textureIndices0.z)], p.vertex.texCoord.xy, 0.0).r;
         }
-        else if(material.emissive.w == PBR_WORKFLOW_METALLIC_ROUGHNESS)
+        else if(material.usingValue1.w == PBR_WORKFLOW_METALLIC_ROUGHNESS)
         {
-            p.roughness = textureLod(uSamplers[nonuniformEXT(material.textureIndices0.w)], p.vertex.texCoord.xy, 0.0).g;
+            p.roughness = (1 - material.usingValue0.z ) * material.roughness.r +  ( material.usingValue0.z ) * textureLod(uSamplers[nonuniformEXT(material.textureIndices0.w)], p.vertex.texCoord.xy, 0.0).g;
         }
-        else if(material.emissive.w == PBR_WORKFLOW_SPECULAR_GLOSINESS)
+        else if(material.usingValue1.w == PBR_WORKFLOW_SPECULAR_GLOSINESS)
         {
-            p.roughness = textureLod(uSamplers[nonuniformEXT(material.textureIndices0.w)], p.vertex.texCoord.xy, 0.0).g;
+            p.roughness = (1 - material.usingValue0.z ) * material.roughness.r + ( material.usingValue0.z ) * textureLod(uSamplers[nonuniformEXT(material.textureIndices0.w)], p.vertex.texCoord.xy, 0.0).g;
         }
     }
 }
@@ -255,21 +258,21 @@ void getMetallic(in Material material, inout SurfaceMaterial p)
 {
     if (material.textureIndices0.w == -1)
     {
-        p.metallic = material.roughness.r;
+        p.metallic = material.metallic.r;
     }
     else
     {
-        if(material.emissive.w == PBR_WORKFLOW_SEPARATE_TEXTURES)
+        if(material.usingValue1.w == PBR_WORKFLOW_SEPARATE_TEXTURES)
         {
-            p.metallic = textureLod(uSamplers[nonuniformEXT(material.textureIndices0.w)], p.vertex.texCoord.xy, 0.0).r;
+            p.metallic = ( 1 - material.usingValue0.y ) * material.metallic.r + ( material.usingValue0.y ) *textureLod(uSamplers[nonuniformEXT(material.textureIndices0.w)], p.vertex.texCoord.xy, 0.0).r;
         }
-        else if(material.emissive.w == PBR_WORKFLOW_METALLIC_ROUGHNESS)
+        else if(material.usingValue1.w == PBR_WORKFLOW_METALLIC_ROUGHNESS)
         {
-            p.metallic = textureLod(uSamplers[nonuniformEXT(material.textureIndices0.w)], p.vertex.texCoord.xy, 0.0).b;
+            p.metallic = ( 1 - material.usingValue0.y ) * material.metallic.r + ( material.usingValue0.y ) *textureLod(uSamplers[nonuniformEXT(material.textureIndices0.w)], p.vertex.texCoord.xy, 0.0).b;
         }
-        else if(material.emissive.w == PBR_WORKFLOW_SPECULAR_GLOSINESS)
+        else if(material.usingValue1.w == PBR_WORKFLOW_SPECULAR_GLOSINESS)
         {
-            p.metallic = textureLod(uSamplers[nonuniformEXT(material.textureIndices0.w)], p.vertex.texCoord.xy, 0.0).b;
+            p.metallic = ( 1 - material.usingValue0.y ) * material.metallic.r + ( material.usingValue0.y ) *textureLod(uSamplers[nonuniformEXT(material.textureIndices0.w)], p.vertex.texCoord.xy, 0.0).b;
         }
     }
 }
@@ -280,7 +283,7 @@ void getEmissive(in Material material, inout SurfaceMaterial p)
     if (material.textureIndices1.x == -1)
         p.emissive = material.emissive.rgb;
     else
-        p.emissive = textureLod(uSamplers[nonuniformEXT(material.textureIndices1.x)], p.vertex.texCoord.xy, 0.0).rgb;
+        p.emissive =  ( 1 - material.usingValue1.z ) * material.emissive.rgb +  material.usingValue1.z * textureLod(uSamplers[nonuniformEXT(material.textureIndices1.x)], p.vertex.texCoord.xy, 0.0).rgb;
 }
 
 

@@ -36,6 +36,8 @@ namespace maple
 		virtual auto copyToGPU(const CommandBuffer *cmd, uint32_t instanceSize) -> void = 0;
 		
 		virtual auto build(const CommandBuffer *cmd, uint32_t instanceSize) -> void = 0;
+
+		virtual auto isBuilt() const -> bool = 0;
 	};
 
 	class NullAccelerationStructure : public AccelerationStructure
@@ -67,6 +69,11 @@ namespace maple
 		{}
 
 		virtual auto build(const CommandBuffer *cmd, uint32_t instanceSize) -> void{};
+
+		virtual auto isBuilt() const -> bool override
+		{
+			return true;
+		};
 	};        // namespace maple
 
 }        // namespace maple

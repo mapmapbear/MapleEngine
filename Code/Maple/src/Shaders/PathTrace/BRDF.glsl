@@ -4,6 +4,7 @@
 #include "Common.glsl"
 
 const float EPSILON = 0.00001;
+
 // GGX/Towbridge-Reitz normal distribution function.
 // Uses Disney's reparametrization of alpha = roughness^2
 float ndfGGX(float cosLh, float roughness)
@@ -51,4 +52,23 @@ vec3 BRDF(in SurfaceMaterial p, in vec3 view, in vec3 halfV, in vec3 lightDir)
     return diffuseBRDF + specularBRDF;
 }
 
+
+vec3 sampleCosineLobe(in vec3 n, in vec2 r)
+{
+    vec2 randSample = max(vec2(0.00001f), r);
+
+    const float phi = 2.0f * M_PI * randSample.y;
+
+    const float cosTheta = sqrt(randSample.x);
+    const float sinTheta = sqrt(1 - randSample.x);
+
+    vec3 t = vec3(sinTheta * cos(phi), sinTheta * sin(phi), cosTheta);
+
+    return normalize(makeRotationMatrix(n) * t);
+}
+
+float pdfCosineLobe(in float ndotl)
+{
+    return ndotl / M_PI;
+}
 #endif

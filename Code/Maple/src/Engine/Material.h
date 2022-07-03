@@ -279,6 +279,16 @@ namespace maple
 			return id;
 		}
 
+		inline auto isDirty() const
+		{
+			return dirty;
+		}
+
+		inline auto setDirty(bool d)
+		{
+			dirty = d;
+		}
+
 		inline auto getMaterialTextures() const
 		{
 			return pbrMaterialTextures;
@@ -301,6 +311,7 @@ namespace maple
 
 		bool    texturesUpdated = false;
 		bool    onlyAlbedoColor = false;
+		bool    dirty           = false;
 		int32_t id              = 0;
 	};
 }        // namespace maple

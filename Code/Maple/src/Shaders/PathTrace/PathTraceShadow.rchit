@@ -3,10 +3,10 @@
 #extension GL_GOOGLE_include_directive : require
 #extension GL_EXT_nonuniform_qualifier : require
 
-rayPayloadInEXT bool visibility;
+rayPayloadInEXT float visibility;
 
 void main()
 {
-    visibility = false;
+    visibility = 0.0;
 }
 

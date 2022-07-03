@@ -45,7 +45,7 @@ void main()
     fragColor = inColor;
     fragNormal =  transpose(inverse(mat3(pushConsts.transform))) * normalize(inNormal);
     
-    fragTangent = inTangent;
+    fragTangent =  transpose(inverse(mat3(pushConsts.transform))) *normalize(inTangent);
 
     fragProjPosition = pos;
     fragOldProjPosition = ubo.projViewOld * pushConsts.transform * vec4(inPosition, 1.0);;

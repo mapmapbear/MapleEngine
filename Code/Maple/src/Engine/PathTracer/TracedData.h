@@ -14,7 +14,9 @@ namespace maple::raytracing
 		glm::vec4  albedo;
 		glm::vec4  roughness;
 		glm::vec4  metalic;
-		glm::vec4  emissive;        // w -> workflow
+		glm::vec4  emissive;
+		glm::vec4  usingValue0;        // albedo metallic roughness
+		glm::vec4  usingValue1;        // normal ao emissive workflow
 	};
 
 	struct TransformData

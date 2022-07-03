@@ -63,8 +63,10 @@ struct Material
     ivec4 textureIndices1;  // x: emissive, y: ao
     vec4  albedo;
     vec4  roughness;
-    vec4  metalic;
-    vec4  emissive;        // w -> workflow
+    vec4  metallic;
+    vec4  emissive; 
+    vec4  usingValue0;        // albedo metallic roughness
+	vec4  usingValue1;        // normal ao emissive workflow
 };
 
 struct SurfaceMaterial

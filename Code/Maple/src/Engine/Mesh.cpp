@@ -100,6 +100,7 @@ namespace maple
 		    0,
 		};
 #endif        // MAPLE_VULKAN
+		Mesh::generateTangents(data, indices);
 
 		return std::make_shared<Mesh>(indices, data);
 	}
@@ -144,6 +145,8 @@ namespace maple
 		    0,
 		};
 #endif        // MAPLE_VULKAN
+		Mesh::generateTangents(data, indices);
+
 		return std::make_shared<Mesh>(indices, data);
 	}
 
@@ -272,6 +275,8 @@ namespace maple
 		    20, 21, 22,
 		    20, 22, 23};
 
+		Mesh::generateTangents(data, indices);
+
 		return std::make_shared<Mesh>(indices, data);
 	}
 
@@ -377,7 +382,7 @@ namespace maple
 		    9, 10, 11,
 		    12, 13, 14,
 		    15, 12, 14};
-
+		Mesh::generateTangents(data, indices);
 		return std::make_shared<Mesh>(indices, data);
 	}
 
@@ -533,6 +538,7 @@ namespace maple
 		}
 
 		Mesh::generateNormals(data, indices);
+		Mesh::generateTangents(data, indices);
 		return std::make_shared<Mesh>(indices, data);
 	}
 
@@ -592,6 +598,7 @@ namespace maple
 				}
 			}
 		}
+		Mesh::generateTangents(data, indices);
 
 		return std::make_shared<Mesh>(indices, data);
 	}
@@ -630,6 +637,8 @@ namespace maple
 		    0, 1, 2,
 		    2, 3, 0};
 
+		Mesh::generateTangents(data, indices);
+
 		return std::make_shared<Mesh>(indices, data);
 	}
 
@@ -657,6 +666,6 @@ namespace maple
 		const glm::vec3 vertex2 = c - a;
 		const glm::vec3 axis    = (vertex1 * coord2.y - vertex2 * coord1.y);
 		const float     factor  = 1.0f / (coord1.x * coord2.y - coord2.x * coord1.y);
-		return axis * factor;
+		return (vertex1 * coord2.y - vertex1 * coord1.y) * factor;
 	}
 };        // namespace maple

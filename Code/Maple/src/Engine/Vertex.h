@@ -19,6 +19,7 @@ namespace maple
 		glm::vec2   texCoord;
 		glm::vec3   normal;
 		glm::vec3   tangent;
+
 		inline auto operator-(const Vertex &right) -> Vertex
 		{
 			Vertex ret;
@@ -51,7 +52,7 @@ namespace maple
 
 		inline auto operator==(const Vertex &other) const -> bool
 		{
-			return pos == other.pos && color == other.color && texCoord == other.texCoord && normal == other.normal && tangent == other.tangent;
+			return pos == other.pos && color == other.color && texCoord == other.texCoord && normal == other.normal && tangent == other.tangent;//
 		}
 	};
 
@@ -67,7 +68,7 @@ namespace maple
 
 		inline auto operator==(const SkinnedVertex &other) const -> bool
 		{
-			return pos == other.pos && color == other.color && texCoord == other.texCoord && normal == other.normal && tangent == other.tangent && boneIndices == other.boneIndices && boneWeights == other.boneWeights;
+			return pos == other.pos && color == other.color && texCoord == other.texCoord && normal == other.normal && tangent == other.tangent && boneIndices == other.boneIndices && boneWeights == other.boneWeights;//
 		}
 	};
 

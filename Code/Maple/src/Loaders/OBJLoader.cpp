@@ -92,6 +92,7 @@ namespace maple
 				Mesh::generateNormals(vertices, indices);
 
 			Mesh::generateTangents(vertices, indices);
+			//Mesh::generateBitangents(vertices, indices);
 
 			auto pbrMaterial = std::make_shared<Material>();
 

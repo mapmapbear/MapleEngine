@@ -74,6 +74,10 @@ namespace maple
 
 		auto build(const CommandBuffer *cmd, uint32_t instanceSize) -> void override;
 
+		inline auto isBuilt() const -> bool override
+		{
+			return built;
+		};
 
 	  protected:
 		auto create(const Desc &desc) -> void;

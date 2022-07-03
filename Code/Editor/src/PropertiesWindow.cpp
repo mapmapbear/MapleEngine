@@ -23,6 +23,7 @@
 #include "Scene/Component/VolumetricCloud.h"
 #include "Scene/Component/LightProbe.h"
 #include "Scene/Component/Environment.h"
+#include "Scene/Component/Bindless.h"
 
 #include "Scene/System/EnvironmentModule.h"
 
@@ -916,7 +917,10 @@ namespace MM
 					MM::textureWidget("Emissive", material.get(), textures.emissive, prop.usingEmissiveMap, prop.emissiveColor, std::bind(&Material::setEmissiveTexture, material, std::placeholders::_1), update);
 
 					if (update)
+					{
 						material->setMaterialProperites(prop);
+						Application::getExecutePoint()->getGlobalComponent<global::component::MaterialChanged>().updateQueue.emplace_back(material.get());
+					}
 
 					ImGui::TreePop();
 				}
@@ -993,7 +997,10 @@ namespace MM
 					MM::textureWidget("Emissive", material.get(), textures.emissive, prop.usingEmissiveMap, prop.emissiveColor, std::bind(&Material::setEmissiveTexture, material, std::placeholders::_1), update);
 
 					if (update)
+					{
 						material->setMaterialProperites(prop);
+						Application::getExecutePoint()->getGlobalComponent<global::component::MaterialChanged>().updateQueue.emplace_back(material.get());
+					}
 
 					ImGui::TreePop();
 				}

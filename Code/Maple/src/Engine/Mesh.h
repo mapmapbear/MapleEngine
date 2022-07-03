@@ -5,10 +5,10 @@
 #pragma once
 #include "Engine/Core.h"
 #include "Engine/Vertex.h"
+#include "RHI/AccelerationStructure.h"
 #include "RHI/IndexBuffer.h"
 #include "RHI/Texture.h"
 #include "RHI/VertexBuffer.h"
-#include "RHI/AccelerationStructure.h"
 
 #include "Timestep.h"
 #include <memory>
@@ -91,7 +91,7 @@ namespace maple
 			return materials;
 		}
 
-		inline auto getMaterial(int32_t index) -> Material*
+		inline auto getMaterial(int32_t index) -> Material *
 		{
 			return index < materials.size() ? materials[index].get() : nullptr;
 		}
@@ -151,6 +151,8 @@ namespace maple
 		static auto generateNormals(std::vector<T> &vertices, const std::vector<uint32_t> &indices) -> void;
 		template <typename T>
 		static auto generateTangents(std::vector<T> &vertices, const std::vector<uint32_t> &indices) -> void;
+		template <typename T>
+		static auto generateBitangents(std::vector<T> &vertices, const std::vector<uint32_t> &indices)->void;
 
 		inline auto &getBlendIndices(int32_t index)
 		{
@@ -174,6 +176,7 @@ namespace maple
 
 	  protected:
 		static auto generateTangent(const glm::vec3 &a, const glm::vec3 &b, const glm::vec3 &c, const glm::vec2 &ta, const glm::vec2 &tb, const glm::vec2 &tc) -> glm::vec3;
+		static auto generateBitTangent(const glm::vec3 &a, const glm::vec3 &b, const glm::vec3 &c, const glm::vec2 &ta, const glm::vec2 &tb, const glm::vec2 &tc) -> glm::vec3;
 
 		std::shared_ptr<IndexBuffer>           indexBuffer;
 		std::shared_ptr<VertexBuffer>          vertexBuffer;
@@ -190,7 +193,7 @@ namespace maple
 		uint32_t              subMeshCount = 1;
 		uint32_t              vertexCount  = 0;
 		std::vector<uint32_t> subMeshIndex;
-		
+
 		/// Skinned mesh blend indices (max 4 per bone)
 		std::vector<glm::ivec4> blendIndices;
 		/// Skinned mesh index buffer (max 4 per bone)
@@ -238,7 +241,7 @@ namespace maple
 			vertices[i].tangent = glm::normalize(tangents[i]);
 		}
 	}
-
+	
 	template <typename T>
 	auto Mesh::generateNormals(std::vector<T> &vertices, const std::vector<uint32_t> &indices) -> void
 	{
