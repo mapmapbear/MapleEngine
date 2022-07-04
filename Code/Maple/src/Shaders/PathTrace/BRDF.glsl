@@ -71,4 +71,77 @@ float pdfCosineLobe(in float ndotl)
 {
     return ndotl / M_PI;
 }
+
+vec3 sampleLambert(in vec3 n, in vec2 r)
+{
+    return sampleCosineLobe(n, r);
+}
+
+vec3 sampleGGX(in vec3 n, in float alpha, in vec2 Xi)
+{
+    float phi = 2.0 * M_PI * Xi.x;
+    float cosTheta = sqrt((1.0 - Xi.y) / (1.0 + (alpha * alpha - 1.0) * Xi.y));
+    float sinTheta = sqrt(1.0 - cosTheta * cosTheta);
+
+    vec3 d;
+
+    d.x = sinTheta * cos(phi);
+    d.y = sinTheta * sin(phi);
+    d.z = cosTheta;
+
+    return normalize(makeRotationMatrix(n) * d);
+}
+
+float pdfNDFGGX(in float alpha, in float ndoth, in float vdoth)
+{
+    return ndfGGX(ndoth, alpha) * ndoth / max(EPSILON, (4.0 * vdoth));
+}
+
+float pdfBRDF(in SurfaceMaterial p, in vec3 Wo, in vec3 Wh, in vec3 Wi)
+{
+    float NdotL = max(dot(p.normal, Wi), 0.0);
+    float NdotV = max(dot(p.normal, Wo), 0.0);
+    float NdotH = max(dot(p.normal, Wh), 0.0);
+    float VdotH = max(dot(Wi, Wh), 0.0);
+
+    float pd = pdfCosineLobe(NdotL);
+    float ps = pdfNDFGGX(p.roughness, NdotH, VdotH);
+
+    return mix(pd, ps, 0.5);
+}
+
+
+vec3 sampleBRDF(in SurfaceMaterial p, in vec3 Wo, in Random rng, out vec3 Wi, out float pdf)
+{
+    float alpha = p.roughness * p.roughness;
+
+    vec3 Wh;
+
+    vec3 randValue = nextVec3(rng);
+
+    bool isSpecular = false;
+
+    if (randValue.x < 0.5)
+    {
+        Wh = sampleGGX(p.normal, alpha, randValue.yz);
+        Wi = reflect(-Wo, Wh);
+        
+        float NdotL = max(dot(p.normal, Wi), 0.0);
+        float NdotV = max(dot(p.normal, Wo), 0.0);
+
+        if (NdotL > 0.0f && NdotV > 0.0f)
+            isSpecular = true;
+    }
+    
+    if (!isSpecular)
+    {
+        Wi = sampleLambert(p.normal, randValue.yz);
+        Wh = normalize(Wo + Wi);
+    }
+
+    pdf = pdfBRDF(p, Wo, Wh, Wi);
+
+    return BRDF(p, Wo, Wh, Wi);
+}
+
 #endif

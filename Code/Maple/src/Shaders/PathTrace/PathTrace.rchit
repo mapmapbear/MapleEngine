@@ -208,8 +208,8 @@ void getAlbedo(in Material material, inout SurfaceMaterial p)
         p.albedo =  (1.0 - material.usingValue0.x) * material.albedo + material.usingValue0.x *  textureLod(uSamplers[nonuniformEXT(material.textureIndices0.x)], p.vertex.texCoord.xy, 0.0);
     else
         p.albedo =  material.albedo;
+    p.albedo = gammaCorrectTexture(p.albedo);
 }
-
 
 vec3 getNormalFromMap(in Vertex vertex, uint normalMapIndex)
 {
@@ -287,6 +287,52 @@ void getEmissive(in Material material, inout SurfaceMaterial p)
 }
 
 
+vec3 indirectLighting(in SurfaceMaterial p)
+{
+    vec3 Wo = -gl_WorldRayDirectionEXT;
+    vec3 Wi;
+    float pdf;
+
+    vec3 brdf = sampleBRDF(p, Wo, inPayload.random, Wi, pdf);
+
+    float cosTheta = clamp(dot(p.normal, Wi), 0.0, 1.0);
+
+    indirectPayload.L = vec3(0.0f);
+    indirectPayload.T = inPayload.T *  (brdf * cosTheta) / pdf;
+
+    // Russian roulette
+    float probability = max(indirectPayload.T.r, max(indirectPayload.T.g, indirectPayload.T.b));
+    if (nextFloat(inPayload.random) > probability)
+        return vec3(0.0f);
+ 
+    // Add the energy we 'lose' by randomly terminating paths
+    indirectPayload.T *= 1.0f / probability;
+
+    indirectPayload.depth = inPayload.depth + 1;
+    indirectPayload.random = inPayload.random;
+
+    uint  rayFlags = gl_RayFlagsOpaqueEXT;
+    uint  cullMask = 0xFF;
+    float tmin      = 0.0001;
+    float tmax      = 10000.0;  
+    vec3 origin = p.vertex.position.xyz;
+    // Trace Ray
+    traceRayEXT(uTopLevelAS, 
+            rayFlags, 
+            cullMask, 
+            PATH_TRACE_CLOSEST_HIT_SHADER_IDX, 
+            0, 
+            PATH_TRACE_MISS_SHADER_IDX, 
+            origin, 
+            tmin, 
+            Wi, 
+            tmax, 
+            1);
+
+    return indirectPayload.L;
+}
+
+
 void main()
 {
     SurfaceMaterial surface;
@@ -317,6 +363,7 @@ void main()
         inPayload.L += surface.emissive.rgb;
     
     inPayload.L += directLighting(surface);
-    /*if ((inPayload.depth + 1) < pushConsts.maxBounces)
-       inPayload.L += indirectLighting(p);*/
+
+    if ((inPayload.depth + 1) < pushConsts.maxBounces)
+       inPayload.L += indirectLighting(surface);
 }

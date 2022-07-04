@@ -92,6 +92,8 @@ void main()
     Vertex v = interpolatedVertex(triangle, barycentrics);
 
     vec4 albedo = getAlbedo(material, v.texCoord.xy);
+    
+    albedo = gammaCorrectTexture(albedo);
 
     if (albedo.a < 0.1f)
         ignoreIntersectionEXT;

@@ -335,24 +335,9 @@ namespace maple
 
 		if (physicalDevice->isExtensionSupported(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
 		{
-			deviceExtensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+			//deviceExtensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 			enableDebugMarkers = true;
 		}
-
-		/*
-		VkPhysicalDeviceDescriptorIndexingFeatures indexingFeatures{};
-		indexingFeatures.sType                           = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
-		indexingFeatures.runtimeDescriptorArray          = VK_TRUE;
-		indexingFeatures.descriptorBindingPartiallyBound = VK_TRUE;
-		indexingFeatures.pNext                           = &address;*/
-
-#if defined(PLATFORM_MACOS) || defined(PLATFORM_IOS)
-		// https://vulkan.lunarg.com/doc/view/1.2.162.0/mac/1.2-extensions/vkspec.html#VUID-VkDeviceCreateInfo-pProperties-04451
-		if (physicalDevice->isExtensionSupported("VK_KHR_portability_subset"))
-		{
-			deviceExtensions.emplace_back("VK_KHR_portability_subset");
-		}
-#endif
 
 		// Device
 		VkDeviceCreateInfo deviceCreateInfo{};

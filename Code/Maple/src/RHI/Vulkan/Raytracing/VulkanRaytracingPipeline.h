@@ -9,6 +9,7 @@
 
 #include <functional>
 #include <memory>
+#include <tuple>
 
 namespace maple
 {
@@ -63,5 +64,9 @@ namespace maple
 		std::shared_ptr<ShaderBindingTable>   sbt;
 		std::shared_ptr<RayTracingProperties> rayTracingProperties;
 		std::shared_ptr<VulkanBuffer>         buffer;
+
+		std::vector<VkShaderModule>                                             rayGens;
+		std::vector<VkShaderModule>                                             missGens;
+		std::vector<std::tuple<VkShaderModule, VkShaderModule, VkShaderModule>> hitsGen;
 	};
 };        // namespace maple

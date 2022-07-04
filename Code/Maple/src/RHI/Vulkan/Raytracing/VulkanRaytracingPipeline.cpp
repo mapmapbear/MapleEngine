@@ -43,21 +43,21 @@ namespace maple
 
 	auto VulkanRaytracingPipeline::init(const PipelineInfo &info) -> bool
 	{
-			PROFILE_FUNCTION();
+		PROFILE_FUNCTION();
 		shader         = info.shader;
 		auto vkShader  = std::static_pointer_cast<VulkanShader>(info.shader);
 		description    = info;
 		pipelineLayout = vkShader->getPipelineLayout();
 
-		std::vector<VkShaderModule>                                             rayGens;
-		std::vector<VkShaderModule>                                             missGens;
-		std::vector<std::tuple<VkShaderModule, VkShaderModule, VkShaderModule>> hitsGen;
+		rayGens.clear();
+		missGens.clear();
+		hitsGen.clear();
 
 		std::unordered_map<std::string, int32_t> map;
 
 		for (auto &stage : vkShader->getShaderGroups())
 		{
-			if (auto iter = map.find(stage.first);iter == map.end())
+			if (auto iter = map.find(stage.first); iter == map.end())
 			{
 				map[stage.first] = map.size();
 			}
@@ -140,7 +140,7 @@ namespace maple
 		    VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT);
 
 		buffer->map();
-		auto dst = (uint8_t*)buffer->getMapped();
+		auto dst = (uint8_t *) buffer->getMapped();
 		auto src = mem.data();
 
 		for (int32_t i = 0; i < groupCount; i++)
@@ -169,13 +169,12 @@ namespace maple
 		VkDeviceSize groupStride = groupSize;
 		//TODO ....
 		const VkStridedDeviceAddressRegionKHR raygenSbt   = {buffer->getDeviceAddress(), groupStride, groupSize};
-		const VkStridedDeviceAddressRegionKHR missSbt     = {buffer->getDeviceAddress() + sbt->getMissGroupOffset(), groupStride, groupSize * 2};
-		const VkStridedDeviceAddressRegionKHR hitSbt      = {buffer->getDeviceAddress() + sbt->getHitGroupOffset(), groupStride, groupSize * 2};
+		const VkStridedDeviceAddressRegionKHR missSbt     = {buffer->getDeviceAddress() + sbt->getMissGroupOffset(), groupStride, groupSize * missGens.size()};
+		const VkStridedDeviceAddressRegionKHR hitSbt      = {buffer->getDeviceAddress() + sbt->getHitGroupOffset(), groupStride, groupSize * hitsGen.size()};
 		const VkStridedDeviceAddressRegionKHR callableSbt = {0, 0, 0};
 
 		vkCmdTraceRaysKHR(static_cast<const VulkanCommandBuffer *>(commandBuffer)->getCommandBuffer(),
 		                  &raygenSbt, &missSbt, &hitSbt, &callableSbt, width, height, depth);
-
 	}
 #endif
 };        // namespace maple

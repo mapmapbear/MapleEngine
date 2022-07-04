@@ -91,13 +91,13 @@ namespace maple
 		descriptorSetAllocateInfo.descriptorSetCount = info.count;
 		descriptorSetAllocateInfo.pNext              = nullptr;
 
+		VkDescriptorSetVariableDescriptorCountAllocateInfo variableInfo{};
+
 		if (info.variableCount > 0)
 		{
-			VkDescriptorSetVariableDescriptorCountAllocateInfo variableInfo{};
 			variableInfo.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO;
 			variableInfo.descriptorSetCount = 1;
 			variableInfo.pDescriptorCounts  = &info.variableCount;
-
 			descriptorSetAllocateInfo.pNext = &variableInfo;
 		}
 

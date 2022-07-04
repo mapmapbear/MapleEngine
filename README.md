@@ -6,6 +6,10 @@
                                                                                                                                                                        
 ![](https://github.com/flwmxd/MapleEngine/blob/main/Screenshot/MapleEngine.png)
 
+### Path Tracing (Hardware)
+
+![image](https://github.com/flwmxd/MapleEngine/blob/main/Screenshot/PathTrace.png)
+
 ### Voxel Cone Tracing
 
 ![image](https://github.com/flwmxd/MapleEngine/blob/main/Screenshot/VXGI.png)

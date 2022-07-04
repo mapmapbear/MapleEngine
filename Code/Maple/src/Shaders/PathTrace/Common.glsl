@@ -97,4 +97,9 @@ bool isBlack(vec3 c)
     return c.x == 0.0f && c.y == 0.0f && c.z == 0.0f;
 }
 
+vec4 gammaCorrectTexture(vec4 samp)
+{
+	return vec4(pow(samp.rgb, vec3(2.2)), samp.a);
+}
+
 #endif
