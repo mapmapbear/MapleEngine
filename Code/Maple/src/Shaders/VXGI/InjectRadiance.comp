@@ -86,7 +86,7 @@ vec3 BRDF(Light light, vec3 normal, vec3 albedo)
     // voxel shading average from all front sides
     float nDotL = rDotL * weight.x + uDotL * weight.y + fDotL * weight.z;
     float intensity = pow(light.intensity,1.4) + 0.1;
-    return light.color.rgb * albedo * nDotL * intensity;
+    return light.color.rgb * albedo * nDotL;// * intensity;
 }
 
 vec4 calculateDirectional(Light light, vec3 normal, vec3 position, vec3 albedo)

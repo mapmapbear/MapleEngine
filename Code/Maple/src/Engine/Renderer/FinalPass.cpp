@@ -64,7 +64,7 @@ namespace maple
 				for (auto ent : group)
 				{
 					auto [path] = group.convert(ent);
-					finalData.finalDescriptorSet->setTexture("uScreenSampler", path.images[1 - path.readIndex]);
+					finalData.finalDescriptorSet->setTexture("uScreenSampler", path.images[path.readIndex]);
 				}
 			}
 
