@@ -311,7 +311,19 @@ namespace maple
 			raytracing.sType              = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
 			raytracing.pNext              = &accelerationStructure;
 			raytracing.rayTracingPipeline = VK_TRUE;
-			features12.pNext              = &raytracing;
+
+			VkPhysicalDeviceBufferDeviceAddressFeatures bufferDeviceAddressFeatures = {};
+			bufferDeviceAddressFeatures.sType                                       = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
+			bufferDeviceAddressFeatures.pNext                                       = &raytracing;
+			bufferDeviceAddressFeatures.bufferDeviceAddress                         = true;
+
+			VkPhysicalDeviceDescriptorIndexingFeatures indexingFeatures = {};
+			indexingFeatures.sType                                      = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
+			indexingFeatures.pNext                                      = &bufferDeviceAddressFeatures;
+			indexingFeatures.runtimeDescriptorArray                     = true;
+			indexingFeatures.shaderSampledImageArrayNonUniformIndexing  = true;
+
+			features12.pNext = &indexingFeatures;
 		}
 		deviceExtensions.emplace_back(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
 
