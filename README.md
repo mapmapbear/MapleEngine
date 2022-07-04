@@ -29,7 +29,7 @@
 ![image](https://github.com/flwmxd/MapleEngine/blob/main/Screenshot/LPV_GI.png)
 
 ## Current Features
-
+- Path Trace
 - OpenGL/Vulkan backends 
 - Entity-component system( Based on entt )
 - PBR/IBL
