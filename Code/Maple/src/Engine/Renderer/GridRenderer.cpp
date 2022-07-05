@@ -91,6 +91,7 @@ namespace maple
 				return;
 
 			PipelineInfo pipeInfo;
+			pipeInfo.pipelineName        = "GridRenderer";
 			pipeInfo.shader              = grid.gridShader;
 			pipeInfo.cullMode            = CullMode::None;
 			pipeInfo.transparencyEnabled = true;

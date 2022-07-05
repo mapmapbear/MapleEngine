@@ -167,6 +167,7 @@ namespace maple
 		virtual auto getDescriptors() const -> const std::vector<Descriptor> &                                                                                = 0;
 		virtual auto setAccelerationStructure(const std::string &name, const std::shared_ptr<AccelerationStructure> &structure) -> void                       = 0;
 		virtual auto toIntID() const -> const uint64_t                                                                                                        = 0;
+		virtual auto setName(const std::string &name) -> void                                                                                                 = 0;
 
 		static auto canUpdate() -> bool;
 		static auto toggleUpdate(bool update) -> void;

@@ -74,6 +74,7 @@ namespace maple
 					inverseCamerm[3]   = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
 
 					PipelineInfo info;
+					info.pipelineName = "Atmosphere";
 					info.shader = data.atmosphereShader;
 					if (atmosphere.renderToScreen)
 					{

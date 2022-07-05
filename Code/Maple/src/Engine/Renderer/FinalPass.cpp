@@ -82,6 +82,7 @@ namespace maple
 
 			PipelineInfo pipelineDesc{};
 			pipelineDesc.shader = finalData.finalShader;
+			pipelineDesc.pipelineName = "FinalScreenPass";
 
 			pipelineDesc.polygonMode         = PolygonMode::Fill;
 			pipelineDesc.cullMode            = CullMode::None;

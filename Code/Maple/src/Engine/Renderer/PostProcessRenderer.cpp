@@ -77,6 +77,7 @@ namespace maple
 			auto commandBuffer = renderData.commandBuffer;
 
 			PipelineInfo pipeInfo;
+			pipeInfo.pipelineName        = "SSAORenderer";
 			pipeInfo.shader              = ssaoData.ssaoShader;
 			pipeInfo.polygonMode         = PolygonMode::Fill;
 			pipeInfo.cullMode            = CullMode::None;
@@ -118,6 +119,7 @@ namespace maple
 			auto commandBuffer = renderData.commandBuffer;
 
 			PipelineInfo pipeInfo;
+			pipeInfo.pipelineName        = "SSAOBlurRenderer";
 			pipeInfo.shader              = ssaoData.ssaoBlurShader;
 			pipeInfo.polygonMode         = PolygonMode::Fill;
 			pipeInfo.cullMode            = CullMode::None;
@@ -160,6 +162,7 @@ namespace maple
 			ssrData.ssrDescriptorSet->update(commandBuffer);
 
 			PipelineInfo pipeInfo;
+			pipeInfo.pipelineName        = "SSRRenderer";
 			pipeInfo.shader              = ssrData.ssrShader;
 			pipeInfo.polygonMode         = PolygonMode::Fill;
 			pipeInfo.cullMode            = CullMode::None;
@@ -202,6 +205,7 @@ namespace maple
 			bloomData.bloomDescriptorSet->update(commandBuffer);
 
 			PipelineInfo pipeInfo;
+			pipeInfo.pipelineName        = "BloomRenderer";
 			pipeInfo.shader              = bloomData.bloomShader;
 			pipeInfo.polygonMode         = PolygonMode::Fill;
 			pipeInfo.cullMode            = CullMode::None;
@@ -240,8 +244,8 @@ namespace maple
 				//v -> h
 				bloomData.bloomDescriptorSet->setTexture("samplerColor",
 				                                         i == 0 ?
-				                                             render.gbuffer->getBuffer(GBufferTextures::BLOOM_SCREEN) :
-				                                             render.gbuffer->getBuffer(GBufferTextures::BLOOM_BLUR));
+                                                             render.gbuffer->getBuffer(GBufferTextures::BLOOM_SCREEN) :
+                                                             render.gbuffer->getBuffer(GBufferTextures::BLOOM_BLUR));
 
 				int32_t dir = 1 - i;
 
@@ -253,6 +257,7 @@ namespace maple
 				bloomData.bloomDescriptorSet->update(commandBuffer);
 
 				PipelineInfo pipeInfo;
+				pipeInfo.pipelineName        = "BloomRenderer";
 				pipeInfo.shader              = bloomData.bloomShader;
 				pipeInfo.polygonMode         = PolygonMode::Fill;
 				pipeInfo.cullMode            = CullMode::None;

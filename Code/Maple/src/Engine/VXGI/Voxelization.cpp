@@ -286,10 +286,11 @@ namespace maple
 					}
 
 					PipelineInfo pipelineInfo;
-					pipelineInfo.shader      = volumePipline.shader;
-					pipelineInfo.groupCountX = static_cast<uint32_t>(glm::ceil(mipmapDim / (float) volumePipline.shader->getLocalSizeX()));
-					pipelineInfo.groupCountY = static_cast<uint32_t>(glm::ceil(mipmapDim / (float) volumePipline.shader->getLocalSizeY()));
-					pipelineInfo.groupCountZ = static_cast<uint32_t>(glm::ceil(mipmapDim / (float) volumePipline.shader->getLocalSizeZ()));
+					pipelineInfo.shader       = volumePipline.shader;
+					pipelineInfo.groupCountX  = static_cast<uint32_t>(glm::ceil(mipmapDim / (float) volumePipline.shader->getLocalSizeX()));
+					pipelineInfo.groupCountY  = static_cast<uint32_t>(glm::ceil(mipmapDim / (float) volumePipline.shader->getLocalSizeY()));
+					pipelineInfo.groupCountZ  = static_cast<uint32_t>(glm::ceil(mipmapDim / (float) volumePipline.shader->getLocalSizeZ()));
+					pipelineInfo.pipelineName = "VoxelMipmapVolumePipline-VXGI";
 
 					auto pipeline = Pipeline::get(pipelineInfo);
 					pipeline->bind(renderData.commandBuffer);
@@ -323,7 +324,8 @@ namespace maple
 				}
 
 				PipelineInfo pipelineInfo;
-				pipelineInfo.shader = pipline.shader;
+				pipelineInfo.pipelineName = "VoxelMipmapBasePipline-VXGI";
+				pipelineInfo.shader       = pipline.shader;
 
 				pipelineInfo.groupCountX = halfDimension / pipline.shader->getLocalSizeX();
 				pipelineInfo.groupCountY = halfDimension / pipline.shader->getLocalSizeY();
@@ -367,7 +369,8 @@ namespace maple
 				buffer.voxelVolume[VoxelBufferId::Radiance]->clear(renderData.commandBuffer);
 
 				PipelineInfo pipelineInfo;
-				pipelineInfo.shader = injection.shader;
+				pipelineInfo.pipelineName = "VoxelRadianceInjectionPipline-VXGI";
+				pipelineInfo.shader       = injection.shader;
 
 				pipelineInfo.groupCountX = component::Voxelization::voxelDimension / injection.shader->getLocalSizeX();
 				pipelineInfo.groupCountY = component::Voxelization::voxelDimension / injection.shader->getLocalSizeY();
@@ -402,10 +405,11 @@ namespace maple
 					propagation.descriptors[0]->update(renderData.commandBuffer);
 
 					PipelineInfo pipelineInfo;
-					pipelineInfo.shader      = propagation.shader;
-					pipelineInfo.groupCountX = component::Voxelization::voxelDimension / propagation.shader->getLocalSizeX();
-					pipelineInfo.groupCountY = component::Voxelization::voxelDimension / propagation.shader->getLocalSizeY();
-					pipelineInfo.groupCountZ = component::Voxelization::voxelDimension / propagation.shader->getLocalSizeZ();
+					pipelineInfo.shader       = propagation.shader;
+					pipelineInfo.groupCountX  = component::Voxelization::voxelDimension / propagation.shader->getLocalSizeX();
+					pipelineInfo.groupCountY  = component::Voxelization::voxelDimension / propagation.shader->getLocalSizeY();
+					pipelineInfo.groupCountZ  = component::Voxelization::voxelDimension / propagation.shader->getLocalSizeZ();
+					pipelineInfo.pipelineName = "VoxelRadiancePropagationPipline-VXGI";
 
 					auto pipeline = Pipeline::get(pipelineInfo);
 					pipeline->bind(renderData.commandBuffer);
@@ -475,6 +479,7 @@ namespace maple
 				buffer.descriptors[DescriptorID::FragmentUniform]->update(renderData.commandBuffer);
 
 				PipelineInfo pipeInfo;
+				pipeInfo.pipelineName    = "VoxelizeStaticScene-VXGI";
 				pipeInfo.shader          = buffer.voxelShader;
 				pipeInfo.cullMode        = CullMode::None;
 				pipeInfo.depthTest       = false;

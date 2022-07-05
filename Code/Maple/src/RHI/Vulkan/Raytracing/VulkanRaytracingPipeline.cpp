@@ -116,6 +116,8 @@ namespace maple
 
 		VK_CHECK_RESULT(vkCreateRayTracingPipelinesKHR(*VulkanDevice::get(), VK_NULL_HANDLE, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &pipeline));
 
+		VulkanHelper::setObjectName(info.pipelineName, (uint64_t) pipeline, VK_OBJECT_TYPE_PIPELINE);
+
 		auto groupHandleSize = rayTracingProperties->getShaderGroupHandleSize();
 
 		auto alignSize = alignedSize(groupHandleSize, rayTracingProperties->getShaderGroupBaseAlignment());

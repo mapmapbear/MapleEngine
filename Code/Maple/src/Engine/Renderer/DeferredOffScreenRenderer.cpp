@@ -239,6 +239,7 @@ namespace maple
 			pipelineInfo.blendMode       = BlendMode::SrcAlphaOneMinusSrcAlpha;
 			pipelineInfo.clearTargets    = false;
 			pipelineInfo.swapChainTarget = false;
+			pipelineInfo.pipelineName    = "DeferredOffscreen";
 
 			std::unordered_map<entt::entity, std::shared_ptr<glm::mat4[]>> boneTransform;
 
@@ -535,6 +536,7 @@ namespace maple
 			descriptorSet->update(rendererData.commandBuffer);
 
 			PipelineInfo pipeInfo;
+			pipeInfo.pipelineName        = "DeferredLighting";
 			pipeInfo.shader              = data.deferredLightShader;
 			pipeInfo.polygonMode         = PolygonMode::Fill;
 			pipeInfo.cullMode            = CullMode::None;

@@ -246,6 +246,7 @@ namespace maple
 				pipelineInfo.clearTargets        = true;
 				pipelineInfo.depthTest           = true;
 				pipelineInfo.clearColor          = {0, 0, 0, 0};
+				pipelineInfo.pipelineName        = "ShadowMapping";
 
 				auto pipeline = Pipeline::get(pipelineInfo, shadowData.descriptorSet, renderGraph);
 
@@ -293,6 +294,7 @@ namespace maple
 				pipelineInfo.depthBiasEnabled    = false;
 				pipelineInfo.depthArrayTarget    = shadowData.shadowTexture;
 				pipelineInfo.clearTargets        = false;
+				pipelineInfo.pipelineName        = "ShadowMapping";
 
 				auto pipeline = Pipeline::get(pipelineInfo, shadowData.animDescriptorSet, renderGraph);
 

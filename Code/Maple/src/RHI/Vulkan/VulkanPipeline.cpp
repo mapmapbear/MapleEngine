@@ -239,6 +239,7 @@ namespace maple
 		description    = info;
 		pipelineLayout = vkShader->getPipelineLayout();
 
+
 		transitionAttachments();
 		createFrameBuffers();
 		// Pipeline
@@ -305,6 +306,8 @@ namespace maple
 		graphicsPipelineCreateInfo.subpass             = 0;
 
 		VK_CHECK_RESULT(vkCreateGraphicsPipelines(*VulkanDevice::get(), VulkanDevice::get()->getPipelineCache(), 1, &graphicsPipelineCreateInfo, VK_NULL_HANDLE, &pipeline));
+
+		VulkanHelper::setObjectName(info.pipelineName, (uint64_t) pipeline, VK_OBJECT_TYPE_PIPELINE);
 
 		return true;
 	}

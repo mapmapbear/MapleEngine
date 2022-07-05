@@ -109,6 +109,8 @@ namespace maple
 		auto getSupportedFormat(const std::vector<VkFormat> &candidates, VkImageTiling tiling, VkFormatFeatureFlags features) -> VkFormat;
 		auto getDepthFormat(bool stencil = false) -> VkFormat;
 
+		auto setObjectName(const std::string &name, uint64_t handle, VkObjectType objType) -> void;
+
 		inline auto semaphoreCreateInfo()
 		{
 			VkSemaphoreCreateInfo semaphoreCreateInfo{};

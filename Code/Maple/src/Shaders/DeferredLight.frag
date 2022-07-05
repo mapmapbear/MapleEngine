@@ -277,13 +277,10 @@ vec3 lighting(vec3 F0, vec3 wsPos, Material material,vec2 fragTexCoord)
 			float cutoffAngle   = 1.0f - light.angle;      
 			float dist          = length(L);
 			L = normalize(L);
-			float theta         = dot(L.xyz, L);
+			float theta         = dot(L.xyz, light.direction.xyz);
 			float epsilon       = cutoffAngle - cutoffAngle * 0.9f;
 			float attenuation 	= ((theta - cutoffAngle) / epsilon); // atteunate when approaching the outer cone
 			attenuation         *= light.radius / (pow(dist, 2.0) + 1.0);//saturate(1.0f - dist / light.range);
-			float intensity 	= attenuation * attenuation;
-			// Erase light if there is no need to compute it
-			intensity *= step(theta, cutoffAngle);
 			value = clamp(attenuation, 0.0, 1.0);
 			lightDir = L;
 		}

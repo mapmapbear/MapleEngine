@@ -370,6 +370,7 @@ namespace maple
 				geometry.lineDescriptorSet[0]->update(render.commandBuffer);
 
 				PipelineInfo pipelineInfo;
+				pipelineInfo.pipelineName        = "GeometryRenderer";
 				pipelineInfo.shader              = geometry.lineShader;
 				pipelineInfo.polygonMode         = PolygonMode::Fill;
 				pipelineInfo.cullMode            = CullMode::Back;
@@ -425,6 +426,8 @@ namespace maple
 			{
 				geometry.pointDescriptorSet[0]->update(render.commandBuffer);
 				PipelineInfo pipelineInfo;
+				pipelineInfo.pipelineName = "GeometryRenderer";
+
 				pipelineInfo.shader              = geometry.pointShader;
 				pipelineInfo.polygonMode         = PolygonMode::Fill;
 				pipelineInfo.cullMode            = CullMode::Back;

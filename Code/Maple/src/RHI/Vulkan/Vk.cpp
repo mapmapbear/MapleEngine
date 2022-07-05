@@ -4,8 +4,8 @@
 
 #include "Vk.h"
 
-#include <vulkan/vulkan.h>
 #include <assert.h>
+#include <vulkan/vulkan.h>
 #ifdef USE_VMA_ALLOCATOR
 #	define VMA_IMPLEMENTATION
 #	define VMA_STATIC_VULKAN_FUNCTIONS 0
@@ -28,6 +28,15 @@ static PFN_vkGetAccelerationStructureDeviceAddressKHR       pfn_vkGetAcceleratio
 static PFN_vkCmdWriteAccelerationStructuresPropertiesKHR    pfn_vkCmdWriteAccelerationStructuresPropertiesKHR    = 0;
 static PFN_vkGetDeviceAccelerationStructureCompatibilityKHR pfn_vkGetDeviceAccelerationStructureCompatibilityKHR = 0;
 static PFN_vkGetAccelerationStructureBuildSizesKHR          pfn_vkGetAccelerationStructureBuildSizesKHR          = 0;
+static PFN_vkSetDebugUtilsObjectNameEXT                     pfn_vkSetDebugUtilsObjectNameEXT                     = 0;
+
+VKAPI_ATTR VkResult VKAPI_CALL vkSetDebugUtilsObjectNameEXT(
+    VkDevice                             device,
+    const VkDebugUtilsObjectNameInfoEXT *pNameInfo)
+{
+	assert(pfn_vkSetDebugUtilsObjectNameEXT);
+	return pfn_vkSetDebugUtilsObjectNameEXT(device, pNameInfo);
+}
 
 VKAPI_ATTR VkResult VKAPI_CALL vkCreateAccelerationStructureKHR(
     VkDevice                                    device,
@@ -291,7 +300,9 @@ auto maple::loadVKAccelerationStructureKHR(VkInstance instance, PFN_vkGetInstanc
 	pfn_vkCmdWriteAccelerationStructuresPropertiesKHR    = (PFN_vkCmdWriteAccelerationStructuresPropertiesKHR) getDeviceProcAddr(device, "vkCmdWriteAccelerationStructuresPropertiesKHR");
 	pfn_vkGetDeviceAccelerationStructureCompatibilityKHR = (PFN_vkGetDeviceAccelerationStructureCompatibilityKHR) getDeviceProcAddr(device, "vkGetDeviceAccelerationStructureCompatibilityKHR");
 	pfn_vkGetAccelerationStructureBuildSizesKHR          = (PFN_vkGetAccelerationStructureBuildSizesKHR) getDeviceProcAddr(device, "vkGetAccelerationStructureBuildSizesKHR");
-	int32_t success                                      = 1;
+	pfn_vkSetDebugUtilsObjectNameEXT                     = (PFN_vkSetDebugUtilsObjectNameEXT) getDeviceProcAddr(device, "vkSetDebugUtilsObjectNameEXT");
+
+    int32_t success                                      = 1;
 	success                                              = success && (pfn_vkCreateAccelerationStructureKHR != 0);
 	success                                              = success && (pfn_vkDestroyAccelerationStructureKHR != 0);
 	success                                              = success && (pfn_vkCmdBuildAccelerationStructuresKHR != 0);

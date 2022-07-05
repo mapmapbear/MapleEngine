@@ -357,6 +357,8 @@ namespace maple
 
 		transitionImage(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 		updateDescriptor();
+		
+		setName(name);
 
 		DEBUG_IMAGE_ADDRESS(textureImage);
 	}
@@ -424,6 +426,13 @@ namespace maple
 			    subresourceRange);
 			imageLayout = layout;
 		}
+	}
+
+	auto VulkanTexture2D::setName(const std::string &name) -> void
+	{
+		Texture::setName(name);
+		VulkanHelper::setObjectName("Image:" + name, (uint64_t) textureImage, VK_OBJECT_TYPE_IMAGE);
+		VulkanHelper::setObjectName("ImageView:" + name, (uint64_t) textureImageView, VK_OBJECT_TYPE_IMAGE_VIEW);
 	}
 
 	auto VulkanTexture2D::createSampler() -> void
@@ -548,6 +557,13 @@ namespace maple
 		descriptor.sampler     = textureSampler;
 		descriptor.imageView   = textureImageView;
 		descriptor.imageLayout = imageLayout;
+	}
+
+	auto VulkanTextureDepth::setName(const std::string &name) -> void
+	{
+		Texture::setName(name);
+		VulkanHelper::setObjectName("Image:" + name, (uint64_t) textureImage, VK_OBJECT_TYPE_IMAGE);
+		VulkanHelper::setObjectName("ImageView:" + name, (uint64_t) textureImageView, VK_OBJECT_TYPE_IMAGE_VIEW);
 	}
 
 	auto VulkanTextureDepth::init(const CommandBuffer *commandBuffer) -> void
@@ -756,6 +772,13 @@ namespace maple
 		updateDescriptor();
 	}
 
+	auto VulkanTextureCube::setName(const std::string &name) -> void
+	{
+		Texture::setName(name);
+		VulkanHelper::setObjectName("Image:" + name, (uint64_t) textureImage, VK_OBJECT_TYPE_IMAGE);
+		VulkanHelper::setObjectName("ImageView:" + name, (uint64_t) textureImageView, VK_OBJECT_TYPE_IMAGE_VIEW);
+	}
+
 	auto VulkanTextureCube::init() -> void
 	{
 		PROFILE_FUNCTION();
@@ -912,6 +935,17 @@ namespace maple
 		updateDescriptor();
 	}
 
+	auto VulkanTextureDepthArray::setName(const std::string &name) -> void
+	{
+		Texture::setName(name);
+		VulkanHelper::setObjectName("Image:" + name, (uint64_t) textureImage, VK_OBJECT_TYPE_IMAGE);
+		VulkanHelper::setObjectName("ImageView:" + name, (uint64_t) textureImageView, VK_OBJECT_TYPE_IMAGE_VIEW);
+		for (int32_t i = 0; i < imageViews.size(); i++)
+		{
+			VulkanHelper::setObjectName("ImageView:" + name + "_" + std::to_string(i), (uint64_t) imageViews[i], VK_OBJECT_TYPE_IMAGE_VIEW);
+		}
+	}
+
 	VulkanTexture3D::VulkanTexture3D(uint32_t width, uint32_t height, uint32_t depth, TextureParameters parameters, TextureLoadOptions loadOptions) :
 	    width(width),
 	    height(height),
@@ -1050,6 +1084,13 @@ namespace maple
 		DEBUG_IMAGE_ADDRESS(textureImage);
 	}
 
+	auto VulkanTexture3D::setName(const std::string &name) -> void
+	{
+		Texture::setName(name);
+		VulkanHelper::setObjectName("Image:" + name, (uint64_t) textureImage, VK_OBJECT_TYPE_IMAGE);
+		VulkanHelper::setObjectName("ImageView:" + name, (uint64_t) textureImageView, VK_OBJECT_TYPE_IMAGE_VIEW);
+	}
+
 	auto VulkanTexture3D::transitionImage2(VkImageLayout newLayout, const VulkanCommandBuffer *commandBuffer /*= nullptr*/, int32_t mipLevel /*= 0*/) -> void
 	{
 		PROFILE_FUNCTION();
@@ -1162,7 +1203,7 @@ namespace maple
 
 					                               :
 
-					                               VulkanHelper::createImageView(textureImage,
+                                                   VulkanHelper::createImageView(textureImage,
 					                                                             VkConverter::textureFormatToVK(format, false),
 					                                                             mipLevels, VK_IMAGE_VIEW_TYPE_3D, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 
@@ -1282,4 +1323,16 @@ namespace maple
 		});
 #endif
 	}
+
+	auto VulkanTexture2DArray::setName(const std::string &name) -> void
+	{
+		Texture::setName(name);
+		VulkanHelper::setObjectName("Image:" + name, (uint64_t) textureImage, VK_OBJECT_TYPE_IMAGE);
+		VulkanHelper::setObjectName("ImageView:" + name, (uint64_t) textureImageView, VK_OBJECT_TYPE_IMAGE_VIEW);
+		for (int32_t i = 0; i < imageViews.size();i++)
+		{
+			VulkanHelper::setObjectName("ImageView:" + name + "_" + std::to_string(i), (uint64_t) imageViews[i], VK_OBJECT_TYPE_IMAGE_VIEW);
+		}
+	}
+
 };        // namespace maple

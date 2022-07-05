@@ -358,6 +358,7 @@ namespace maple
 		uint32_t groupCountY = 1;
 		uint32_t groupCountZ = 1;
 		uint32_t maxRayRecursionDepth = 2;
+		std::string pipelineName;
 	};
 
 	struct RenderCommand

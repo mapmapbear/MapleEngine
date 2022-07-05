@@ -60,6 +60,8 @@ namespace maple
 			return -1;
 		};
 
+		auto setName(const std::string &name) -> void override{};
+
 	  private:
 		uint32_t                dynamicOffset = 0;
 		GLShader *              shader        = nullptr;

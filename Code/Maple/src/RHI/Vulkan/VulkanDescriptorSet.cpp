@@ -445,4 +445,13 @@ namespace maple
 	{
 		accelerationStructures[name] = structure;
 	}
+
+	auto VulkanDescriptorSet::setName(const std::string &name) -> void
+	{
+		int32_t i = 0;
+		for (auto desc : descriptorSet)
+		{
+			VulkanHelper::setObjectName(name + ":" + std::to_string(i), (uint64_t) desc, VK_OBJECT_TYPE_DESCRIPTOR_SET);
+		}
+	}
 };        // namespace maple

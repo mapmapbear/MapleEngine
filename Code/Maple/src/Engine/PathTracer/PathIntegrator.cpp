@@ -100,6 +100,7 @@ namespace maple
 			PipelineInfo info;
 			info.shader = pipeline.shader;
 			info.maxRayRecursionDepth = 8;
+			info.pipelineName         = "PathTrace";
 
 			pipeline.pipeline        = Pipeline::get(info);
 			pipeline.lightBuffer     = StorageBuffer::create(sizeof(component::LightData) * MAX_SCENE_LIGHT_COUNT, nullptr, BufferOptions{false, (int32_t) MemoryUsage::MEMORY_USAGE_CPU_TO_GPU, 0});

@@ -183,6 +183,7 @@ namespace maple
 		pipeInfo.transparencyEnabled = false;
 		pipeInfo.depthBiasEnabled    = false;
 		pipeInfo.clearTargets        = true;
+		pipeInfo.pipelineName        = "GenerateSkyboxRenderer";
 		pipeInfo.colorTargets[0]     = skyboxCaptureColor;
 		pipeInfo.colorTargets[1]     = skyboxCube;
 		auto cubeMapPipeline         = Pipeline::get(pipeInfo, {cubeMapSet}, graph);
@@ -213,6 +214,7 @@ namespace maple
 		pipeInfo.transparencyEnabled = false;
 		pipeInfo.depthBiasEnabled    = false;
 		pipeInfo.clearTargets        = true;
+		pipeInfo.pipelineName        = "GenerateIrradianceMapRenderer";
 
 		pipeInfo.colorTargets[0] = irradianceCaptureColor;
 		pipeInfo.colorTargets[1] = envComponent->irradianceMap;
@@ -243,6 +245,7 @@ namespace maple
 		PipelineInfo pipeInfo;
 		pipeInfo.shader   = prefilterShader;
 		pipeInfo.cullMode = CullMode::None;
+		pipeInfo.pipelineName = "GeneratePrefilterMapRenderer";
 
 		pipeInfo.transparencyEnabled = false;
 		pipeInfo.depthBiasEnabled    = false;

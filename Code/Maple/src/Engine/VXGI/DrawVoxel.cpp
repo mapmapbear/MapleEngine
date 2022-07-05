@@ -81,6 +81,8 @@ namespace maple
 					PipelineInfo pipelineInfo;
 					pipelineInfo.shader      = pipline.shader;
 					pipelineInfo.polygonMode = PolygonMode::Fill;
+					pipelineInfo.pipelineName = "DrawVoxelRender";
+
 					//very important for vulkan.. actually opengl ignored.
 					//the final drawType is determined by geometry shader in opengl side.
 					//but determined by pipeline info in vulkan side.

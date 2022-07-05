@@ -126,6 +126,7 @@ namespace maple
 				info.polygonMode         = PolygonMode::Fill;
 				info.clearTargets        = true;
 				info.transparencyEnabled = false;
+				info.pipelineName        = "SkyboxRenderer";
 
 				auto pipeline = Pipeline::get(info, {skyboxData.pseudoSkydescriptorSet}, graph);
 

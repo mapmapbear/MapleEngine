@@ -527,6 +527,15 @@ namespace maple
 		    VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT);
 	}
 
+	auto VulkanHelper::setObjectName(const std::string &name, uint64_t handle, VkObjectType objType) -> void
+	{
+		if (name != "" && handle != 0)
+		{
+			VkDebugUtilsObjectNameInfoEXT s{VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT, nullptr, objType, handle, name.c_str()};
+			vkSetDebugUtilsObjectNameEXT(*VulkanDevice::get(), &s);
+		}
+	}
+
 	auto VulkanHelper::getSupportedDepthFormat(VkPhysicalDevice physicalDevice, VkFormat *depthFormat) -> VkBool32
 	{
 		// Since all depth formats may be optional, we need to find a suitable depth format to use

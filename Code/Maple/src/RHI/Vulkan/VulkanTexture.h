@@ -119,6 +119,8 @@ namespace maple
 			return (uint64_t) textureImage;
 		};
 
+		auto setName(const std::string &name) -> void override;
+
 	  private:
 		auto createSampler() -> void;
 		auto deleteSampler() -> void;
@@ -232,6 +234,8 @@ namespace maple
 		{
 			return (uint64_t) textureImage;
 		};
+
+		auto setName(const std::string &name) -> void override;
 
 	  protected:
 		auto init(const CommandBuffer *commandBuffer = nullptr) -> void;
@@ -350,6 +354,8 @@ namespace maple
 			return (uint64_t) textureImage;
 		};
 
+		auto setName(const std::string &name) -> void override;
+
 	  private:
 		auto init() -> void;
 
@@ -463,6 +469,8 @@ namespace maple
 			return (uint64_t) textureImage;
 		};
 
+		auto setName(const std::string &name) -> void override;
+
 	  protected:
 		auto init(const CommandBuffer *commandBuffer) -> void override;
 		auto release() -> void;
@@ -548,6 +556,8 @@ namespace maple
 		{
 			return (uint64_t) textureImage;
 		};
+
+		auto setName(const std::string &name) -> void override;
 
 	  private:
 		auto deleteSampler() -> void;
@@ -659,6 +669,8 @@ namespace maple
 		{
 			return (uint64_t) textureImage;
 		};
+
+		auto setName(const std::string &name) -> void override;
 
 	  protected:
 		auto init(const CommandBuffer *commandBuffer) -> void override;

@@ -43,6 +43,7 @@ namespace maple
 		                                         VulkanDevice::get()->getPipelineCache(), 1,
 		                                         &computePipelineCreateInfo, nullptr, &pipeline));
 
+		VulkanHelper::setObjectName(info.pipelineName, (uint64_t) pipeline, VK_OBJECT_TYPE_PIPELINE);
 		return true;
 	}
 

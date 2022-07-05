@@ -305,6 +305,7 @@ namespace maple
 			{
 				data.screenDescriptorSet->update(render.commandBuffer);
 				PipelineInfo info;
+				info.pipelineName        = "CloudRenderer";
 				info.shader              = data.screenCloudShader;
 				info.cullMode            = CullMode::None;
 				info.colorTargets[0]     = render.gbuffer->getBuffer(GBufferTextures::SCREEN);

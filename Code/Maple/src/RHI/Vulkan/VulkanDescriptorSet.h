@@ -58,6 +58,8 @@ namespace maple
 
 		auto setAccelerationStructure(const std::string &name, const std::shared_ptr<AccelerationStructure> &structure) -> void override;
 
+		auto setName(const std::string &name) -> void override;
+
 		inline auto getDescriptors() const -> const std::vector<Descriptor> & override
 		{
 			return descriptors;
@@ -93,7 +95,7 @@ namespace maple
 		std::vector<std::unordered_map<std::string, std::shared_ptr<UniformBuffer>>> uniformBuffers;
 		std::unordered_map<std::string, std::vector<VkBuffer>>                       ssbos;
 		std::unordered_map<std::string, std::shared_ptr<AccelerationStructure>>      accelerationStructures;
-		std::unordered_map<std::string, UniformBufferInfo> uniformBuffersData;
+		std::unordered_map<std::string, UniformBufferInfo>                           uniformBuffersData;
 
 		uint32_t currentFrame = 0;
 	};

@@ -155,7 +155,39 @@ vec3 sampleLight(in SurfaceMaterial p, in Light light, out vec3 Wi, out float pd
         Li = texture(uSkybox, Wi).rgb;
         pdf = pdfCosineLobe(dot(p.normal, Wi)); 
     }
+    else if(light.type == LIGHT_POINT)
+    {
+        // Vector to light
+        vec3 lightDir = light.position.xyz - p.vertex.position.xyz;
+        // Distance from light to fragment position
+        float dist = length(lightDir);
+        // Light to fragment
+        lightDir = normalize(lightDir);
+        // Attenuation
+        float atten = light.radius / (pow(dist, 2.0) + 1.0);
+        Wi = lightDir;
+        Li = light.color.xyz * (pow(light.intensity,1.4) + 0.1);
+        pdf = 0.0f;
+        tmax = dist;
+    }
+    else if(light.type == LIGHT_SPOT)
+    {
+        vec3 L = light.position.xyz -  p.vertex.position.xyz;
+        float cutoffAngle   = 1.0f - light.angle;      
+        float dist          = length(L);
+        L = normalize(L);
+        float theta         = dot(L.xyz, light.direction.xyz);
+        float epsilon       = cutoffAngle - cutoffAngle * 0.9f;
+        float attenuation 	= ((theta - cutoffAngle) / epsilon); // atteunate when approaching the outer cone
+        attenuation         *= light.radius / (pow(dist, 2.0) + 1.0);//saturate(1.0f - dist / light.range);
+    
+        float value = clamp(attenuation, 0.0, 1.0);
 
+        Li = light.color.xyz * (pow(light.intensity,1.4) + 0.1) * value;
+        Wi = L;
+        pdf = 0.0f;
+        tmax = dist;
+    }
     // Trace Ray
     traceRayEXT(uTopLevelAS, 
                 rayFlags, 

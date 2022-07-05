@@ -238,15 +238,16 @@ namespace maple
 	{
 		vkDestroyPipelineCache(device, pipelineCache, VK_NULL_HANDLE);
 
-#ifdef USE_VMA_ALLOCATOR
-		vmaDestroyAllocator(allocator);
-#endif
-
 #if defined(MAPLE_PROFILE) && defined(TRACY_ENABLE)
 		TracyVkDestroy(tracyContext);
 #endif
 		if (device != nullptr)
 			vkDestroyDevice(device, nullptr);
+
+		
+#ifdef USE_VMA_ALLOCATOR
+		vmaDestroyAllocator(allocator);
+#endif
 	}
 
 	auto VulkanDevice::createTracyContext() -> void
@@ -335,7 +336,7 @@ namespace maple
 
 		if (physicalDevice->isExtensionSupported(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
 		{
-			//deviceExtensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+			deviceExtensions.emplace_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 			enableDebugMarkers = true;
 		}
 
