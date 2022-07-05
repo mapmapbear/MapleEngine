@@ -8,6 +8,9 @@
 
 #define GAMMA 2.2
 
+#define ShadowTypeShadowMap 0
+#define ShadowTypeTraceShadowCone 1
+
 const int NUM_PCF_SAMPLES = 16;
 const bool FADE_CASCADES = false;
 const float EPSILON = 0.00001;
@@ -287,7 +290,7 @@ vec3 lighting(vec3 F0, vec3 wsPos, Material material,vec2 fragTexCoord)
 		else
 		{
 			lightDir = light.direction.xyz * -1;
-			if(ubo.enableShadow == 1.0)
+			if(ubo.enableShadow == 1.0 && ubo.shadowMethod == ShadowTypeShadowMap)
 			{
 				int cascadeIndex = calculateCascadeIndex(
 					ubo.viewMatrix,wsPos,ubo.shadowCount,ubo.splitDepths
@@ -324,6 +327,11 @@ vec3 lighting(vec3 F0, vec3 wsPos, Material material,vec2 fragTexCoord)
 			vec3 indirect = ( diffuseBRDF + specularBRDF ) * indirectShading.rgb;
 			indirectShading = vec4(indirect,1);
 		}	
+
+		if(ubo.shadowMethod == ShadowTypeTraceShadowCone)
+		{
+			value = indirectShading.a;
+		}
 
 		vec3 directShading = (diffuseBRDF + specularBRDF) * Lradiance * cosLi * value;
 

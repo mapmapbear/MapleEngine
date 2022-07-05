@@ -116,25 +116,23 @@ vec4 calculatePoint(Light light, vec3 normal, vec3 position, vec3 albedo)
     float dT = length(lightDirT);
     lightDirT = normalize(lightDirT);
 
-    float visibility = traceShadow(voxelPos, lightDirT, dT);
+    float visibility = traceShadow(voxelPos, lightDirT, dT) * atten ;
 
     if(visibility <= 0.0f) return vec4(0.0f); 
 
-    return vec4(BRDF(light, normal, albedo) * atten * visibility, visibility);
+    return vec4(BRDF(light, normal, albedo) * visibility, visibility);
 }
 
 vec4 calculateSpot(Light light, vec3 normal, vec3 position, vec3 albedo)
 {
-    vec3 spotDirection = light.direction.xyz;
-    light.direction.xyz = normalize(light.position.xyz - position);
-    float cosAngle = dot(-light.direction.xyz, spotDirection);
-
-    float dst = distance(light.position.xyz, position);
-
-    float cutoffAngle = 1.0f - light.angle; 
-    float epsilon = cutoffAngle - cutoffAngle * 0.9f;
-    float attenuation 	= ((cosAngle - cutoffAngle) / epsilon);
-    attenuation*= light.radius / (pow(dst, 2.0) + 1.0);
+    vec3 L              = light.position.xyz - position;
+    float cutoffAngle   = 1.0f - light.angle; 
+    float dst           = length(L);
+    L                   = normalize(L);
+    float theta         = dot(L,  light.direction.xyz);
+    float epsilon       = cutoffAngle - cutoffAngle * 0.9f;
+    float attenuation 	= ((theta - cutoffAngle) / epsilon);
+    attenuation         *= light.radius / (pow(dst, 2.0) + 1.0);
     float value = clamp(attenuation, 0.0, 1.0);
 
     vec3 voxelPos = worldToVoxel(position);
@@ -146,7 +144,7 @@ vec4 calculateSpot(Light light, vec3 normal, vec3 position, vec3 albedo)
 
     if(visibility <= 0.0f) return vec4(0.0f);
 
-    return vec4(BRDF(light, normal, albedo) * value * visibility, visibility);
+    return vec4(BRDF(light, normal, albedo) * value * visibility, visibility * value);
 }
 
 vec4 calculateDirectLighting(vec3 position, vec3 normal, vec3 albedo)

@@ -634,6 +634,7 @@ namespace maple
 				indirectPipeline.descriptors[0]->setTexture("uNormalSampler", rendererData.gbuffer->getBuffer(GBufferTextures::NORMALS));
 				indirectPipeline.descriptors[0]->setTexture("uPBRSampler", rendererData.gbuffer->getBuffer(GBufferTextures::PBR));
 				indirectPipeline.descriptors[0]->setTexture("uSkyBox", rendererData.unitCube);
+				indirectPipeline.descriptors[0]->setTexture("uVoxelNormal", voxelBuffer.voxelVolume[VoxelBufferId::Normal]);
 				if (!skyboxGroup.empty())
 				{
 					for (auto sky : skyboxGroup)

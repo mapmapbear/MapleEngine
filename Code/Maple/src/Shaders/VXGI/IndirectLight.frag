@@ -11,7 +11,8 @@ layout(binding = 8)  uniform sampler2D uPositionSampler;
 layout(binding = 9)  uniform sampler2D uNormalSampler;
 layout(binding = 10) uniform sampler2D uPBRSampler;
 layout(binding = 11) uniform samplerCube uSkyBox;
-layout(binding = 12) uniform UniformBufferVXGI
+layout(binding = 12) uniform sampler3D uVoxelNormal;
+layout(binding = 13) uniform UniformBufferVXGI
 {
 	float voxelScale;
 	float maxTracingDistanceGlobal;
@@ -225,6 +226,12 @@ void main()
     
 	material.view 			= normalize(uboVXGI.cameraPosition.xyz - fragPosXyzw.xyz);
 	material.normalDotView  = max(dot(material.normal, material.view), 0.0);
+
     vec4 color = calculateIndirectLightingFromVXGI(fragPosXyzw.xyz, material.normal, material.view, material.albedo.xyz, material.roughness ,true);
-    outColor = vec4(color.rgb,1.0);
+   
+    vec3 voxelPos = worldToVoxel(fragPosXyzw.xyz,uboVXGI.worldMinPoint,uboVXGI.voxelScale);
+
+    float visibility = max(0.0f, texture(uVoxelNormal, voxelPos).a);
+
+    outColor = vec4(color.rgb,visibility);
 }
