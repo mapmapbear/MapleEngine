@@ -481,6 +481,7 @@ namespace maple
 		else
 		{
 			init(vsync);
+			acquireNextImage();
 		}
 	}
 
