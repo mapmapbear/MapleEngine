@@ -13,11 +13,12 @@ namespace maple
 	{
 		struct PathIntegrator
 		{
-			int32_t                    readIndex = 0;
-			int32_t                    depth     = 8;
-			int32_t                    maxBounces = 8;
+			int32_t                    readIndex          = 0;
+			int32_t                    depth              = 8;
+			int32_t                    maxBounces         = 8;
 			uint32_t                   accumulatedSamples = 0;
 			float                      shadowRayBias      = 0.0000;
+			bool                       enable             = true;
 			std::shared_ptr<Texture2D> images[2];
 		};
 	}        // namespace component

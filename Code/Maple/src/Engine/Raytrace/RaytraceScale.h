@@ -6,10 +6,21 @@
 
 namespace maple
 {
-	enum class RaytraceScale : int32_t
+	namespace RaytraceScale
 	{
-		Full,
-		Half,
-		Quarter
-	};
-};
+		enum Id : int32_t
+		{
+			Full,
+			Half,
+			Quarter,
+			Length
+		};
+
+		static const char *Names[] =
+		    {
+		        "Full",
+		        "Half",
+		        "Quarter",
+		        nullptr};
+	}        // namespace RaytraceScale
+};           // namespace maple

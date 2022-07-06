@@ -14,9 +14,9 @@ namespace maple
 		{
 			struct RaytracedShadow
 			{
-				RaytraceScale scale = RaytraceScale::Half;
-				uint32_t      width;
-				uint32_t      height;
+				RaytraceScale::Id scale = RaytraceScale::Half;
+				uint32_t          width;
+				uint32_t          height;
 			};
 		}        // namespace component
 		auto registerRaytracedShadow(ExecuteQueue &update, ExecuteQueue &queue, std::shared_ptr<ExecutePoint> executePoint) -> void;

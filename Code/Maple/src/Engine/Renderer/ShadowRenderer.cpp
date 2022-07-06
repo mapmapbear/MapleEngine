@@ -125,14 +125,16 @@ namespace maple
 
 		auto beginScene(Entity entity, LightQuery lightQuery, MeshQuery meshQuery, SkinnedMeshQuery skinnedQuery, BoneMeshQuery boneQuery,
 		                const global::component::SceneTransformChanged &sceneChanged,
-		                PathTraceGroup pathGroup,
+		                PathTraceGroup                                  pathGroup,
 		                ecs::World                                      world)
 		{
 			auto [shadowData, cameraView] = entity;
 
-			if (!pathGroup.empty())
+			for (auto ent : pathGroup)
 			{
-				return;
+				auto [path] = pathGroup.convert(ent);
+				if (path.enable)
+					return;
 			}
 
 			if (sceneChanged.dirty || shadowData.dirty)
@@ -229,8 +231,12 @@ namespace maple
 		{
 			auto [shadowData, rendererData, renderGraph] = entity;
 
-			if (!pathGroup.empty())
-				return;
+			for (auto ent : pathGroup)
+			{
+				auto [path] = pathGroup.convert(ent);
+				if (path.enable)
+					return;
+			}
 
 			if (sceneChanged.dirty)
 			{
@@ -275,14 +281,18 @@ namespace maple
 		}
 
 		inline auto onRenderAnim(RenderEntity                                    entity,
-		                         const component::PathIntegrator *               path,
+		                         PathTraceGroup                                  pathGroup,
 		                         const global::component::SceneTransformChanged &sceneChanged,
 		                         ecs::World                                      world)
 		{
 			auto [shadowData, rendererData, renderGraph] = entity;
 
-			if (path != nullptr)
-				return;
+			for (auto ent : pathGroup)
+			{
+				auto [path] = pathGroup.convert(ent);
+				if (path.enable)
+					return;
+			}
 
 			if (sceneChanged.dirty)
 			{

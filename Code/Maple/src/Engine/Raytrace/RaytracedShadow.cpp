@@ -104,14 +104,32 @@ namespace maple
 
 		inline auto system(Entity entity, component::RendererData &renderData)
 		{
+			//clear
+			//trace...
 		}
 	}        // namespace on_trace
+
+	namespace denoise
+	{
+		using Entity = ecs::Registry ::Modify<raytraced_shadow::component::RaytracedShadow>::To<ecs::Entity>;
+
+		inline auto system(Entity entity, component::RendererData &renderData)
+		{
+			//reset 
+			//temporal accumulation
+			//a trous filter
+			//upsample to fullscreen
+		}
+	}
+
 
 	namespace raytraced_shadow
 	{
 		auto registerRaytracedShadow(ExecuteQueue &update, ExecuteQueue &queue, std::shared_ptr<ExecutePoint> executePoint) -> void
 		{
 			executePoint->onConstruct<raytraced_shadow::component::RaytracedShadow, init::initRaytracedShadow>();
+
+			executePoint->registerWithinQueue<on_trace::system>(queue);
 		};
 	}        // namespace raytraced_shadow
 };           // namespace maple

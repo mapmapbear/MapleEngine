@@ -283,7 +283,7 @@ namespace maple
 		    global::component::MaterialChanged *      materialChanged)
 		{
 			auto [integrator, pipeline] = entity;
-			if (sceneChanged && sceneChanged->dirty)
+			if (sceneChanged && sceneChanged->dirty && integrator.enable)
 			{
 				std::unordered_set<uint32_t> processedMeshes;
 				std::unordered_set<uint32_t> processedMaterials;
@@ -458,6 +458,9 @@ namespace maple
 		                   ecs::World                            world)
 		{
 			auto [integrator, pipeline] = entity;
+
+			if (!integrator.enable)
+				return;
 
 			if (cameraView.projView != pipeline.projView)
 			{

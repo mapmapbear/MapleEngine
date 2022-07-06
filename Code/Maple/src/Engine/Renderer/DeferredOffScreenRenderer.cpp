@@ -132,8 +132,12 @@ namespace maple
 			if (cameraView.cameraTransform == nullptr)
 				return;
 
-			if (!pathGroup.empty())
-				return;
+			for (auto ent : pathGroup)
+			{
+				auto [path] = pathGroup.convert(ent);
+				if (path.enable)
+					return;
+			}
 
 			data.stencilDescriptorSet->setUniform("UniformBufferObject", "projView", &cameraView.projView);
 
@@ -509,9 +513,13 @@ namespace maple
 		    ecs::World                                            world)
 		{
 			auto [data, shadow, cameraView, rendererData, graph] = entity;
-
-			if (!pathGroup.empty())
-				return;
+		
+			for (auto ent : pathGroup)
+			{
+				auto [path] = pathGroup.convert(ent);
+				if (path.enable)
+					return;
+			}
 
 			if (voxelDebug && voxelDebug->enable)
 				return;
