@@ -68,6 +68,7 @@ Animation and State Machine       	| 30%			| Apply Animation successfully
 Precomputed Atmospheric Scattering 	| -          	| Low priority
 Spherical Harmonics Lighting | -          | Medium priority
 Subsurface Scattering 			| -          	| Low priority
+Screen-space blurred reflections using Screen-Space Roughness | -          	| -
 Ray traced shadows				 	| -          	| -
 Ray traced reflections			| -          	| -
 GPU Driven Rendering			 	| -          	| High priority(https://vkguide.dev/docs/gpudriven/compute_culling/)
