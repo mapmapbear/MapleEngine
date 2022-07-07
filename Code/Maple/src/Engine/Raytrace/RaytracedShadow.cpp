@@ -4,6 +4,7 @@
 
 #include "RaytracedShadow.h"
 #include "RHI/DescriptorSet.h"
+#include "RHI/Pipeline.h"
 #include "RHI/RenderDevice.h"
 #include "RHI/StorageBuffer.h"
 #include "RHI/Texture.h"
@@ -40,6 +41,12 @@ namespace maple
 
 			DescriptorSet::Ptr writeDescriptorSet;        //Shadows Ray Trace Write
 			DescriptorSet::Ptr readDescriptorSet;         //Shadows Ray Trace Read
+
+			bool firstFrame = false;
+
+			Pipeline::Ptr pipeline;
+
+			Shader::Ptr shadowRaytraceShader;
 		};
 	}        // namespace component
 
@@ -56,12 +63,12 @@ namespace maple
 
 			//////////////////////////////////////////////////////////
 			pipeline.prev = Texture2D::create();
-			pipeline.prev->setName("Shadows Previous Re-projection");
 			pipeline.prev->buildTexture(TextureFormat::RG16F, shadow.width, shadow.height);
+			pipeline.prev->setName("Shadows Previous Re-projection");
 
 			pipeline.output = Texture2D::create();
-			pipeline.output->setName("Shadows Re-projection Output");
 			pipeline.output->buildTexture(TextureFormat::RG16F, shadow.width, shadow.height);
+			pipeline.output->setName("Shadows Re-projection Output");
 
 			for (int32_t i = 0; i < 2; i++)
 			{
@@ -95,17 +102,28 @@ namespace maple
 
 			pipeline.shadowTileCoordsBuffer = StorageBuffer::create(bufferSize, nullptr, BufferOptions{false, true});
 			pipeline.shadowDispatchBuffer   = StorageBuffer::create(sizeof(int32_t) * 3, nullptr, BufferOptions{true, true});
+			pipeline.firstFrame             = true;
+
+			pipeline.shadowRaytraceShader = Shader::create("shaders/Raytraced/ShadowRaytrace.shader");
+			PipelineInfo info{};
+			info.shader       = pipeline.shadowRaytraceShader;
+			pipeline.pipeline = Pipeline::get(info);
 		}
 	}        // namespace init
 
 	namespace on_trace
 	{
-		using Entity = ecs::Registry ::Modify<raytraced_shadow::component::RaytracedShadow>::To<ecs::Entity>;
+		using Entity = ecs::Registry ::Modify<raytraced_shadow::component::RaytracedShadow>::Modify<component::RaytraceShadowPipeline>::To<ecs::Entity>;
+
+		inline auto clear(component::RaytraceShadowPipeline &pipeline,
+		                  component::RendererData &          renderData)
+		{
+		}
 
 		inline auto system(Entity entity, component::RendererData &renderData)
 		{
 			//clear
-			//trace...
+			auto [shadow, pipeline] = entity;
 		}
 	}        // namespace on_trace
 
@@ -115,13 +133,12 @@ namespace maple
 
 		inline auto system(Entity entity, component::RendererData &renderData)
 		{
-			//reset 
+			//reset
 			//temporal accumulation
 			//a trous filter
 			//upsample to fullscreen
 		}
-	}
-
+	}        // namespace denoise
 
 	namespace raytraced_shadow
 	{
