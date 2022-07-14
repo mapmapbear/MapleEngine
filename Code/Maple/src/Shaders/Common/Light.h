@@ -7,6 +7,12 @@
  * PointLight = 2,
  */
 
+#define LIGHT_DIRECTIONAL 0
+#define LIGHT_SPOT 1.0
+#define LIGHT_POINT 2.0
+#define LIGHT_ENV 3.0
+#define LIGHT_AREA 4.0
+
 struct Light
 {
 	vec4 color;
@@ -36,5 +42,6 @@ int calculateCascadeIndex(mat4 viewMatrix, vec3 wsPos, int shadowCount, vec4 spl
 	}
 	return cascadeIndex;
 }
+
 
 #endif

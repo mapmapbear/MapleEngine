@@ -10,12 +10,6 @@
 #define VISIBILITY_MISS_SHADER_IDX 1
 #define RADIANCE_CLAMP_COLOR vec3(1.0f)
 
-#define LIGHT_DIRECTIONAL 0
-#define LIGHT_SPOT 1.0
-#define LIGHT_POINT 2.0
-#define LIGHT_ENV 3.0
-#define LIGHT_AREA 4.0
-
 #define M_PI 3.14159265359
 
 struct Vertex

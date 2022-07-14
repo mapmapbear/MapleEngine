@@ -104,7 +104,7 @@ namespace maple
 			pipeline.shadowDispatchBuffer   = StorageBuffer::create(sizeof(int32_t) * 3, nullptr, BufferOptions{true, true});
 			pipeline.firstFrame             = true;
 
-			pipeline.shadowRaytraceShader = Shader::create("shaders/Raytraced/ShadowRaytrace.shader");
+			pipeline.shadowRaytraceShader = Shader::create("shaders/Shadow/ShadowRaytrace.shader");
 			PipelineInfo info{};
 			info.shader       = pipeline.shadowRaytraceShader;
 			pipeline.pipeline = Pipeline::get(info);
