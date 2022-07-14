@@ -1,6 +1,8 @@
 #ifndef BLUE_NOISE_GLSL
 #define BLUE_NOISE_GLSL
 
+//https://blog.demofox.org/2020/05/16/using-blue-noise-for-raytraced-soft-shadows/
+
 float sampleBlueNoise(ivec2 coord, int samplerIndex, int dimension, sampler2D sobalTex, sampler2D scramblingRanking)
 {
 	// wrap arguments
