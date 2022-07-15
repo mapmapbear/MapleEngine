@@ -94,6 +94,8 @@ file(GLOB VK_APP_SRC
 	src/Engine/Raytrace/*.h
 	src/Engine/PathTracer/*.cpp
 	src/Engine/PathTracer/*.h
+	src/Engine/Noise/*.cpp
+	src/Engine/Noise/*.h
 	src/RHI/*.h
 	src/RHI/*.cpp
 	src/RHI/Vulkan/*.h

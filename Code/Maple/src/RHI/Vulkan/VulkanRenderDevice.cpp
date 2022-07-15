@@ -38,39 +38,19 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 
-		descriptorPool = DescriptorPool::create({MAX_DESCRIPTOR_SET_COUNT,
-		                                         {{DescriptorType::Image, 500},
-		                                          {DescriptorType::ImageSampler, 500},
-		                                          {DescriptorType::Buffer, 500},
-		                                          {DescriptorType::BufferDynamic, 500},
-		                                          {DescriptorType::UniformBuffer, 500},
-		                                          {DescriptorType::UniformBufferDynamic, 500}}});
-
-
-		/*	std::vector<VkDescriptorPoolSize> poolSizes = {
-		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_SAMPLER, 500},
-		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 500},
-		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 500},
-		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 500},
-		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 500},
-		    VkDescriptorPoolSize{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 500}};
-
+		std::vector<DescriptorPoolInfo> poolInfos = {{DescriptorType::Image, 500},
+		                                             {DescriptorType::ImageSampler, 500},
+		                                             {DescriptorType::Buffer, 500},
+		                                             {DescriptorType::BufferDynamic, 500},
+		                                             {DescriptorType::UniformBuffer, 500},
+		                                             {DescriptorType::UniformBufferDynamic, 500}};
+		
 		if (VulkanDevice::get()->getPhysicalDevice()->isRaytracingSupport())
 		{
-			poolSizes.push_back({VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 16});
+			poolInfos.push_back({DescriptorType::AccelerationStructure, 16});
 		}
 
-		// Create info
-		VkDescriptorPoolCreateInfo poolCreateInfo = {};
-		poolCreateInfo.sType                      = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-		poolCreateInfo.flags                      = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-		poolCreateInfo.poolSizeCount              = poolSizes.size();
-		poolCreateInfo.pPoolSizes                 = poolSizes.data();
-		poolCreateInfo.maxSets                    = MAX_DESCRIPTOR_SET_COUNT;
-		
-
-		// Pool
-		VK_CHECK_RESULT(vkCreateDescriptorPool(*VulkanDevice::get(), &poolCreateInfo, nullptr, &descriptorPool));*/
+		descriptorPool = DescriptorPool::create({ MAX_DESCRIPTOR_SET_COUNT, poolInfos });
 	}
 
 	auto VulkanRenderDevice::begin() -> void

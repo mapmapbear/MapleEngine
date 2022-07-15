@@ -17,7 +17,7 @@ namespace maple
 			{
 				float         width;
 				float         height;
-				RaytraceScale scale;
+				RaytraceScale::Id scale;
 			};
 
 			struct ProbeGrid

@@ -12,18 +12,18 @@
 layout(local_size_x = 8, local_size_y = 4, local_size_z = 1) in;
 
 layout(set = 0, binding = 0, r32ui) uniform uimage2D outColor;
-layout(set = 0, binding = 1) uniform sampler2D uColorSampler;
-layout(set = 0, binding = 2) uniform sampler2D uPositionSampler;
-layout(set = 0, binding = 3) uniform sampler2D uNormalSampler;
-layout(set = 0, binding = 4) uniform sampler2D uDepthSampler;
-layout(set = 0, binding = 5) uniform sampler2D uPBRSampler;
-layout(set = 0, binding = 6) uniform sampler2D uSobolSequence;
-layout(set = 0, binding = 7) uniform sampler2D uScramblingRankingTile;
-layout(set = 0, binding = 8) uniform UniformBufferObject
+
+layout(set = 0, binding = 1) uniform sampler2D uPositionSampler;
+layout(set = 0, binding = 2) uniform sampler2D uNormalSampler;
+layout(set = 0, binding = 3) uniform sampler2D uDepthSampler;
+layout(set = 0, binding = 4) uniform sampler2D uSobolSequence;
+layout(set = 0, binding = 5) uniform sampler2D uScramblingRankingTile;
+layout(set = 0, binding = 6) uniform UniformBufferObject
 {
     Light light;
 }ubo;
-layout(set = 0, binding = 9) uniform accelerationStructureEXT uTopLevelAS;
+
+layout(set = 0, binding = 7) uniform accelerationStructureEXT uTopLevelAS;
 
 layout(push_constant) uniform PushConstants
 {

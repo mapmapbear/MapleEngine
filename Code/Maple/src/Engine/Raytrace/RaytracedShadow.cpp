@@ -9,6 +9,10 @@
 #include "RHI/StorageBuffer.h"
 #include "RHI/Texture.h"
 
+#include "Engine/Noise/BlueNoise.h"
+
+#include "Engine/GBuffer.h"
+#include "Engine/Renderer/Renderer.h"
 #include "Engine/Renderer/RendererData.h"
 
 namespace maple
@@ -54,7 +58,7 @@ namespace maple
 	{
 		inline auto initRaytracedShadow(raytraced_shadow::component::RaytracedShadow &shadow, Entity entity, ecs::World world)
 		{
-			float scaleDivisor = powf(2.0f, float(shadow.scale));
+			float scaleDivisor = std::powf(2.0f, float(shadow.scale));
 			auto &winSize      = world.getComponent<component::WindowSize>();
 			shadow.width       = winSize.width / scaleDivisor;
 			shadow.height      = winSize.height / scaleDivisor;
@@ -108,6 +112,10 @@ namespace maple
 			PipelineInfo info{};
 			info.shader       = pipeline.shadowRaytraceShader;
 			pipeline.pipeline = Pipeline::get(info);
+
+			pipeline.writeDescriptorSet = DescriptorSet::create({0, pipeline.shadowRaytraceShader.get()});
+			pipeline.readDescriptorSet = DescriptorSet::create({0, pipeline.shadowRaytraceShader.get()});
+
 		}
 	}        // namespace init
 
@@ -120,10 +128,27 @@ namespace maple
 		{
 		}
 
-		inline auto system(Entity entity, component::RendererData &renderData)
+		inline auto system(Entity entity, 
+			component::RendererData &renderData, 
+			const blue_noise::global::component::BlueNoise& blueNoise)
 		{
 			//clear
 			auto [shadow, pipeline] = entity;
+			
+
+			pipeline.writeDescriptorSet->setTexture("uPositionSampler", renderData.gbuffer->getBuffer(GBufferTextures::POSITION));
+			pipeline.writeDescriptorSet->setTexture("uNormalSampler", renderData.gbuffer->getBuffer(GBufferTextures::NORMALS));
+			pipeline.writeDescriptorSet->setTexture("uDepthSampler", renderData.gbuffer->getDepthBuffer());
+			pipeline.writeDescriptorSet->setTexture("uSobolSequence", blueNoise.sobolSequence);
+			pipeline.writeDescriptorSet->setTexture("uScramblingRankingTile", blueNoise.scramblingRanking[blue_noise::Blue_Noise_1SPP]);
+
+			pipeline.pipeline->bind(renderData.commandBuffer);
+			Renderer::bindDescriptorSets(pipeline.pipeline.get(), renderData.commandBuffer, 0, {pipeline.writeDescriptorSet});
+			Renderer::dispatch(renderData.commandBuffer, 
+				static_cast<uint32_t>(ceil(float(shadow.width) / float(RAY_TRACE_NUM_THREADS_X))),
+			                   static_cast<uint32_t>(ceil(float(shadow.height) / float(RAY_TRACE_NUM_THREADS_Y))), 1);
+			pipeline.pipeline->end(renderData.commandBuffer);
+
 		}
 	}        // namespace on_trace
 
@@ -145,6 +170,14 @@ namespace maple
 		auto registerRaytracedShadow(ExecuteQueue &update, ExecuteQueue &queue, std::shared_ptr<ExecutePoint> executePoint) -> void
 		{
 			executePoint->onConstruct<raytraced_shadow::component::RaytracedShadow, init::initRaytracedShadow>();
+
+			executePoint->registerGlobalComponent<blue_noise::global::component::BlueNoise>([](auto & noise){
+				noise.sobolSequence = Texture2D::create(blue_noise::SOBOL_TEXTURE, blue_noise::SOBOL_TEXTURE);
+				for (int32_t i = 0; i < blue_noise :: BlueNoiseSpp::Length; i++)
+				{
+					noise.scramblingRanking[i] = Texture2D::create(blue_noise::SCRAMBLING_RANKING_TEXTURES[i], blue_noise::SCRAMBLING_RANKING_TEXTURES[i]);
+				}
+			});
 
 			executePoint->registerWithinQueue<on_trace::system>(queue);
 		};
