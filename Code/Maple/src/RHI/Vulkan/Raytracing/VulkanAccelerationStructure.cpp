@@ -113,10 +113,15 @@ namespace maple
 		}
 	}
 
-	auto VulkanAccelerationStructure::updateTLAS(void *buffer, const glm::mat4 &transform, uint32_t instanceId, uint64_t instanceAddress) -> void
+	auto VulkanAccelerationStructure::updateTLAS(const glm::mat4 &transform, uint32_t instanceId, uint64_t instanceAddress) -> uint64_t
 	{
-		VkAccelerationStructureInstanceKHR *geometryBuffer = (VkAccelerationStructureInstanceKHR *) buffer;
-		VkAccelerationStructureInstanceKHR &vkASInstance   = geometryBuffer[instanceId];
+		VkAccelerationStructureInstanceKHR *geometryBuffer = (VkAccelerationStructureInstanceKHR *) instanceBufferHost->getMapped();
+		if (geometryBuffer == nullptr)
+		{
+			geometryBuffer = (VkAccelerationStructureInstanceKHR *) mapHost();
+		}
+
+		VkAccelerationStructureInstanceKHR &vkASInstance = geometryBuffer[instanceId];
 
 		vkASInstance.instanceCustomIndex                    = instanceId;
 		vkASInstance.mask                                   = 0xFF;
@@ -125,6 +130,8 @@ namespace maple
 		vkASInstance.accelerationStructureReference         = instanceAddress;
 		auto trans                                          = glm::transpose(transform);
 		std::memcpy(&vkASInstance.transform, &trans, sizeof(vkASInstance.transform));
+
+		return instanceId * sizeof(VkAccelerationStructureInstanceKHR);
 	}
 
 	auto VulkanAccelerationStructure::create(const Desc &desc) -> void
@@ -225,13 +232,15 @@ namespace maple
 		return instanceBufferHost->unmap();
 	}
 
-	auto VulkanAccelerationStructure::copyToGPU(const CommandBuffer *cmd, uint32_t instanceSize) -> void
+	auto VulkanAccelerationStructure::copyToGPU(const CommandBuffer *cmd, uint32_t instanceSize, uint64_t offset) -> void
 	{
-		if (instanceBufferHost != nullptr && instanceBufferDevice != nullptr)
+		if (instanceBufferHost != nullptr && instanceBufferDevice != nullptr && instanceSize > 0)
 		{
+		
 			VkBufferCopy copyRegion{};
 
-			copyRegion.dstOffset = 0;
+			copyRegion.srcOffset = offset;
+			copyRegion.dstOffset = offset;
 			copyRegion.size      = sizeof(VkAccelerationStructureInstanceKHR) * instanceSize;
 
 			auto vkCmd = static_cast<const VulkanCommandBuffer *>(cmd);
@@ -240,10 +249,15 @@ namespace maple
 		}
 	}
 
-	auto VulkanAccelerationStructure::build(const CommandBuffer *cmd, uint32_t instanceSize) -> void
+	auto VulkanAccelerationStructure::build(const CommandBuffer *cmd, uint32_t instanceSize, uint32_t instanceOffset) -> void
 	{
 		if (instanceBufferDevice)
 		{
+			if (instanceBufferDevice->getMapped() != nullptr)
+			{
+				instanceBufferDevice->unmap();
+			}
+
 			auto vkCmd = static_cast<const VulkanCommandBuffer *>(cmd);
 			{
 				VkMemoryBarrier memoryBarrier;
@@ -275,7 +289,7 @@ namespace maple
 			VkAccelerationStructureBuildRangeInfoKHR buildRangeInfo;
 
 			buildRangeInfo.primitiveCount  = instanceSize;
-			buildRangeInfo.primitiveOffset = 0;
+			buildRangeInfo.primitiveOffset = instanceOffset;
 			buildRangeInfo.firstVertex     = 0;
 			buildRangeInfo.transformOffset = 0;
 

@@ -4,6 +4,7 @@
 #include "VulkanDescriptorSet.h"
 #include "Engine/Profiler.h"
 #include "Others/Console.h"
+#include "RHI/Vulkan/Raytracing/VulkanAccelerationStructure.h"
 #include "VulkanBuffer.h"
 #include "VulkanCommandBuffer.h"
 #include "VulkanDescriptorPool.h"
@@ -17,7 +18,6 @@
 #include "VulkanTexture.h"
 #include "VulkanUniformBuffer.h"
 #include "VulkanVertexBuffer.h"
-#include "RHI/Vulkan/Raytracing/VulkanAccelerationStructure.h"
 
 #include "Application.h"
 
@@ -175,6 +175,26 @@ namespace maple
 		}
 		//currentFrame = Application::getGraphicsContext()->getSwapChain()->getCurrentBufferIndex();
 
+		for (auto &imageInfo : descriptors)
+		{
+			if (imageInfo.type == DescriptorType::ImageSampler || imageInfo.type == DescriptorType::Image)
+			{
+				if (!imageInfo.textures.empty())
+				{
+					for (uint32_t i = 0; i < imageInfo.textures.size(); i++)
+					{
+						if (imageInfo.textures[i])
+						{
+							transitionImageLayout(
+							    commandBuffer, imageInfo.textures[i].get(),
+							    imageInfo.type == DescriptorType::ImageSampler,
+							    imageInfo.mipmapLevel);
+						}
+					}
+				}
+			}
+		}
+
 		if (descriptorDirty[currentFrame])
 		{
 			descriptorDirty[currentFrame] = false;
@@ -192,13 +212,14 @@ namespace maple
 						{
 							if (imageInfo.textures[i])
 							{
+/*
 								transitionImageLayout(
 								    commandBuffer, imageInfo.textures[i].get(),
 								    imageInfo.type == DescriptorType::ImageSampler,
-								    imageInfo.mipmapLevel);
+								    imageInfo.mipmapLevel);*/
 
-								const auto &des               = *static_cast<VkDescriptorImageInfo *>(imageInfo.textures[i]->getDescriptorInfo(
-                                    imageInfo.mipmapLevel, imageInfo.format));
+								const auto &des = *static_cast<VkDescriptorImageInfo *>(imageInfo.textures[i]->getDescriptorInfo(imageInfo.mipmapLevel, imageInfo.format));
+
 								imageInfoPool[i + imageIndex] = des;
 								validCount++;
 							}
@@ -277,8 +298,7 @@ namespace maple
 					descriptorAs.pNext                      = nullptr;
 					descriptorAs.accelerationStructureCount = 1;
 					descriptorAs.pAccelerationStructures    = &acc->getAccelerationStructure();
-					
-					
+
 					VkWriteDescriptorSet writeDescriptorSet{};
 					writeDescriptorSet.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 					writeDescriptorSet.dstSet          = descriptorSet[currentFrame];
@@ -309,16 +329,30 @@ namespace maple
 		{
 			if ((descriptor.type == DescriptorType::ImageSampler || descriptor.type == DescriptorType::Image) && descriptor.name == name)
 			{
-				descriptor.textures    = textures;
-				descriptor.mipmapLevel = mipLevel;
-				descriptorDirty[0]     = true;
-				descriptorDirty[1]     = true;
-				descriptorDirty[2]     = true;
-				set                    = true;
+				bool textureUpdated = false;
+				for (auto tex : textures)
+				{
+					if (tex->isUpdated())
+					{
+						textureUpdated = true;
+						tex->setUpdate(false);
+					}
+				}
+
+				if (descriptor.mipmapLevel != mipLevel || textureUpdated || textures != descriptor.textures)
+				{
+					descriptor.textures    = textures;
+					descriptor.mipmapLevel = mipLevel;
+					descriptorDirty[0]     = true;
+					descriptorDirty[1]     = true;
+					descriptorDirty[2]     = true;
+				}
+
+				set = true;
 			}
 		}
 		if (!set)
-			LOGW("did not find texture {0} in Descriptor",name);
+			LOGW("did not find texture {0} in Descriptor", name);
 	}
 
 	auto VulkanDescriptorSet::setTexture(const std::string &name, const std::shared_ptr<Texture> &texture, int32_t mipLevel) -> void

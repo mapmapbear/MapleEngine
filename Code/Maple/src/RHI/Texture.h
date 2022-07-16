@@ -29,6 +29,17 @@ namespace maple
 		virtual auto memoryBarrier(const CommandBuffer *cmd, uint32_t flags) -> void;
 
 		virtual auto bindImageTexture(uint32_t unit, bool read = false, bool write = false, uint32_t level = 0, uint32_t layer = 0, TextureFormat format = TextureFormat::NONE) -> void{};
+
+		virtual auto isUpdated() const -> bool
+		{
+			return updated;
+		}
+
+		inline auto setUpdate(bool update)
+		{
+			return updated = update;
+		}
+
 		virtual auto getSize() const -> uint32_t
 		{
 			return 0;
@@ -97,6 +108,7 @@ namespace maple
 		uint16_t    flags = 0;
 		std::string name;
 		uint32_t    id = 0;
+		bool        updated = true;
 	};
 
 	class MAPLE_EXPORT Texture2D : public Texture

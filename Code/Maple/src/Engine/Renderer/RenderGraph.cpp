@@ -17,6 +17,8 @@
 #include "Engine/VXGI/DrawVoxel.h"
 #include "Engine/VXGI/Voxelization.h"
 #include "Engine/Vertex.h"
+#include "Engine/Raytrace/AccelerationStructure.h"
+#include "Engine/Raytrace/RaytracedShadow.h"
 
 #include "RHI/CommandBuffer.h"
 #include "RHI/GPUProfile.h"
@@ -57,7 +59,7 @@ namespace maple
 {
 	namespace on_begin_renderer
 	{
-		using Entity = ecs::Registry ::Fetch<component::RendererData>::To<ecs::Entity>;
+		using Entity = ecs::Registry ::Modify<component::RendererData>::To<ecs::Entity>;
 
 		inline auto system(Entity entity, ecs::World world)
 		{
@@ -77,6 +79,8 @@ namespace maple
 			Application::getRenderDevice()->clearRenderTarget(renderer.gbuffer->getBuffer(GBufferTextures::VIEW_POSITION), renderer.commandBuffer, {0, 0, 0, 0});
 			Application::getRenderDevice()->clearRenderTarget(renderer.gbuffer->getBuffer(GBufferTextures::VIEW_NORMALS), renderer.commandBuffer, {0, 0, 0, 0});
 			Application::getRenderDevice()->clearRenderTarget(renderer.gbuffer->getBuffer(GBufferTextures::VELOCITY), renderer.commandBuffer, {0, 0, 0, 0});
+
+			renderer.numFrames++;
 		}
 	}        // namespace on_begin_renderer
 
@@ -100,6 +104,8 @@ namespace maple
 		executePoint->registerQueue(renderQ);
 		executePoint->registerWithinQueue<on_begin_renderer::system>(renderQ);
 
+		raytracing::registerAccelerationStructureModule(beginQ,executePoint);
+
 		shadow_map::registerShadowMap(beginQ, renderQ, executePoint);
 		reflective_shadow_map::registerShadowMap(beginQ, renderQ, executePoint);
 		deferred_offscreen::registerDeferredOffScreenRenderer(beginQ, renderQ, executePoint);
@@ -119,6 +125,9 @@ namespace maple
 		final_screen_pass::registerFinalPass(renderQ, executePoint);
 
 		//############################################################################
+		
+		raytraced_shadow::registerRaytracedShadow(beginQ, renderQ, executePoint);
+	
 		cloud_renderer::registerComputeCloud(renderQ, executePoint);
 		vxgi::registerUpdateRadiace(renderQ, executePoint);
 		light_propagation_volume::registerLPV(beginQ, renderQ, executePoint);

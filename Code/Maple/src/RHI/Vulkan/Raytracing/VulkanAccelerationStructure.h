@@ -64,15 +64,15 @@ namespace maple
 			return flags;
 		}
 
-		auto updateTLAS(void *buffer, const glm::mat4 &transform, uint32_t instanceId, uint64_t instanceAddress) -> void override;
+		auto updateTLAS(const glm::mat4 &transform, uint32_t instanceId, uint64_t instanceAddress) -> uint64_t override;
 
 		auto mapHost() -> void * override;
 
 		auto unmap() -> void override;
 
-		auto copyToGPU(const CommandBuffer *cmd, uint32_t instanceSize) -> void override;
+		auto copyToGPU(const CommandBuffer *cmd, uint32_t instanceSize, uint64_t offset) -> void override;
 
-		auto build(const CommandBuffer *cmd, uint32_t instanceSize) -> void override;
+		auto build(const CommandBuffer *cmd, uint32_t instanceSize, uint32_t instanceOffset = 0) -> void override;
 
 		inline auto isBuilt() const -> bool override
 		{

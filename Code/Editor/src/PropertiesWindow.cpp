@@ -946,6 +946,8 @@ namespace MM
 		auto &materials = mesh.mesh->getMaterial();
 
 		ImGui::Columns(2);
+		if (mesh.mesh)
+			ImGuiHelper::showProperty("Mesh ID", std::to_string(mesh.mesh->getId()));
 
 		if (auto box = mesh.mesh->getBoundingBox(); box != nullptr)
 		{

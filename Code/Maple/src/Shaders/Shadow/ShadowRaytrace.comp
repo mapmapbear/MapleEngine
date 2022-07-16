@@ -29,7 +29,6 @@ layout(push_constant) uniform PushConstants
 {
     float bias;
     uint  numFrames;
-    int   gbufferMip;
 }pushConsts;
 
 #include "../Raytraced/RayQuery.glsl"
@@ -123,7 +122,7 @@ void main()
 
     barrier();
 
-    const ivec2 size          = textureSize(uPositionSampler, pushConsts.gbufferMip);
+    const ivec2 size          = textureSize(uPositionSampler, 0);
     const ivec2 currentCoord = ivec2(gl_GlobalInvocationID.xy);
     const vec2  pixelCenter  = vec2(currentCoord) + vec2(0.5);
     const vec2  texCoord     = pixelCenter / vec2(size);

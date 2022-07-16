@@ -50,5 +50,6 @@ namespace maple
 		TRIVIAL_COMPONENT(vxgi::component::Voxelization, false, "VXGI-Component");
 
 		TRIVIAL_COMPONENT(component::PathIntegrator, false, "Path Integrator");
+		TRIVIAL_COMPONENT(raytraced_shadow::component::RaytracedShadow, false, "Path Integrator");
 	}
 }

@@ -19,7 +19,7 @@
 
 namespace maple
 {
-	static int32_t IdGenerator = 0;
+	static std::atomic_int32_t IdGenerator = 0;
 
 	Material::Material(const std::shared_ptr<Shader> &shader, const MaterialProperties &properties, const PBRMataterialTextures &textures) :
 	    pbrMaterialTextures(textures),

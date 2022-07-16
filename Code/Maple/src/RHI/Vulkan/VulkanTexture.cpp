@@ -458,6 +458,9 @@ namespace maple
 	auto VulkanTexture2D::deleteSampler() -> void
 	{
 		PROFILE_FUNCTION();
+
+		updated = true;
+
 		auto &deletionQueue = VulkanContext::getDeletionQueue();
 
 		if (textureSampler)
@@ -513,7 +516,7 @@ namespace maple
 		auto &deletionQueue = VulkanContext::getDeletionQueue();
 
 		imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-
+		updated      = true;
 		if (textureSampler)
 		{
 			auto sampler   = textureSampler;
@@ -900,7 +903,7 @@ namespace maple
 		auto textureSampler     = this->textureSampler;
 		auto imageViews         = this->imageViews;
 		auto size               = count;
-
+		updated                 = true;
 		queue.emplace([textureImageView, textureSampler, imageViews, size]() {
 			vkDestroyImageView(*VulkanDevice::get(), textureImageView, nullptr);
 
@@ -1139,6 +1142,8 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 
+		updated = true;
+
 		auto &deletionQueue = VulkanContext::getDeletionQueue();
 
 		if (textureSampler)
@@ -1300,7 +1305,7 @@ namespace maple
 		auto textureSampler     = this->textureSampler;
 		auto imageViews         = this->imageViews;
 		auto size               = count;
-
+		updated                 = true;
 		queue.emplace([textureImageView, textureSampler, imageViews, size]() {
 			vkDestroyImageView(*VulkanDevice::get(), textureImageView, nullptr);
 

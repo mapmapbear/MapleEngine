@@ -5,6 +5,7 @@
 #include "PathIntegrator.h"
 #include "Engine/CaptureGraph.h"
 #include "Engine/Mesh.h"
+#include "Engine/Raytrace/AccelerationStructure.h"
 #include "Engine/Renderer/RendererData.h"
 
 #include "RHI/AccelerationStructure.h"
@@ -62,8 +63,6 @@ namespace maple
 			DescriptorSet::Ptr readDescriptor;
 			DescriptorSet::Ptr writeDescriptor;
 
-			AccelerationStructure::Ptr tlas;
-
 			struct PushConstants
 			{
 				glm::mat4 invViewProj;
@@ -98,7 +97,7 @@ namespace maple
 			                                                                        {"SubmeshInfoBuffer", MAX_SCENE_MESH_INSTANCE_COUNT},
 			                                                                        {"uSamplers", MAX_SCENE_MATERIAL_TEXTURE_COUNT}});
 			PipelineInfo info;
-			info.shader = pipeline.shader;
+			info.shader               = pipeline.shader;
 			info.maxRayRecursionDepth = 8;
 			info.pipelineName         = "PathTrace";
 
@@ -120,8 +119,6 @@ namespace maple
 			pipeline.textureDescriptor  = DescriptorSet::create({4, pipeline.shader.get(), 1, pipeline.descriptorPool.get(), MAX_SCENE_MATERIAL_TEXTURE_COUNT});
 			pipeline.readDescriptor     = DescriptorSet::create({5, pipeline.shader.get()});
 			pipeline.writeDescriptor    = DescriptorSet::create({6, pipeline.shader.get()});
-
-			pipeline.tlas = AccelerationStructure::createTopLevel(MAX_SCENE_MESH_INSTANCE_COUNT);
 
 			pipeline.defaultMaterial = std::make_shared<Material>();
 			MaterialProperties properties;
@@ -196,7 +193,7 @@ namespace maple
 				}
 				else
 				{
-					materialData.textureIndices0.x = bindless.textureIndices[textures.albedo->getId()];
+					materialData.textureIndices0.x = textureIndices[textures.albedo->getId()];
 				}
 			}
 
@@ -210,7 +207,7 @@ namespace maple
 				}
 				else
 				{
-					materialData.textureIndices0.y = bindless.textureIndices[textures.normal->getId()];
+					materialData.textureIndices0.y = textureIndices[textures.normal->getId()];
 				}
 			}
 
@@ -224,7 +221,7 @@ namespace maple
 				}
 				else
 				{
-					materialData.textureIndices0.z = bindless.textureIndices[textures.roughness->getId()];
+					materialData.textureIndices0.z = textureIndices[textures.roughness->getId()];
 				}
 			}
 
@@ -238,7 +235,7 @@ namespace maple
 				}
 				else
 				{
-					materialData.textureIndices0.w = bindless.textureIndices[textures.metallic->getId()];
+					materialData.textureIndices0.w = textureIndices[textures.metallic->getId()];
 				}
 			}
 
@@ -252,7 +249,7 @@ namespace maple
 				}
 				else
 				{
-					materialData.textureIndices1.x = bindless.textureIndices[textures.emissive->getId()];
+					materialData.textureIndices1.x = textureIndices[textures.emissive->getId()];
 				}
 			}
 
@@ -266,24 +263,25 @@ namespace maple
 				}
 				else
 				{
-					materialData.textureIndices1.y = bindless.textureIndices[textures.ao->getId()];
+					materialData.textureIndices1.y = textureIndices[textures.ao->getId()];
 				}
 			}
 		}
 
 		inline auto system(
-		    Entity                                    entity,
-		    LightGroup                                lightGroup,
-		    MeshQuery                                 meshGroup,
-		    SkyboxGroup                               skyboxGroup,
-		    const maple::component::RendererData &    rendererData,
-		    global::component::Bindless &             bindless,
-		    global::component::GraphicsContext &      context,
-		    global::component::SceneTransformChanged *sceneChanged,
-		    global::component::MaterialChanged *      materialChanged)
+		    Entity                                           entity,
+		    LightGroup                                       lightGroup,
+		    MeshQuery                                        meshGroup,
+		    SkyboxGroup                                      skyboxGroup,
+		    const maple::component::RendererData &           rendererData,
+		    const raytracing::global::component::TopLevelAs &topLevels,
+		    global::component::Bindless &                    bindless,
+		    global::component::GraphicsContext &             context,
+		    global::component::SceneTransformChanged *       sceneChanged,
+		    global::component::MaterialChanged *             materialChanged)
 		{
 			auto [integrator, pipeline] = entity;
-			if (sceneChanged && sceneChanged->dirty && integrator.enable)
+			if (sceneChanged && sceneChanged->dirty && integrator.enable && topLevels.topLevelAs)
 			{
 				std::unordered_set<uint32_t> processedMeshes;
 				std::unordered_set<uint32_t> processedMaterials;
@@ -311,19 +309,18 @@ namespace maple
 
 				auto tasks = BatchTask::create();
 
-				auto instanceBuffer = pipeline.tlas->mapHost();        //Copy to CPU side.
-
-				uint32_t meshCount = 0;
 				for (auto meshEntity : meshGroup)
 				{
 					auto [mesh, transform] = meshGroup.convert(meshEntity);
 
 					if (processedMeshes.count(mesh.mesh->getId()) == 0)
 					{
+
 						processedMeshes.emplace(mesh.mesh->getId());
-						bindless.meshIndices[mesh.mesh->getId()] = meshCounter++;
 						vbos.emplace_back(mesh.mesh->getVertexBuffer());
 						ibos.emplace_back(mesh.mesh->getIndexBuffer());
+
+						MAPLE_ASSERT(mesh.mesh->getSubMeshCount() != 0, "sub mesh should be one at least");
 
 						for (auto i = 0; i < mesh.mesh->getSubMeshCount(); i++)
 						{
@@ -366,18 +363,16 @@ namespace maple
 
 					auto blas = mesh.mesh->getAccelerationStructure(tasks);
 
-					transformBuffer[meshCount].meshIndex    = bindless.meshIndices[mesh.mesh->getId()];
-					transformBuffer[meshCount].model        = transform.getWorldMatrix();
-					transformBuffer[meshCount].normalMatrix = glm::transpose(glm::inverse(glm::mat3(transform.getWorldMatrix())));
+					auto meshIdx = bindless.meshIndices[mesh.mesh->getId()];
 
-					pipeline.tlas->updateTLAS(instanceBuffer, transform.getWorldMatrix(), meshCount++, blas->getDeviceAddress());
+					transformBuffer[meshIdx].meshIndex    = meshIdx;
+					transformBuffer[meshIdx].model        = transform.getWorldMatrix();
+					transformBuffer[meshIdx].normalMatrix = glm::transpose(glm::inverse(glm::mat3(transform.getWorldMatrix())));
 
 					auto guard = sg::make_scope_guard([&]() {
 						buffer->unmap();
 					});
 				}
-
-				pipeline.tlas->unmap();
 
 				uint32_t lightIndicator = 0;
 
@@ -411,16 +406,13 @@ namespace maple
 				pipeline.sceneDescriptor->setStorageBuffer("MaterialBuffer", pipeline.materialBuffer);
 				pipeline.sceneDescriptor->setStorageBuffer("TransformBuffer", pipeline.transformBuffer);
 				pipeline.sceneDescriptor->setStorageBuffer("LightBuffer", pipeline.lightBuffer);
-				pipeline.sceneDescriptor->setAccelerationStructure("uTopLevelAS", pipeline.tlas);
+				pipeline.sceneDescriptor->setAccelerationStructure("uTopLevelAS", topLevels.topLevelAs);
 
 				pipeline.vboDescriptor->setStorageBuffer("VertexBuffer", vbos);
 				pipeline.iboDescriptor->setStorageBuffer("IndexBuffer", ibos);
 
 				pipeline.materialDescriptor->setStorageBuffer("SubmeshInfoBuffer", materialIndices);
 				pipeline.textureDescriptor->setTexture("uSamplers", pipeline.shaderTextures);
-
-				pipeline.tlas->copyToGPU(rendererData.commandBuffer, meshCount);        //TODO, should move to render pass...
-				pipeline.tlas->build(rendererData.commandBuffer, meshCount);
 			}
 
 			/*if (materialChanged && pipeline.tlas->isBuilt() && materialChanged->updateQueue.size() > 0)
@@ -464,7 +456,7 @@ namespace maple
 
 			if (cameraView.projView != pipeline.projView)
 			{
-				pipeline.projView = cameraView.projView;
+				pipeline.projView             = cameraView.projView;
 				integrator.accumulatedSamples = 0;
 			}
 

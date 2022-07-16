@@ -14,7 +14,7 @@ namespace maple
 	class StorageBuffer;
 	class CommandBuffer;
 
-	class AccelerationStructure
+	class MAPLE_EXPORT AccelerationStructure
 	{
 	  public:
 		using Ptr = std::shared_ptr<AccelerationStructure>;
@@ -25,7 +25,7 @@ namespace maple
 
 		virtual auto getBuildScratchSize() const -> uint64_t = 0;
 
-		virtual auto updateTLAS(void *buffer, const glm::mat4 &transform, uint32_t instanceId, uint64_t instanceAddress) -> void = 0;
+		virtual auto updateTLAS(const glm::mat4 &transform, uint32_t instanceId, uint64_t instanceAddress) -> uint64_t = 0;
 
 		virtual auto getDeviceAddress() const -> uint64_t = 0;
 
@@ -33,9 +33,9 @@ namespace maple
 
 		virtual auto unmap() -> void = 0;
 
-		virtual auto copyToGPU(const CommandBuffer *cmd, uint32_t instanceSize) -> void = 0;
-		
-		virtual auto build(const CommandBuffer *cmd, uint32_t instanceSize) -> void = 0;
+		virtual auto copyToGPU(const CommandBuffer *cmd, uint32_t instanceSize, uint64_t offset) -> void = 0;
+
+		virtual auto build(const CommandBuffer *cmd, uint32_t instanceSize, uint32_t instanceOffset = 0) -> void = 0;
 
 		virtual auto isBuilt() const -> bool = 0;
 	};
@@ -48,8 +48,10 @@ namespace maple
 			return 0;
 		}
 
-		virtual auto updateTLAS(void *buffer, const glm::mat4 &transform, uint32_t instanceId, uint64_t instanceAddress) -> void
-		{}
+		virtual auto updateTLAS(const glm::mat4 &transform, uint32_t instanceId, uint64_t instanceAddress) -> uint64_t
+		{
+			return 0;
+		}
 
 		virtual auto getDeviceAddress() const -> uint64_t
 		{
@@ -65,10 +67,10 @@ namespace maple
 		{
 		}
 
-		virtual auto copyToGPU(const CommandBuffer *cmd, uint32_t instanceSize) -> void
+		virtual auto copyToGPU(const CommandBuffer *cmd, uint32_t instanceSize, uint64_t offset) -> void
 		{}
 
-		virtual auto build(const CommandBuffer *cmd, uint32_t instanceSize) -> void{};
+		virtual auto build(const CommandBuffer *cmd, uint32_t instanceSize, uint32_t instanceOffset = 0) -> void{};
 
 		virtual auto isBuilt() const -> bool override
 		{

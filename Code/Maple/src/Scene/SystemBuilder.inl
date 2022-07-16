@@ -9,6 +9,7 @@
 #include "Scene/System/HierarchyModule.h"
 #include "Scripts/Mono/MonoSystem.h"
 #include "Scene/System/BindlessModule.h"
+#include "Engine/Raytrace/AccelerationStructure.h"
 
 namespace maple
 {

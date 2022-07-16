@@ -18,11 +18,12 @@
 #include "Scene/SceneManager.h"
 #include "Scene/System/HierarchyModule.h"
 
-#include "Engine/PathTracer/PathIntegrator.h"
 #include "Engine/LPVGI/LPVIndirectLighting.h"
 #include "Engine/LPVGI/LightPropagationVolume.h"
 #include "Engine/LPVGI/ReflectiveShadowMap.h"
+#include "Engine/PathTracer/PathIntegrator.h"
 #include "Engine/VXGI/Voxelization.h"
+#include "Engine/Raytrace/RaytracedShadow.h"
 
 #include "Engine/IconsDefine.inl"
 #include "ImGui/ImGuiHelpers.h"
@@ -166,38 +167,56 @@ namespace maple
 
 			constexpr char *gi[] = {"VX-GI", "LPV-GI"};
 
-			if (ImGui::BeginMenu("Add GI Component"))
-			{
-				for (auto name : gi)
+			ecs::World world{Application::getExecutePoint()->getRegistry(), Application::getExecutePoint()->getGlobalEntity()};
+
+			if (!world.hasComponent<vxgi::component::Voxelization>())
+			{        //TODO LPV module needs to be re factored.
+				if (ImGui::BeginMenu("Add GI Component"))
 				{
-					if (ImGui::MenuItem(name))
+					for (auto name : gi)
 					{
-						if (strcmp("VX-GI", name) == 0)
+						if (ImGui::MenuItem(name))
 						{
-							auto entity = scene->createEntity("VXGI");
-							entity.addComponent<vxgi::component::Voxelization>();
-							vxgi::registerGlobalComponent(Application::getExecutePoint());
+							if (strcmp("VX-GI", name) == 0)
+							{
+								auto entity = scene->createEntity("VXGI");
+								entity.addComponent<vxgi::component::Voxelization>();
+								vxgi::registerGlobalComponent(Application::getExecutePoint());
 
-							Application::getExecutePoint()->getGlobalComponent<global::component::SceneTransformChanged>().dirty = true;
-						}
+								Application::getExecutePoint()->getGlobalComponent<global::component::SceneTransformChanged>().dirty = true;
+							}
 
-						if (strcmp("LPV-GI", name) == 0)
-						{
-							light_propagation_volume::registerGlobalComponent(Application::getExecutePoint());
-							reflective_shadow_map::registerGlobalComponent(Application::getExecutePoint());
-							lpv_indirect_lighting::registerGlobalComponent(Application::getExecutePoint());
-							Application::getExecutePoint()->getGlobalComponent<global::component::SceneTransformChanged>().dirty = true;
+							if (strcmp("LPV-GI", name) == 0)
+							{
+								light_propagation_volume::registerGlobalComponent(Application::getExecutePoint());
+								reflective_shadow_map::registerGlobalComponent(Application::getExecutePoint());
+								lpv_indirect_lighting::registerGlobalComponent(Application::getExecutePoint());
+								Application::getExecutePoint()->getGlobalComponent<global::component::SceneTransformChanged>().dirty = true;
+							}
 						}
 					}
+					ImGui::EndMenu();
 				}
-				ImGui::EndMenu();
 			}
 
-			if (ImGui::Selectable("Add Path Trace"))
+			if (!world.hasComponent<component::PathIntegrator>())
 			{
-				auto entity = scene->createEntity("PathTrace");
-				entity.addComponent<component::PathIntegrator>();
-				Application::getExecutePoint()->getGlobalComponent<global::component::SceneTransformChanged>().dirty = true;
+				if (ImGui::Selectable("Add Path Trace"))
+				{
+					auto entity = scene->createEntity("PathTrace");
+					entity.addComponent<component::PathIntegrator>();
+					Application::getExecutePoint()->getGlobalComponent<global::component::SceneTransformChanged>().dirty = true;
+				}
+			}
+
+			if (!world.hasComponent<raytraced_shadow::component::RaytracedShadow>())
+			{
+				if (ImGui::Selectable("Add Raytraced-Shadow"))
+				{
+					auto entity = scene->createEntity("Raytraced-Shadow");
+					entity.addComponent<raytraced_shadow::component::RaytracedShadow>();
+					Application::getExecutePoint()->getGlobalComponent<global::component::SceneTransformChanged>().dirty = true;
+				}
 			}
 
 			ImGui::PopStyleVar();

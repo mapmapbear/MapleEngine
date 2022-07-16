@@ -14,7 +14,7 @@ namespace maple
 		{
 			struct RaytracedShadow
 			{
-				RaytraceScale::Id scale = RaytraceScale::Half;
+				RaytraceScale::Id scale = RaytraceScale::Full;
 				uint32_t          width;
 				uint32_t          height;
 			};

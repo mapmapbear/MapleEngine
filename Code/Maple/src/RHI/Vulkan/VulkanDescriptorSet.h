@@ -98,5 +98,7 @@ namespace maple
 		std::unordered_map<std::string, UniformBufferInfo>                           uniformBuffersData;
 
 		uint32_t currentFrame = 0;
+
+
 	};
 };        // namespace maple
