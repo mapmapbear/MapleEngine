@@ -24,7 +24,7 @@ namespace maple
 			glm::vec4 direction = {};
 			//align to 16 bytes
 			float intensity = 1.f;
-			float radius    = 10.f;
+			float radius    = 0.1f;
 			float type      = 0.f;
 			float angle     = 0.f;
 		};

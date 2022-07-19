@@ -477,7 +477,13 @@ namespace maple
 
 	auto VulkanDescriptorSet::setAccelerationStructure(const std::string &name, const std::shared_ptr<AccelerationStructure> &structure) -> void
 	{
-		accelerationStructures[name] = structure;
+		if (accelerationStructures[name] != structure)
+		{
+			accelerationStructures[name] = structure;
+			descriptorDirty[0]           = true;
+			descriptorDirty[1]           = true;
+			descriptorDirty[2]           = true;
+		}
 	}
 
 	auto VulkanDescriptorSet::setName(const std::string &name) -> void
