@@ -1,0 +1,86 @@
+#version 450
+#extension GL_GOOGLE_include_directive : require
+
+#define NUM_THREADS_X 8
+#define NUM_THREADS_Y 8
+
+#define RAY_MASK_SIZE_X 8
+#define RAY_MASK_SIZE_Y 4
+
+layout(local_size_x = NUM_THREADS_X, local_size_y = NUM_THREADS_Y, local_size_z = 1) in;
+
+
+layout(set = 0, binding = 0, rg16f)     uniform writeonly image2D outColor;
+layout(set = 0, binding = 1, rgba16f)   uniform writeonly image2D moment;
+
+//prev
+layout(set = 0, binding = 2) uniform sampler2D uHistoryOutput;
+layout(set = 0, binding = 3) uniform sampler2D uHistoryMoments;
+
+layout(set = 1, binding = 0) uniform sampler2D uPositionSampler;
+layout(set = 1, binding = 1) uniform sampler2D uNormalSampler;
+layout(set = 1, binding = 2) uniform sampler2D uDepthSampler;
+
+layout(set = 2, binding = 0) uniform sampler2D uPrevPositionSampler;
+layout(set = 2, binding = 1) uniform sampler2D uPrevNormalSampler;
+layout(set = 2, binding = 2) uniform sampler2D uPrevDepthSampler;
+
+//Noise Shadow
+layout(set = 3, binding = 0) uniform usampler2D uInput;
+
+layout(set = 4, binding = 0, std430) buffer DenoiseTileData
+{
+    ivec2 coord[];
+}denoiseTileData;
+
+layout(set = 4, binding = 1, std430) buffer DenoiseTileDispatchArgs
+{
+    uint numGroupsX;
+    uint numGroupsY;
+    uint numGroupsZ;
+}denoiseTileDispatchArgs;
+
+layout(set = 4 binding = 2, std430) buffer ShadowTileData
+{
+    ivec2 coord[];
+}shadowTileData;
+
+layout(set = 4, binding = 3, std430) buffer ShadowTileDispatchArgs
+{
+    uint numGroupsX;
+    uint numGroupsY;
+    uint numGroupsZ;
+}shadowTileDispatchArgs;
+
+layout(push_constant) uniform PushConstants
+{
+    float alpha;
+    float momentsAlpha;
+}pushConsts;
+
+shared uint  gShadowHitMasks[3][6];
+shared float gMeanAccumulation[8][24];
+shared uint  gShouldDenoise;
+
+
+void loadCache()
+{
+    if (gl_LocalInvocationID.x < 3 && gl_LocalInvocationID.y < 6)
+    {
+        ivec2 coord                                                     = ivec2(gl_WorkGroupID.x, gl_WorkGroupID.y * 2) - ivec2(1, 2) + ivec2(gl_LocalInvocationID.xy);
+        gShadowHitMasks[gl_LocalInvocationID.x][gl_LocalInvocationID.y] = texelFetch(uInput, coord, 0).x;
+    }
+    barrier();
+}
+
+
+void main()
+{
+    gShouldDenoise = 0;
+
+    barrier();
+
+    const ivec2 size          = textureSize(uHistoryOutput, 0);
+    const ivec2 currentCoord = ivec2(gl_GlobalInvocationID.xy);
+    loadCache();
+}

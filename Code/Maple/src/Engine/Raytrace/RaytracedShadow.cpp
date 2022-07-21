@@ -241,6 +241,11 @@ namespace maple
 			Renderer::dispatch(renderData.commandBuffer, 1, 1, 1);
 		}
 
+		inline auto accumulation(component::TemporalAccumulator &acc, const component::RendererData &renderData)
+		{
+			
+		}
+
 		inline auto system(Entity entity, component::RendererData &renderData)
 		{
 			auto [shadow, acc] = entity;
