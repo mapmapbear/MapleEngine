@@ -16,6 +16,14 @@ namespace maple
 		POSITION,        //Deferred Render - World Space Positions
 		NORMALS,         //Deferred Render - World Space Normals
 		PBR,
+		VELOCITY,
+
+		COLOR_PONG,   
+		POSITION_PONG,        //Deferred Render - World Space Positions
+		NORMALS_PONG,         //Deferred Render - World Space Normals
+		PBR_PONG,
+		VELOCITY_PONG,
+
 		SSAO_SCREEN,
 		SSAO_BLUR,
 		SSR_SCREEN,
@@ -27,8 +35,6 @@ namespace maple
 		PREV_DISPLAY,
 		VIEW_POSITION,        //Deferred Render - View Space Positions  need to be optimized. they can be performed very well in post processing
 		VIEW_NORMALS,
-		VELOCITY,
-		VOLUMETRIC_LIGHT,
 		PSEUDO_SKY,
 		LENGTH
 	};
@@ -39,6 +45,14 @@ namespace maple
 	        "Position",
 	        "Normals",
 	        "PBR",
+	        "Velocity",
+
+	        "Color-Pong",
+	        "Position-Pong",
+	        "Normals-Pong",
+	        "PBR-Pong",
+	        "Velocity-Pong",
+
 	        "SSAOScreen",
 	        "SSAOBlur",
 	        "SSRScreen",
@@ -49,10 +63,14 @@ namespace maple
 	        "PreviewDisplay",
 	        "ViewPosition",
 	        "ViewNormal",
-	        "Velocity",
-	        "VolumetricLight",
 	        "PseudoSky",
 	        nullptr};
+
+	enum PingPong
+	{
+		Ping,
+		Pong
+	};
 
 	class GBuffer
 	{
@@ -72,12 +90,11 @@ namespace maple
 
 		inline auto getDepthBuffer()
 		{
-			return depthBuffer;
+			return depthBuffer[index];
 		}
-		inline auto getBuffer(uint32_t index)
-		{
-			return screenTextures[index];
-		}
+
+		auto getBuffer(uint32_t index) -> std::shared_ptr<Texture2D>;
+
 		inline auto getFormat(uint32_t index)
 		{
 			return formats[index];
@@ -88,14 +105,17 @@ namespace maple
 			return ssaoNoiseMap;
 		}
 
+		auto pingPong() -> void;
+
 	  private:
 		std::array<std::shared_ptr<Texture2D>, GBufferTextures::LENGTH> screenTextures;
 		std::array<TextureFormat, GBufferTextures::LENGTH>              formats;
-		std::shared_ptr<TextureDepth>                                   depthBuffer;
+		std::shared_ptr<TextureDepth>                                   depthBuffer[2];
 		std::shared_ptr<Texture2D>                                      ssaoNoiseMap;
 
 	  private:
 		uint32_t width;
 		uint32_t height;
+		int32_t  index = PingPong::Ping;
 	};
 }        // namespace maple

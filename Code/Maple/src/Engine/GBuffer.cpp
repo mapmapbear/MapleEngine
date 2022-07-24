@@ -21,11 +21,16 @@ namespace maple
 		formats[COLOR]             = TextureFormat::RGBA32;
 		formats[POSITION]          = TextureFormat::RGBA32;
 		formats[NORMALS]           = TextureFormat::RGBA32;
+		formats[PBR]               = TextureFormat::RGBA32;
+		formats[VELOCITY]          = TextureFormat::RG8;
+		formats[COLOR_PONG]        = TextureFormat::RGBA32;
+		formats[POSITION_PONG]     = TextureFormat::RGBA32;
+		formats[NORMALS_PONG]      = TextureFormat::RGBA32;
+		formats[PBR_PONG]          = TextureFormat::RGBA32;
+		formats[VELOCITY]          = TextureFormat::RG8;
+
 		formats[VIEW_POSITION]     = TextureFormat::RGBA32;
 		formats[VIEW_NORMALS]      = TextureFormat::RGBA32;
-		formats[VELOCITY]          = TextureFormat::RGBA8;
-		formats[PBR]               = TextureFormat::RGBA32;
-		formats[VOLUMETRIC_LIGHT]  = TextureFormat::RGB8;
 		formats[PSEUDO_SKY]        = TextureFormat::RGBA8;
 		formats[INDIRECT_LIGHTING] = TextureFormat::RGBA32;
 		//buildTexture(commandBuffer);
@@ -40,15 +45,20 @@ namespace maple
 
 	auto GBuffer::buildTexture(const CommandBuffer *commandBuffer) -> void
 	{
-		if (depthBuffer == nullptr)
+		if (depthBuffer[0] == nullptr)
 		{
 			for (auto i = 0; i < GBufferTextures::LENGTH; i++)
 			{
 				screenTextures[i] = Texture2D::create();
 				screenTextures[i]->setName(GBufferNames[i]);
 			}
-			depthBuffer = TextureDepth::create(width, height, true, commandBuffer);
-			depthBuffer->setName("GBuffer-Depth");
+
+			depthBuffer[0] = TextureDepth::create(width, height, true, commandBuffer);
+			depthBuffer[0]->setName("GBuffer-Depth-Ping");
+
+			depthBuffer[1] = TextureDepth::create(width, height, true, commandBuffer);
+			depthBuffer[1]->setName("GBuffer-Depth-Pong");
+
 #if defined(__ANDROID__)
 			constexpr int32_t SSAO_NOISE_DIM = 8;
 #else
@@ -65,15 +75,24 @@ namespace maple
 
 		for (int32_t i = COLOR; i < LENGTH; i++)
 		{
-			if (i == VOLUMETRIC_LIGHT)
-			{
-				screenTextures[i]->buildTexture(formats[i], width / 2.f, height / 2.f, false, false, false);
-			}
-			else
-			{
-				screenTextures[i]->buildTexture(formats[i], width, height, false, false, false);
-			}
+			screenTextures[i]->buildTexture(formats[i], width, height, false, false, false);
 		}
-		depthBuffer->resize(width, height, commandBuffer);
+		depthBuffer[0]->resize(width, height, commandBuffer);
+		depthBuffer[1]->resize(width, height, commandBuffer);
+	}
+
+	auto GBuffer::getBuffer(uint32_t i) -> std::shared_ptr<Texture2D>
+	{
+		if (i <= VELOCITY)
+		{
+			return screenTextures[( i  + 1 ) * 2 - index];
+		}
+
+		return screenTextures[i];
+	}
+
+	auto GBuffer::pingPong() -> void
+	{
+		index = 1 - index;
 	}
 }        // namespace maple

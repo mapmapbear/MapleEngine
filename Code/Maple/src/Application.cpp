@@ -8,6 +8,7 @@
 #include "Engine/Renderer/Renderer2D.h"
 #include "Engine/Terrain.h"
 #include "Engine/Timestep.h"
+#include "Engine/GBuffer.h"
 
 #include "2d/Sprite.h"
 #include "Scene/Component/BoundingBox.h"
@@ -18,7 +19,9 @@
 #include "Scene/Component/MeshRenderer.h"
 #include "Scene/Component/Transform.h"
 #include "Scene/Component/VolumetricCloud.h"
-
+#include "Scene/Scene.h"
+#include "Scene/SceneManager.h"
+#include "Scene/System/ExecutePoint.h"
 #include "Scene/SystemBuilder.inl"
 
 #include "Others/Console.h"
@@ -31,9 +34,7 @@
 #include "ImGui/ImGuiSystem.h"
 #include "ImGui/ImNotification.h"
 #include "Physics/PhysicsWorld.h"
-#include "Scene/Scene.h"
-#include "Scene/SceneManager.h"
-#include "Scene/System/ExecutePoint.h"
+
 #include "Scripts/Mono/MonoVirtualMachine.h"
 
 #include "Loaders/Loader.h"
@@ -184,6 +185,7 @@ namespace maple
 		imGuiManager->onRender(sceneManager->getCurrentScene());
 		renderDevice->present();        //present all data
 		window->swapBuffers();
+		renderGraph->pingPong();
 	}
 
 	auto Application::beginScene() -> void

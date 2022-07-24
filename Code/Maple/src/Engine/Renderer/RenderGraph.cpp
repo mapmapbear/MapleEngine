@@ -14,11 +14,11 @@
 #include "Engine/PathTracer/PathIntegrator.h"
 #include "Engine/Profiler.h"
 #include "Engine/Quad2D.h"
+#include "Engine/Raytrace/AccelerationStructure.h"
+#include "Engine/Raytrace/RaytracedShadow.h"
 #include "Engine/VXGI/DrawVoxel.h"
 #include "Engine/VXGI/Voxelization.h"
 #include "Engine/Vertex.h"
-#include "Engine/Raytrace/AccelerationStructure.h"
-#include "Engine/Raytrace/RaytracedShadow.h"
 
 #include "RHI/CommandBuffer.h"
 #include "RHI/GPUProfile.h"
@@ -75,10 +75,10 @@ namespace maple
 			Application::getRenderDevice()->clearRenderTarget(renderer.gbuffer->getBuffer(GBufferTextures::POSITION), renderer.commandBuffer, {0, 0, 0, 0});
 			Application::getRenderDevice()->clearRenderTarget(renderer.gbuffer->getBuffer(GBufferTextures::NORMALS), renderer.commandBuffer, {0, 0, 0, 0});
 			Application::getRenderDevice()->clearRenderTarget(renderer.gbuffer->getBuffer(GBufferTextures::PBR), renderer.commandBuffer, {0, 0, 0, 0});
+			Application::getRenderDevice()->clearRenderTarget(renderer.gbuffer->getBuffer(GBufferTextures::VELOCITY), renderer.commandBuffer, {0, 0, 0, 0});
 
 			Application::getRenderDevice()->clearRenderTarget(renderer.gbuffer->getBuffer(GBufferTextures::VIEW_POSITION), renderer.commandBuffer, {0, 0, 0, 0});
 			Application::getRenderDevice()->clearRenderTarget(renderer.gbuffer->getBuffer(GBufferTextures::VIEW_NORMALS), renderer.commandBuffer, {0, 0, 0, 0});
-			Application::getRenderDevice()->clearRenderTarget(renderer.gbuffer->getBuffer(GBufferTextures::VELOCITY), renderer.commandBuffer, {0, 0, 0, 0});
 
 			renderer.numFrames++;
 		}
@@ -104,7 +104,7 @@ namespace maple
 		executePoint->registerQueue(renderQ);
 		executePoint->registerWithinQueue<on_begin_renderer::system>(renderQ);
 
-		raytracing::registerAccelerationStructureModule(beginQ,executePoint);
+		raytracing::registerAccelerationStructureModule(beginQ, executePoint);
 
 		shadow_map::registerShadowMap(beginQ, renderQ, executePoint);
 		reflective_shadow_map::registerShadowMap(beginQ, renderQ, executePoint);
@@ -125,9 +125,9 @@ namespace maple
 		final_screen_pass::registerFinalPass(renderQ, executePoint);
 
 		//############################################################################
-		
+
 		raytraced_shadow::registerRaytracedShadow(beginQ, renderQ, executePoint);
-	
+
 		cloud_renderer::registerComputeCloud(renderQ, executePoint);
 		vxgi::registerUpdateRadiace(renderQ, executePoint);
 		light_propagation_volume::registerLPV(beginQ, renderQ, executePoint);
@@ -334,5 +334,12 @@ namespace maple
 	{
 		PROFILE_FUNCTION();
 		Application::getExecutePoint()->getGlobalComponent<component::FinalPass>().renderTarget = texture;
+	}
+
+	auto RenderGraph::pingPong() -> void
+	{
+		gBuffer->pingPong();
+		auto &cameraView       = Application::getExecutePoint()->getGlobalComponent<component::CameraView>();
+		cameraView.projViewOld = cameraView.projView;
 	}
 };        // namespace maple

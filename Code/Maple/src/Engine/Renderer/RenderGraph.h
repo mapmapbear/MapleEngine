@@ -65,6 +65,8 @@ namespace maple
 			screenBufferHeight = height;
 		}
 
+		auto pingPong() -> void;
+
 	  private:
 		bool previewFocused = false;
 
