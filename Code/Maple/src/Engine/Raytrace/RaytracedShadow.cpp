@@ -40,8 +40,7 @@ namespace maple
 			Texture2D::Ptr atrousFilter[2];        //A-Trous Filter
 
 			//Temporal - Accumulation
-			Texture2D::Ptr prev;        //Shadows Previous Re-projection
-			Texture2D::Ptr output;
+			Texture2D::Ptr outputs[2];        //Shadows Previous Re-projection
 			Texture2D::Ptr currentMoments[2];
 
 			DescriptorSet::Ptr writeDescriptorSet;        //Shadows Ray Trace Write
@@ -54,6 +53,9 @@ namespace maple
 			Shader::Ptr shadowRaytraceShader;
 
 			float showBias = 0.5f;
+
+			int32_t pingPong = 0;
+
 		};
 
 		struct TemporalAccumulator
@@ -67,8 +69,16 @@ namespace maple
 			DescriptorSet::Ptr indirectDescriptorSet;
 			Shader::Ptr        resetArgsShader;
 			Pipeline::Ptr      resetPipeline;
-		};
 
+			/*
+			* 0 -> Moment/History
+			* 1 -> GBuffer
+			* 2 -> PrevGBuffer
+			* 3 -> Args
+			*/
+			DescriptorSet::Ptr descriptorSets[4];
+			Shader::Ptr        reprojectionShader;
+		};
 	}        // namespace component
 
 	namespace init
@@ -83,13 +93,14 @@ namespace maple
 			auto &pipeline = entity.addComponent<component::RaytraceShadowPipeline>();
 
 			//////////////////////////////////////////////////////////
-			pipeline.prev = Texture2D::create();
-			pipeline.prev->buildTexture(TextureFormat::RG16F, shadow.width, shadow.height);
-			pipeline.prev->setName("Shadows Previous Re-projection");
 
-			pipeline.output = Texture2D::create();
-			pipeline.output->buildTexture(TextureFormat::RG16F, shadow.width, shadow.height);
-			pipeline.output->setName("Shadows Re-projection Output");
+			pipeline.outputs[0] = Texture2D::create();
+			pipeline.outputs[0]->buildTexture(TextureFormat::RG16F, shadow.width, shadow.height);
+			pipeline.outputs[0]->setName("Shadows Re-projection Output Ping");
+
+			pipeline.outputs[1] = Texture2D::create();
+			pipeline.outputs[1]->buildTexture(TextureFormat::RG16F, shadow.width, shadow.height);
+			pipeline.outputs[1]->setName("Shadows Re-projection Output Pong");
 
 			for (int32_t i = 0; i < 2; i++)
 			{
@@ -132,7 +143,17 @@ namespace maple
 
 			accumulator.indirectDescriptorSet->setStorageBuffer("DenoiseTileDispatchArgs", accumulator.denoiseTileCoordsBuffer);
 			accumulator.indirectDescriptorSet->setStorageBuffer("ShadowTileDispatchArgs", accumulator.shadowDispatchBuffer);
-			
+
+			//###############
+			accumulator.reprojectionShader = Shader::create("shaders/Shadow/DenoiseReprojection.shader");
+			constexpr char *str[4]         = {"Accumulation", "GBuffer", "PrevGBuffer", "Args"};
+
+			for (uint32_t i = 0; i < 4; i++)
+			{
+				accumulator.descriptorSets[i] = DescriptorSet::create({i, accumulator.reprojectionShader.get()});
+				accumulator.descriptorSets[i]->setName(str[i]);
+			}
+			//###############
 
 			PipelineInfo info;
 			info.shader               = accumulator.resetArgsShader;
@@ -230,8 +251,13 @@ namespace maple
 
 	namespace denoise
 	{
+		// clang-format off
 		using Entity = ecs::Registry 
-			::Modify<raytraced_shadow::component::RaytracedShadow>::Modify<component::TemporalAccumulator>::To<ecs::Entity>;
+			::Modify<raytraced_shadow::component::RaytracedShadow>
+			::Modify<component::TemporalAccumulator>
+			::Modify<component::RaytraceShadowPipeline>
+			::To<ecs::Entity>;
+		// clang-format on
 
 		inline auto reserArgs(component::TemporalAccumulator &acc, const component::RendererData &renderData)
 		{
@@ -241,20 +267,29 @@ namespace maple
 			Renderer::dispatch(renderData.commandBuffer, 1, 1, 1);
 		}
 
-		inline auto accumulation(component::TemporalAccumulator &acc, const component::RendererData &renderData)
+		inline auto accumulation(component::TemporalAccumulator &accumulator, 
+			component::RaytraceShadowPipeline& pipeline,
+			const component::RendererData &renderData)
 		{
-			
+			accumulator.descriptorSets[0]->setTexture("outColor", pipeline.outputs[pipeline.pingPong]);
+			accumulator.descriptorSets[0]->setTexture("moment", pipeline.currentMoments[pipeline.pingPong]);
+			accumulator.descriptorSets[0]->setTexture("uHistoryOutput", pipeline.outputs[1 - pipeline.pingPong]);        //prev
+			accumulator.descriptorSets[0]->setTexture("uHistoryMoments", pipeline.currentMoments[1-pipeline.pingPong]);
+			accumulator.descriptorSets[0]->setTexture("uInput", pipeline.raytraceImage);        //noise shadow
 		}
 
 		inline auto system(Entity entity, component::RendererData &renderData)
 		{
-			auto [shadow, acc] = entity;
+			auto [shadow, acc,pipeline] = entity;
 			//reset
 			//temporal accumulation
 			//a trous filter
 			//upsample to fullscreen
 
 			reserArgs(acc, renderData);
+
+
+			pipeline.pingPong = 1 - pipeline.pingPong;
 		}
 	}        // namespace denoise
 
