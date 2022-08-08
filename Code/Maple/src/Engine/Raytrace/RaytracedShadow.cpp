@@ -55,7 +55,6 @@ namespace maple
 			float showBias = 0.5f;
 
 			int32_t pingPong = 0;
-
 		};
 
 		struct TemporalAccumulator
@@ -76,8 +75,15 @@ namespace maple
 			* 2 -> PrevGBuffer
 			* 3 -> Args
 			*/
-			DescriptorSet::Ptr descriptorSets[4];
-			Shader::Ptr        reprojectionShader;
+			std::vector<DescriptorSet::Ptr> descriptorSets;
+			Shader::Ptr                     reprojectionShader;
+			Pipeline::Ptr                   reprojectionPipeline;
+
+			struct PushConstants
+			{
+				float alpha        = 0.01f;
+				float momentsAlpha = 0.2f;
+			} pushConsts;
 		};
 	}        // namespace component
 
@@ -147,17 +153,25 @@ namespace maple
 			//###############
 			accumulator.reprojectionShader = Shader::create("shaders/Shadow/DenoiseReprojection.shader");
 			constexpr char *str[4]         = {"Accumulation", "GBuffer", "PrevGBuffer", "Args"};
-
+			accumulator.descriptorSets.resize(4);
 			for (uint32_t i = 0; i < 4; i++)
 			{
 				accumulator.descriptorSets[i] = DescriptorSet::create({i, accumulator.reprojectionShader.get()});
 				accumulator.descriptorSets[i]->setName(str[i]);
 			}
+
+			accumulator.descriptorSets[3]->setStorageBuffer("DenoiseTileData", accumulator.denoiseDispatchBuffer);
+			accumulator.descriptorSets[3]->setStorageBuffer("DenoiseTileDispatchArgs", accumulator.denoiseTileCoordsBuffer);
+			accumulator.descriptorSets[3]->setStorageBuffer("ShadowTileData", accumulator.shadowTileCoordsBuffer);
+			accumulator.descriptorSets[3]->setStorageBuffer("ShadowTileDispatchArgs", accumulator.shadowDispatchBuffer);
+			PipelineInfo info;
+			info.shader                      = accumulator.reprojectionShader;
+			accumulator.reprojectionPipeline = Pipeline::get(info);
 			//###############
 
-			PipelineInfo info;
-			info.shader               = accumulator.resetArgsShader;
-			accumulator.resetPipeline = Pipeline::get(info);
+			PipelineInfo info2;
+			info2.shader               = accumulator.resetArgsShader;
+			accumulator.resetPipeline = Pipeline::get(info2);
 
 			////////////////////////////////////////////////////////////////////////////////////////
 
@@ -267,27 +281,49 @@ namespace maple
 			Renderer::dispatch(renderData.commandBuffer, 1, 1, 1);
 		}
 
-		inline auto accumulation(component::TemporalAccumulator &accumulator, 
-			component::RaytraceShadowPipeline& pipeline,
-			const component::RendererData &renderData)
+		inline auto accumulation(component::TemporalAccumulator &   accumulator,
+		                         component::RaytraceShadowPipeline &pipeline,
+		                         const component::RendererData &    renderData,
+		                         const component::WindowSize &      winSize)
 		{
 			accumulator.descriptorSets[0]->setTexture("outColor", pipeline.outputs[pipeline.pingPong]);
 			accumulator.descriptorSets[0]->setTexture("moment", pipeline.currentMoments[pipeline.pingPong]);
 			accumulator.descriptorSets[0]->setTexture("uHistoryOutput", pipeline.outputs[1 - pipeline.pingPong]);        //prev
-			accumulator.descriptorSets[0]->setTexture("uHistoryMoments", pipeline.currentMoments[1-pipeline.pingPong]);
+			accumulator.descriptorSets[0]->setTexture("uHistoryMoments", pipeline.currentMoments[1 - pipeline.pingPong]);
 			accumulator.descriptorSets[0]->setTexture("uInput", pipeline.raytraceImage);        //noise shadow
+
+			accumulator.descriptorSets[1]->setTexture("uPositionSampler", renderData.gbuffer->getBufferWithoutPingPong(GBufferTextures::POSITION));
+			accumulator.descriptorSets[1]->setTexture("uNormalSampler", renderData.gbuffer->getBufferWithoutPingPong(GBufferTextures::NORMALS));
+			accumulator.descriptorSets[1]->setTexture("uVelocitySampler", renderData.gbuffer->getBufferWithoutPingPong(GBufferTextures::VELOCITY));
+			accumulator.descriptorSets[1]->setTexture("uDepthSampler", renderData.gbuffer->getDepthBuffer());
+
+			accumulator.descriptorSets[2]->setTexture("uPrevPositionSampler", renderData.gbuffer->getBufferWithoutPingPong(GBufferTextures::POSITION));
+			accumulator.descriptorSets[2]->setTexture("uPrevNormalSampler", renderData.gbuffer->getBufferWithoutPingPong(GBufferTextures::NORMALS));
+			accumulator.descriptorSets[2]->setTexture("uPrevVelocitySampler", renderData.gbuffer->getBufferWithoutPingPong(GBufferTextures::VELOCITY));
+			accumulator.descriptorSets[2]->setTexture("uPrevDepthSampler", renderData.gbuffer->getDepthBufferPong());
+
+			if (auto pushConsts = accumulator.reprojectionShader->getPushConstant(0))
+			{
+				pushConsts->setData(&accumulator.pushConsts);
+			}
+
+			accumulator.reprojectionPipeline->bind(renderData.commandBuffer);
+			accumulator.reprojectionShader->bindPushConstants(renderData.commandBuffer, accumulator.reprojectionPipeline.get());
+			Renderer::bindDescriptorSets(accumulator.reprojectionPipeline.get(), renderData.commandBuffer, 0, accumulator.descriptorSets);
+			auto x = static_cast<uint32_t>(ceil(float(winSize.width) / float(TEMPORAL_ACCUMULATION_NUM_THREADS_X)));
+			auto y = static_cast<uint32_t>(ceil(float(winSize.height) / float(TEMPORAL_ACCUMULATION_NUM_THREADS_Y)));
+			Renderer::dispatch(renderData.commandBuffer, x, y, 1);
 		}
 
-		inline auto system(Entity entity, component::RendererData &renderData)
+		inline auto system(Entity entity, component::RendererData &renderData, const component::WindowSize &winSize)
 		{
-			auto [shadow, acc,pipeline] = entity;
+			auto [shadow, acc, pipeline] = entity;
 			//reset
 			//temporal accumulation
 			//a trous filter
 			//upsample to fullscreen
-
 			reserArgs(acc, renderData);
-
+			accumulation(acc, pipeline, renderData, winSize);
 
 			pipeline.pingPong = 1 - pipeline.pingPong;
 		}

@@ -28,6 +28,7 @@ namespace maple
 		formats[NORMALS_PONG]      = TextureFormat::RGBA32;
 		formats[PBR_PONG]          = TextureFormat::RGBA32;
 		formats[VELOCITY]          = TextureFormat::RG8;
+		formats[VELOCITY_PONG]     = TextureFormat::RG8;
 
 		formats[VIEW_POSITION]     = TextureFormat::RGBA32;
 		formats[VIEW_NORMALS]      = TextureFormat::RGBA32;
@@ -85,10 +86,20 @@ namespace maple
 	{
 		if (i <= VELOCITY)
 		{
-			return screenTextures[( i  + 1 ) * 2 - index];
+			std::shared_ptr<Texture2D> textures[2] = 
+			{
+			        screenTextures[i],
+			        screenTextures[i + 5]
+			};
+			return textures[index];
 		}
 
 		return screenTextures[i];
+	}
+
+	auto GBuffer::getBufferWithoutPingPong(uint32_t index) -> std::shared_ptr<Texture2D>
+	{
+		return screenTextures[index];
 	}
 
 	auto GBuffer::pingPong() -> void

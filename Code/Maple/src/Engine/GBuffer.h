@@ -93,7 +93,14 @@ namespace maple
 			return depthBuffer[index];
 		}
 
+		inline auto getDepthBufferPong()
+		{
+			return depthBuffer[1 - index];
+		}
+
 		auto getBuffer(uint32_t index) -> std::shared_ptr<Texture2D>;
+
+		auto getBufferWithoutPingPong(uint32_t index) -> std::shared_ptr<Texture2D>;
 
 		inline auto getFormat(uint32_t index)
 		{
@@ -106,6 +113,11 @@ namespace maple
 		}
 
 		auto pingPong() -> void;
+
+		inline auto getIndex() const
+		{
+			return index;
+		}
 
 	  private:
 		std::array<std::shared_ptr<Texture2D>, GBufferTextures::LENGTH> screenTextures;
