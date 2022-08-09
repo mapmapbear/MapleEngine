@@ -68,10 +68,73 @@ void loadCache()
 {
     if (gl_LocalInvocationID.x < 3 && gl_LocalInvocationID.y < 6)
     {
-        ivec2 coord                                                     = ivec2(gl_WorkGroupID.x, gl_WorkGroupID.y * 2) - ivec2(1, 2) + ivec2(gl_LocalInvocationID.xy);
+        ivec2 coord = ivec2(gl_WorkGroupID.x, gl_WorkGroupID.y * 2) - ivec2(1, 2) + ivec2(gl_LocalInvocationID.xy);
         gShadowHitMasks[gl_LocalInvocationID.x][gl_LocalInvocationID.y] = texelFetch(uInput, coord, 0).x;
     }
     barrier();
+}
+
+
+float unpackShadowHitValue(ivec2 coord)
+{
+    // Find the global coordinate for the top left corner of the current work group.
+    const ivec2 workGroupStartCoord = ivec2(gl_WorkGroupID.xy) * ivec2(NUM_THREADS_X, NUM_THREADS_Y);
+
+    // Find the global coordinate for the top left corner of the cache.
+    const ivec2 cacheStartCoord = workGroupStartCoord - ivec2(RAY_MASK_SIZE_X, RAY_MASK_SIZE_Y * 2);
+
+    // Compute the local coordinate within the cache for the requested global coordinate.
+    const ivec2 unpackedCacheCoord = coord - cacheStartCoord;
+
+    // From the unpacked local coordinate, compute which ray mask the requested hit belongs to.
+    // aka the packed local coordinate.
+    const ivec2 packedCacheCoord = unpackedCacheCoord / ivec2(RAY_MASK_SIZE_X, RAY_MASK_SIZE_Y);
+
+    // From the packed local coordinate, compute the unpacked local coordinate for the start of the current ray mask.
+    const ivec2 maskStartCoord = packedCacheCoord * ivec2(RAY_MASK_SIZE_X, RAY_MASK_SIZE_Y);
+
+    // Find the relative coordinate of the requested sample within the ray mask.
+    const ivec2 relative_mask_coord = unpackedCacheCoord - maskStartCoord;
+
+    // Compute the flattened hit index of the requested sample within the ray mask.
+    const int hit_index = relative_mask_coord.y * RAY_MASK_SIZE_X + relative_mask_coord.x;
+
+    // Use the hit index to bit shift the value from the cache and retrieve the requested sample.
+    return float((gShadowHitMasks[packedCacheCoord.x][packedCacheCoord.y] >> hit_index) & 1u);
+}
+
+
+float horizontalMean(ivec2 coord)
+{
+    float result = 0.0f;
+
+    for (int x = -8; x <= 8; x++)
+        result += unpackShadowHitValue(ivec2(coord.x + x, coord.y));
+
+    return result;
+}
+
+float computeMean(ivec2 coord)
+{
+    float top    = horizontalMean(ivec2(coord.x, coord.y - 8));
+    float middle = horizontalMean(ivec2(coord.x, coord.y));
+    float bottom = horizontalMean(ivec2(coord.x, coord.y + 8));
+
+    gMeanAccumulation[gl_LocalInvocationID.x][gl_LocalInvocationID.y]      = top;
+    gMeanAccumulation[gl_LocalInvocationID.x][gl_LocalInvocationID.y + 8]  = middle;
+    gMeanAccumulation[gl_LocalInvocationID.x][gl_LocalInvocationID.y + 16] = bottom;
+
+    barrier();
+
+    const int   radius = 8;
+    const float weight = (float(radius) * 2.0f + 1.0f) * (float(radius) * 2.0f + 1.0f);
+
+    float mean = 0.0f;
+
+    for (int y = 0; y <= 16; y++)
+        mean += gMeanAccumulation[gl_LocalInvocationID.x][gl_LocalInvocationID.y + y];
+
+    return mean / weight;
 }
 
 
@@ -84,4 +147,8 @@ void main()
     const ivec2 size          = textureSize(uHistoryOutput, 0);
     const ivec2 currentCoord = ivec2(gl_GlobalInvocationID.xy);
     loadCache();
+    float mean = computeMean(current_coord);
 }
+
+//gl_GlobalInvocationID = gl_WorkGroupID * gl_WorkGroupSize + gl_LocalInvocationID;
+//gl_LocalInvocationIndex = gl_LocalInvocationID.z * gl_WorkGroupSize.x * gl_WorkGroupSize.y + gl_LocalInvocationID.y * gl_WorkGroupSize.x + gl_LocalInvocationID.x;

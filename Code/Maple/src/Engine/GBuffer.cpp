@@ -82,7 +82,7 @@ namespace maple
 		depthBuffer[1]->resize(width, height, commandBuffer);
 	}
 
-	auto GBuffer::getBuffer(uint32_t i) -> std::shared_ptr<Texture2D>
+	auto GBuffer::getBuffer(uint32_t i, bool pong) -> std::shared_ptr<Texture2D>
 	{
 		if (i <= VELOCITY)
 		{
@@ -91,7 +91,7 @@ namespace maple
 			        screenTextures[i],
 			        screenTextures[i + 5]
 			};
-			return textures[index];
+			return pong ? textures[1 - index] : textures[index];
 		}
 
 		return screenTextures[i];

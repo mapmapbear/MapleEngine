@@ -170,7 +170,7 @@ namespace maple
 			//###############
 
 			PipelineInfo info2;
-			info2.shader               = accumulator.resetArgsShader;
+			info2.shader              = accumulator.resetArgsShader;
 			accumulator.resetPipeline = Pipeline::get(info2);
 
 			////////////////////////////////////////////////////////////////////////////////////////
@@ -292,14 +292,14 @@ namespace maple
 			accumulator.descriptorSets[0]->setTexture("uHistoryMoments", pipeline.currentMoments[1 - pipeline.pingPong]);
 			accumulator.descriptorSets[0]->setTexture("uInput", pipeline.raytraceImage);        //noise shadow
 
-			accumulator.descriptorSets[1]->setTexture("uPositionSampler", renderData.gbuffer->getBufferWithoutPingPong(GBufferTextures::POSITION));
-			accumulator.descriptorSets[1]->setTexture("uNormalSampler", renderData.gbuffer->getBufferWithoutPingPong(GBufferTextures::NORMALS));
-			accumulator.descriptorSets[1]->setTexture("uVelocitySampler", renderData.gbuffer->getBufferWithoutPingPong(GBufferTextures::VELOCITY));
+			accumulator.descriptorSets[1]->setTexture("uPositionSampler", renderData.gbuffer->getBuffer(GBufferTextures::POSITION));
+			accumulator.descriptorSets[1]->setTexture("uNormalSampler", renderData.gbuffer->getBuffer(GBufferTextures::NORMALS));
+			accumulator.descriptorSets[1]->setTexture("uVelocitySampler", renderData.gbuffer->getBuffer(GBufferTextures::VELOCITY));
 			accumulator.descriptorSets[1]->setTexture("uDepthSampler", renderData.gbuffer->getDepthBuffer());
 
-			accumulator.descriptorSets[2]->setTexture("uPrevPositionSampler", renderData.gbuffer->getBufferWithoutPingPong(GBufferTextures::POSITION));
-			accumulator.descriptorSets[2]->setTexture("uPrevNormalSampler", renderData.gbuffer->getBufferWithoutPingPong(GBufferTextures::NORMALS));
-			accumulator.descriptorSets[2]->setTexture("uPrevVelocitySampler", renderData.gbuffer->getBufferWithoutPingPong(GBufferTextures::VELOCITY));
+			accumulator.descriptorSets[2]->setTexture("uPrevPositionSampler", renderData.gbuffer->getBuffer(GBufferTextures::POSITION, true));
+			accumulator.descriptorSets[2]->setTexture("uPrevNormalSampler", renderData.gbuffer->getBuffer(GBufferTextures::NORMALS, true));
+			accumulator.descriptorSets[2]->setTexture("uPrevVelocitySampler", renderData.gbuffer->getBuffer(GBufferTextures::VELOCITY, true));
 			accumulator.descriptorSets[2]->setTexture("uPrevDepthSampler", renderData.gbuffer->getDepthBufferPong());
 
 			if (auto pushConsts = accumulator.reprojectionShader->getPushConstant(0))

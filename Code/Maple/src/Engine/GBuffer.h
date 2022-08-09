@@ -98,7 +98,7 @@ namespace maple
 			return depthBuffer[1 - index];
 		}
 
-		auto getBuffer(uint32_t index) -> std::shared_ptr<Texture2D>;
+		auto getBuffer(uint32_t index,bool pong = false) -> std::shared_ptr<Texture2D>;
 
 		auto getBufferWithoutPingPong(uint32_t index) -> std::shared_ptr<Texture2D>;
 
