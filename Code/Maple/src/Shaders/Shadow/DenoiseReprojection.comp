@@ -4,6 +4,9 @@
 #define NUM_THREADS_X 8
 #define NUM_THREADS_Y 8
 
+
+
+
 #define RAY_MASK_SIZE_X 8
 #define RAY_MASK_SIZE_Y 4
 
@@ -94,13 +97,13 @@ float unpackShadowHitValue(ivec2 coord)
     const ivec2 maskStartCoord = packedCacheCoord * ivec2(RAY_MASK_SIZE_X, RAY_MASK_SIZE_Y);
 
     // Find the relative coordinate of the requested sample within the ray mask.
-    const ivec2 relative_mask_coord = unpackedCacheCoord - maskStartCoord;
+    const ivec2 relativeMaskCoord = unpackedCacheCoord - maskStartCoord;
 
     // Compute the flattened hit index of the requested sample within the ray mask.
-    const int hit_index = relative_mask_coord.y * RAY_MASK_SIZE_X + relative_mask_coord.x;
+    const int hitIndex = relativeMaskCoord.y * RAY_MASK_SIZE_X + relativeMaskCoord.x;
 
     // Use the hit index to bit shift the value from the cache and retrieve the requested sample.
-    return float((gShadowHitMasks[packedCacheCoord.x][packedCacheCoord.y] >> hit_index) & 1u);
+    return float((gShadowHitMasks[packedCacheCoord.x][packedCacheCoord.y] >> hitIndex) & 1u);
 }
 
 
@@ -108,7 +111,7 @@ float horizontalMean(ivec2 coord)
 {
     float result = 0.0f;
 
-    for (int x = -8; x <= 8; x++)
+    for (int x = -8; x <= 8; x++)// 17
         result += unpackShadowHitValue(ivec2(coord.x + x, coord.y));
 
     return result;
@@ -138,6 +141,8 @@ float computeMean(ivec2 coord)
 }
 
 
+
+
 void main()
 {
     gShouldDenoise = 0;
@@ -147,7 +152,7 @@ void main()
     const ivec2 size          = textureSize(uHistoryOutput, 0);
     const ivec2 currentCoord = ivec2(gl_GlobalInvocationID.xy);
     loadCache();
-    float mean = computeMean(current_coord);
+    float mean = computeMean(currentCoord);
 }
 
 //gl_GlobalInvocationID = gl_WorkGroupID * gl_WorkGroupSize + gl_LocalInvocationID;

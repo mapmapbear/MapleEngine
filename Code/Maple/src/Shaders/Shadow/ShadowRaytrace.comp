@@ -9,6 +9,8 @@
 #include "../Common/Light.h"
 #include "../Common/Math.h"
 
+//work group perfectly fits 32 rays
+
 layout(local_size_x = 8, local_size_y = 4, local_size_z = 1) in;
 
 layout(set = 0, binding = 0, r32ui) uniform uimage2D outColor;
@@ -153,7 +155,9 @@ void main()
     atomicOr(gVisibility, result << gl_LocalInvocationIndex);
 
     barrier();
-
+    
+    //because of ray hit is true or false, so we can use bitwise to do.
+    //for every workgroup is 4 * 8 = 32 bit, so we can use 4 * 8 as a group to pack 32 rays.
     if (gl_LocalInvocationIndex == 0)
         imageStore(outColor, ivec2(gl_WorkGroupID.xy), uvec4(gVisibility));
 }
