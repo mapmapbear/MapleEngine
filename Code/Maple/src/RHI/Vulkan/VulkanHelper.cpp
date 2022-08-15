@@ -1042,6 +1042,10 @@ namespace maple
 						return VK_FORMAT_R32G32B32_SFLOAT;
 					case TextureFormat::RGBA32:
 						return VK_FORMAT_R32G32B32A32_SFLOAT;
+					case TextureFormat::R32F:
+						return VK_FORMAT_R32_SFLOAT;
+					case TextureFormat::R16F:
+						return VK_FORMAT_R16_SFLOAT;
 					default:
 						MAPLE_ASSERT(ignoreAssert, "[Texture] Unsupported image bit-depth!");
 						return VK_FORMAT_UNDEFINED;
@@ -1079,6 +1083,10 @@ namespace maple
 						return VK_FORMAT_R32_SINT;
 					case TextureFormat::RG16F:
 						return VK_FORMAT_R16G16_SFLOAT;
+					case TextureFormat::R32F:
+						return VK_FORMAT_R32_SFLOAT;
+					case TextureFormat::R16F:
+						return VK_FORMAT_R16_SFLOAT;
 					default:
 						MAPLE_ASSERT(ignoreAssert, "[Texture] Unsupported image bit-depth!");
 						return VK_FORMAT_UNDEFINED;

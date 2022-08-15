@@ -166,6 +166,8 @@ void main()
 	outViewPosition = fragViewPosition;
 	outViewNormal   = vec4(transpose(inverse(mat3(ubo.view))) * outNormal.xyz, 1);
 	//outViewNormal   = ubo.view * outNormal;
+	//Perspective division, covert clip space positions to NDC.
+	//and remap to [0,1]
     vec2 a = (fragProjPosition.xy / fragProjPosition.w) * 0.5 + 0.5;
     vec2 b = (fragOldProjPosition.xy / fragOldProjPosition.w) * 0.5 + 0.5;
     outVelocity.xy = b - a;

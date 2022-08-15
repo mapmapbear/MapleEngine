@@ -20,6 +20,8 @@
 #include "Engine/Renderer/Renderer.h"
 #include "Engine/Renderer/RendererData.h"
 
+#include <glm/gtc/type_ptr.hpp>
+
 namespace maple
 {
 	namespace
@@ -101,11 +103,11 @@ namespace maple
 			//////////////////////////////////////////////////////////
 
 			pipeline.outputs[0] = Texture2D::create();
-			pipeline.outputs[0]->buildTexture(TextureFormat::RG16F, shadow.width, shadow.height);
+			pipeline.outputs[0]->buildTexture(TextureFormat::R32F, shadow.width, shadow.height);
 			pipeline.outputs[0]->setName("Shadows Re-projection Output Ping");
 
 			pipeline.outputs[1] = Texture2D::create();
-			pipeline.outputs[1]->buildTexture(TextureFormat::RG16F, shadow.width, shadow.height);
+			pipeline.outputs[1]->buildTexture(TextureFormat::R32F, shadow.width, shadow.height);
 			pipeline.outputs[1]->setName("Shadows Re-projection Output Pong");
 
 			for (int32_t i = 0; i < 2; i++)
@@ -284,13 +286,15 @@ namespace maple
 		inline auto accumulation(component::TemporalAccumulator &   accumulator,
 		                         component::RaytraceShadowPipeline &pipeline,
 		                         const component::RendererData &    renderData,
-		                         const component::WindowSize &      winSize)
+		                         const component::WindowSize &      winSize,
+		                         const component::CameraView &      cameraView)
 		{
 			accumulator.descriptorSets[0]->setTexture("outColor", pipeline.outputs[pipeline.pingPong]);
 			accumulator.descriptorSets[0]->setTexture("moment", pipeline.currentMoments[pipeline.pingPong]);
 			accumulator.descriptorSets[0]->setTexture("uHistoryOutput", pipeline.outputs[1 - pipeline.pingPong]);        //prev
 			accumulator.descriptorSets[0]->setTexture("uHistoryMoments", pipeline.currentMoments[1 - pipeline.pingPong]);
 			accumulator.descriptorSets[0]->setTexture("uInput", pipeline.raytraceImage);        //noise shadow
+			accumulator.descriptorSets[0]->setUniform("UniformBufferObject", "viewProjInv", glm::value_ptr(glm::inverse(cameraView.projView)));
 
 			accumulator.descriptorSets[1]->setTexture("uPositionSampler", renderData.gbuffer->getBuffer(GBufferTextures::POSITION));
 			accumulator.descriptorSets[1]->setTexture("uNormalSampler", renderData.gbuffer->getBuffer(GBufferTextures::NORMALS));
@@ -315,7 +319,7 @@ namespace maple
 			Renderer::dispatch(renderData.commandBuffer, x, y, 1);
 		}
 
-		inline auto system(Entity entity, component::RendererData &renderData, const component::WindowSize &winSize)
+		inline auto system(Entity entity, component::RendererData &renderData, const component::WindowSize &winSize, const component::CameraView & cameraView)
 		{
 			auto [shadow, acc, pipeline] = entity;
 			//reset
@@ -323,7 +327,7 @@ namespace maple
 			//a trous filter
 			//upsample to fullscreen
 			reserArgs(acc, renderData);
-			accumulation(acc, pipeline, renderData, winSize);
+			accumulation(acc, pipeline, renderData, winSize, cameraView);
 
 			pipeline.pingPong = 1 - pipeline.pingPong;
 		}

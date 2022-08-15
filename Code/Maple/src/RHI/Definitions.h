@@ -86,10 +86,12 @@ namespace maple
 	{
 		NONE,
 		R8,
+		R16,
+		R16F,
+		R32F,
 		R32I,
 		R32UI,
 		RG8,
-		R16,
 		RG16F,
 		RGB8,
 		RGBA8,

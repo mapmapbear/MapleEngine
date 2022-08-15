@@ -1,10 +1,11 @@
 #version 450
 #extension GL_GOOGLE_include_directive : require
 
+#include "../Raytraced/Reprojection.glsl"
+
+
 #define NUM_THREADS_X 8
 #define NUM_THREADS_Y 8
-
-
 
 
 #define RAY_MASK_SIZE_X 8
@@ -18,6 +19,11 @@ layout(set = 0, binding = 1, rgba16f)   uniform writeonly image2D moment;
 layout(set = 0, binding = 2)            uniform sampler2D uHistoryOutput;
 layout(set = 0, binding = 3)            uniform sampler2D uHistoryMoments;
 layout(set = 0, binding = 4)            uniform usampler2D uInput;
+layout(set = 0, binding = 5)            uniform UniformBufferObject
+{
+    mat4 viewProjInv;
+}ubo;
+
 
 layout(set = 1, binding = 0) uniform sampler2D uPositionSampler;
 layout(set = 1, binding = 1) uniform sampler2D uNormalSampler;
@@ -66,9 +72,8 @@ shared uint  gShadowHitMasks[3][6];
 shared float gMeanAccumulation[8][24];
 shared uint  gShouldDenoise;
 
-
 void loadCache()
-{
+{   
     if (gl_LocalInvocationID.x < 3 && gl_LocalInvocationID.y < 6)
     {
         ivec2 coord = ivec2(gl_WorkGroupID.x, gl_WorkGroupID.y * 2) - ivec2(1, 2) + ivec2(gl_LocalInvocationID.xy);
@@ -77,7 +82,10 @@ void loadCache()
     barrier();
 }
 
-
+/**
+ * visibility was packed with bitwise 
+ * every workgroup is 4 * 8 = 32 -> pack 32 into uint32
+ */
 float unpackShadowHitValue(ivec2 coord)
 {
     // Find the global coordinate for the top left corner of the current work group.
@@ -106,7 +114,6 @@ float unpackShadowHitValue(ivec2 coord)
     return float((gShadowHitMasks[packedCacheCoord.x][packedCacheCoord.y] >> hitIndex) & 1u);
 }
 
-
 float horizontalMean(ivec2 coord)
 {
     float result = 0.0f;
@@ -123,6 +130,7 @@ float computeMean(ivec2 coord)
     float middle = horizontalMean(ivec2(coord.x, coord.y));
     float bottom = horizontalMean(ivec2(coord.x, coord.y + 8));
 
+//group mean..
     gMeanAccumulation[gl_LocalInvocationID.x][gl_LocalInvocationID.y]      = top;
     gMeanAccumulation[gl_LocalInvocationID.x][gl_LocalInvocationID.y + 8]  = middle;
     gMeanAccumulation[gl_LocalInvocationID.x][gl_LocalInvocationID.y + 16] = bottom;
@@ -141,8 +149,6 @@ float computeMean(ivec2 coord)
 }
 
 
-
-
 void main()
 {
     gShouldDenoise = 0;
@@ -153,7 +159,77 @@ void main()
     const ivec2 currentCoord = ivec2(gl_GlobalInvocationID.xy);
     loadCache();
     float mean = computeMean(currentCoord);
-}
+    float depth = texelFetch(uDepthSampler, currentCoord, 0).r;
 
-//gl_GlobalInvocationID = gl_WorkGroupID * gl_WorkGroupSize + gl_LocalInvocationID;
-//gl_LocalInvocationIndex = gl_LocalInvocationID.z * gl_WorkGroupSize.x * gl_WorkGroupSize.y + gl_LocalInvocationID.y * gl_WorkGroupSize.x + gl_LocalInvocationID.x;
+    float visibility               = 0.0f;
+    vec2  outputVisibilityVariance = vec2(0.0f);
+    vec2  outputMoments            = vec2(0.0f);
+    float historyLength            = 0.0f;
+
+    if (depth != 1.0f)
+    {
+        visibility = unpackShadowHitValue(currentCoord);
+        float historyVisibility;
+        vec2  historyMoments;
+
+        bool success = reproject(currentCoord,
+                                 depth,
+                                 ubo.viewProjInv,
+                                 uVelocitySampler,
+                                 uNormalSampler,
+                                 uPrevVelocitySampler,
+                                 uPrevNormalSampler,
+                                 uPrevDepthSampler,
+                                 uHistoryOutput,
+                                 uHistoryMoments,
+                                 historyVisibility,
+                                 historyMoments,
+                                 historyLength);
+
+        historyLength = min(32.0f, success ? historyLength + 1.0f : 1.0f);
+
+        if (success)
+        {
+            float spatialVariance    = max(mean - mean * mean, 0.0f);
+            // Compute the clamping bounding box
+            const float stdDeviation = sqrt(spatialVariance);
+            const float nmin         = mean - 0.5f * stdDeviation;
+            const float nmax         = mean + 0.5f * stdDeviation;
+
+            historyVisibility = clamp(historyVisibility, nmin, nmax);
+        }
+
+        const float alpha        = success ? max(pushConsts.alpha, 1.0 / historyLength) : 1.0;
+        const float alphaMoments = success ? max(pushConsts.momentsAlpha, 1.0 / historyLength) : 1.0;
+        
+        outputMoments.r = visibility;
+        outputMoments.g = visibility * visibility;
+        outputMoments = mix(historyMoments, outputMoments, alphaMoments);
+
+        outputVisibilityVariance.y = max(0.0f, outputMoments.g - outputMoments.r * outputMoments.r);
+        outputVisibilityVariance.x = mix(historyVisibility, visibility, alpha);
+    } 
+
+    imageStore(moment,   currentCoord, vec4(outputMoments, historyLength, 0.0f));
+    imageStore(outColor, currentCoord, vec4(outputVisibilityVariance, 0.0f, 0.0f));
+
+    // If all the threads are in shadow, skip the A-Trous filter.
+    if (depth != 1.0f && outputVisibilityVariance.x > 0.0f)
+        gShouldDenoise = 1;
+
+    barrier();
+
+    if (gl_LocalInvocationIndex == 0)
+    {
+        if (gShouldDenoise == 1)
+        {
+            uint idx                   = atomicAdd(denoiseTileDispatchArgs.numGroupsX, 1);
+            denoiseTileData.coord[idx] = currentCoord;
+        }
+        else
+        {
+            uint idx                  = atomicAdd(shadowTileDispatchArgs.numGroupsX, 1);
+            shadowTileData.coord[idx] = currentCoord;
+        }
+    }
+}

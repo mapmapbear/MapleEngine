@@ -152,8 +152,8 @@ void main()
             result = uint(queryDistance(rayOrigin, Wi, tMax));
     }
 
-    atomicOr(gVisibility, result << gl_LocalInvocationIndex);
-
+    atomicOr(gVisibility, result << gl_LocalInvocationIndex);// 0 - 31
+//bitwise operation.
     barrier();
     
     //because of ray hit is true or false, so we can use bitwise to do.
