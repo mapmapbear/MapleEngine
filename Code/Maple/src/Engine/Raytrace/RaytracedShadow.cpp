@@ -26,8 +26,10 @@ namespace maple
 {
 	namespace
 	{
-		constexpr uint32_t RAY_TRACE_NUM_THREADS_X             = 8;
-		constexpr uint32_t RAY_TRACE_NUM_THREADS_Y             = 4;
+		//using int32_t to pack visibility
+		constexpr uint32_t RAY_TRACE_NUM_THREADS_X = 8;
+		constexpr uint32_t RAY_TRACE_NUM_THREADS_Y = 4;
+
 		constexpr uint32_t TEMPORAL_ACCUMULATION_NUM_THREADS_X = 8;
 		constexpr uint32_t TEMPORAL_ACCUMULATION_NUM_THREADS_Y = 8;
 
@@ -87,6 +89,26 @@ namespace maple
 				float momentsAlpha = 0.2f;
 			} pushConsts;
 		};
+
+		struct AtrousFiler
+		{
+			struct PushConstants
+			{
+				int   radius        = 1;
+				int   stepSize      = 0;
+				float phiVisibility = 10.0f;
+				float phiNormal     = 32.f;
+				float sigmaDepth    = 1.f;
+				float power         = 1.2f;
+			} pushConsts;
+
+			int32_t iterations = 4;
+
+			std::vector<DescriptorSet::Ptr> descriptorSets;
+			Shader::Ptr                     atrousFilerShader;
+			Pipeline::Ptr                   atrousFilerPipeline;
+		};
+
 	}        // namespace component
 
 	namespace init
@@ -103,15 +125,16 @@ namespace maple
 			//////////////////////////////////////////////////////////
 
 			pipeline.outputs[0] = Texture2D::create();
-			pipeline.outputs[0]->buildTexture(TextureFormat::R32F, shadow.width, shadow.height);
+			pipeline.outputs[0]->buildTexture(TextureFormat::RG16F, shadow.width, shadow.height);
 			pipeline.outputs[0]->setName("Shadows Re-projection Output Ping");
-
+			//R:Visibility - G:Variance
 			pipeline.outputs[1] = Texture2D::create();
-			pipeline.outputs[1]->buildTexture(TextureFormat::R32F, shadow.width, shadow.height);
+			pipeline.outputs[1]->buildTexture(TextureFormat::RG16F, shadow.width, shadow.height);
 			pipeline.outputs[1]->setName("Shadows Re-projection Output Pong");
 
 			for (int32_t i = 0; i < 2; i++)
 			{
+				//Visibility - Visibility * Visibility HistoryLength.
 				pipeline.currentMoments[i] = Texture2D::create();
 				pipeline.currentMoments[i]->buildTexture(TextureFormat::RGBA16, shadow.width, shadow.height);
 				pipeline.currentMoments[i]->setName("Shadows Re-projection Moments " + std::to_string(i));
@@ -181,6 +204,18 @@ namespace maple
 			pipeline.shadowRaytraceShader = Shader::create("shaders/Shadow/ShadowRaytrace.shader");
 			pipeline.writeDescriptorSet   = DescriptorSet::create({0, pipeline.shadowRaytraceShader.get()});
 			pipeline.readDescriptorSet    = DescriptorSet::create({0, pipeline.shadowRaytraceShader.get()});
+
+			auto &atrous = entity.addComponent<component::AtrousFiler>();
+			{
+				atrous.atrousFilerShader = Shader::create("shaders/Shadow/DenoiseAtrous.shader");
+				constexpr char *str[4]   = {"Output", "Input", "GBuffer", "DenoiseTileData"};
+				atrous.descriptorSets.resize(4);
+				for (uint32_t i = 0; i < 4; i++)
+				{
+					atrous.descriptorSets[i] = DescriptorSet::create({i, accumulator.reprojectionShader.get()});
+					atrous.descriptorSets[i]->setName(str[i]);
+				}
+			}
 		}
 	}        // namespace init
 
@@ -272,6 +307,7 @@ namespace maple
 			::Modify<raytraced_shadow::component::RaytracedShadow>
 			::Modify<component::TemporalAccumulator>
 			::Modify<component::RaytraceShadowPipeline>
+			::Modify<component::AtrousFiler>
 			::To<ecs::Entity>;
 		// clang-format on
 
@@ -319,16 +355,34 @@ namespace maple
 			Renderer::dispatch(renderData.commandBuffer, x, y, 1);
 		}
 
-		inline auto system(Entity entity, component::RendererData &renderData, const component::WindowSize &winSize, const component::CameraView & cameraView)
+		inline auto atrousFilter(component::AtrousFiler &atrous, component::RaytraceShadowPipeline &pipeline, component::RendererData &renderData)
 		{
-			auto [shadow, acc, pipeline] = entity;
+			bool    pingPong = false;
+			int32_t readIdx  = 0;
+			int32_t writeIdx = 1;
+
+			for (int32_t i = 0; i < atrous.iterations; i++)
+			{
+				readIdx  = (int32_t) pingPong;
+				writeIdx = (int32_t) !pingPong;
+				renderData.renderDevice->clearRenderTarget(pipeline.atrousFilter[writeIdx], renderData.commandBuffer, {1, 1, 1, 1});
+				//Copy....
+
+
+			}
+		}
+
+		inline auto system(Entity entity, component::RendererData &renderData, const component::WindowSize &winSize, const component::CameraView &cameraView)
+		{
+			auto [shadow, acc, pipeline, atrous] = entity;
 			//reset
 			//temporal accumulation
 			//a trous filter
 			//upsample to fullscreen
 			reserArgs(acc, renderData);
 			accumulation(acc, pipeline, renderData, winSize, cameraView);
-
+			atrousFilter(atrous, pipeline, renderData);
+			
 			pipeline.pingPong = 1 - pipeline.pingPong;
 		}
 	}        // namespace denoise

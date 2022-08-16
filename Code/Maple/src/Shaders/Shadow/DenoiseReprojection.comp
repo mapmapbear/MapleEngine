@@ -206,8 +206,8 @@ void main()
         outputMoments.g = visibility * visibility;
         outputMoments = mix(historyMoments, outputMoments, alphaMoments);
 
-        outputVisibilityVariance.y = max(0.0f, outputMoments.g - outputMoments.r * outputMoments.r);
         outputVisibilityVariance.x = mix(historyVisibility, visibility, alpha);
+        outputVisibilityVariance.y = max(0.0f, outputMoments.g - outputMoments.r * outputMoments.r);
     } 
 
     imageStore(moment,   currentCoord, vec4(outputMoments, historyLength, 0.0f));
