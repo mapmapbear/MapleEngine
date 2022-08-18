@@ -11,24 +11,26 @@ namespace maple
 	    width(width),
 	    height(height)
 	{
-		formats[PREV_DISPLAY]      = TextureFormat::RGBA8;
-		formats[SCREEN]            = TextureFormat::RGBA32;
-		formats[BLOOM_SCREEN]      = TextureFormat::RGBA32;
-		formats[BLOOM_BLUR]        = TextureFormat::RGBA32;
-		formats[SSAO_SCREEN]       = TextureFormat::RGB8;
-		formats[SSAO_BLUR]         = TextureFormat::RGB8;
-		formats[SSR_SCREEN]        = TextureFormat::RGBA32;
-		formats[COLOR]             = TextureFormat::RGBA32;
-		formats[POSITION]          = TextureFormat::RGBA32;
-		formats[NORMALS]           = TextureFormat::RGBA32;
-		formats[PBR]               = TextureFormat::RGBA32;
-		formats[VELOCITY]          = TextureFormat::RG8;
-		formats[COLOR_PONG]        = TextureFormat::RGBA32;
-		formats[POSITION_PONG]     = TextureFormat::RGBA32;
-		formats[NORMALS_PONG]      = TextureFormat::RGBA32;
-		formats[PBR_PONG]          = TextureFormat::RGBA32;
-		formats[VELOCITY]          = TextureFormat::RG8;
-		formats[VELOCITY_PONG]     = TextureFormat::RG8;
+		formats[PREV_DISPLAY]  = TextureFormat::RGBA8;
+		formats[SCREEN]        = TextureFormat::RGBA32;
+		formats[BLOOM_SCREEN]  = TextureFormat::RGBA32;
+		formats[BLOOM_BLUR]    = TextureFormat::RGBA32;
+		formats[SSAO_SCREEN]   = TextureFormat::RGB8;
+		formats[SSAO_BLUR]     = TextureFormat::RGB8;
+		formats[SSR_SCREEN]    = TextureFormat::RGBA32;
+		formats[COLOR]         = TextureFormat::RGBA32;
+		formats[POSITION]      = TextureFormat::RGBA32;
+		formats[NORMALS]       = TextureFormat::RGBA32;
+		formats[PBR]           = TextureFormat::RGBA32;
+		formats[VELOCITY]      = TextureFormat::RG8;
+		formats[COLOR_PONG]    = TextureFormat::RGBA32;
+		formats[POSITION_PONG] = TextureFormat::RGBA32;
+		formats[NORMALS_PONG]  = TextureFormat::RGBA32;
+		formats[PBR_PONG]      = TextureFormat::RGBA32;
+		formats[VELOCITY]      = TextureFormat::RG8;
+		formats[VELOCITY_PONG] = TextureFormat::RG8;
+		formats[LINEARZ]       = TextureFormat::R8;
+		formats[LINEARZ_PONG]  = TextureFormat::R8;
 
 		formats[VIEW_POSITION]     = TextureFormat::RGBA32;
 		formats[VIEW_NORMALS]      = TextureFormat::RGBA32;
@@ -86,11 +88,10 @@ namespace maple
 	{
 		if (i <= VELOCITY)
 		{
-			std::shared_ptr<Texture2D> textures[2] = 
-			{
+			std::shared_ptr<Texture2D> textures[2] =
+			    {
 			        screenTextures[i],
-			        screenTextures[i + 5]
-			};
+			        screenTextures[i + VELOCITY + 1]};
 			return pong ? textures[1 - index] : textures[index];
 		}
 

@@ -61,6 +61,7 @@ layout(location = 3) out vec4 outPBR;
 layout(location = 4) out vec4 outViewPosition;
 layout(location = 5) out vec4 outViewNormal;
 layout(location = 6) out vec2 outVelocity;
+layout(location = 7) out float outLinearZ;
 
 vec4 gammaCorrectTexture(vec4 samp)
 {
@@ -171,4 +172,6 @@ void main()
     vec2 a = (fragProjPosition.xy / fragProjPosition.w) * 0.5 + 0.5;
     vec2 b = (fragOldProjPosition.xy / fragOldProjPosition.w) * 0.5 + 0.5;
     outVelocity.xy = b - a;
+
+	outLinearZ = gl_FragCoord.z /  gl_FragCoord.w;
 }

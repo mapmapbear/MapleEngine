@@ -866,7 +866,7 @@ namespace maple
 	    const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
 	    void *                                      pUserData) -> VkBool32
 	{
-	/*	switch (messageSeverity)
+		switch (messageSeverity)
 		{
 			case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
 				LOGV("validation layer: {0}", pCallbackData->pMessage);
@@ -880,8 +880,8 @@ namespace maple
 			case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
 				LOGE("validation layer: {0}", pCallbackData->pMessage);
 				break;
-		}*/
-
+		}
+		 
 		//std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
 		return VK_FALSE;
 	}

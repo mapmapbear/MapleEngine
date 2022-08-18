@@ -14,6 +14,11 @@
 
 ![image](https://github.com/flwmxd/MapleEngine/blob/main/Screenshot/VXGI.png)
 
+### Ray Tracing Soft Shadow (with SVGF)
+
+![image](https://github.com/flwmxd/MapleEngine/blob/main/Screenshot/Soft-Shadow.png)
+
+
 ### Realtime Volumetric Cloud 
 
 ![](https://github.com/flwmxd/MapleEngine/blob/main/Screenshot/cloud.png)
@@ -69,7 +74,7 @@ Precomputed Atmospheric Scattering 	| -          	| Low priority
 Spherical Harmonics Lighting | -          | Medium priority
 Subsurface Scattering 			| -          	| Low priority
 Screen-space blurred reflections using Screen-Space Roughness | -          	| -
-Ray traced shadows				 	| -          	| -
+Ray traced shadows				 	| 90%          	| Spatiotemporal Variance-Guided Filtering
 Ray traced reflections			| -          	| -
 GPU Driven Rendering			 	| -          	| High priority(https://vkguide.dev/docs/gpudriven/compute_culling/)
 Culling System      			 	| -          	| High priority

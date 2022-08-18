@@ -16,12 +16,14 @@ namespace maple
 		POSITION,        //Deferred Render - World Space Positions
 		NORMALS,         //Deferred Render - World Space Normals
 		PBR,
+		LINEARZ,
 		VELOCITY,
 
 		COLOR_PONG,   
 		POSITION_PONG,        //Deferred Render - World Space Positions
 		NORMALS_PONG,         //Deferred Render - World Space Normals
 		PBR_PONG,
+		LINEARZ_PONG,
 		VELOCITY_PONG,
 
 		SSAO_SCREEN,
@@ -45,12 +47,14 @@ namespace maple
 	        "Position",
 	        "Normals",
 	        "PBR",
+	        "LinearZ",
 	        "Velocity",
 
 	        "Color-Pong",
 	        "Position-Pong",
 	        "Normals-Pong",
 	        "PBR-Pong",
+	        "LinearZ-Pong",
 	        "Velocity-Pong",
 
 	        "SSAOScreen",

@@ -113,6 +113,9 @@ namespace maple
 		deferred_offscreen::registerDeferredOffScreenRenderer(beginQ, renderQ, executePoint);
 		post_process::registerSSAOPass(beginQ, renderQ, executePoint);
 		vxgi::registerVXGIIndirectLighting(renderQ, executePoint);
+
+		raytraced_shadow::registerRaytracedShadow(beginQ, renderQ, executePoint);
+
 		deferred_lighting::registerDeferredLighting(beginQ, renderQ, executePoint);
 		atmosphere_pass::registerAtmosphere(beginQ, renderQ, executePoint);
 		skybox_renderer::registerSkyboxRenderer(beginQ, renderQ, executePoint);
@@ -127,8 +130,8 @@ namespace maple
 		final_screen_pass::registerFinalPass(renderQ, executePoint);
 
 		//############################################################################
+		
 
-		raytraced_shadow::registerRaytracedShadow(beginQ, renderQ, executePoint);
 
 		cloud_renderer::registerComputeCloud(renderQ, executePoint);
 		vxgi::registerUpdateRadiace(renderQ, executePoint);

@@ -13,7 +13,8 @@ layout(local_size_x = NUM_THREADS_X, local_size_y = NUM_THREADS_Y, local_size_z 
 
 layout(set = 0, binding = 0, rg16f) uniform writeonly image2D outColor;
 
-#include "GBuffer.glsl"
+layout(set = 1, binding = 0) uniform sampler2D uNormalSampler;
+layout(set = 1, binding = 1) uniform sampler2D uLinearZSampler;
 
 layout(set = 2, binding = 0) uniform sampler2D uInput;
 
@@ -30,6 +31,8 @@ layout(push_constant) uniform PushConstants
     float phiNormal;
     float sigmaDepth;
     float power;
+    float near;
+    float far;
 }pushConstants;
 
 // computes a 3x3 gaussian blur of the variance, centered around
@@ -56,9 +59,17 @@ float computeVarianceCenter(ivec2 ipos)
     return sum;
 }
 
+float linearizeDepth(float depth) 
+{
+    float near = pushConstants.near;
+    float far = pushConstants.far;
+    float z = depth * 2.0 - 1.0; // back to NDC 
+    return (2.0 * near * far) / (far + near - z * (far - near));
+}
+
 void main()
 {
-    ivec2       size = textureSize(uPositionSampler, 0);
+    ivec2       size = textureSize(uNormalSampler, 0);
     const ivec2 ipos = denoiseTileData.coord[gl_WorkGroupID.x] + ivec2(gl_LocalInvocationID.xy);
 
     const float epsVariance      = 1e-10;
@@ -72,12 +83,12 @@ void main()
     const float var = computeVarianceCenter(ipos);
 
     vec4 normal = texelFetch(uNormalSampler, ipos, 0);
-    float centerDepth = texelFetch(uDepthSampler, ipos, 0).r;
+    float centerDepth = texelFetch(uLinearZSampler, ipos, 0).r;
 
     if (centerDepth < 0)
     {
-        imageStore(outColor, ipos, vec4(centerVisibility, 0.0f, 0.0f));
-        return;
+       imageStore(outColor, ipos, vec4(centerVisibility, 0.0f, 0.0f));
+       return;
     }
 
     const float phiVisibility = pushConstants.phiVisibility * sqrt(max(0.0, epsVariance + var.r));
@@ -100,7 +111,7 @@ void main()
                 const vec2 sampleVisibility = texelFetch(uInput, p, 0).rg;
 
                 vec4 sampleNormal = texelFetch(uNormalSampler, p, 0);
-                float depth = texelFetch(uDepthSampler, p, 0).r;
+                float depth = texelFetch(uLinearZSampler, ipos, 0).r;
 
 
                 // compute the edge-stopping functions

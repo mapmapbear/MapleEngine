@@ -311,6 +311,7 @@ namespace maple
 					pipelineInfo.colorTargets[4] = renderData.gbuffer->getBuffer(GBufferTextures::VIEW_POSITION);
 					pipelineInfo.colorTargets[5] = renderData.gbuffer->getBuffer(GBufferTextures::VIEW_NORMALS);
 					pipelineInfo.colorTargets[6] = renderData.gbuffer->getBuffer(GBufferTextures::VELOCITY);
+					pipelineInfo.colorTargets[7] = renderData.gbuffer->getBuffer(GBufferTextures::LINEARZ);
 
 					if (cmd.material != nullptr)
 					{
