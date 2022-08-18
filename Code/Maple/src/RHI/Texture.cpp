@@ -24,6 +24,13 @@ namespace maple
 #endif
 	}
 
+	auto Texture2D::copy(const Texture2D::Ptr &from, Texture2D::Ptr &to, const CommandBuffer *cmdBuffer) -> void
+	{
+#ifdef MAPLE_VULKAN
+		VulkanHelper::copyTo(from, to, cmdBuffer);
+#endif
+	}
+
 	auto Texture::getStrideFromFormat(TextureFormat format) -> uint8_t
 	{
 		switch (format)

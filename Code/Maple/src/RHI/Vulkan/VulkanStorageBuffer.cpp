@@ -50,7 +50,7 @@ namespace maple
 		}
 	}
 
-	auto VulkanStorageBuffer::getHandle() -> VkBuffer &
+	auto VulkanStorageBuffer::getHandle() const -> VkBuffer &
 	{
 		return vulkanBuffer->getVkBuffer();
 	}

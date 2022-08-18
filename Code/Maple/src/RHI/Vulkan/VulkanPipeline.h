@@ -43,7 +43,7 @@ namespace maple
 		{
 			return VK_PIPELINE_BIND_POINT_GRAPHICS;
 		}
-
+		 auto dispatchIndirect(const CommandBuffer * cmdBuffer, const StorageBuffer *ssbo) -> void override;
 	  protected:
 		std::shared_ptr<Shader> shader;
 		VkPipelineLayout        pipelineLayout;

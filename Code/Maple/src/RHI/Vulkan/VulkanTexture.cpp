@@ -143,6 +143,8 @@ namespace maple
 				case TextureFormat::RGBA8:
 				case TextureFormat::RGBA:
 				case TextureFormat::RG16F:
+				case TextureFormat::R32I:
+				case TextureFormat::R32UI:
 					return 4;
 				case TextureFormat::RGB16:
 					return 6;

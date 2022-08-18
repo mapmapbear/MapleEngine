@@ -17,6 +17,7 @@ namespace maple
 		{
 			ShadowMap,
 			TraceShadowCone,
+			RaytracedShadow,
 			Length
 		};
 
@@ -24,6 +25,7 @@ namespace maple
 		    {
 		        "ShadowMap",
 		        "TraceShadowCone",
+		        "RaytracedShadow",
 		        nullptr};
 	}        // namespace ShadowingMethod
 

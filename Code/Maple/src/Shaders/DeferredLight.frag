@@ -10,6 +10,7 @@
 
 #define ShadowTypeShadowMap 0
 #define ShadowTypeTraceShadowCone 1
+#define ShadowTypeRaytraceShadow 2
 
 const int NUM_PCF_SAMPLES = 16;
 const bool FADE_CASCADES = false;
@@ -46,7 +47,8 @@ layout(set = 0, binding = 7)  uniform samplerCube uIrradianceMap;
 layout(set = 0, binding = 8)  uniform samplerCube uPrefilterMap;
 layout(set = 0, binding = 9)  uniform sampler2D uPreintegratedFG;
 layout(set = 0, binding = 10) uniform sampler2D uIndirectLight;
-layout(set = 0, binding = 11) uniform UniformBufferLight
+layout(set = 0, binding = 11) uniform sampler2D uShadowMapRaytrace;
+layout(set = 0, binding = 12) uniform UniformBufferLight
 {
 	Light lights[MAX_LIGHTS];
 	mat4 shadowTransform[MAX_SHADOWMAPS];
@@ -331,6 +333,11 @@ vec3 lighting(vec3 F0, vec3 wsPos, Material material,vec2 fragTexCoord)
 		if(ubo.shadowMethod == ShadowTypeTraceShadowCone)
 		{
 			value = indirectShading.a;
+		}
+
+		if(ubo.shadowMethod == ShadowTypeRaytraceShadow)
+		{
+			value = texture(uShadowMapRaytrace,fragTexCoord).r;
 		}
 
 		vec3 directShading = (diffuseBRDF + specularBRDF) * Lradiance * cosLi * value;

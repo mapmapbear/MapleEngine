@@ -244,7 +244,6 @@ namespace maple
 		if (device != nullptr)
 			vkDestroyDevice(device, nullptr);
 
-		
 #ifdef USE_VMA_ALLOCATOR
 		vmaDestroyAllocator(allocator);
 #endif
@@ -313,9 +312,14 @@ namespace maple
 			raytracing.pNext              = &accelerationStructure;
 			raytracing.rayTracingPipeline = VK_TRUE;
 
+			VkPhysicalDeviceRayQueryFeaturesKHR rayQuery{};
+			rayQuery.sType    = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_QUERY_FEATURES_KHR;
+			rayQuery.pNext    = &raytracing;
+			rayQuery.rayQuery = VK_TRUE;
+
 			VkPhysicalDeviceBufferDeviceAddressFeatures bufferDeviceAddressFeatures = {};
 			bufferDeviceAddressFeatures.sType                                       = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
-			bufferDeviceAddressFeatures.pNext                                       = &raytracing;
+			bufferDeviceAddressFeatures.pNext                                       = &rayQuery;
 			bufferDeviceAddressFeatures.bufferDeviceAddress                         = true;
 
 			VkPhysicalDeviceDescriptorIndexingFeatures indexingFeatures = {};

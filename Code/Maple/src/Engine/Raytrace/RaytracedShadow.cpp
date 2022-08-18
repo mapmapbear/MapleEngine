@@ -41,7 +41,6 @@ namespace maple
 		{
 			Texture2D::Ptr raytraceImage;
 			Texture2D::Ptr upsample;
-			Texture2D::Ptr atrousFilter[2];        //A-Trous Filter
 
 			//Temporal - Accumulation
 			Texture2D::Ptr outputs[2];        //Shadows Previous Re-projection
@@ -69,9 +68,10 @@ namespace maple
 			StorageBuffer::Ptr shadowTileCoordsBuffer;
 			StorageBuffer::Ptr shadowDispatchBuffer;        // indirect?
 
+			Shader::Ptr   resetArgsShader;
+			Pipeline::Ptr resetPipeline;
+
 			DescriptorSet::Ptr indirectDescriptorSet;
-			Shader::Ptr        resetArgsShader;
-			Pipeline::Ptr      resetPipeline;
 
 			/*
 			* 0 -> Moment/History
@@ -104,9 +104,22 @@ namespace maple
 
 			int32_t iterations = 4;
 
-			std::vector<DescriptorSet::Ptr> descriptorSets;
-			Shader::Ptr                     atrousFilerShader;
-			Pipeline::Ptr                   atrousFilerPipeline;
+			Shader::Ptr   atrousFilerShader;
+			Pipeline::Ptr atrousFilerPipeline;
+
+			Shader::Ptr   copyTilesShader;
+			Pipeline::Ptr copyTilesPipeline;
+
+			DescriptorSet::Ptr copyWriteDescriptorSet[2];
+			DescriptorSet::Ptr copyReadDescriptorSet[2];
+
+			DescriptorSet::Ptr copyTilesSet[2];
+
+			DescriptorSet::Ptr inputSet;
+			DescriptorSet::Ptr gBufferSet;
+			DescriptorSet::Ptr argsSet;
+
+			Texture2D::Ptr atrousFilter[2];        //A-Trous Filter
 		};
 
 	}        // namespace component
@@ -141,17 +154,11 @@ namespace maple
 			}
 
 			//////////////////////////////////////////////////////////
-			pipeline.raytraceImage = Texture2D::create();
+			auto w = static_cast<uint32_t>(ceil(float(shadow.width) / float(RAY_TRACE_NUM_THREADS_X)));
+			auto h = static_cast<uint32_t>(ceil(float(shadow.height) / float(RAY_TRACE_NUM_THREADS_Y)));
+
+			pipeline.raytraceImage = Texture2D::create(w, h, nullptr, {TextureFormat::R32UI, TextureFilter::Nearest});
 			pipeline.raytraceImage->setName("Shadows Ray Trace");
-			pipeline.raytraceImage->buildTexture(TextureFormat::R32UI,
-			                                     static_cast<uint32_t>(ceil(float(shadow.width) / float(RAY_TRACE_NUM_THREADS_X))),
-			                                     static_cast<uint32_t>(ceil(float(shadow.height) / float(RAY_TRACE_NUM_THREADS_Y))));
-			for (int32_t i = 0; i < 2; i++)
-			{
-				pipeline.atrousFilter[i] = Texture2D::create();
-				pipeline.atrousFilter[i]->buildTexture(TextureFormat::RG16F, shadow.width, shadow.height);
-				pipeline.atrousFilter[i]->setName("A-Trous Filter " + std::to_string(i));
-			}
 
 			pipeline.upsample = Texture2D::create();
 			pipeline.upsample->buildTexture(TextureFormat::R16, winSize.width, winSize.height);
@@ -171,9 +178,9 @@ namespace maple
 			accumulator.shadowDispatchBuffer   = StorageBuffer::create(sizeof(int32_t) * 3, nullptr, BufferOptions{true});
 
 			accumulator.indirectDescriptorSet = DescriptorSet::create({0, accumulator.resetArgsShader.get()});
-
 			accumulator.indirectDescriptorSet->setStorageBuffer("DenoiseTileDispatchArgs", accumulator.denoiseTileCoordsBuffer);
 			accumulator.indirectDescriptorSet->setStorageBuffer("ShadowTileDispatchArgs", accumulator.shadowDispatchBuffer);
+			accumulator.indirectDescriptorSet->update(world.getComponent<component::RendererData>().commandBuffer);
 
 			//###############
 			accumulator.reprojectionShader = Shader::create("shaders/Shadow/DenoiseReprojection.shader");
@@ -189,12 +196,17 @@ namespace maple
 			accumulator.descriptorSets[3]->setStorageBuffer("DenoiseTileDispatchArgs", accumulator.denoiseTileCoordsBuffer);
 			accumulator.descriptorSets[3]->setStorageBuffer("ShadowTileData", accumulator.shadowTileCoordsBuffer);
 			accumulator.descriptorSets[3]->setStorageBuffer("ShadowTileDispatchArgs", accumulator.shadowDispatchBuffer);
+			accumulator.descriptorSets[3]->update(world.getComponent<component::RendererData>().commandBuffer);
+
 			PipelineInfo info;
 			info.shader                      = accumulator.reprojectionShader;
+			info.pipelineName                = "Reprojection";
 			accumulator.reprojectionPipeline = Pipeline::get(info);
+			
 			//###############
 
 			PipelineInfo info2;
+			info2.pipelineName        = "Reset-Args";
 			info2.shader              = accumulator.resetArgsShader;
 			accumulator.resetPipeline = Pipeline::get(info2);
 
@@ -208,13 +220,40 @@ namespace maple
 			auto &atrous = entity.addComponent<component::AtrousFiler>();
 			{
 				atrous.atrousFilerShader = Shader::create("shaders/Shadow/DenoiseAtrous.shader");
-				constexpr char *str[4]   = {"Output", "Input", "GBuffer", "DenoiseTileData"};
-				atrous.descriptorSets.resize(4);
-				for (uint32_t i = 0; i < 4; i++)
+				atrous.copyTilesShader   = Shader::create("shaders/Shadow/DenoiseCopyTiles.shader");
+
+				PipelineInfo info1;
+				info2.pipelineName = "Atrous-Filer Pipeline";
+				info1.shader               = atrous.atrousFilerShader;
+				atrous.atrousFilerPipeline = Pipeline::get(info1);
+
+				info1.shader             = atrous.copyTilesShader;
+				atrous.copyTilesPipeline = Pipeline::get(info1);
+
+				atrous.gBufferSet = DescriptorSet::create({1, atrous.atrousFilerShader.get()});
+				atrous.argsSet    = DescriptorSet::create({3, atrous.atrousFilerShader.get()});
+				atrous.argsSet->setStorageBuffer("DenoiseTileData", accumulator.denoiseDispatchBuffer);
+				atrous.argsSet->update(world.getComponent<component::RendererData>().commandBuffer);
+
+				for (uint32_t i = 0; i < 2; i++)
 				{
-					atrous.descriptorSets[i] = DescriptorSet::create({i, accumulator.reprojectionShader.get()});
-					atrous.descriptorSets[i]->setName(str[i]);
+					atrous.atrousFilter[i] = Texture2D::create();
+					atrous.atrousFilter[i]->buildTexture(TextureFormat::RG16F, shadow.width, shadow.height);
+					atrous.atrousFilter[i]->setName("A-Trous Filter " + std::to_string(i));
+
+					atrous.copyWriteDescriptorSet[i] = DescriptorSet::create({0, atrous.atrousFilerShader.get()});
+					atrous.copyWriteDescriptorSet[i]->setTexture("outColor", atrous.atrousFilter[i]);
+
+					atrous.copyReadDescriptorSet[i] = DescriptorSet::create({2, atrous.atrousFilerShader.get()});
+					atrous.copyReadDescriptorSet[i]->setTexture("uInput", atrous.atrousFilter[i]);
+
+					atrous.copyTilesSet[i] = DescriptorSet::create({0, atrous.copyTilesShader.get()});
+					atrous.copyTilesSet[i]->setTexture("outColor", atrous.atrousFilter[i]);
+					atrous.copyTilesSet[i]->setStorageBuffer("ShadowTileData", accumulator.shadowTileCoordsBuffer);
 				}
+
+				atrous.inputSet = DescriptorSet::create({2, atrous.atrousFilerShader.get()});
+				atrous.inputSet->setTexture("uInput", pipeline.outputs[0]);
 			}
 		}
 	}        // namespace init
@@ -313,10 +352,10 @@ namespace maple
 
 		inline auto reserArgs(component::TemporalAccumulator &acc, const component::RendererData &renderData)
 		{
-			acc.indirectDescriptorSet->update(renderData.commandBuffer);
 			acc.resetPipeline->bind(renderData.commandBuffer);
 			Renderer::bindDescriptorSets(acc.resetPipeline.get(), renderData.commandBuffer, 0, {acc.indirectDescriptorSet});
 			Renderer::dispatch(renderData.commandBuffer, 1, 1, 1);
+			acc.resetPipeline->end(renderData.commandBuffer);
 		}
 
 		inline auto accumulation(component::TemporalAccumulator &   accumulator,
@@ -325,9 +364,9 @@ namespace maple
 		                         const component::WindowSize &      winSize,
 		                         const component::CameraView &      cameraView)
 		{
-			accumulator.descriptorSets[0]->setTexture("outColor", pipeline.outputs[pipeline.pingPong]);
+			accumulator.descriptorSets[0]->setTexture("outColor", pipeline.outputs[0]);
 			accumulator.descriptorSets[0]->setTexture("moment", pipeline.currentMoments[pipeline.pingPong]);
-			accumulator.descriptorSets[0]->setTexture("uHistoryOutput", pipeline.outputs[1 - pipeline.pingPong]);        //prev
+			accumulator.descriptorSets[0]->setTexture("uHistoryOutput", pipeline.outputs[1]);        //prev
 			accumulator.descriptorSets[0]->setTexture("uHistoryMoments", pipeline.currentMoments[1 - pipeline.pingPong]);
 			accumulator.descriptorSets[0]->setTexture("uInput", pipeline.raytraceImage);        //noise shadow
 			accumulator.descriptorSets[0]->setUniform("UniformBufferObject", "viewProjInv", glm::value_ptr(glm::inverse(cameraView.projView)));
@@ -342,6 +381,11 @@ namespace maple
 			accumulator.descriptorSets[2]->setTexture("uPrevVelocitySampler", renderData.gbuffer->getBuffer(GBufferTextures::VELOCITY, true));
 			accumulator.descriptorSets[2]->setTexture("uPrevDepthSampler", renderData.gbuffer->getDepthBufferPong());
 
+			for (auto set : accumulator.descriptorSets)
+			{
+				set->update(renderData.commandBuffer);
+			}
+
 			if (auto pushConsts = accumulator.reprojectionShader->getPushConstant(0))
 			{
 				pushConsts->setData(&accumulator.pushConsts);
@@ -355,21 +399,72 @@ namespace maple
 			Renderer::dispatch(renderData.commandBuffer, x, y, 1);
 		}
 
-		inline auto atrousFilter(component::AtrousFiler &atrous, component::RaytraceShadowPipeline &pipeline, component::RendererData &renderData)
+		inline auto atrousFilter(
+		    component::AtrousFiler &           atrous,
+		    component::RaytraceShadowPipeline &pipeline,
+		    component::RendererData &          renderData,
+		    component::TemporalAccumulator &   accumulator)
 		{
 			bool    pingPong = false;
 			int32_t readIdx  = 0;
 			int32_t writeIdx = 1;
 
+			atrous.gBufferSet->setTexture("uPositionSampler", renderData.gbuffer->getBuffer(GBufferTextures::POSITION));
+			atrous.gBufferSet->setTexture("uNormalSampler", renderData.gbuffer->getBuffer(GBufferTextures::NORMALS));
+			atrous.gBufferSet->setTexture("uVelocitySampler", renderData.gbuffer->getBuffer(GBufferTextures::VELOCITY));
+			atrous.gBufferSet->setTexture("uDepthSampler", renderData.gbuffer->getDepthBuffer());
+			atrous.gBufferSet->update(renderData.commandBuffer);
+			atrous.inputSet->update(renderData.commandBuffer);
+
 			for (int32_t i = 0; i < atrous.iterations; i++)
 			{
+				atrous.copyTilesSet[writeIdx]->setTexture("outColor", atrous.atrousFilter[writeIdx]);
+				atrous.copyWriteDescriptorSet[writeIdx]->setTexture("outColor", atrous.atrousFilter[writeIdx]);
+				atrous.copyReadDescriptorSet[readIdx]->setTexture("uInput", atrous.atrousFilter[readIdx]);
+
+				atrous.copyTilesSet[writeIdx]->update(renderData.commandBuffer);
+				atrous.copyWriteDescriptorSet[writeIdx]->update(renderData.commandBuffer);
+				atrous.copyReadDescriptorSet[readIdx]->update(renderData.commandBuffer);
+
 				readIdx  = (int32_t) pingPong;
 				writeIdx = (int32_t) !pingPong;
-				renderData.renderDevice->clearRenderTarget(pipeline.atrousFilter[writeIdx], renderData.commandBuffer, {1, 1, 1, 1});
+				renderData.renderDevice->clearRenderTarget(atrous.atrousFilter[writeIdx], renderData.commandBuffer, {1, 1, 1, 1});
 				//Copy....
+				atrous.copyTilesPipeline->bind(renderData.commandBuffer);
+				Renderer::bindDescriptorSets(atrous.copyTilesPipeline.get(), renderData.commandBuffer, 0, {atrous.copyTilesSet[writeIdx]});
+				atrous.copyTilesPipeline->dispatchIndirect(renderData.commandBuffer, accumulator.denoiseDispatchBuffer.get());
+				atrous.copyTilesPipeline->end(renderData.commandBuffer);
 
+				atrous.atrousFilerPipeline->bind(renderData.commandBuffer);
+				auto pushConsts     = atrous.pushConsts;
+				pushConsts.stepSize = 1 << i;
+				pushConsts.power    = i == (atrous.iterations - 1) ? atrous.pushConsts.power : 0.0f;
+				if (auto ptr = atrous.atrousFilerPipeline->getShader()->getPushConstant(0))
+				{
+					ptr->setData(&pushConsts);
+					atrous.atrousFilerPipeline->getShader()->bindPushConstants(renderData.commandBuffer, atrous.atrousFilerPipeline.get());
+				}
 
+				Renderer::bindDescriptorSets(
+				    atrous.atrousFilerPipeline.get(),
+				    renderData.commandBuffer, 0,
+				    {atrous.copyWriteDescriptorSet[writeIdx],
+				     atrous.gBufferSet,
+				     i == 0 ? atrous.inputSet : atrous.copyReadDescriptorSet[readIdx],
+				     atrous.argsSet});
+
+				atrous.atrousFilerPipeline->dispatchIndirect(renderData.commandBuffer, accumulator.denoiseDispatchBuffer.get());
+				atrous.atrousFilerPipeline->end(renderData.commandBuffer);
+
+				pingPong = !pingPong;
+
+				if (i == 1)
+				{
+					Texture2D::copy(atrous.atrousFilter[writeIdx], pipeline.outputs[1], renderData.commandBuffer);
+				}
 			}
+
+			return atrous.atrousFilter[writeIdx];
 		}
 
 		inline auto system(Entity entity, component::RendererData &renderData, const component::WindowSize &winSize, const component::CameraView &cameraView)
@@ -381,7 +476,9 @@ namespace maple
 			//upsample to fullscreen
 			reserArgs(acc, renderData);
 			accumulation(acc, pipeline, renderData, winSize, cameraView);
-			atrousFilter(atrous, pipeline, renderData);
+			shadow.output = pipeline.outputs[0];
+
+				/*	shadow.output = atrousFilter(atrous, pipeline, renderData, acc);*/
 			
 			pipeline.pingPong = 1 - pipeline.pingPong;
 		}

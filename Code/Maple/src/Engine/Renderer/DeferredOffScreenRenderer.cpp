@@ -34,6 +34,8 @@
 #include "Engine/VXGI/DrawVoxel.h"
 #include "Engine/VXGI/Voxelization.h"
 
+#include "Engine/Raytrace/RaytracedShadow.h"
+
 #include "Application.h"
 #include "ImGui/ImGuiHelpers.h"
 #include "Others/Randomizer.h"
@@ -504,16 +506,19 @@ namespace maple
 
 		using PathTraceGroup = ecs::Registry::Fetch<component::PathIntegrator>::To<ecs::Group>;
 
+		using RaytraceShadowGroup = ecs::Registry::Fetch<raytraced_shadow::component::RaytracedShadow>::To<ecs::Group>;
+
 		inline auto onRender(
 		    Entity                                                entity,
 		    EnvQuery                                              envQuery,
 		    PathTraceGroup                                        pathGroup,
+		    RaytraceShadowGroup                                   raytraceShadowGroup,
 		    const vxgi_debug::global::component::DrawVoxelRender *voxelDebug,
 		    const vxgi::global::component::VoxelBuffer *          voxelBuffer,
 		    ecs::World                                            world)
 		{
 			auto [data, shadow, cameraView, rendererData, graph] = entity;
-		
+
 			for (auto ent : pathGroup)
 			{
 				auto [path] = pathGroup.convert(ent);
@@ -533,6 +538,20 @@ namespace maple
 			descriptorSet->setTexture("uDepthSampler", rendererData.gbuffer->getDepthBuffer());
 			descriptorSet->setTexture("uIndirectLight", rendererData.gbuffer->getBuffer(GBufferTextures::INDIRECT_LIGHTING));
 			descriptorSet->setTexture("uShadowMap", shadow.shadowTexture);
+
+			if (!raytraceShadowGroup.empty())
+			{
+				for (auto ent : raytraceShadowGroup)
+				{
+					auto [shadow] = raytraceShadowGroup.convert(ent);
+					if (shadow.output)
+					descriptorSet->setTexture("uShadowMapRaytrace", shadow.output);
+				}
+			}
+			else
+			{
+				descriptorSet->setTexture("uShadowMapRaytrace", rendererData.unitTexture);
+			}
 
 			if (!envQuery.empty())
 			{

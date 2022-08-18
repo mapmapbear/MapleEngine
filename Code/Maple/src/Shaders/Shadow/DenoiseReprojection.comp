@@ -13,7 +13,6 @@
 
 layout(local_size_x = NUM_THREADS_X, local_size_y = NUM_THREADS_Y, local_size_z = 1) in;
 
-
 layout(set = 0, binding = 0, rg16f)     uniform writeonly image2D outColor;
 layout(set = 0, binding = 1, rgba16f)   uniform writeonly image2D moment;
 layout(set = 0, binding = 2)            uniform sampler2D uHistoryOutput;
@@ -25,41 +24,10 @@ layout(set = 0, binding = 5)            uniform UniformBufferObject
 }ubo;
 
 
-layout(set = 1, binding = 0) uniform sampler2D uPositionSampler;
-layout(set = 1, binding = 1) uniform sampler2D uNormalSampler;
-layout(set = 1, binding = 2) uniform sampler2D uDepthSampler;
-layout(set = 1, binding = 3) uniform sampler2D uVelocitySampler;
-
-layout(set = 2, binding = 0) uniform sampler2D uPrevPositionSampler;
-layout(set = 2, binding = 1) uniform sampler2D uPrevNormalSampler;
-layout(set = 2, binding = 2) uniform sampler2D uPrevDepthSampler;
-layout(set = 2, binding = 3) uniform sampler2D uPrevVelocitySampler;
-
+#include "GBuffer.glsl"//1
+#include "PrevGBuffer.glsl" //2
 //Noise Shadow
-
-layout(set = 3, binding = 0, std430) buffer DenoiseTileData
-{
-    ivec2 coord[];
-}denoiseTileData;
-
-layout(set = 3, binding = 1, std430) buffer DenoiseTileDispatchArgs
-{
-    uint numGroupsX;
-    uint numGroupsY;
-    uint numGroupsZ;
-}denoiseTileDispatchArgs;
-
-layout(set = 3, binding = 2, std430) buffer ShadowTileData
-{
-    ivec2 coord[];
-}shadowTileData;
-
-layout(set = 3, binding = 3, std430) buffer ShadowTileDispatchArgs
-{
-    uint numGroupsX;
-    uint numGroupsY;
-    uint numGroupsZ;
-}shadowTileDispatchArgs;
+#include "BufferArgs.glsl" //3
 
 
 layout(push_constant) uniform PushConstants

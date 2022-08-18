@@ -5,6 +5,7 @@
 #pragma once
 #include "RHI/Definitions.h"
 #include "RHI/Shader.h"
+#include "RHI/Texture.h"
 
 #include "Vk.h"
 #include <array>
@@ -49,6 +50,8 @@ namespace maple
 		}
 	};
 
+	class CommandBuffer;
+
 	namespace VulkanHelper
 	{
 		auto validateResolution(uint32_t &width, uint32_t &height) -> void;
@@ -59,6 +62,9 @@ namespace maple
 		auto querySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface) -> SwapChainSupportDetails;
 		auto checkDeviceExtensionSupport(VkPhysicalDevice device, const std::vector<const char *> &deviceExtensions) -> bool;
 		auto checkValidationLayerSupport(const std::vector<const char *> &layerNames) -> bool;
+
+		auto copyTo(const Texture2D::Ptr &from, Texture2D::Ptr &to,const CommandBuffer * cmdBuffer) -> void;
+
 
 #ifdef USE_VMA_ALLOCATOR
 		auto createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkFormat format, VkImageType imageType, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage &image, VkDeviceMemory &imageMemory, uint32_t arrayLayers, VkImageCreateFlags flags, VmaAllocation &allocation, uint32_t depth = 1, VkImageLayout initLayout = VK_IMAGE_LAYOUT_UNDEFINED, void *next = nullptr) -> void;

@@ -11,6 +11,7 @@
 #include "VulkanDescriptorSet.h"
 #include "VulkanDevice.h"
 #include "VulkanSwapChain.h"
+#include "VulkanTexture.h"
 
 #include <string>
 
@@ -291,6 +292,42 @@ namespace maple
 			}
 		}
 		return true;
+	}
+
+	auto VulkanHelper::copyTo(const Texture2D::Ptr &from, Texture2D::Ptr &to, const CommandBuffer *cmdBuffer) -> void
+	{
+		VkImageSubresourceRange subresource_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+
+		const auto vkFrom = std::static_pointer_cast<VulkanTexture2D>(from);
+		auto       vkTo   = std::static_pointer_cast<VulkanTexture2D>(to);
+
+		vkFrom->transitionImage(VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, static_cast<const VulkanCommandBuffer *>(cmdBuffer));
+		vkTo->transitionImage(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, static_cast<const VulkanCommandBuffer *>(cmdBuffer));
+
+		auto vkFromLayout = vkFrom->getImageLayout();
+		auto vkToLayout   = vkTo->getImageLayout();
+
+		VkImageCopy imageCopyRegion{};
+		imageCopyRegion.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		imageCopyRegion.srcSubresource.layerCount = 1;
+		imageCopyRegion.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		imageCopyRegion.dstSubresource.layerCount = 1;
+		imageCopyRegion.extent.width              = from->getWidth();
+		imageCopyRegion.extent.height             = from->getHeight();
+		imageCopyRegion.extent.depth              = 1;
+
+		// Issue the copy command
+		vkCmdCopyImage(
+		    static_cast<const VulkanCommandBuffer *>(cmdBuffer)->getCommandBuffer(),
+		    vkFrom->getImage(),
+		    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+		    vkTo->getImage(),
+		    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		    1,
+		    &imageCopyRegion);
+
+		vkFrom->transitionImage(vkFromLayout, static_cast<const VulkanCommandBuffer *>(cmdBuffer));
+		vkTo->transitionImage(vkToLayout, static_cast<const VulkanCommandBuffer *>(cmdBuffer));
 	}
 
 	auto VulkanHelper::validateResolution(uint32_t &width, uint32_t &height) -> void
@@ -829,7 +866,7 @@ namespace maple
 	    const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
 	    void *                                      pUserData) -> VkBool32
 	{
-		switch (messageSeverity)
+	/*	switch (messageSeverity)
 		{
 			case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
 				LOGV("validation layer: {0}", pCallbackData->pMessage);
@@ -843,7 +880,7 @@ namespace maple
 			case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
 				LOGE("validation layer: {0}", pCallbackData->pMessage);
 				break;
-		}
+		}*/
 
 		//std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
 		return VK_FALSE;

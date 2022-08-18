@@ -17,6 +17,7 @@ namespace maple
 				RaytraceScale::Id scale = RaytraceScale::Full;
 				uint32_t          width;
 				uint32_t          height;
+				Texture2D::Ptr    output;
 			};
 		}        // namespace component
 		auto registerRaytracedShadow(ExecuteQueue &update, ExecuteQueue &queue, std::shared_ptr<ExecutePoint> executePoint) -> void;

@@ -11,6 +11,7 @@
 #include "VulkanShader.h"
 #include "VulkanSwapChain.h"
 #include "VulkanTexture.h"
+#include "VulkanStorageBuffer.h"
 
 #include "Engine/Vertex.h"
 #include "Others/Console.h"
@@ -239,7 +240,6 @@ namespace maple
 		description    = info;
 		pipelineLayout = vkShader->getPipelineLayout();
 
-
 		transitionAttachments();
 		createFrameBuffers();
 		// Pipeline
@@ -417,6 +417,14 @@ namespace maple
 			}
 		}
 	}
+
+	auto VulkanPipeline::dispatchIndirect(const CommandBuffer *cmdBuffer, const StorageBuffer *ssbo) -> void
+	{
+		auto vkCmd = static_cast<const VulkanCommandBuffer *>(cmdBuffer);
+		auto vkBuffer = static_cast<const VulkanStorageBuffer *>(ssbo);
+		vkCmdDispatchIndirect(vkCmd->getCommandBuffer(), vkBuffer->getHandle(), 0);
+	}
+
 	auto VulkanPipeline::transitionAttachments() -> void
 	{
 		PROFILE_FUNCTION();

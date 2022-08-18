@@ -37,7 +37,7 @@ namespace maple
 		{
 			usage = flags;
 		}
-		inline auto &getVkBuffer()
+		inline auto &getVkBuffer() 
 		{
 			return buffer;
 		}

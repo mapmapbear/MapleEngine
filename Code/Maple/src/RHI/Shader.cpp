@@ -94,6 +94,8 @@ namespace maple
 				return TextureFormat::R32UI;
 			case spv::ImageFormatR8:
 				return TextureFormat::R8;
+			case spv::ImageFormatRg16f:
+				return TextureFormat::RG16F;
 		}
 
 		MAPLE_ASSERT(false, "unsupported spv::ImageFormat");

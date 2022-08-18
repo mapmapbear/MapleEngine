@@ -91,6 +91,8 @@ namespace maple
 		executePoint->registerGlobalComponent<component::RendererData>([&, width, height](component::RendererData &data) {
 			data.screenQuad = Mesh::createQuad(true);
 			data.unitCube   = TextureCube::create(1);
+			data.unitTexture = Texture2D::create();
+			data.unitTexture->buildTexture(TextureFormat::RGBA, 1, 1);
 			data.gbuffer    = gBuffer.get();
 		});
 		executePoint->registerGlobalComponent<capture_graph::component::RenderGraph>();

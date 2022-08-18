@@ -44,6 +44,7 @@ namespace maple
 			std::shared_ptr<TextureCube> unitCube;        //1
 			RenderDevice *               renderDevice = nullptr;
 			uint32_t                     numFrames    = 0;
+			std::shared_ptr<Texture2D>   unitTexture;
 		};
 
 		struct WindowSize

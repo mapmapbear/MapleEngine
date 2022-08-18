@@ -99,6 +99,7 @@ namespace maple
 			return id;
 		}
 
+
 	  public:
 		static auto getStrideFromFormat(TextureFormat format) -> uint8_t;
 		static auto bitsToTextureFormat(uint32_t bits) -> TextureFormat;
@@ -131,6 +132,7 @@ namespace maple
 		{
 			return TextureType::Color;
 		};
+		static auto copy(const Texture2D::Ptr &from, Texture2D::Ptr &to, const CommandBuffer *cmdBuffer) -> void;
 	};
 
 	class MAPLE_EXPORT Texture3D : public Texture2D
