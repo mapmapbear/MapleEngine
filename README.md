@@ -41,6 +41,7 @@
 - Global Illumination(Light Propagation Volumes/Voxel Cone Tracing)
 - Directional lights + Cascaded shadow maps
 - Soft shadows (PCF)
+- Ray traced shadows (Spatiotemporal Variance-Guided Filtering)
 - Screen Space Ambient Occlusion (SSAO)
 - Screen Space Reflections(SSR)
 - Lua Scripting
