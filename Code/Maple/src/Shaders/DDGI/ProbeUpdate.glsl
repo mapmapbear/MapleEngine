@@ -1,18 +1,21 @@
 
+
+#include "../Common/Math.h"
+
 #define CACHE_SIZE 64
 
 #if defined(DEPTHPROBE_UPDATE)
     #define NUM_THREADS_X 16
     #define NUM_THREADS_Y 16
-    #define TEXTURE_WIDTH ddgi.depth_texture_width
-    #define TEXTURE_HEIGHT ddgi.depth_texture_height
-    #define PROBE_SIDE_LENGTH ddgi.depthProbe_side_length
+    #define TEXTURE_WIDTH ddgi.depthTextureWidth
+    #define TEXTURE_HEIGHT ddgi.depthTextureHeight
+    #define PROBE_SIDE_LENGTH ddgi.depthProbeSideLength
 #else
     #define NUM_THREADS_X 8
     #define NUM_THREADS_Y 8
-    #define TEXTURE_WIDTH ddgi.irradiance_texture_width
-    #define TEXTURE_HEIGHT ddgi.irradiance_texture_height
-    #define PROBE_SIDE_LENGTH ddgi.irradianceProbe_side_length
+    #define TEXTURE_WIDTH ddgi.irradianceTextureWidth
+    #define TEXTURE_HEIGHT ddgi.irradianceTextureHeight
+    #define PROBE_SIDE_LENGTH ddgi.irradianceProbeSideLength
 #endif
 
 layout(local_size_x = NUM_THREADS_X, local_size_y = NUM_THREADS_Y, local_size_z = 1) in;
@@ -25,13 +28,13 @@ layout(set = 1, binding = 0) uniform sampler2D uInputIrradiance;
 layout(set = 1, binding = 1) uniform sampler2D uInputDepth;
 layout(set = 1, binding = 2, scalar) uniform DDGIUBO
 {
-    DDGIUniforms ddgi; 
+    DDGIUniform ddgi; 
 };
 
 layout(set = 2, binding = 0) uniform sampler2D uInputRadiance;
 layout(set = 2, binding = 1) uniform sampler2D uInputDirectionDepth;
 
-layout(pushConstant) uniform PushConstants
+layout(push_constant) uniform PushConstants
 {
     uint firstFrame;
 }pushConsts;
@@ -109,7 +112,7 @@ void main()
 {
     const ivec2 currentCoord = ivec2(gl_GlobalInvocationID.xy) + (ivec2(gl_WorkGroupID.xy) * ivec2(2)) + ivec2(2);
 
-    const int relativeProbeId = probeId(currentCoord, TEXTURE_WIDTH, PROBE_SIDE_LENGTH);
+    const int relativeProbeId = getProbeId(currentCoord, TEXTURE_WIDTH, PROBE_SIDE_LENGTH);
     
     vec3  result       = vec3(0.0f);
     float totalWeight = 0.0f;
@@ -143,7 +146,7 @@ void main()
     vec3 prevResult = texelFetch(uInputIrradiance, currentCoord, 0).rgb;
 #endif
             
-    if (uPushConstants.first_frame == 0)            
+    if (pushConsts.firstFrame == 0)            
         result = mix(result, prevResult, ddgi.hysteresis);
 
 #if defined(DEPTHPROBE_UPDATE)

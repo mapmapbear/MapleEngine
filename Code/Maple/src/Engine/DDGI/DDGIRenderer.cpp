@@ -32,7 +32,6 @@ namespace maple
 				std::vector<std::shared_ptr<DescriptorSet>> writeSets;
 				std::vector<std::shared_ptr<DescriptorSet>> readSets;
 			};
-
 		}        // namespace component
 
 		namespace on_init
