@@ -34,7 +34,7 @@ namespace maple
 		TRIVIAL_COMPONENT(component::ReflectiveShadowData, false, "Reflective Shadow Map");
 		TRIVIAL_COMPONENT(component::ShadowMapData, false, "Shadow Map");
 		TRIVIAL_COMPONENT(component::BoundingBoxComponent, false, "BoundingBox");
-		TRIVIAL_COMPONENT(component::SSAOData, false, "SSAO Data");
+		TRIVIAL_COMPONENT(ssao::component::SSAOData, false, "SSAO Data");
 		TRIVIAL_COMPONENT(component::GridRender, false, "Grid Render");
 		TRIVIAL_COMPONENT(component::BoneComponent, false, "Bone");
 		TRIVIAL_COMPONENT(component::Animator, true, "Animator");
@@ -51,5 +51,6 @@ namespace maple
 
 		TRIVIAL_COMPONENT(component::PathIntegrator, false, "Path Integrator");
 		TRIVIAL_COMPONENT(raytraced_shadow::component::RaytracedShadow, false, "Path Integrator");
+		TRIVIAL_COMPONENT(ddgi::component::DDGIPipeline, false, "DDGI-Pipeline");
 	}
 }

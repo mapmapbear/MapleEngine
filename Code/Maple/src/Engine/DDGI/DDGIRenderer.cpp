@@ -6,6 +6,7 @@
 #include "Engine/Raytrace/RaytraceScale.h"
 #include "IrradianceVolume.h"
 #include "RHI/Texture.h"
+#include "Scene/Component/BoundingBox.h"
 
 namespace maple
 {
@@ -13,52 +14,81 @@ namespace maple
 	{
 		namespace component
 		{
-			struct DDGIPipeline
+			struct DDGIPipelineInternal
 			{
-				float         width;
-				float         height;
-				RaytraceScale::Id scale;
-			};
-
-			struct ProbeGrid
-			{
-				float      probeDistance               = 1.0f;
-				float      recursiveEnergyPreservation = 0.85f;
-				uint32_t   irradianceOctSize           = 8;
-				uint32_t   depthOctSize                = 16;
-				glm::vec3  gridStartPosition;
-				glm::ivec3 probeCounts;
+				BoundingBox box;
 
 				std::vector<std::shared_ptr<DescriptorSet>> writeSets;
 				std::vector<std::shared_ptr<DescriptorSet>> readSets;
 			};
 		}        // namespace component
 
-		namespace on_init
+		namespace init
 		{
-			using Entity = ecs::Registry ::Include<component::IrradianceVolume>::Exclude<component::DDGIPipeline>::To<ecs::Entity>;
-
-			inline auto system(Entity entity, ecs::World world)
+			inline auto updateUniform(ddgi::component::DDGIPipeline &pipeline, component::DDGIUniform &uniform, BoundingBox *box)
 			{
-				auto &pipeline = world.addComponent<component::DDGIPipeline>(entity);
+				if (box != nullptr)
+				{
+					glm::vec3 sceneLength = box->max - box->min;
+					// Add 2 more probes to fully cover scene.
+					uniform.probeCounts        = glm::ivec3(sceneLength / pipeline.probeDistance) + glm::ivec3(2);
+					uniform.startPosition      = box->min;
+					uniform.maxDistance        = pipeline.probeDistance * 1.5f;
+					uniform.depthSharpness     = pipeline.depthSharpness;
+					uniform.hysteresis         = pipeline.hysteresis;
+					uniform.normalBias         = pipeline.normalBias;
+					uniform.energyPreservation = pipeline.energyPreservation;
+					//todo update uniform
+				}
 			}
-		}        // namespace on_init
 
-		namespace begin_scene
+			inline auto initDDGIPipeline(ddgi::component::DDGIPipeline &pipeline, Entity entity, ecs::World world)
+			{
+				auto &bBox = world.getComponent<maple::component::BoundingBoxComponent>();
+				if (bBox.box != nullptr)
+				{
+					entity.addComponent<ddgi::component::DDGIPipelineInternal>();
+				}
+			}
+		}        // namespace init
+
+		namespace on_update
 		{
-			using Entity = ecs::Registry ::Modify<component::IrradianceVolume>::To<ecs::Entity>;
-
-			inline auto system(Entity entity)
+			inline auto onUniformChanged(ddgi::component::DDGIPipeline &pipeline, Entity entity, ecs::World world)
 			{
-				auto [irradiance] = entity;
+				auto &uniform = world.getComponent<component::DDGIUniform>(entity);
+				auto &bBox    = world.getComponent<maple::component::BoundingBoxComponent>();
+				init::updateUniform(pipeline, uniform, bBox.box);
 			}
-		}        // namespace begin_scene
+		}        // namespace on_update
 	}            // namespace ddgi
 
 	namespace ddgi
 	{
-		auto registerDDGI(ExecuteQueue &begin, std::shared_ptr<ExecutePoint> point) -> void
+		// clang-format off
+		using Entity = ecs::Registry 
+			::Modify<ddgi::component::DDGIPipeline>
+			::Exclude<ddgi::component::DDGIPipelineInternal>
+			::To<ecs::Entity>;
+		// clang-format on
+
+		inline auto system(Entity entity, const maple::component::BoundingBoxComponent &box, ecs::World world)
 		{
+			auto [pipeline] = entity;
+
+			if (box.box != nullptr)
+			{
+				world.addComponent<ddgi::component::DDGIPipelineInternal>(entity);
+			}
+		}
+	}        // namespace ddgi
+
+	namespace ddgi
+	{
+		auto registerDDGI(ExecuteQueue &begin, ExecuteQueue &render, std::shared_ptr<ExecutePoint> executePoint) -> void
+		{
+			executePoint->onConstruct<ddgi::component::DDGIPipeline, init::initDDGIPipeline>();
+			executePoint->onUpdate<ddgi::component::DDGIPipeline, on_update::onUniformChanged>();
 		}
 	}        // namespace ddgi
 }        // namespace maple

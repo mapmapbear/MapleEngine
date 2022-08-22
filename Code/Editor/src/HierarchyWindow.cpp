@@ -24,6 +24,7 @@
 #include "Engine/PathTracer/PathIntegrator.h"
 #include "Engine/VXGI/Voxelization.h"
 #include "Engine/Raytrace/RaytracedShadow.h"
+#include "Engine/DDGI/DDGIRenderer.h"
 
 #include "Engine/IconsDefine.inl"
 #include "ImGui/ImGuiHelpers.h"
@@ -110,13 +111,6 @@ namespace maple
 				entity.getOrAddComponent<component::Transform>();
 			}
 
-			if (ImGui::Selectable("Add Light Probe"))
-			{
-				auto entity = scene->createEntity("Light Probe");
-				//	entity.addComponent<component::LightProbe>();
-				//	entity.getOrAddComponent<component::Transform>();
-			}
-
 			constexpr char *shapes[] = {"Sphere", "Cube", "Pyramid", "Capsule", "Cylinder", "Terrain", "Quad"};
 
 			ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 10.f);
@@ -165,7 +159,7 @@ namespace maple
 				ImGui::EndMenu();
 			}
 
-			constexpr char *gi[] = {"VX-GI", "LPV-GI"};
+			constexpr char *gi[] = {"VX-GI", "DDGI", "LPV-GI"};
 
 			ecs::World world{Application::getExecutePoint()->getRegistry(), Application::getExecutePoint()->getGlobalEntity()};
 
@@ -183,6 +177,13 @@ namespace maple
 								entity.addComponent<vxgi::component::Voxelization>();
 								vxgi::registerGlobalComponent(Application::getExecutePoint());
 
+								Application::getExecutePoint()->getGlobalComponent<global::component::SceneTransformChanged>().dirty = true;
+							}
+
+							if (strcmp("DDGI", name) == 0)
+							{
+								auto entity = scene->createEntity("DDGI");
+								entity.addComponent<ddgi::component::DDGIPipeline>();
 								Application::getExecutePoint()->getGlobalComponent<global::component::SceneTransformChanged>().dirty = true;
 							}
 

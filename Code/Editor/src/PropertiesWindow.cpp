@@ -4,6 +4,7 @@
 #include "PropertiesWindow.h"
 #include "Editor.h"
 #include "Engine/Camera.h"
+#include "Engine/DDGI/DDGIRenderer.h"
 #include "Engine/GBuffer.h"
 #include "Engine/Material.h"
 #include "Engine/Mesh.h"
@@ -13,6 +14,7 @@
 #include "Engine/Renderer/PostProcessRenderer.h"
 #include "Engine/Renderer/ShadowRenderer.h"
 #include "Engine/Renderer/SkyboxRenderer.h"
+#include "Engine/AmbientOcclusion/SSAORenderer.h"
 
 #include "Scene/Component/Atmosphere.h"
 #include "Scene/Component/Bindless.h"
@@ -97,6 +99,41 @@ namespace MM
 	using namespace maple;
 
 	template <>
+	inline auto ComponentEditorWidget<ddgi::component::DDGIPipeline>(entt::registry &reg, entt::registry::entity_type e) -> void
+	{
+		auto &comp = reg.get<ddgi::component::DDGIPipeline>(e);
+
+		ImGui::Columns(2);
+		ImGui::Separator();
+
+		bool updated = false;
+
+		updated = updated || ImGuiHelper::property("Probe Distance", comp.probeDistance, 1, 100);
+		updated = updated || ImGuiHelper::property("Infinite Bounce", comp.infiniteBounce);
+		updated = updated || ImGuiHelper::property("Rays Per Probe", comp.raysPerProbe, 64, 512);
+		updated = updated || ImGuiHelper::property("Hysteresis", comp.hysteresis, 0.0f, 10.f);
+		updated = updated || ImGuiHelper::property("GI Intensity", comp.intensity, 1.f, 10.f);
+		updated = updated || ImGuiHelper::property("Infinite Bounce Intensity", comp.infiniteBounceIntensity, 1.f, 10.f);
+		updated = updated || ImGuiHelper::property("Normal Bias", comp.normalBias, 0.f, 5.f);
+		updated = updated || ImGuiHelper::property("Depth Sharpness", comp.depthSharpness, 50.f, 100.f);
+		updated = updated || ImGuiHelper::property("Energy Preservation", comp.energyPreservation, 0.f, 2.f);
+
+		if (auto id = ImGuiHelper::combox("Raytrace Scale", RaytraceScale::Names, RaytraceScale::Length, comp.scale); id != -1)
+		{
+			comp.scale = static_cast<RaytraceScale::Id>(id);
+			updated    = true;
+		}
+
+		if (updated)
+		{//update uniform.....
+			reg.patch<ddgi::component::DDGIPipeline>(e);
+		}
+
+		ImGui::Separator();
+		ImGui::Columns(1);
+	}
+
+	template <>
 	inline auto ComponentEditorWidget<raytraced_shadow::component::RaytracedShadow>(entt::registry &reg, entt::registry::entity_type e) -> void
 	{
 		auto &shadow = reg.get<raytraced_shadow::component::RaytracedShadow>(e);
@@ -104,11 +141,11 @@ namespace MM
 		ImGui::Columns(2);
 		ImGui::Separator();
 
-		if (auto id = ImGuiHelper::combox("RaytraceScale", RaytraceScale::Names, RaytraceScale::Length, shadow.scale);id != -1)
+		if (auto id = ImGuiHelper::combox("RaytraceScale", RaytraceScale::Names, RaytraceScale::Length, shadow.scale); id != -1)
 		{
 			shadow.scale = static_cast<RaytraceScale::Id>(id);
 		}
-	
+
 		ImGui::Separator();
 		ImGui::Columns(1);
 	}
@@ -494,9 +531,9 @@ namespace MM
 	}
 
 	template <>
-	inline auto ComponentEditorWidget<component::SSAOData>(entt::registry &reg, entt::registry::entity_type e) -> void
+	inline auto ComponentEditorWidget<ssao::component::SSAOData>(entt::registry &reg, entt::registry::entity_type e) -> void
 	{
-		auto &ssao = reg.get<component::SSAOData>(e);
+		auto &ssao = reg.get<ssao::component::SSAOData>(e);
 		ImGui::Columns(2);
 		ImGui::Separator();
 		ImGuiHelper::property("SSAO Enable", ssao.enable);

@@ -16,6 +16,7 @@
 #include "Engine/Mesh.h"
 #include "Engine/PathTracer/PathIntegrator.h"
 #include "Engine/Profiler.h"
+#include "Engine/AmbientOcclusion/SSAORenderer.h"
 
 #include "Scene/Component/Component.h"
 #include "Scene/Component/Environment.h"
@@ -100,7 +101,7 @@ namespace maple
 
 	namespace deferred_offscreen
 	{
-		using Entity = ecs::Registry ::Modify<component::DeferredData>::Fetch<component::ShadowMapData>::Fetch<component::CameraView>::Fetch<component::RendererData>::Fetch<component::SSAOData>::OptinalFetch<component::LPVGrid>::OptinalFetch<vxgi::component::Voxelization>::To<ecs::Entity>;
+		using Entity = ecs::Registry ::Modify<component::DeferredData>::Fetch<component::ShadowMapData>::Fetch<component::CameraView>::Fetch<component::RendererData>::Fetch<ssao::component::SSAOData>::OptinalFetch<component::LPVGrid>::OptinalFetch<vxgi::component::Voxelization>::To<ecs::Entity>;
 
 		using LightDefine = ecs::Registry ::Modify<component::Light>::Fetch<component::Transform>;
 
@@ -388,7 +389,7 @@ namespace maple
 			}
 		}
 
-		using RenderEntity = ecs::Registry ::Modify<component::DeferredData>::Fetch<component::ShadowMapData>::Fetch<component::CameraView>::Fetch<component::RendererData>::Fetch<component::SSAOData>::Modify<capture_graph::component::RenderGraph>::To<ecs::Entity>;
+		using RenderEntity = ecs::Registry ::Modify<component::DeferredData>::Fetch<component::ShadowMapData>::Fetch<component::CameraView>::Fetch<component::RendererData>::Fetch<ssao::component::SSAOData>::Modify<capture_graph::component::RenderGraph>::To<ecs::Entity>;
 
 		inline auto onRender(RenderEntity entity, PathTraceGroup pathGroup, ecs::World world)
 		{

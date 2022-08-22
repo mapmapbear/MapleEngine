@@ -19,6 +19,8 @@
 #include "Engine/VXGI/DrawVoxel.h"
 #include "Engine/VXGI/Voxelization.h"
 #include "Engine/Vertex.h"
+#include "Engine/DDGI/DDGIRenderer.h"
+#include "Engine/AmbientOcclusion/SSAORenderer.h"
 
 #include "RHI/CommandBuffer.h"
 #include "RHI/GPUProfile.h"
@@ -111,12 +113,14 @@ namespace maple
 		shadow_map::registerShadowMap(beginQ, renderQ, executePoint);
 		reflective_shadow_map::registerShadowMap(beginQ, renderQ, executePoint);
 		deferred_offscreen::registerDeferredOffScreenRenderer(beginQ, renderQ, executePoint);
-		post_process::registerSSAOPass(beginQ, renderQ, executePoint);
+		ssao::registerSSAOPass(beginQ, renderQ, executePoint);
 		vxgi::registerVXGIIndirectLighting(renderQ, executePoint);
 
 		raytraced_shadow::registerRaytracedShadow(beginQ, renderQ, executePoint);
+		ddgi::registerDDGI(beginQ, renderQ, executePoint);
 
 		deferred_lighting::registerDeferredLighting(beginQ, renderQ, executePoint);
+		
 		atmosphere_pass::registerAtmosphere(beginQ, renderQ, executePoint);
 		skybox_renderer::registerSkyboxRenderer(beginQ, renderQ, executePoint);
 		cloud_renderer::registerCloudRenderer(beginQ, renderQ, executePoint);
