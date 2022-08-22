@@ -63,8 +63,8 @@ Feature     					 	| Completion 	| Notes
 :-          					 	| :-         	| :-
 Reflective Shadow Map				| 100%		  	| High priority
 Light propagation volumes		 	| 90%       	    | High priority (No cascade)
-Voxel Global Illumintaion     | 70%             | High priority 
-Dynamic Diffus Global Illumintaion (DDGI)     | 0%             | High priority 
+Voxel Global Illumination     | 70%             | High priority 
+Dynamic Diffus Global Illumination (DDGI)     | 0%             | High priority 
 C# scripting                     	| 80%			| Using Mono (no engine API exposed yet)
 Vulkan porting 	 				    | 90%	  		| support Compute and Tessellation shader
 Skinned Mesh                | 70%       | High priority
@@ -75,8 +75,10 @@ Precomputed Atmospheric Scattering 	| -          	| Low priority
 Spherical Harmonics Lighting | -          | Medium priority
 Subsurface Scattering 			| -          	| Low priority
 Screen-space blurred reflections using Screen-Space Roughness | -          	| -
-Ray traced shadows				 	| 90%          	| Spatiotemporal Variance-Guided Filtering
-Ray traced reflections			| -          	| -
+Ray-traced shadows				 	| 90%          	| Spatiotemporal Variance-Guided Filtering
+Ray-traced reflections			| -          	| -
+SDF Shadow			| -          	| -
+SDF AO			| -          	| -
 GPU Driven Rendering			 	| -          	| High priority(https://vkguide.dev/docs/gpudriven/compute_culling/)
 Culling System      			 	| -          	| High priority
 Linux support			 	        | -          	| -
