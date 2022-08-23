@@ -248,7 +248,19 @@ namespace maple
 
 	auto VulkanContext::getMinUniformBufferOffsetAlignment() const -> size_t
 	{
-		return 0;
+		return VulkanDevice::get()->getPhysicalDevice()->getProperties().limits.minUniformBufferOffsetAlignment;
+	}
+
+	auto VulkanContext::alignedDynamicUboSize(size_t size) const -> size_t
+	{
+		auto min = VulkanDevice::get()->getPhysicalDevice()->getProperties().limits.minUniformBufferOffsetAlignment;
+		
+		size_t alignedSize = size;
+
+		if (min > 0)
+			alignedSize = (alignedSize + min - 1) & ~(min - 1);
+
+		return alignedSize;
 	}
 
 	auto VulkanContext::onImGui() -> void

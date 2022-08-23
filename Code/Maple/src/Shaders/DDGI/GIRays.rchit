@@ -62,7 +62,7 @@ layout (set = 4, binding = 0) uniform sampler2D uSamplers[];
 
 layout (set = 5, binding = 0) uniform sampler2D uIrradiance;
 layout (set = 5, binding = 1) uniform sampler2D uDepth;
-layout (set = 5, binding = 3, scalar) uniform DDGIUBO
+layout (set = 5, binding = 2, scalar) uniform DDGIUBO
 {
     DDGIUniform ddgi;
 };

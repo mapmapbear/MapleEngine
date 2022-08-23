@@ -8,15 +8,16 @@
 #include "DDGICommon.glsl"
 #include "../Common/Math.h"
 
-layout (set = 0, binding = 3) uniform accelerationStructureEXT uTopLevelAS;
+layout(set = 0, binding = 3) uniform accelerationStructureEXT uTopLevelAS;
 
-layout(set = 1, binding = 0, rgba16f) uniform image2D iRadiance;
-layout(set = 1, binding = 1, rgba16f) uniform image2D iDirectionDistance;
-
-layout(set = 5, binding = 3, scalar) uniform DDGIUBO
+layout(set = 5, binding = 2, scalar) uniform DDGIUBO
 {
     DDGIUniform ddgi;
 };
+
+layout(set = 6, binding = 0, rgba16f) uniform image2D iRadiance;
+
+layout(set = 6, binding = 1, rgba16f) uniform image2D iDirectionDistance;
 
 layout(push_constant) uniform PushConstants
 {

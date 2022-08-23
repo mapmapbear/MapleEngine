@@ -53,6 +53,7 @@ namespace maple
 		virtual auto init() -> void                                       = 0;
 		virtual auto present() -> void                                    = 0;
 		virtual auto getMinUniformBufferOffsetAlignment() const -> size_t = 0;
+		virtual auto alignedDynamicUboSize(size_t size) const -> size_t   = 0;
 		virtual auto waitIdle() const -> void                             = 0;
 		virtual auto onImGui() -> void                                    = 0;
 		virtual auto getGPUMemoryUsed() -> float                          = 0;

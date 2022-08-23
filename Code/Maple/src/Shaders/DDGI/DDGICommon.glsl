@@ -6,17 +6,20 @@
 
 struct DDGIUniform
 {
-    vec3  startPosition;
-    vec3  step;
-    ivec3 probeCounts;
+    vec4  startPosition;
+    vec4  step;
+    ivec4 probeCounts;
+
     float maxDistance;
     float sharpness;
     float hysteresis;
     float normalBias;
+    
     float energyPreservation;
     int   irradianceProbeSideLength;
     int   irradianceTextureWidth;
     int   irradianceTextureHeight;
+    
     int   depthProbeSideLength;
     int   depthTextureWidth;
     int   depthTextureHeight;
@@ -50,7 +53,7 @@ int getProbeId(vec2 texel, int width, int probeSideLength)
 
 vec3 gridToPosition(in DDGIUniform ddgi, ivec3 c)
 {
-    return ddgi.step * vec3(c) + ddgi.startPosition;
+    return ddgi.step.xyz * vec3(c) + ddgi.startPosition.xyz;
 }
 
 vec3 probeLocation(in DDGIUniform ddgi, int index)
@@ -65,12 +68,12 @@ vec3 probeLocation(in DDGIUniform ddgi, int index)
 
 ivec3 baseGridCoord(in DDGIUniform ddgi, vec3 X) 
 {
-    return clamp(ivec3((X - ddgi.startPosition) / ddgi.step), ivec3(0, 0, 0), ivec3(ddgi.probeCounts) - ivec3(1, 1, 1));
+    return clamp(ivec3((X - ddgi.startPosition.xyz) / ddgi.step.xyz), ivec3(0, 0, 0), ivec3(ddgi.probeCounts.xyz) - ivec3(1, 1, 1));
 }
 
 vec3 gridCoordToPosition(in DDGIUniform ddgi, ivec3 c)
 {
-    return ddgi.step * vec3(c) + ddgi.startPosition;
+    return ddgi.step.xyz * vec3(c) + ddgi.startPosition.xyz;
 }
 
 //Three dimension -> One dimension
@@ -125,14 +128,14 @@ vec3 sampleIrradiance(in DDGIUniform ddgi, vec3 P, vec3 N, vec3 Wo, sampler2D uI
     float sumWeight = 0.0f;
 
     // alpha is how far from the floor(currentVertex) position. on [0, 1] for each axis.
-    vec3 alpha = clamp((P - baseProbePos) / ddgi.step, vec3(0.0f), vec3(1.0f));
+    vec3 alpha = clamp((P - baseProbePos) / ddgi.step.xyz, vec3(0.0f), vec3(1.0f));
 
     for (int i = 0; i < 8; ++i) 
     {
         // Compute the offset grid coord and clamp to the probe grid boundary
         // Offset = 0 or 1 along each axis
         ivec3 offset = ivec3(i, i >> 1, i >> 2) & ivec3(1);
-        ivec3 probeGridCoord = clamp(baseGridCoord + offset, ivec3(0), ddgi.probeCounts - ivec3(1));
+        ivec3 probeGridCoord = clamp(baseGridCoord + offset, ivec3(0), ddgi.probeCounts.xyz - ivec3(1));
         // Make cosine falloff in tangent plane with respect to the angle from the surface to the probe so that we never
         // test a probe that is *behind* the surface.
         // It doesn't have to be cosine, but that is efficient to compute and we must clip to the tangent plane.

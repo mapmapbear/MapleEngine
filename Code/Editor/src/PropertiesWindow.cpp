@@ -3,6 +3,7 @@
 //////////////////////////////////////////////////////////////////////////////
 #include "PropertiesWindow.h"
 #include "Editor.h"
+#include "Engine/AmbientOcclusion/SSAORenderer.h"
 #include "Engine/Camera.h"
 #include "Engine/DDGI/DDGIRenderer.h"
 #include "Engine/GBuffer.h"
@@ -14,7 +15,6 @@
 #include "Engine/Renderer/PostProcessRenderer.h"
 #include "Engine/Renderer/ShadowRenderer.h"
 #include "Engine/Renderer/SkyboxRenderer.h"
-#include "Engine/AmbientOcclusion/SSAORenderer.h"
 
 #include "Scene/Component/Atmosphere.h"
 #include "Scene/Component/Bindless.h"
@@ -125,12 +125,18 @@ namespace MM
 		}
 
 		if (updated)
-		{//update uniform.....
+		{        //update uniform.....
 			reg.patch<ddgi::component::DDGIPipeline>(e);
 		}
 
 		ImGui::Separator();
 		ImGui::Columns(1);
+
+		if (ImGui::Button("Apply GI"))
+		{
+			reg.emplace<ddgi::component::ApplyEvent>(e);
+		}
+		ImGui::Separator();
 	}
 
 	template <>
@@ -328,20 +334,37 @@ namespace MM
 	inline auto ComponentEditorWidget<component::BoundingBoxComponent>(entt::registry &reg, entt::registry::entity_type e) -> void
 	{
 		auto &bbbox = reg.get<component::BoundingBoxComponent>(e);
-		if (auto box = bbbox.box; box != nullptr)
+		auto transform = reg.try_get<component::Transform>(e);
+
+		if (auto box = bbbox.box; box != nullptr && transform)
 		{
 			ImGui::Separator();
 			ImGui::Columns(1);
 			ImGui::TextUnformatted("Bounds");
 			ImGui::Columns(2);
 
-			auto size   = box->size();
-			auto center = box->center();
+			auto newBB = box->transform(transform->getWorldMatrix());
+
+			auto size   = newBB.size();
+			auto center = newBB.center();
+
+			//show size is ok.
 
 			ImGuiHelper::property("Center", center, 0, 0, ImGuiHelper::PropertyFlag::DragFloat);
 			ImGuiHelper::property("Extend", size, 0, 0, ImGuiHelper::PropertyFlag::DragFloat);
 			ImGui::Separator();
+
+			ImGui::Columns(1);
+
+			if (ImGui::Button("Edit Box"))
+			{
+				auto editor = static_cast<maple::Editor *>(Application::get());
+				editor->editBox();
+			}
+
+			ImGui::Separator();
 		}
+		ImGui::Columns(1);
 	}
 
 	template <>

@@ -146,7 +146,7 @@ namespace maple
 		auto clickObject(const Ray &ray) -> void;
 		auto focusCamera(const glm::vec3 &point, float distance, float speed = 1.0f) -> void;
 		auto drawPlayButtons() -> void;
-
+		auto editBox() -> void;
 	  private:
 		  
 		auto drawMenu() -> void;
@@ -191,6 +191,7 @@ namespace maple
 		glm::vec3 cameraStartPosition;
 		float     cameraTransitionStartTime = 0.0f;
 		float     cameraTransitionSpeed     = 0.0f;
+		float     bounds[6]                 = {};
 	};
 
 	template <class T>

@@ -34,5 +34,11 @@ namespace maple
 		{
 			return 256;
 		}
+
+		inline auto alignedDynamicUboSize(size_t size) const->size_t override
+		{
+			//todo..
+			return size;
+		}
 	};
 }        // namespace maple

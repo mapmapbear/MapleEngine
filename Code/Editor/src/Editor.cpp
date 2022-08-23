@@ -264,6 +264,17 @@ namespace maple
 			}
 		}
 
+		if (auto box = registry.try_get<component::BoundingBoxComponent>(selectedNode))
+		{
+			auto transform = registry.try_get<component::Transform>(selectedNode);
+
+			if (transform && box->box)
+			{
+				auto bb = box->box->transform(transform->getWorldMatrix());
+				GeometryRenderer::drawBox({}, bb, {1, 1, 1, 1});
+			}
+		}
+
 		if (auto collider = registry.try_get<physics::component::Collider>(selectedNode))
 		{
 			auto &transform = registry.get<component::Transform>(selectedNode);
@@ -318,23 +329,29 @@ namespace maple
 
 		if (selectedNode == entt::null || imGuizmoOperation == ImGuizmo::SELECT)
 			return;
+		auto &registry = getExecutePoint()->getRegistry();
 
 		if (showGizmos)
 		{
 			ImGuizmo::SetDrawlist();
 			ImGuizmo::SetOrthographic(camera->isOrthographic());
 
-			auto &registry  = getExecutePoint()->getRegistry();
-			auto  transform = registry.try_get<component::Transform>(selectedNode);
-			auto  rigidBody = registry.try_get<physics::component::RigidBody>(selectedNode);
-			auto  collider  = registry.try_get<physics::component::Collider>(selectedNode);
+			auto transform   = registry.try_get<component::Transform>(selectedNode);
+			auto rigidBody   = registry.try_get<physics::component::RigidBody>(selectedNode);
+			auto collider    = registry.try_get<physics::component::Collider>(selectedNode);
+			auto boundingBox = registry.try_get<component::BoundingBoxComponent>(selectedNode);
 
 			if (transform != nullptr)
 			{
-				auto model = transform->getWorldMatrix();
+				auto model = transform->getLocalMatrix();
 
-				float delta[16];
 				float box[6] = {};
+
+				if (boundingBox && boundingBox->box)
+				{
+					memcpy(box, &boundingBox->box->min, sizeof(boundingBox->box->min));
+					memcpy(&box[3], &boundingBox->box->max, sizeof(boundingBox->box->max));
+				}
 
 				ImGuizmo::Manipulate(
 				    glm::value_ptr(view),
@@ -342,24 +359,14 @@ namespace maple
 				    static_cast<ImGuizmo::OPERATION>(imGuizmoOperation),
 				    ImGuizmo::LOCAL,
 				    glm::value_ptr(model),
-				    delta,
-				    nullptr);
+				    nullptr,
+				    nullptr, boundingBox ? box : nullptr);
 
 				if (ImGuizmo::IsUsing())
 				{
-					if (static_cast<ImGuizmo::OPERATION>(imGuizmoOperation) == ImGuizmo::OPERATION::SCALE)
-					{
-						auto mat = glm::make_mat4(delta);
-						transform->setLocalScale(component::Transform::getScaleFromMatrix(mat));
-					}
-					else
-					{
-						auto mat = glm::make_mat4(delta) * transform->getLocalMatrix();
-						transform->setLocalTransform(mat);
-						//TOOD
-					}
+					transform->setLocalTransform(model);
 				}
-			}
+			}	
 		}
 	}
 
@@ -435,6 +442,11 @@ namespace maple
 		}
 		//ImGui::PopStyleVar();
 		//ImGui::End();
+	}
+
+	auto Editor::editBox() -> void
+	{
+		imGuizmoOperation = ImGuizmo::BOUNDS;
 	}
 
 	auto Editor::drawMenu() -> void

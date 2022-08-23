@@ -23,6 +23,8 @@ namespace maple
 		auto init() -> void override;
 		auto present() -> void override;
 		auto getMinUniformBufferOffsetAlignment() const -> size_t override;
+		auto alignedDynamicUboSize(size_t size) const -> size_t override;
+		 
 		auto waitIdle() const -> void override;
 		auto onImGui() -> void override;
 

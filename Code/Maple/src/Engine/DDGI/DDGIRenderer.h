@@ -19,9 +19,9 @@ namespace maple
 		{
 			struct DDGIUniform
 			{
-				glm::vec3  startPosition;
-				glm::vec3  step;
-				glm::ivec3 probeCounts;
+				glm::vec4  startPosition;
+				glm::vec4  step;//align
+				glm::ivec4 probeCounts;
 
 				float maxDistance    = 6.f;
 				float depthSharpness = 50.f;
@@ -36,7 +36,6 @@ namespace maple
 				int32_t depthProbeSideLength = DepthOctSize;
 				int32_t depthTextureWidth;
 				int32_t depthTextureHeight;
-
 				int32_t raysPerProbe = 256;
 			};
 
@@ -54,7 +53,12 @@ namespace maple
 
 				float             width;
 				float             height;
-				RaytraceScale::Id scale;
+				RaytraceScale::Id scale = RaytraceScale::Full;
+			};
+
+			struct ApplyEvent
+			{
+				uint8_t dummy;
 			};
 		}        // namespace component
 
