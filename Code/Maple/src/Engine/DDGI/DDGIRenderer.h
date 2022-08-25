@@ -6,6 +6,7 @@
 #include "Engine/Core.h"
 #include "Scene/System/ExecutePoint.h"
 #include "Engine/Raytrace/RaytraceScale.h"
+#include "RHI/Texture.h"
 #include <glm/glm.hpp>
 
 namespace maple
@@ -54,11 +55,9 @@ namespace maple
 				float             width;
 				float             height;
 				RaytraceScale::Id scale = RaytraceScale::Full;
-			};
 
-			struct ApplyEvent
-			{
-				uint8_t dummy;
+				Texture::Ptr currentIrrdance;
+				Texture::Ptr currentDepth;
 			};
 		}        // namespace component
 

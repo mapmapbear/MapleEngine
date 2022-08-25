@@ -66,6 +66,15 @@ vec3 probeLocation(in DDGIUniform ddgi, int index)
     return gridToPosition(ddgi, gridCoord);
 }
 
+ivec3 probeIndexToGridCoord(in DDGIUniforms ddgi, int index)
+{
+    ivec3 gridCoord;
+    gridCoord.x = index % ddgi.probeCounts.x;
+    gridCoord.y = (index % (ddgi.probeCounts.x * ddgi.probeCounts.y)) / ddgi.probeCounts.x;
+    gridCoord.z = index / (ddgi.probeCounts.x * ddgi.probeCounts.y);
+    return gridCoord;
+}
+
 ivec3 baseGridCoord(in DDGIUniform ddgi, vec3 X) 
 {
     return clamp(ivec3((X - ddgi.startPosition.xyz) / ddgi.step.xyz), ivec3(0, 0, 0), ivec3(ddgi.probeCounts.xyz) - ivec3(1, 1, 1));

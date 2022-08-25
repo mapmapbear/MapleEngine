@@ -20,6 +20,8 @@
 #include "Engine/VXGI/Voxelization.h"
 #include "Engine/Vertex.h"
 #include "Engine/DDGI/DDGIRenderer.h"
+#include "Engine/DDGI/DDGIVisualization.h"
+
 #include "Engine/AmbientOcclusion/SSAORenderer.h"
 
 #include "RHI/CommandBuffer.h"
@@ -130,6 +132,7 @@ namespace maple
 		geometry_renderer::registerGeometryRenderer(beginQ, renderQ, executePoint);
 		post_process::registerBloom(renderQ, executePoint);
 		vxgi_debug::registerVXGIVisualization(beginQ, renderQ, executePoint);
+		ddgi::registerDDGIVisualization(beginQ, renderQ, executePoint);
 		vxgi::registerVoxelizer(beginQ, renderQ, executePoint);
 		final_screen_pass::registerFinalPass(renderQ, executePoint);
 

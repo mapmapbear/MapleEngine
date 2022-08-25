@@ -3,6 +3,8 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include "DDGIRenderer.h"
+#include "DDGIVisualization.h"
+
 #include "Engine/CaptureGraph.h"
 #include "Engine/Material.h"
 #include "Engine/Mesh.h"
@@ -48,17 +50,8 @@ namespace maple
 	{
 		namespace component
 		{
-			struct Running
-			{
-				int8_t dummy;
-			};
-
 			struct DDGIPipelineInternal
 			{
-				BoundingBox box = {
-				    {-1.f, -1.f, -1.f},
-				    {1.f, 1.f, 1.f}};
-
 				//raytrace pass.
 				Texture2D::Ptr radiance;
 				Texture2D::Ptr directionDepth;
@@ -163,7 +156,6 @@ namespace maple
 	{
 		// clang-format off
 		using Entity = ecs::Registry 
-			::Include<ddgi::component::Running>
 			::Modify<ddgi::component::RaytracePass>
 			::Modify<ddgi::component::DDGIPipelineInternal>
 			::Modify<ddgi::component::DDGIPipeline>
@@ -174,8 +166,13 @@ namespace maple
 		inline auto system(Entity entity, component::RendererData &renderData, ecs::World world)
 		{
 			auto [raytracePass, internal, pipeline, uniform] = entity;
+			pipeline.currentIrrdance                         = internal.irradiance[internal.pingPong];
+			pipeline.currentDepth                            = internal.depth[internal.pingPong];
+
 			raytracePass.samplerDescriptor->setTexture("uIrradiance", internal.irradiance[internal.pingPong]);
 			raytracePass.samplerDescriptor->setTexture("uDepth", internal.depth[internal.pingPong]);
+			raytracePass.outpuDescriptor->setTexture("iRadiance", internal.radiance);
+			raytracePass.outpuDescriptor->setTexture("iDirectionDistance", internal.directionDepth);
 
 			raytracePass.sceneDescriptor->update(renderData.commandBuffer);
 			raytracePass.vboDescriptor->update(renderData.commandBuffer);
@@ -191,6 +188,7 @@ namespace maple
 			{
 				raytracePass.pushConsts.infiniteBounces = pipeline.infiniteBounce && !raytracePass.firstFrame ? 1 : 0;
 				raytracePass.pushConsts.intensity       = pipeline.infiniteBounceIntensity;
+				raytracePass.pushConsts.numFrames       = internal.frames;
 
 				auto vec3 = glm::normalize(glm::vec3(internal.rand.nextReal(-1.f, 1.f),
 				                                     internal.rand.nextReal(-1.f, 1.f), internal.rand.nextReal(-1.f, 1.f)));
@@ -215,7 +213,6 @@ namespace maple
 	{
 		// clang-format off
 		using Entity = ecs::Registry 
-			::Include<ddgi::component::Running>
 			::Modify<ddgi::component::DDGIPipelineInternal>
 			::To<ecs::Entity>;
 		// clang-format on
@@ -227,35 +224,11 @@ namespace maple
 		}
 	}        // namespace end_frame
 
-	namespace apply_event
-	{
-		// clang-format off
-		using Entity = ecs::Registry 
-			::Modify<ddgi::component::DDGIPipeline>
-			::Modify<ddgi::component::DDGIPipelineInternal>
-			::Modify<ddgi::component::DDGIUniform>
-			::Include<ddgi::component::ApplyEvent>
-			::Modify<ddgi::component::RaytracePass>
-			::To<ecs::Entity>;
-		// clang-format on
-
-		inline auto system(Entity entity, ecs::World world)
-		{
-			auto [pipeline, internal, uniform, raytracePass] = entity;
-			ddgi::init::initializeProbeGrid(pipeline, internal, uniform, world);
-			raytracePass.outpuDescriptor->setTexture("iRadiance", internal.radiance);
-			raytracePass.outpuDescriptor->setTexture("iDirectionDistance", internal.directionDepth);
-			world.removeComponent<ddgi::component::ApplyEvent>(entity);
-			world.addComponent<ddgi::component::Running>(entity);
-		}
-	}        // namespace apply_event
-
 	namespace gather_scene
 	{
 		// clang-format off
 		using Entity = ecs::Registry
 			::Modify<ddgi::component::RaytracePass>
-			::Include<ddgi::component::Running>
 			::To<ecs::Entity>;
 
 		using LightDefine = ecs::Registry 
@@ -572,18 +545,19 @@ namespace maple
 
 			inline auto initDDGIPipeline(ddgi::component::DDGIPipeline &pipeline, Entity entity, ecs::World world)
 			{
-				auto &bBox = entity.addComponent<maple::component::BoundingBoxComponent>();
-				auto &pipe = entity.addComponent<ddgi::component::DDGIPipelineInternal>();
-				entity.addComponent<ddgi::component::DDGIUniform>();
+				auto &bBox     = entity.addComponent<maple::component::BoundingBoxComponent>();
+				auto &sceneBox = world.getComponent<maple::component::BoundingBoxComponent>();
+				auto &pipe     = entity.addComponent<ddgi::component::DDGIPipelineInternal>();
+				auto &uniform  = entity.addComponent<ddgi::component::DDGIUniform>();
 				entity.addComponent<maple::component::Transform>();
-				bBox.box = &pipe.box;
+				bBox.box = sceneBox.box;
 
 				const auto &windowSize = world.getComponent<maple::component::WindowSize>();
 
 				float scaleDivisor = powf(2.0f, float(pipeline.scale));
 
-				pipeline.width = windowSize.width / scaleDivisor;
-				pipeline.width = windowSize.height / scaleDivisor;
+				pipeline.width  = windowSize.width / scaleDivisor;
+				pipeline.height = windowSize.height / scaleDivisor;
 
 				auto &raytracePass = entity.addComponent<ddgi::component::RaytracePass>();
 
@@ -613,8 +587,6 @@ namespace maple
 				raytracePass.samplerDescriptor  = DescriptorSet::create({5, raytracePass.shader.get()});
 				raytracePass.outpuDescriptor    = DescriptorSet::create({6, raytracePass.shader.get()});
 
-
-
 				raytracePass.defaultMaterial = std::make_shared<Material>();
 				MaterialProperties properties;
 				properties.albedoColor       = glm::vec4(1.f, 1.f, 1.f, 1.f);
@@ -627,14 +599,15 @@ namespace maple
 				raytracePass.defaultMaterial->setMaterialProperites(properties);
 
 				uniformChanged(pipeline, entity, world);
+				ddgi::init::initializeProbeGrid(pipeline, pipe, uniform, world);
 			}
 		}        // namespace delegates
 
 		auto registerDDGI(ExecuteQueue &begin, ExecuteQueue &render, std::shared_ptr<ExecutePoint> executePoint) -> void
 		{
+			executePoint->addDependency<ddgi::component::DDGIPipeline, ddgi::component::DDGIVisualization>();
 			executePoint->onConstruct<ddgi::component::DDGIPipeline, delegates::initDDGIPipeline>();
 			executePoint->onUpdate<ddgi::component::DDGIPipeline, delegates::uniformChanged>();
-			executePoint->registerWithinQueue<apply_event::system>(begin);
 			executePoint->registerWithinQueue<gather_scene::system>(begin);
 			executePoint->registerWithinQueue<trace_rays::system>(render);
 			executePoint->registerWithinQueue<end_frame::system>(render);

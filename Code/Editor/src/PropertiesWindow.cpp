@@ -131,12 +131,6 @@ namespace MM
 
 		ImGui::Separator();
 		ImGui::Columns(1);
-
-		if (ImGui::Button("Apply GI"))
-		{
-			reg.emplace<ddgi::component::ApplyEvent>(e);
-		}
-		ImGui::Separator();
 	}
 
 	template <>

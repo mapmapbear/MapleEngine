@@ -40,6 +40,13 @@ namespace maple
 		virtual auto clearRenderTargets(const CommandBuffer *commandBuffer) -> void{};
 		virtual auto traceRays(const CommandBuffer *commandBuffer, uint32_t width, uint32_t height, uint32_t depth) -> void{};
 		virtual auto dispatchIndirect(const CommandBuffer *cmdBuffer, const StorageBuffer *ssbo) -> void{};
+		
+		virtual auto drawIndexed(const CommandBuffer *cmdBuffer,
+		                         uint32_t             indexCount,
+		                         uint32_t             instanceCount,
+		                         uint32_t             firstIndex,
+		                         int32_t              vertexOffset,
+		                         uint32_t             firstInstance) -> void = 0;
 
 	  protected:
 		PipelineInfo description;

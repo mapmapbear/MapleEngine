@@ -425,6 +425,12 @@ namespace maple
 		vkCmdDispatchIndirect(vkCmd->getCommandBuffer(), vkBuffer->getHandle(), 0);
 	}
 
+	auto VulkanPipeline::drawIndexed(const CommandBuffer *cmdBuffer, uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex, int32_t vertexOffset, uint32_t firstInstance) -> void 
+	{
+		auto vkCmd = static_cast<const VulkanCommandBuffer *>(cmdBuffer);
+		vkCmdDrawIndexed(vkCmd->getCommandBuffer(), indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
+	}
+
 	auto VulkanPipeline::transitionAttachments() -> void
 	{
 		PROFILE_FUNCTION();

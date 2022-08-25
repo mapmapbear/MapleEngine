@@ -38,6 +38,8 @@ namespace maple
 		Mesh(const std::vector<uint32_t> &indices, const std::vector<Vertex> &vertices);
 		Mesh(const std::vector<uint32_t> &indices, const std::vector<SkinnedVertex> &vertices);
 
+		using Ptr = std::shared_ptr<Mesh>;
+
 		inline auto setMaterial(const std::shared_ptr<Material> &material)
 		{
 			materials.clear();
