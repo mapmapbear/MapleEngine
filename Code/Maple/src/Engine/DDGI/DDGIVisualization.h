@@ -14,7 +14,7 @@ namespace maple
 		{
 			struct DDGIVisualization
 			{
-				bool enable = true;
+				bool enable = false;
 				float scale  = 1.f;
 			};
 		};        // namespace component

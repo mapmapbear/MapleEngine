@@ -14,6 +14,8 @@
 #include "Scene/Component/VolumetricCloud.h"
 
 #include "Engine/AmbientOcclusion/SSAORenderer.h"
+#include "Engine/DDGI/DDGIRenderer.h"
+#include "Engine/DDGI/DDGIVisualization.h"
 #include "Engine/LPVGI/LightPropagationVolume.h"
 #include "Engine/LPVGI/ReflectiveShadowMap.h"
 #include "Engine/PathTracer/PathIntegrator.h"
@@ -82,3 +84,4 @@ COMP_ICON(vxgi::component::Voxelization, ICON_MDI_LIGHTHOUSE_ON);
 COMP_ICON(vxgi_debug::global::component::DrawVoxelRender, ICON_MDI_LIGHTHOUSE_ON);
 COMP_ICON(raytraced_shadow::component::RaytracedShadow, ICON_MDI_BOX_SHADOW);
 COMP_ICON(ddgi::component::DDGIPipeline, ICON_MDI_EYE_PLUS);
+COMP_ICON(ddgi::component::DDGIVisualization, ICON_MDI_EYE_SETTINGS);

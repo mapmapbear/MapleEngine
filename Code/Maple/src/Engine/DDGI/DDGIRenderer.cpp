@@ -205,11 +205,11 @@ namespace maple
 		inline auto system(Entity entity, component::RendererData &renderData, ecs::World world)
 		{
 			auto [raytracePass, internal, pipeline, uniform] = entity;
-			pipeline.currentIrrdance                         = internal.irradiance[internal.pingPong];
-			pipeline.currentDepth                            = internal.depth[internal.pingPong];
+			pipeline.currentIrrdance                         = internal.irradiance[1 - internal.pingPong];
+			pipeline.currentDepth                            = internal.depth[1 - internal.pingPong];
 
-			raytracePass.samplerDescriptor->setTexture("uIrradiance", internal.irradiance[internal.pingPong]);
-			raytracePass.samplerDescriptor->setTexture("uDepth", internal.depth[internal.pingPong]);
+			raytracePass.samplerDescriptor->setTexture("uIrradiance", internal.irradiance[1 - internal.pingPong]);
+			raytracePass.samplerDescriptor->setTexture("uDepth", internal.depth[1 - internal.pingPong]);
 			raytracePass.outpuDescriptor->setTexture("iRadiance", internal.radiance);
 			raytracePass.outpuDescriptor->setTexture("iDirectionDistance", internal.directionDepth);
 
@@ -224,7 +224,7 @@ namespace maple
 			raytracePass.pipeline->bind(renderData.commandBuffer);
 
 			raytracePass.pushConsts.infiniteBounces = pipeline.infiniteBounce && internal.frames != 0 ? 1 : 0;
-			raytracePass.pushConsts.intensity       = pipeline.infiniteBounceIntensity;
+			raytracePass.pushConsts.intensity       = pipeline.intensity;
 			raytracePass.pushConsts.numFrames       = internal.frames;
 
 			auto vec3 = glm::normalize(glm::vec3(internal.rand.nextReal(-1.f, 1.f),
@@ -692,7 +692,7 @@ namespace maple
 			pass.descriptors[0]->setUniform("UniformBufferObject", "cameraPosition", &pos);
 			pass.descriptors[0]->update(renderData.commandBuffer);
 			pass.pipeline->bind(renderData.commandBuffer);
-			const uint32_t dispatchX = static_cast<uint32_t>(std::ceil(float(renderData.gbuffer->getBuffer(GBufferTextures::INDIRECT_LIGHTING)->getWidth()) / 32));
+			const uint32_t dispatchX = static_cast<uint32_t>(std::ceil(float(renderData.gbuffer->getBuffer(GBufferTextures::INDIRECT_LIGHTING)->getWidth()) / 32.f));
 			const uint32_t dispatchY = static_cast<uint32_t>(std::ceil(float(renderData.gbuffer->getBuffer(GBufferTextures::INDIRECT_LIGHTING)->getHeight()) / 32.f));
 			Renderer::bindDescriptorSets(pass.pipeline.get(), renderData.commandBuffer, 0, pass.descriptors);
 			Renderer::dispatch(renderData.commandBuffer, dispatchX, dispatchY, 1);

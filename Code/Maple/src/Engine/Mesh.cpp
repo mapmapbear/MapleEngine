@@ -386,6 +386,32 @@ namespace maple
 		return std::make_shared<Mesh>(indices, data);
 	}
 
+	auto Mesh::createOctahedron() -> std::shared_ptr<Mesh>
+	{
+		std::vector<Vertex> data;
+		data.resize(6);
+
+		std::vector<glm::vec3> octVertices{
+		    {1, 0, 0}, {-1, 0, 0}, {0, 1, 0}, {0, -1, 0}, {0, 0, 1}, {0, 0, -1}};
+
+		for (auto i = 0;i<6;i++)
+		{
+			data[i].pos = octVertices[i];
+			data[i].color    = glm::vec4(1.0f);
+			data[i].texCoord = glm::vec2(0.0f, 0.0f);
+			data[i].normal   = glm::vec3(0.0f, 0.0f, 0.0f);
+		}
+
+		const std::vector<uint32_t> indices = {
+		    0, 2, 4, 0, 4, 3, 0, 3, 5,
+		    0, 5, 2, 1, 2, 5, 1, 5, 3,
+		    1, 3, 4, 1, 4, 2};
+
+		Mesh::generateTangents(data, indices);
+		Mesh::generateNormals(data, indices);
+		return std::make_shared<Mesh>(indices, data);
+	}
+
 	auto Mesh::createCapsule(float radius /*= 0.5f*/, float midHeight /*= 2.0f*/, int32_t radialSegments /*= 64*/, int32_t rings /*= 8*/) -> std::shared_ptr<Mesh>
 	{
 		PROFILE_FUNCTION();

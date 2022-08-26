@@ -71,8 +71,7 @@ layout(set = 0, binding = 12) uniform UniformBufferLight
 	int enableShadow;
 	int shadowMethod;
 	int iblEnable;
-
-	float padd2;
+	int enableDDGI;
 } ubo;
 
 float RayMarch(vec3 startPos, vec3 viewDir, vec3 normal, vec3 cameraPos, Light light)
@@ -311,7 +310,8 @@ vec3 lighting(vec3 F0, vec3 wsPos, Material material,vec2 fragTexCoord)
 		float cosLi = max(0.0, dot(material.normal, Li));
 		float cosLh = max(0.0, dot(material.normal, Lh));
 		
-		vec3 F = fresnelSchlick(F0, max(0.0, dot(Lh, material.view)));
+		//vec3 F = fresnelSchlick(F0, max(0.0, dot(Lh, material.view)));
+		vec3 F = fresnelSchlickRoughness(F0,material.normalDotView,material.roughness);
 		
 		float D = ndfGGX(cosLh, material.roughness);
 		float G = gaSchlickGGX(cosLi, material.normalDotView, material.roughness);
@@ -329,6 +329,12 @@ vec3 lighting(vec3 F0, vec3 wsPos, Material material,vec2 fragTexCoord)
 			vec3 indirect = ( diffuseBRDF + specularBRDF ) * indirectShading.rgb;
 			indirectShading = vec4(indirect,1);
 		}	
+
+		if(ubo.enableDDGI == 1)
+		{
+			vec3 indirect = kd * material.albedo.xyz * indirectShading.rgb;
+			indirectShading = vec4(indirect,1);
+		}
 
 		if(ubo.shadowMethod == ShadowTypeTraceShadowCone)
 		{

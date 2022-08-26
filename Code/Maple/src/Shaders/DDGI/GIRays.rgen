@@ -31,8 +31,6 @@ layout(push_constant) uniform PushConstants
 }pushConsts;
 
 
-
-
 /**
 At each of the m active probes, we [uniformly sample] n spherical directions 
 according to a stochastically-rotated Fibonacci spiral pattern.

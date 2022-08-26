@@ -15,7 +15,7 @@ const float PBR_WORKFLOW_SEPARATE_TEXTURES = 0.0f;
 const float PBR_WORKFLOW_METALLIC_ROUGHNESS = 1.0f;
 const float PBR_WORKFLOW_SPECULAR_GLOSINESS = 2.0f;
 
-layout(location = 0) rayPayloadEXT GIPayload outPayload;
+layout(location = 0) rayPayloadInEXT GIPayload inPayload;
 
 hitAttributeEXT vec2 hitAttribs;
 
@@ -77,6 +77,7 @@ layout(push_constant) uniform PushConstants
     float intensity;
 }pushConsts;
 
+#include "../Raytraced/RayQuery.glsl"
 
 HitInfo getHitInfo()
 {
@@ -129,10 +130,12 @@ vec3 sampleLight(in SurfaceMaterial p, in Light light, out vec3 Wi)
         vec3 lightDir = -light.direction.xyz;
         Wi = lightDir;
         Li = light.color.xyz * (pow(light.intensity,1.4) + 0.1);
+        float v = queryDistance( p.vertex.position + p.normal * 0.1f, Wi , 10000.f );
+        Li *= v;
     } 
     else if (light.type == LIGHT_ENV)
     {
-        vec2 randValue = nextVec2(outPayload.random);
+        vec2 randValue = nextVec2(inPayload.random);
         Wi = sampleCosineLobe(p.normal, randValue);
         Li = texture(uSkybox, Wi).rgb;
     }
@@ -172,8 +175,8 @@ vec3 directLighting(in SurfaceMaterial p)
 {
     vec3 L = vec3(0.0f);
 
-    //uint lightIdx = nextUInt(outPayload.random, pushConsts.numLights);
-    const Light light = Lights.data[0];
+    uint lightIdx = nextUInt(inPayload.random, pushConsts.numLights);
+    const Light light = Lights.data[lightIdx];
 
     vec3 view = -gl_WorldRayDirectionEXT;
     vec3 lightDir = vec3(0.0f);
@@ -185,9 +188,7 @@ vec3 directLighting(in SurfaceMaterial p)
 
     vec3 brdf = BRDF(p, view, halfV, lightDir);
     float cosTheta = clamp(dot(p.normal, lightDir), 0.0, 1.0);
-
-    L = outPayload.T * brdf * cosTheta * Li;
-
+    L = inPayload.T * brdf * cosTheta * Li;
     return L;
 }
 
@@ -311,14 +312,14 @@ void main()
     surface.roughness = max(surface.roughness, 0.00001);
     surface.F0 = mix(vec3(0.03), surface.albedo.xyz, surface.metallic);
 
-    outPayload.L = vec3(0.0f,0.0f,0.f);
+    inPayload.L = vec3(0.0f);
 
    /*if (!isBlack(surface.emissive.rgb))
-        outPayload.L += surface.emissive.rgb;*/
-    outPayload.L += directLighting(surface);
+        inPayload.L += surface.emissive.rgb;*/
+    inPayload.L += directLighting(surface);
 
     if (pushConsts.infiniteBounces == 1)
-        outPayload.L += indirectLighting(surface);
+        inPayload.L += indirectLighting(surface);
 
-    outPayload.hitDistance = gl_RayTminEXT + gl_HitTEXT;
+    inPayload.hitDistance = gl_RayTminEXT + gl_HitTEXT;
 }

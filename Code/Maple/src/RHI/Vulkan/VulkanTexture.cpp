@@ -272,7 +272,7 @@ namespace maple
 		}
 		else if (fileName != "")
 		{
-			image             = maple::ImageLoader::loadAsset(fileName, true, true);
+			image             = maple::ImageLoader::loadAsset(fileName, true, loadOptions.flipY);
 			width             = image->getWidth();
 			height            = image->getHeight();
 			imageSize         = image->getImageSize();

@@ -52,5 +52,6 @@ namespace maple
 		TRIVIAL_COMPONENT(component::PathIntegrator, false, "Path Integrator");
 		TRIVIAL_COMPONENT(raytraced_shadow::component::RaytracedShadow, false, "Path Integrator");
 		TRIVIAL_COMPONENT(ddgi::component::DDGIPipeline, false, "DDGI-Pipeline");
+		TRIVIAL_COMPONENT(ddgi::component::DDGIVisualization, false, "DDGI-Debugger");
 	}
 }

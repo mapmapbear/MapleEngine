@@ -14,6 +14,10 @@
 
 ![image](https://github.com/flwmxd/MapleEngine/blob/main/Screenshot/VXGI.png)
 
+### Dynamic Diffuse Global Illumination with Raytracing Acceleration
+
+![image](https://github.com/flwmxd/MapleEngine/blob/main/Screenshot/DDGI.png)
+
 ### Ray Tracing Soft Shadow (with SVGF)
 
 ![image](https://github.com/flwmxd/MapleEngine/blob/main/Screenshot/Soft-Shadow.png)
@@ -38,7 +42,7 @@
 - OpenGL/Vulkan backends 
 - Entity-component system( Based on entt )
 - PBR/IBL
-- Global Illumination(Light Propagation Volumes/Voxel Cone Tracing)
+- Global Illumination(Light Propagation Volumes/Voxel Cone Tracing/DDGI)
 - Directional lights + Cascaded shadow maps
 - Soft shadows (PCF)
 - Ray traced shadows (Spatiotemporal Variance-Guided Filtering)
@@ -63,10 +67,11 @@ Feature     					 	| Completion 	| Notes
 :-          					 	| :-         	| :-
 Reflective Shadow Map				| 100%		  	| High priority
 Light propagation volumes		 	| 90%       	    | High priority (No cascade)
-Voxel Global Illumination     | 70%             | High priority 
-Dynamic Diffus Global Illumination (DDGI)     | 0%             | High priority 
-C# scripting                     	| 80%			| Using Mono (no engine API exposed yet)
+Dynamic Diffus Global Illumination (DDGI)     | 90%             | High priority 
+Ray-traced shadows				 	| 90%          	| Spatiotemporal Variance-Guided Filtering
 Vulkan porting 	 				    | 90%	  		| support Compute and Tessellation shader
+C# scripting                     	| 80%			| Using Mono (no engine API exposed yet)
+Voxel Global Illumination     | 70%             | High priority 
 Skinned Mesh                | 70%       | High priority
 Precomputed Light Field Probes 	| 0%		  	| High priority
 Screen space global illumination 	| 0%		  	| High priority
@@ -75,7 +80,6 @@ Precomputed Atmospheric Scattering 	| -          	| Low priority
 Spherical Harmonics Lighting | -          | Medium priority
 Subsurface Scattering 			| -          	| Low priority
 Screen-space blurred reflections using Screen-Space Roughness | -          	| -
-Ray-traced shadows				 	| 90%          	| Spatiotemporal Variance-Guided Filtering
 Ray-traced reflections			| -          	| -
 SDF Shadow			| -          	| -
 SDF AO			| -          	| -

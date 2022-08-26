@@ -18,6 +18,8 @@
 #include "Engine/Profiler.h"
 #include "Engine/AmbientOcclusion/SSAORenderer.h"
 
+#include "Engine/DDGI/DDGIRenderer.h"
+
 #include "Scene/Component/Component.h"
 #include "Scene/Component/Environment.h"
 #include "Scene/Component/Light.h"
@@ -119,6 +121,8 @@ namespace maple
 
 		using PathTraceGroup = ecs::Registry::Fetch<component::PathIntegrator>::To<ecs::Group>;
 
+		using DDGIGroup = ecs::Registry::Fetch<ddgi::component::DDGIPipeline>::To<ecs::Group>;
+
 		inline auto beginScene(Entity           entity,
 		                       Group            lightQuery,
 		                       EnvQuery         env,
@@ -126,6 +130,7 @@ namespace maple
 		                       SkinnedMeshQuery skinnedMeshQuery,
 		                       BoneMeshQuery    boneQuery,
 		                       PathTraceGroup   pathGroup,
+		                       DDGIGroup        ddgiGroup,
 		                       ecs::World       world)
 		{
 			auto [data, shadowData, cameraView, renderData, ssao] = entity;
@@ -188,6 +193,15 @@ namespace maple
                     entity.getComponent<component::LPVGrid>().enableIndirect :
                     0;
 
+			int32_t ddgiEanble = 0;
+
+			if (!ddgiGroup.empty())
+			{
+				auto [ddgi] = ddgiGroup.convert(*ddgiGroup.begin());
+				ddgiEanble  = ddgi.enable ? 1 : 0;
+			}
+
+
 			const glm::mat4 *shadowTransforms = shadowData.shadowProjView;
 			const glm::vec4 *splitDepth       = shadowData.splitDepth;
 			const glm::mat4  lightView        = shadowData.lightMatrix;
@@ -210,6 +224,7 @@ namespace maple
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "mode", &renderMode);
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "shadowMethod", &shadowData.shadowMethod);
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "enableLPV", &lpvEnable);
+			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "enableDDGI", &ddgiEanble);
 
 			if (directionaLight != nullptr)
 			{

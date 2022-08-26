@@ -145,6 +145,7 @@ namespace maple
 		static auto createQuaterScreenQuad() -> std::shared_ptr<Mesh>;
 		static auto createCube() -> std::shared_ptr<Mesh>;
 		static auto createPyramid() -> std::shared_ptr<Mesh>;
+		static auto createOctahedron() -> std::shared_ptr<Mesh>;
 		static auto createCapsule(float radius = 0.5f, float midHeight = 2.0f, int32_t radialSegments = 64, int32_t rings = 8) -> std::shared_ptr<Mesh>;
 		static auto createSphere(uint32_t xSegments = 64, uint32_t ySegments = 64) -> std::shared_ptr<Mesh>;
 		static auto createPlane(float w, float h, const glm::vec3 &normal) -> std::shared_ptr<Mesh>;

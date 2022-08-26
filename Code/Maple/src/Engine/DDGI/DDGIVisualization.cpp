@@ -35,7 +35,7 @@ namespace maple
 				auto &renderData = world.getComponent<maple::component::RendererData>();
 
 				pipeline.shader = Shader::create("shaders/DDGI/ProbeVisualization.shader");
-				pipeline.sphere      = Mesh::createSphere();
+				pipeline.sphere = Mesh::createOctahedron();
 
 				for (uint32_t i = 0;i<2;i++)
 				{

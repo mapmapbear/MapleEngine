@@ -6,6 +6,7 @@
 #include "Engine/AmbientOcclusion/SSAORenderer.h"
 #include "Engine/Camera.h"
 #include "Engine/DDGI/DDGIRenderer.h"
+#include "Engine/DDGI/DDGIVisualization.h"
 #include "Engine/GBuffer.h"
 #include "Engine/Material.h"
 #include "Engine/Mesh.h"
@@ -113,7 +114,6 @@ namespace MM
 		updated = updated || ImGuiHelper::property("Rays Per Probe", comp.raysPerProbe, 64, 512);
 		updated = updated || ImGuiHelper::property("Hysteresis", comp.hysteresis, 0.0f, 10.f);
 		updated = updated || ImGuiHelper::property("GI Intensity", comp.intensity, 1.f, 10.f);
-		updated = updated || ImGuiHelper::property("Infinite Bounce Intensity", comp.infiniteBounceIntensity, 1.f, 10.f);
 		updated = updated || ImGuiHelper::property("Normal Bias", comp.normalBias, 0.f, 5.f);
 		updated = updated || ImGuiHelper::property("Depth Sharpness", comp.depthSharpness, 50.f, 100.f);
 		updated = updated || ImGuiHelper::property("Energy Preservation", comp.energyPreservation, 0.f, 2.f);
@@ -129,6 +129,21 @@ namespace MM
 			reg.patch<ddgi::component::DDGIPipeline>(e);
 		}
 
+		ImGui::Separator();
+		ImGui::Columns(1);
+	}
+
+	template <>
+	inline auto ComponentEditorWidget<ddgi::component::DDGIVisualization>(entt::registry &reg, entt::registry::entity_type e) -> void
+	{
+		auto &comp = reg.get<ddgi::component::DDGIVisualization>(e);
+
+		ImGui::Columns(2);
+		ImGui::Separator();
+
+		ImGuiHelper::property("Draw Probe", comp.enable);
+		ImGuiHelper::property("Scale", comp.scale);
+		
 		ImGui::Separator();
 		ImGui::Columns(1);
 	}
