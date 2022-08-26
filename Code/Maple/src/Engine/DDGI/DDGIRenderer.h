@@ -42,12 +42,12 @@ namespace maple
 
 			struct DDGIPipeline
 			{
-				float   probeDistance           = 2.f;
+				float   probeDistance           = 1.5f;
 				bool    infiniteBounce          = true;
 				int32_t raysPerProbe            = 256;
 				float   hysteresis              = 0.98f;
 				float   intensity               = 1.2f;
-				float   normalBias              = 1.f;
+				float   normalBias              = 0.1f;
 				float   depthSharpness          = 50.f;
 				float   energyPreservation      = 0.85f;
 
