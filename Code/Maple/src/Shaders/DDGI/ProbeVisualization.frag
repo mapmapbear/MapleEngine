@@ -16,7 +16,7 @@ layout(set = 1, binding = 0) uniform sampler2D uIrradiance;
 layout(set = 1, binding = 1) uniform sampler2D uDepth;
 layout(set = 1, binding = 2, scalar) uniform DDGIUBO
 {
-    DDGIUniforms ddgi;
+    DDGIUniform ddgi;
 };
 
 layout(push_constant) uniform PushConstants

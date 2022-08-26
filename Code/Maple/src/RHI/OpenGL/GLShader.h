@@ -112,7 +112,7 @@ namespace maple
 		std::unordered_map<ShaderType, std::string>           sources;
 
 		std::unordered_map<ShaderType, std::unique_ptr<spirv_cross::CompilerGLSL>> shaderCompilers;
-		std::array<std::string, static_cast<size_t>(ShaderType::Length)>           shaderSources;
+		std::array<std::string, maple::ShaderTypeLength>                                  shaderSources;
 
 		BufferLayout              layout;
 		std::vector<PushConstant> pushConstants;

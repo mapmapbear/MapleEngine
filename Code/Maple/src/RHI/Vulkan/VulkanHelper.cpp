@@ -1259,10 +1259,31 @@ namespace maple
 			        VK_SHADER_STAGE_INTERSECTION_BIT_KHR,
 			        VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM};
 
-			if ((uint32_t) shaderName < (uint32_t) ShaderType::Unknown)
+			uint32_t retBits = 0;
+
+			const ShaderType flags[11] = {
+			    ShaderType::Vertex,
+			    ShaderType::Fragment,
+			    ShaderType::Geometry,
+			    ShaderType::TessellationControl,
+			    ShaderType::TessellationEvaluation,
+			    ShaderType::Compute,
+			    ShaderType::RayMiss,
+			    ShaderType::RayCloseHit,
+			    ShaderType::RayAnyHit,
+			    ShaderType::RayGen,
+			    ShaderType::RayIntersect};
+
+			for (auto i = 0;i< 12;i++)
 			{
-				return types[(uint32_t) shaderName];
+				if (((uint32_t) shaderName & (uint32_t) flags[i]) == (uint32_t) flags[i])
+				{
+					retBits |= types[i];
+				}
 			}
+
+			if (retBits != 0)
+				return (VkShaderStageFlagBits) retBits;
 
 			LOGC("Unknown Shader Type");
 			return VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM;

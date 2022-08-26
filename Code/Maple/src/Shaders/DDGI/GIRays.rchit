@@ -1,10 +1,11 @@
 #version 460
 
-#extension GL_ARB_shading_language_420pack : enable
 #extension GL_EXT_ray_tracing : require
 #extension GL_EXT_nonuniform_qualifier : require
 #extension GL_GOOGLE_include_directive : require
 #extension GL_EXT_scalar_block_layout : enable
+#extension GL_EXT_ray_query : enable
+#extension GL_EXT_debug_printf : enable
 
 #include "../Common/Light.h"
 #include "../PathTrace/BRDF.glsl"
@@ -14,9 +15,9 @@ const float PBR_WORKFLOW_SEPARATE_TEXTURES = 0.0f;
 const float PBR_WORKFLOW_METALLIC_ROUGHNESS = 1.0f;
 const float PBR_WORKFLOW_SPECULAR_GLOSINESS = 2.0f;
 
-hitAttributeEXT vec2 hitAttribs;
-
 layout(location = 0) rayPayloadEXT GIPayload outPayload;
+
+hitAttributeEXT vec2 hitAttribs;
 
 ////////////////////////Scene Infos////////////////////////////////
 layout (set = 0, binding = 0, std430) readonly buffer MaterialBuffer 
@@ -119,7 +120,7 @@ void transformVertex(in Transform transform, inout Vertex v)
     v.tangent.xyz   = normalMat * v.tangent.xyz;
 }
 
-vec3 sampleLight(in SurfaceMaterial p, in Light light, out vec3 Wi, out float pdf)
+vec3 sampleLight(in SurfaceMaterial p, in Light light, out vec3 Wi)
 {
     vec3 Li = vec3(0.0f);
 
@@ -128,14 +129,12 @@ vec3 sampleLight(in SurfaceMaterial p, in Light light, out vec3 Wi, out float pd
         vec3 lightDir = -light.direction.xyz;
         Wi = lightDir;
         Li = light.color.xyz * (pow(light.intensity,1.4) + 0.1);
-        pdf = 0.0f;
     } 
     else if (light.type == LIGHT_ENV)
     {
         vec2 randValue = nextVec2(outPayload.random);
         Wi = sampleCosineLobe(p.normal, randValue);
         Li = texture(uSkybox, Wi).rgb;
-        pdf = pdfCosineLobe(dot(p.normal, Wi)); 
     }
     else if(light.type == LIGHT_POINT)
     {
@@ -149,7 +148,6 @@ vec3 sampleLight(in SurfaceMaterial p, in Light light, out vec3 Wi, out float pd
         float atten = light.radius / (pow(dist, 2.0) + 1.0);
         Wi = lightDir;
         Li = light.color.xyz * (pow(light.intensity,1.4) + 0.1);
-        pdf = 0.0f;
     }
     else if(light.type == LIGHT_SPOT)
     {
@@ -166,7 +164,6 @@ vec3 sampleLight(in SurfaceMaterial p, in Light light, out vec3 Wi, out float pd
 
         Li = light.color.xyz * (pow(light.intensity,1.4) + 0.1) * value;
         Wi = L;
-        pdf = 0.0f;
     }
     return Li;
 }
@@ -175,29 +172,23 @@ vec3 directLighting(in SurfaceMaterial p)
 {
     vec3 L = vec3(0.0f);
 
-    uint lightIdx = nextUInt(outPayload.random, pushConsts.numLights);
-    const Light light = Lights.data[lightIdx];
+    //uint lightIdx = nextUInt(outPayload.random, pushConsts.numLights);
+    const Light light = Lights.data[0];
 
     vec3 view = -gl_WorldRayDirectionEXT;
     vec3 lightDir = vec3(0.0f);
     vec3 halfV = vec3(0.0f);
-    float pdf = 0.0f;
 
-    vec3 Li = sampleLight(p, light, lightDir, pdf);
+    vec3 Li = sampleLight(p, light, lightDir);
 
     halfV = normalize(lightDir + view);
 
     vec3 brdf = BRDF(p, view, halfV, lightDir);
     float cosTheta = clamp(dot(p.normal, lightDir), 0.0, 1.0);
 
-    if (!isBlack(Li))
-    {
-        if (pdf == 0.0f)
-            L = outPayload.T * brdf * cosTheta * Li;
-        else
-            L = (outPayload.T * brdf * cosTheta * Li) / pdf;
-    }
-    return L * float( pushConsts.numLights );
+    L = outPayload.T * brdf * cosTheta * Li;
+
+    return L;
 }
 
 void getAlbedo(in Material material, inout SurfaceMaterial p)
@@ -320,14 +311,14 @@ void main()
     surface.roughness = max(surface.roughness, 0.00001);
     surface.F0 = mix(vec3(0.03), surface.albedo.xyz, surface.metallic);
 
-    outPayload.L = vec3(0.0f);
+    outPayload.L = vec3(0.0f,0.0f,0.f);
 
    /*if (!isBlack(surface.emissive.rgb))
         outPayload.L += surface.emissive.rgb;*/
-
     outPayload.L += directLighting(surface);
 
     if (pushConsts.infiniteBounces == 1)
-       outPayload.L += indirectLighting(surface);
+        outPayload.L += indirectLighting(surface);
 
+    outPayload.hitDistance = gl_RayTminEXT + gl_HitTEXT;
 }

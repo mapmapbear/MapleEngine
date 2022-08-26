@@ -19,22 +19,24 @@ namespace spirv_cross
 namespace maple
 {
 	//Keep Order....
-	enum class ShaderType : int32_t
+	enum class ShaderType : uint32_t
 	{
-		Vertex,
-		Fragment,
-		Geometry,
-		TessellationControl,
-		TessellationEvaluation,
-		Compute,
-		RayMiss,
-		RayCloseHit,
-		RayAnyHit,
-		RayGen,
-		RayIntersect,
-		Unknown,
-		Length
+		Vertex                 = BIT(0),
+		Fragment               = BIT(1),
+		Geometry               = BIT(2),
+		TessellationControl    = BIT(3),
+		TessellationEvaluation = BIT(4),
+		Compute                = BIT(5),
+		RayMiss                = BIT(6),
+		RayCloseHit            = BIT(7),
+		RayAnyHit              = BIT(8),
+		RayGen                 = BIT(9),
+		RayIntersect           = BIT(10),
+		Unknown                = BIT(11),
+		Length                 = 0xFFFFFFFF
 	};
+
+	constexpr int32_t ShaderTypeLength = 12;
 
 	inline auto shaderTypeToName(ShaderType type) -> std::string
 	{

@@ -35,19 +35,12 @@ namespace maple
 				auto &renderData = world.getComponent<maple::component::RendererData>();
 
 				pipeline.shader = Shader::create("shaders/DDGI/ProbeVisualization.shader");
-				PipelineInfo info;
-				info.pipelineName    = "Probe-Visualization";
-				info.polygonMode     = PolygonMode::Fill;
-				info.blendMode       = BlendMode::SrcAlphaOneMinusSrcAlpha;
-				info.clearTargets    = false;
-				info.swapChainTarget = false;
-				info.depthTarget     = renderData.gbuffer->getDepthBuffer();
-				info.colorTargets[0] = renderData.gbuffer->getBuffer(GBufferTextures::SCREEN);
-				pipeline.pipeline    = Pipeline::get(info);
 				pipeline.sphere      = Mesh::createSphere();
 
-				pipeline.descriptorSets[0] = DescriptorSet::create({0, pipeline.shader.get()});
-				pipeline.descriptorSets[1] = DescriptorSet::create({1, pipeline.shader.get()});
+				for (uint32_t i = 0;i<2;i++)
+				{
+					pipeline.descriptorSets.emplace_back(DescriptorSet::create({i, pipeline.shader.get()}));
+				}
 			}
 		}        // namespace delegates
 
@@ -70,6 +63,17 @@ namespace maple
 				auto [visual, pipeline, uniform, ddgipipe] = entity;
 				if (visual.enable)
 				{
+					PipelineInfo info;
+					info.shader          = pipeline.shader;
+					info.pipelineName    = "Probe-Visualization";
+					info.polygonMode     = PolygonMode::Fill;
+					info.blendMode       = BlendMode::SrcAlphaOneMinusSrcAlpha;
+					info.clearTargets    = false;
+					info.swapChainTarget = false;
+					info.depthTarget     = renderData.gbuffer->getDepthBuffer();
+					info.colorTargets[0] = renderData.gbuffer->getBuffer(GBufferTextures::SCREEN);
+					pipeline.pipeline    = Pipeline::get(info);
+
 					pipeline.descriptorSets[0]->setUniform("UniformBufferObject", "viewProj", &cameraView.projView);
 					pipeline.descriptorSets[1]->setUniform("DDGIUBO", "ddgi", &uniform);
 					pipeline.descriptorSets[1]->setTexture("uIrradiance", ddgipipe.currentIrrdance);
@@ -90,6 +94,8 @@ namespace maple
 					Renderer::bindDescriptorSets(pipeline.pipeline.get(), renderData.commandBuffer, 0, pipeline.descriptorSets);
 
 					pipeline.shader->bindPushConstants(renderData.commandBuffer, pipeline.pipeline.get());
+					pipeline.sphere->getIndexBuffer()->bind(renderData.commandBuffer);
+					pipeline.sphere->getVertexBuffer()->bind(renderData.commandBuffer, pipeline.pipeline.get());
 
 					pipeline.pipeline->drawIndexed(
 					    renderData.commandBuffer,

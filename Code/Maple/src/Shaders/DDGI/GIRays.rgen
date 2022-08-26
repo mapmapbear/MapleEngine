@@ -8,6 +8,8 @@
 #include "DDGICommon.glsl"
 #include "../Common/Math.h"
 
+layout(location = 0) rayPayloadEXT GIPayload outPayload;
+
 layout(set = 0, binding = 3) uniform accelerationStructureEXT uTopLevelAS;
 
 layout(set = 5, binding = 2, scalar) uniform DDGIUBO
@@ -29,7 +31,7 @@ layout(push_constant) uniform PushConstants
 }pushConsts;
 
 
-layout(location = 0) rayPayloadEXT GIPayload outPayload;
+
 
 /**
 At each of the m active probes, we [uniformly sample] n spherical directions 
@@ -57,7 +59,7 @@ void main()
     const int probeId       = texCoords.y;
     const int rayId         = texCoords.x;
 
-    uint  rayFlags  = gl_RayFlagsOpaqueEXT;
+    uint  rayFlags  = 0;//gl_RayFlagsOpaqueEXT;
     uint  cullMask  = 0xff;
     float tmin      = 0.001;
     float tmax      = 10000.0;

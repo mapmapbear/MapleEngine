@@ -66,7 +66,7 @@ vec3 probeLocation(in DDGIUniform ddgi, int index)
     return gridToPosition(ddgi, gridCoord);
 }
 
-ivec3 probeIndexToGridCoord(in DDGIUniforms ddgi, int index)
+ivec3 probeIndexToGridCoord(in DDGIUniform ddgi, int index)
 {
     ivec3 gridCoord;
     gridCoord.x = index % ddgi.probeCounts.x;

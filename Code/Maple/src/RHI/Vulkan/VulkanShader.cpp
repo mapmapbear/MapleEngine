@@ -277,8 +277,6 @@ namespace maple
 		std::unordered_multimap<ShaderType, std::string> sources;
 		parseSource(lines, sources);
 
-		
-
 		for (auto &source : sources)
 		{
 			switch (source.first)
@@ -353,12 +351,27 @@ namespace maple
 			}
 			else
 			{
-				layouts[descriptorLayout.setID].emplace_back(descriptorLayout);
+				auto iter = std::find_if(layouts[descriptorLayout.setID].begin(), layouts[descriptorLayout.setID].end(), [&](const DescriptorLayoutInfo &info) {
+					return info.binding == descriptorLayout.binding &&
+					       info.setID == descriptorLayout.setID &&
+					       info.count == descriptorLayout.count &&
+					       info.type == descriptorLayout.type;
+				});
+
+				if (iter == layouts[descriptorLayout.setID].end())
+				{
+					layouts[descriptorLayout.setID].emplace_back(descriptorLayout);
+				}
+				else
+				{
+					iter->stage = static_cast<ShaderType>(static_cast<uint32_t>(iter->stage) |
+					                                      static_cast<uint32_t>(descriptorLayout.stage));
+				}
 			}
 		}
 
 		uint32_t stageFlags = 0;
-		for (auto & s : shaderStages)
+		for (auto &s : shaderStages)
 		{
 			stageFlags |= s.stage;
 		}

@@ -21,7 +21,7 @@ namespace maple
 	class AccelerationStructure;
 
 	enum class TextureType : int32_t;
-	enum class ShaderType : int32_t;
+	enum class ShaderType : uint32_t;
 	enum class TextureFormat : int32_t;
 
 	enum class DescriptorType

@@ -47,7 +47,6 @@ namespace maple
 		                         uint32_t             firstIndex,
 		                         int32_t              vertexOffset,
 		                         uint32_t             firstInstance) -> void = 0;
-
 	  protected:
 		PipelineInfo description;
 	};

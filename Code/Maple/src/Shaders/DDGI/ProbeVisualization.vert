@@ -23,7 +23,7 @@ layout(set = 0, binding = 0) uniform UniformBufferObject
 
 layout(set = 1, binding = 2, scalar) uniform DDGIUBO
 {
-    DDGIUniforms ddgi;
+    DDGIUniform ddgi;
 };
 
 layout(push_constant) uniform PushConstants

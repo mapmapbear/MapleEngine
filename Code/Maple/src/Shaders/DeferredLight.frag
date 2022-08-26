@@ -70,8 +70,8 @@ layout(set = 0, binding = 12) uniform UniformBufferLight
 	int enableLPV;
 	int enableShadow;
 	int shadowMethod;
+	int iblEnable;
 
-	float padd;
 	float padd2;
 } ubo;
 
@@ -420,7 +420,13 @@ void main()
 	// Fresnel reflectance, metals use albedo
 	vec3 F0 = mix(Fdielectric, material.albedo.rgb, material.metallic.r);
 	
-	vec3 iblContribution = IBL(F0, Lr, material);
+	vec3 iblContribution = vec3(0,0,0);
+	
+	if(ubo.iblEnable == 1)
+	{
+		iblContribution = IBL(F0, Lr, material);
+	}
+
 	vec3 lightContribution = lighting(F0, wsPos, material,fragTexCoord);
 
 	vec3 finalColor = (lightContribution + iblContribution) * material.ao * material.ssao + emissive;
