@@ -10,11 +10,13 @@
 #include "Scripts/Mono/MonoSystem.h"
 #include "Scene/System/BindlessModule.h"
 #include "Engine/Raytrace/AccelerationStructure.h"
+#include "Engine/Noise/BlueNoise.h"
 
 namespace maple
 {
 	inline auto registerSystem(std::shared_ptr<ExecutePoint> executePoint)
 	{
+		blue_noise::registerBlueNoiseModule(executePoint);
 		hierarchy::registerHierarchyModule(executePoint);
 		animation::registerAnimationModule(executePoint);
 		sprite2d::registerSprite2dModule(executePoint);

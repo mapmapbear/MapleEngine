@@ -5,7 +5,7 @@
 #extension GL_EXT_ray_query : enable
 #extension GL_EXT_nonuniform_qualifier : require
 
-#include "BlueNoise.glsl"
+#include "../Raytraced/BlueNoise.glsl"
 #include "../Common/Light.h"
 #include "../Common/Math.h"
 

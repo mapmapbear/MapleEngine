@@ -1,7 +1,16 @@
 #version 460
+
 #extension GL_EXT_ray_tracing : require
 #extension GL_GOOGLE_include_directive : require
-#extension GL_EXT_nonuniform_qualifier : require
+
+#include "Common.glsl"
+
+layout (set = 0, binding = 4) uniform samplerCube uSkybox;
+
+layout(location = 0) rayPayloadInEXT ReflectionPayload inPayload;
 
 void main()
-{}
+{
+    inPayload.color = texture(uSkybox, gl_WorldRayDirectionEXT).rgb; 
+    inPayload.rayLength = -1.0f;
+}

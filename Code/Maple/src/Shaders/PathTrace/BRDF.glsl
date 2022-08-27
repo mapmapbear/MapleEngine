@@ -150,4 +150,32 @@ vec3 sampleBRDF(in SurfaceMaterial p, in vec3 Wo, in Random rng, out vec3 Wi, ou
     return BRDF(p, Wo, Wh, Wi);
 }
 
+
+vec4 importanceSampleGGX(vec2 E, vec3 N, float roughness)
+{
+    float a  = roughness * roughness;
+    float m2 = a * a;
+
+    float phi      = 2.0f * M_PI * E.x;
+    float cosTheta = sqrt((1.0f - E.y) / (1.0f + (m2 - 1.0f) * E.y));
+    float sinTheta = sqrt(1.0f - cosTheta * cosTheta);
+
+    vec3 H;
+    H.x = cos(phi) * sinTheta;
+    H.y = sin(phi) * sinTheta;
+    H.z = cosTheta;
+
+    float d = (cosTheta * m2 - cosTheta) * cosTheta + 1;
+    float D = m2 / (M_PI * d * d);
+
+    float PDF = D * cosTheta;
+
+    vec3 up        = abs(N.z) < 0.999f ? vec3(0.0f, 0.0f, 1.0f) : vec3(1.0f, 0.0f, 0.0f);
+    vec3 tangent   = normalize(cross(up, N));
+    vec3 bitangent = cross(N, tangent);
+
+    vec3 sampleVec = tangent * H.x + bitangent * H.y + N * H.z;
+    return vec4(normalize(sampleVec), PDF);
+}
+
 #endif

@@ -431,6 +431,48 @@ namespace maple
 		vkCmdDrawIndexed(vkCmd->getCommandBuffer(), indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
 	}
 
+	auto VulkanPipeline::bufferBarrier(const CommandBuffer *commandBuffer, const std::vector<std::shared_ptr<StorageBuffer>> &buffers, bool read) -> void
+	{
+		auto vkCmd = static_cast<const VulkanCommandBuffer *>(commandBuffer);
+		std::vector<VkBufferMemoryBarrier> bufferBarriers;
+		for (auto & ssbo : buffers)
+		{
+			auto vkBuffer = static_cast<VulkanStorageBuffer *>(ssbo.get());
+			VkBufferMemoryBarrier memoryBarrier{};
+
+			uint32_t srcAccessFlags = vkBuffer->getAccessFlagBits();
+			uint32_t dstAccessFlags = read ? VK_ACCESS_SHADER_READ_BIT : VK_ACCESS_SHADER_WRITE_BIT;
+			
+			if (vkBuffer->isIndirect() && read)
+			{
+				dstAccessFlags = dstAccessFlags | VK_ACCESS_INDIRECT_COMMAND_READ_BIT;
+			}
+
+			memoryBarrier.sType         = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+			memoryBarrier.srcAccessMask = srcAccessFlags;
+			memoryBarrier.dstAccessMask = dstAccessFlags;
+			memoryBarrier.buffer        = vkBuffer->getHandle();
+			memoryBarrier.offset        = 0;
+			memoryBarrier.size          = VK_WHOLE_SIZE;
+
+			vkBuffer->setAccessFlagBits(dstAccessFlags);
+
+			bufferBarriers.emplace_back(memoryBarrier);
+		}
+//TODO...................
+		vkCmdPipelineBarrier(
+		    vkCmd->getCommandBuffer(),
+		    VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+		    VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+		    0,
+		    0,
+		    0,
+		    bufferBarriers.size(),
+		    bufferBarriers.data(),
+		    0,
+		    0);
+	}
+
 	auto VulkanPipeline::transitionAttachments() -> void
 	{
 		PROFILE_FUNCTION();

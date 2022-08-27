@@ -22,8 +22,23 @@ namespace maple
 		auto unmap() -> void override;
 		auto map() -> void * override;
 		auto getDeviceAddress() const -> uint64_t override;
-	  private:
+
+		inline auto getAccessFlagBits() const
+		{
+			return accessFlagBits;
+		}
+
+		auto setAccessFlagBits(uint32_t flags) -> void;
+
+		inline auto isIndirect() const
+		{
+			return options.indirect;
+		}
+
+	private:
 		std::shared_ptr<VulkanBuffer> vulkanBuffer;
 		BufferOptions                 options;
+		uint32_t                      accessFlagBits;
+		uint32_t                      lastAccessFlagBits;
 	};
 };        // namespace maple

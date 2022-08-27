@@ -10,13 +10,17 @@ namespace maple
 	VulkanStorageBuffer::VulkanStorageBuffer(uint32_t size, const void *data, const BufferOptions &options) :
 	    options(options)
 	{
+		accessFlagBits           = VK_ACCESS_SHADER_READ_BIT;
+
 		VkBufferUsageFlags flags = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
 
 		if (options.indirect)
 		{
 			flags |= VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT;
+			accessFlagBits |= VK_ACCESS_INDIRECT_COMMAND_READ_BIT;
 		}
 
+		lastAccessFlagBits = accessFlagBits;
 		vulkanBuffer = std::make_shared<VulkanBuffer>(flags, size, data, options.vmaUsage, options.vmaCreateFlags);
 	}
 
@@ -36,12 +40,15 @@ namespace maple
 		if (vulkanBuffer->getSize() == 0)
 		{
 			VkBufferUsageFlags flags = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
-
+			accessFlagBits           = VK_ACCESS_SHADER_READ_BIT;
+			
 			if (options.indirect)
 			{
 				flags |= VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT;
+				accessFlagBits |= VK_ACCESS_INDIRECT_COMMAND_READ_BIT;
 			}
 
+			lastAccessFlagBits = accessFlagBits;
 			vulkanBuffer->init(flags, size, data, options.vmaUsage, options.vmaCreateFlags);
 		}
 		else
@@ -76,6 +83,12 @@ namespace maple
 	auto VulkanStorageBuffer::getDeviceAddress() const -> uint64_t
 	{
 		return vulkanBuffer->getDeviceAddress();
+	}
+
+	auto VulkanStorageBuffer::setAccessFlagBits(uint32_t flags) -> void
+	{
+		lastAccessFlagBits = accessFlagBits;
+		accessFlagBits     = flags;
 	}
 
 }        // namespace maple

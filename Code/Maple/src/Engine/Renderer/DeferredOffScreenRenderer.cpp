@@ -38,6 +38,7 @@
 #include "Engine/VXGI/Voxelization.h"
 
 #include "Engine/Raytrace/RaytracedShadow.h"
+#include "Engine/Raytrace/RaytracedReflection.h"
 
 #include "Application.h"
 #include "ImGui/ImGuiHelpers.h"

@@ -52,6 +52,8 @@ namespace maple
 		                 int32_t              vertexOffset,
 		                 uint32_t             firstInstance) -> void override;
 
+		auto bufferBarrier(const CommandBuffer *commandBuffer, const std::vector<std::shared_ptr<StorageBuffer>> &buffers, bool read) -> void override;
+
 	  protected:
 		std::shared_ptr<Shader> shader;
 		VkPipelineLayout        pipelineLayout;

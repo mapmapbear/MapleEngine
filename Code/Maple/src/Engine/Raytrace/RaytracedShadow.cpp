@@ -174,7 +174,7 @@ namespace maple
 			accumulator.resetArgsShader = Shader::create("shaders/Shadow/DenoiseReset.shader");
 
 			accumulator.denoiseTileCoordsBuffer = StorageBuffer::create(bufferSize, nullptr);
-			accumulator.denoiseDispatchBuffer1   = StorageBuffer::create(sizeof(int32_t) * 3, nullptr, BufferOptions{true, (int32_t)MemoryUsage::MEMORY_USAGE_GPU_ONLY});
+			accumulator.denoiseDispatchBuffer1  = StorageBuffer::create(sizeof(int32_t) * 3, nullptr, BufferOptions{true, (int32_t) MemoryUsage::MEMORY_USAGE_GPU_ONLY});
 
 			accumulator.shadowTileCoordsBuffer = StorageBuffer::create(bufferSize, nullptr);
 			accumulator.shadowDispatchBuffer   = StorageBuffer::create(sizeof(int32_t) * 3, nullptr, BufferOptions{true, (int32_t) MemoryUsage::MEMORY_USAGE_GPU_ONLY});
@@ -248,7 +248,7 @@ namespace maple
 					atrous.copyWriteDescriptorSet[i]->setName("Atrous-Write-Descriptor-" + std::to_string(i));
 
 					atrous.copyReadDescriptorSet[i] = DescriptorSet::create({2, atrous.atrousFilerShader.get()});
-					atrous.copyReadDescriptorSet[i]->setName("Atrous-Read-Descriptor-"+std::to_string(i));
+					atrous.copyReadDescriptorSet[i]->setName("Atrous-Read-Descriptor-" + std::to_string(i));
 
 					atrous.copyTilesSet[i] = DescriptorSet::create({0, atrous.copyTilesShader.get()});
 					atrous.copyTilesSet[i]->setStorageBuffer("ShadowTileData", accumulator.shadowTileCoordsBuffer);
@@ -354,6 +354,12 @@ namespace maple
 
 		inline auto reserArgs(component::TemporalAccumulator &acc, const component::RendererData &renderData)
 		{
+			//acc.denoiseDispatchBuffer1->
+			acc.resetPipeline->bufferBarrier(renderData.commandBuffer, {acc.denoiseDispatchBuffer1,
+			                                                            acc.denoiseTileCoordsBuffer,
+			                                                            acc.shadowDispatchBuffer,
+			                                                            acc.shadowTileCoordsBuffer},false);
+
 			acc.resetPipeline->bind(renderData.commandBuffer);
 			Renderer::bindDescriptorSets(acc.resetPipeline.get(), renderData.commandBuffer, 0, {acc.indirectDescriptorSet});
 			Renderer::dispatch(renderData.commandBuffer, 1, 1, 1);
@@ -399,6 +405,13 @@ namespace maple
 			auto x = static_cast<uint32_t>(ceil(float(winSize.width) / float(TEMPORAL_ACCUMULATION_NUM_THREADS_X)));
 			auto y = static_cast<uint32_t>(ceil(float(winSize.height) / float(TEMPORAL_ACCUMULATION_NUM_THREADS_Y)));
 			Renderer::dispatch(renderData.commandBuffer, x, y, 1);
+
+			accumulator.reprojectionPipeline->bufferBarrier(renderData.commandBuffer, 
+				{
+				accumulator.denoiseDispatchBuffer1,
+				accumulator.denoiseTileCoordsBuffer, 
+				accumulator.shadowDispatchBuffer, 
+				accumulator.shadowTileCoordsBuffer}, true);
 		}
 
 		inline auto atrousFilter(
@@ -436,7 +449,7 @@ namespace maple
 
 				{
 					atrous.copyWriteDescriptorSet[writeIdx]->setTexture("outColor", atrous.atrousFilter[writeIdx]);
-					atrous.copyReadDescriptorSet[readIdx]->setTexture("uInput", atrous.atrousFilter [readIdx]);
+					atrous.copyReadDescriptorSet[readIdx]->setTexture("uInput", atrous.atrousFilter[readIdx]);
 
 					atrous.copyWriteDescriptorSet[writeIdx]->update(renderData.commandBuffer);
 					atrous.copyReadDescriptorSet[readIdx]->update(renderData.commandBuffer);
@@ -474,8 +487,8 @@ namespace maple
 				}
 			}
 
-			return atrous.atrousFilter[readIdx];
-			//there is a bug.  
+			return atrous.atrousFilter[writeIdx];
+			//there is a bug.
 			//theoretically read and write index are both ok, but write one could have problem... the problem could be barrier problem ?
 		}
 
@@ -501,17 +514,7 @@ namespace maple
 		auto registerRaytracedShadow(ExecuteQueue &update, ExecuteQueue &queue, std::shared_ptr<ExecutePoint> executePoint) -> void
 		{
 			executePoint->onConstruct<raytraced_shadow::component::RaytracedShadow, init::initRaytracedShadow>();
-
-			executePoint->registerGlobalComponent<blue_noise::global::component::BlueNoise>([](auto &noise) {
-				noise.sobolSequence = Texture2D::create(blue_noise::SOBOL_TEXTURE, blue_noise::SOBOL_TEXTURE);
-				for (int32_t i = 0; i < blue_noise ::BlueNoiseSpp::Length; i++)
-				{
-					noise.scramblingRanking[i] = Texture2D::create(blue_noise::SCRAMBLING_RANKING_TEXTURES[i], blue_noise::SCRAMBLING_RANKING_TEXTURES[i]);
-				}
-			});
-
 			executePoint->registerWithinQueue<on_trace::begin>(update);
-
 			executePoint->registerWithinQueue<on_trace::render>(queue);
 			executePoint->registerWithinQueue<denoise::system>(queue);
 		};

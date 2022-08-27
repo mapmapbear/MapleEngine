@@ -6,6 +6,8 @@
 #include "RHI/Texture.h"
 namespace maple
 {
+	class ExecutePoint;
+
 	namespace blue_noise
 	{
 		static constexpr const char *SOBOL_TEXTURE = "textures/blue_noise/sobol_256_4d.png";
@@ -40,12 +42,9 @@ namespace maple
 			{
 				Texture2D::Ptr sobolSequence;
 				Texture2D::Ptr scramblingRanking[BlueNoiseSpp::Length];
-
-				BlueNoise()
-				{
-					
-				}
 			};
 		}
+
+		auto registerBlueNoiseModule(std::shared_ptr<ExecutePoint> executePoint) -> void;
 	}
 }

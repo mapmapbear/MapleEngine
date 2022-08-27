@@ -16,6 +16,7 @@
 #include "Engine/Quad2D.h"
 #include "Engine/Raytrace/AccelerationStructure.h"
 #include "Engine/Raytrace/RaytracedShadow.h"
+#include "Engine/Raytrace/RaytracedReflection.h"
 #include "Engine/VXGI/DrawVoxel.h"
 #include "Engine/VXGI/Voxelization.h"
 #include "Engine/Vertex.h"
@@ -117,7 +118,7 @@ namespace maple
 		deferred_offscreen::registerDeferredOffScreenRenderer(beginQ, renderQ, executePoint);
 		ssao::registerSSAOPass(beginQ, renderQ, executePoint);
 		vxgi::registerVXGIIndirectLighting(renderQ, executePoint);
-
+		raytraced_reflection::registerRaytracedReflection(beginQ, renderQ, executePoint);
 		raytraced_shadow::registerRaytracedShadow(beginQ, renderQ, executePoint);
 		ddgi::registerDDGI(beginQ, renderQ, executePoint);
 
