@@ -20,6 +20,7 @@ namespace maple
 	{
 	  public:
 		VulkanDescriptorSet(const DescriptorInfo &info);
+		VulkanDescriptorSet(const DescriptorLayoutInfo &desc);
 		~VulkanDescriptorSet();
 		NO_COPYABLE(VulkanDescriptorSet);
 		auto update(const CommandBuffer *commandBuffer) -> void override;

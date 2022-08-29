@@ -140,6 +140,19 @@ namespace maple
 		std::vector<BufferMemberInfo> members;
 	};
 
+
+	struct DescriptorLayoutInfo
+	{
+		struct Layout
+		{
+			uint32_t set;
+			uint32_t binding;
+			std::string name;
+		};
+
+		std::unordered_map<int32_t, std::vector<Layout>> layouts;
+	};
+
 	class DescriptorSet
 	{
 	  public:
@@ -147,6 +160,7 @@ namespace maple
 
 		virtual ~DescriptorSet() = default;
 		static auto create(const DescriptorInfo &desc) -> std::shared_ptr<DescriptorSet>;
+		static auto createWithLayout(const DescriptorLayoutInfo &desc) -> std::shared_ptr<DescriptorSet>;
 
 		virtual auto update(const CommandBuffer *commandBuffer) -> void                                                                                       = 0;
 		virtual auto setDynamicOffset(uint32_t offset) -> void                                                                                                = 0;
@@ -169,7 +183,14 @@ namespace maple
 		virtual auto toIntID() const -> const uint64_t                                                                                                        = 0;
 		virtual auto setName(const std::string &name) -> void                                                                                                 = 0;
 
-		static auto canUpdate() -> bool;
-		static auto toggleUpdate(bool update) -> void;
+		inline auto& getDescriptorLayoutInfo() const
+		{
+			return layoutInfo;
+		}
+
+	  protected:
+		DescriptorLayoutInfo layoutInfo;
+	  private:
+		static std::vector<std::shared_ptr<DescriptorSet>> setCache;
 	};
 }        // namespace maple
