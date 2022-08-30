@@ -15,33 +15,46 @@
 
 namespace maple
 {
-	std::vector<std::shared_ptr<maple::DescriptorSet>> DescriptorSet::setCache;
+	std::unordered_multimap<uint32_t, std::shared_ptr<DescriptorSet>> DescriptorSet::setCache;
 
 	namespace
 	{
-		inline auto isSubLayout(const DescriptorLayoutInfo &desc, const DescriptorLayoutInfo &parent)
+		inline auto isSubLayout(const LayoutBings &desc, const LayoutBings &parent)
 		{
-			
+			for (auto &l : desc.layouts)
+			{
+				if (auto iter = std::find_if(parent.layouts.begin(), parent.layouts.end(), [&](const auto & other) {
+					    return l.name == other.name && l.type == other.type;
+				}); iter == parent.layouts.end())
+				{
+					return false;
+				}
+			}
 			return true;
 		}
 	}        // namespace
 
-	auto DescriptorSet::createWithLayout(const DescriptorLayoutInfo &desc) -> std::shared_ptr<DescriptorSet>
+	auto DescriptorSet::createWithLayout(const LayoutBings &desc) -> std::shared_ptr<DescriptorSet>
 	{
-		for (auto &set : setCache)
+		auto range = setCache.equal_range(desc.binding); 
+		
+		for (auto iter = range.first;iter != range.second;iter++)
 		{
-			if (isSubLayout(desc, set->getDescriptorLayoutInfo()))
+			if (isSubLayout(desc, iter->second->getLayoutBings()))
 			{
-				return set;
+				return std::make_shared<VulkanDescriptorSet>(desc);
 			}
 		}
 
+		return setCache.emplace(
+		    std::piecewise_construct,
+		    std::forward_as_tuple(desc.binding),
 #ifdef MAPLE_VULKAN
-		return std::make_shared<VulkanDescriptorSet>(desc);
+			std::forward_as_tuple(new VulkanDescriptorSet(desc)))->second;
 #endif
 
 #ifdef MAPLE_OPENGL
-		return std::make_shared<GLDescriptorSet>(desc);
+		std::forward_as_tuple(new GLDescriptorSet(desc)))->second;
 #endif
 	}
 

@@ -3,8 +3,11 @@
 //////////////////////////////////////////////////////////////////////////////
 #include "RenderGraph.h"
 #include "Application.h"
+#include "Engine/AmbientOcclusion/SSAORenderer.h"
 #include "Engine/Camera.h"
 #include "Engine/CaptureGraph.h"
+#include "Engine/DDGI/DDGIRenderer.h"
+#include "Engine/DDGI/DDGIVisualization.h"
 #include "Engine/GBuffer.h"
 #include "Engine/LPVGI/LPVIndirectLighting.h"
 #include "Engine/LPVGI/LightPropagationVolume.h"
@@ -15,15 +18,11 @@
 #include "Engine/Profiler.h"
 #include "Engine/Quad2D.h"
 #include "Engine/Raytrace/AccelerationStructure.h"
-#include "Engine/Raytrace/RaytracedShadow.h"
 #include "Engine/Raytrace/RaytracedReflection.h"
+#include "Engine/Raytrace/RaytracedShadow.h"
 #include "Engine/VXGI/DrawVoxel.h"
 #include "Engine/VXGI/Voxelization.h"
 #include "Engine/Vertex.h"
-#include "Engine/DDGI/DDGIRenderer.h"
-#include "Engine/DDGI/DDGIVisualization.h"
-
-#include "Engine/AmbientOcclusion/SSAORenderer.h"
 
 #include "RHI/CommandBuffer.h"
 #include "RHI/GPUProfile.h"
@@ -36,6 +35,7 @@
 #include "Scene/Component/MeshRenderer.h"
 #include "Scene/Component/VolumetricCloud.h"
 #include "Scene/Scene.h"
+#include "Scene/System/BindlessModule.h"
 
 #include "Math/BoundingBox.h"
 #include "Math/MathUtils.h"
@@ -94,11 +94,11 @@ namespace maple
 		auto executePoint = Application::getExecutePoint();
 		gBuffer           = std::make_shared<GBuffer>(width, height);
 		executePoint->registerGlobalComponent<component::RendererData>([&, width, height](component::RendererData &data) {
-			data.screenQuad = Mesh::createQuad(true);
-			data.unitCube   = TextureCube::create(1);
+			data.screenQuad  = Mesh::createQuad(true);
+			data.unitCube    = TextureCube::create(1);
 			data.unitTexture = Texture2D::create();
 			data.unitTexture->buildTexture(TextureFormat::RGBA, 1, 1);
-			data.gbuffer    = gBuffer.get();
+			data.gbuffer = gBuffer.get();
 		});
 		executePoint->registerGlobalComponent<capture_graph::component::RenderGraph>();
 		executePoint->registerGlobalComponent<component::CameraView>();
@@ -112,6 +112,7 @@ namespace maple
 		executePoint->registerWithinQueue<on_begin_renderer::system>(renderQ);
 
 		raytracing::registerAccelerationStructureModule(beginQ, executePoint);
+		bindless::registerBindlessModule(beginQ, renderQ, executePoint);
 
 		shadow_map::registerShadowMap(beginQ, renderQ, executePoint);
 		reflective_shadow_map::registerShadowMap(beginQ, renderQ, executePoint);
@@ -123,7 +124,7 @@ namespace maple
 		ddgi::registerDDGI(beginQ, renderQ, executePoint);
 
 		deferred_lighting::registerDeferredLighting(beginQ, renderQ, executePoint);
-		
+
 		atmosphere_pass::registerAtmosphere(beginQ, renderQ, executePoint);
 		skybox_renderer::registerSkyboxRenderer(beginQ, renderQ, executePoint);
 		cloud_renderer::registerCloudRenderer(beginQ, renderQ, executePoint);
@@ -138,8 +139,6 @@ namespace maple
 		final_screen_pass::registerFinalPass(renderQ, executePoint);
 
 		//############################################################################
-		
-
 
 		cloud_renderer::registerComputeCloud(renderQ, executePoint);
 		vxgi::registerUpdateRadiace(renderQ, executePoint);

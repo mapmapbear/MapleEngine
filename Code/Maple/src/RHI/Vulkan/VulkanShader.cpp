@@ -376,6 +376,8 @@ namespace maple
 			stageFlags |= s.stage;
 		}
 
+		
+
 		for (auto &l : layouts)
 		{
 			std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings;
@@ -394,6 +396,8 @@ namespace maple
 				if (raytracingShader)
 				{
 					setLayoutBinding.stageFlags = stageFlags;
+					//TODO ....
+					setLayoutBinding.stageFlags |= VK_SHADER_STAGE_ANY_HIT_BIT_KHR;
 				}
 
 				setLayoutBinding.binding         = info.binding;

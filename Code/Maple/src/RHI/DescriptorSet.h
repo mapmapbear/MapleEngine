@@ -5,6 +5,7 @@
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace maple
@@ -140,17 +141,16 @@ namespace maple
 		std::vector<BufferMemberInfo> members;
 	};
 
-
-	struct DescriptorLayoutInfo
+	struct LayoutBings
 	{
 		struct Layout
 		{
-			uint32_t set;
-			uint32_t binding;
-			std::string name;
+			std::string    name;
+			DescriptorType type;
 		};
-
-		std::unordered_map<int32_t, std::vector<Layout>> layouts;
+		uint32_t            binding;
+		std::vector<Layout> layouts;
+		DescriptorPool *    pool = nullptr;
 	};
 
 	class DescriptorSet
@@ -160,7 +160,7 @@ namespace maple
 
 		virtual ~DescriptorSet() = default;
 		static auto create(const DescriptorInfo &desc) -> std::shared_ptr<DescriptorSet>;
-		static auto createWithLayout(const DescriptorLayoutInfo &desc) -> std::shared_ptr<DescriptorSet>;
+		static auto createWithLayout(const LayoutBings &desc) -> std::shared_ptr<DescriptorSet>;
 
 		virtual auto update(const CommandBuffer *commandBuffer) -> void                                                                                       = 0;
 		virtual auto setDynamicOffset(uint32_t offset) -> void                                                                                                = 0;
@@ -183,14 +183,15 @@ namespace maple
 		virtual auto toIntID() const -> const uint64_t                                                                                                        = 0;
 		virtual auto setName(const std::string &name) -> void                                                                                                 = 0;
 
-		inline auto& getDescriptorLayoutInfo() const
+		inline auto &getLayoutBings() const
 		{
 			return layoutInfo;
 		}
 
 	  protected:
-		DescriptorLayoutInfo layoutInfo;
+		LayoutBings layoutInfo;
+
 	  private:
-		static std::vector<std::shared_ptr<DescriptorSet>> setCache;
+		static std::unordered_multimap<uint32_t, std::shared_ptr<DescriptorSet>> setCache;
 	};
 }        // namespace maple

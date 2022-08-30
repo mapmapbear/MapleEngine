@@ -144,7 +144,7 @@ namespace maple
 		memset(imageInfoPool.data(), 0, sizeof(VkDescriptorImageInfo) * MAX_IMAGE_INFOS);
 	}
 
-	VulkanDescriptorSet::VulkanDescriptorSet(const DescriptorLayoutInfo &desc)
+	VulkanDescriptorSet::VulkanDescriptorSet(const LayoutBings &desc)
 	{
 		MAPLE_ASSERT(false, "To do implement.");
 	}
