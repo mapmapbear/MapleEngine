@@ -74,8 +74,6 @@ Vulkan porting 	 				    | 90%	  		| support Compute and Tessellation shader
 C# scripting                     	| 80%			| Using Mono (no engine API exposed yet)
 Voxel Global Illumination     | 70%             | High priority 
 Skinned Mesh                | 70%       | High priority
-Precomputed Light Field Probes 	| 0%		  	| High priority
-Screen space global illumination 	| 0%		  	| High priority
 Animation and State Machine       	| 30%			| Apply Animation successfully
 Precomputed Atmospheric Scattering 	| -          	| Low priority
 Spherical Harmonics Lighting | -          | Medium priority
