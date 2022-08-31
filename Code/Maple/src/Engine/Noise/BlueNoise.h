@@ -4,6 +4,8 @@
 #pragma once
 #include <cstdint>
 #include "RHI/Texture.h"
+#include "RHI/DescriptorSet.h"
+
 namespace maple
 {
 	class ExecutePoint;

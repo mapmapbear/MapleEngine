@@ -12,12 +12,13 @@ namespace maple
 	{
 		namespace component
 		{
-			struct RaytracedReflecton
+			struct RaytracedReflection
 			{
 				RaytraceScale::Id scale = RaytraceScale::Full;
 				uint32_t          width;
 				uint32_t          height;
 				Texture2D::Ptr    output;
+				bool              enable = true;
 			};
 		}        // namespace component
 		auto registerRaytracedReflection(ExecuteQueue &update, ExecuteQueue &queue, std::shared_ptr<ExecutePoint> executePoint) -> void;

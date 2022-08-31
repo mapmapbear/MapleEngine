@@ -28,10 +28,7 @@ namespace maple
 {
 	namespace
 	{
-		constexpr uint32_t MAX_SCENE_MESH_INSTANCE_COUNT    = 1024;
-		constexpr uint32_t MAX_SCENE_LIGHT_COUNT            = 300;
-		constexpr uint32_t MAX_SCENE_MATERIAL_COUNT         = 4096;
-		constexpr uint32_t MAX_SCENE_MATERIAL_TEXTURE_COUNT = MAX_SCENE_MATERIAL_COUNT * 4;
+
 	}        // namespace
 
 	namespace bindless
@@ -52,26 +49,26 @@ namespace maple
 		namespace gather_scene
 		{
 			// clang-format off
-		using Entity = ecs::Registry
-			::Modify<global::component::RaytracingDescriptor>
-			::To<ecs::Entity>;
+			using Entity = ecs::Registry
+				::Modify<global::component::RaytracingDescriptor>
+				::To<ecs::Entity>;
 
-		using LightDefine = ecs::Registry 
-			::Fetch<component::Transform>
-			::Modify<component::Light>;
+			using LightDefine = ecs::Registry 
+				::Fetch<component::Transform>
+				::Modify<component::Light>;
 
-		using LightEntity = LightDefine::To<ecs::Entity>;
+			using LightEntity = LightDefine::To<ecs::Entity>;
 
-		using LightGroup = LightDefine::To<ecs::Group>;
+			using LightGroup = LightDefine::To<ecs::Group>;
 
-		using MeshQuery = ecs::Registry 
-			::Modify<component::MeshRenderer>
-			::Modify<component::Transform>
-			::To<ecs::Group>;
+			using MeshQuery = ecs::Registry 
+				::Modify<component::MeshRenderer>
+				::Modify<component::Transform>
+				::To<ecs::Group>;
 
-		using SkyboxGroup = ecs::Registry
-			::Fetch<component::SkyboxData>
-			::To<ecs::Group>;
+			using SkyboxGroup = ecs::Registry
+				::Fetch<component::SkyboxData>
+				::To<ecs::Group>;
 			// clang-format on
 
 			inline auto updateMaterial(raytracing::MaterialData &              materialData,
@@ -380,6 +377,12 @@ namespace maple
 				descriptor.iboDescriptor      = DescriptorSet::create({2, shader.get(), 1, descriptor.descriptorPool.get(), MAX_SCENE_MESH_INSTANCE_COUNT});
 				descriptor.materialDescriptor = DescriptorSet::create({3, shader.get(), 1, descriptor.descriptorPool.get(), MAX_SCENE_MESH_INSTANCE_COUNT});
 				descriptor.textureDescriptor  = DescriptorSet::create({4, shader.get(), 1, descriptor.descriptorPool.get(), MAX_SCENE_MATERIAL_TEXTURE_COUNT});
+
+				descriptor.sceneDescriptor->setName("SceneDescriptor");
+				descriptor.vboDescriptor->setName("VBO-Descriptor");
+				descriptor.iboDescriptor->setName("IBO-Descriptor");
+				descriptor.materialDescriptor->setName("MaterialDescriptor");
+				descriptor.textureDescriptor->setName("TextureDescriptor");
 
 				descriptor.defaultMaterial = std::make_shared<Material>();
 				MaterialProperties properties;

@@ -225,7 +225,7 @@ namespace maple
 				atrous.copyTilesShader   = Shader::create("shaders/Shadow/DenoiseCopyTiles.shader");
 
 				PipelineInfo info1;
-				info2.pipelineName         = "Atrous-Filer Pipeline";
+				info1.pipelineName         = "Atrous-Filer Pipeline";
 				info1.shader               = atrous.atrousFilerShader;
 				atrous.atrousFilerPipeline = Pipeline::get(info1);
 
@@ -352,7 +352,7 @@ namespace maple
 			::To<ecs::Entity>;
 		// clang-format on
 
-		inline auto reserArgs(component::TemporalAccumulator &acc, const component::RendererData &renderData)
+		inline auto resetArgs(component::TemporalAccumulator &acc, const component::RendererData &renderData)
 		{
 			//acc.denoiseDispatchBuffer1->
 			acc.resetPipeline->bufferBarrier(renderData.commandBuffer, {acc.denoiseDispatchBuffer1,
@@ -501,7 +501,7 @@ namespace maple
 			//temporal accumulation
 			//a trous filter
 			//upsample to fullscreen
-			reserArgs(acc, renderData);
+			resetArgs(acc, renderData);
 			accumulation(acc, pipeline, renderData, winSize, cameraView);
 			shadow.output = atrousFilter(atrous, pipeline, renderData, acc);
 

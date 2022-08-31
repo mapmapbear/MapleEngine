@@ -72,12 +72,13 @@ layout(push_constant) uniform PushConstants
 {
     float bias;
     float trim;
-    uint  numLights;
-    uint  numFrames;
-    int   sampleGI;
-    int   approximateWithDDGI;
     float intensity;
     float roughDDGIIntensity;
+    uint  numLights;
+    uint  numFrames;
+    uint  sampleGI;
+    uint  approximateWithDDGI;
+    vec4  cameraPosition;
 }pushConsts;
 
 #include "../Raytraced/RayQuery.glsl"

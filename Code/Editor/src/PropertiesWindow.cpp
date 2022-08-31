@@ -15,7 +15,6 @@
 #include "Engine/Renderer/GridRenderer.h"
 #include "Engine/Renderer/PostProcessRenderer.h"
 #include "Engine/Renderer/ShadowRenderer.h"
-#include "Engine/Renderer/SkyboxRenderer.h"
 
 #include "Scene/Component/Atmosphere.h"
 #include "Scene/Component/Bindless.h"

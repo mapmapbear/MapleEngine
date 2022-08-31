@@ -6,6 +6,7 @@
 #include "Engine/Core.h"
 #include "Scene/System/ExecutePoint.h"
 #include "Engine/Raytrace/RaytraceScale.h"
+#include "RHI/DescriptorSet.h"
 #include "RHI/Texture.h"
 #include <glm/glm.hpp>
 
@@ -58,6 +59,8 @@ namespace maple
 
 				Texture::Ptr currentIrrdance;
 				Texture::Ptr currentDepth;
+
+				DescriptorSet::Ptr ddgiCommon;// set 5.
 			};
 		}        // namespace component
 

@@ -40,14 +40,6 @@
 
 namespace maple
 {
-	namespace
-	{
-		constexpr uint32_t MAX_SCENE_MESH_INSTANCE_COUNT    = 1024;
-		constexpr uint32_t MAX_SCENE_LIGHT_COUNT            = 300;
-		constexpr uint32_t MAX_SCENE_MATERIAL_COUNT         = 4096;
-		constexpr uint32_t MAX_SCENE_MATERIAL_TEXTURE_COUNT = MAX_SCENE_MATERIAL_COUNT * 4;
-	}        // namespace
-
 	namespace ddgi
 	{
 		namespace component
@@ -72,18 +64,6 @@ namespace maple
 			{
 				Shader::Ptr   shader;
 				Pipeline::Ptr pipeline;
-
-				/*StorageBuffer::Ptr  lightBuffer;
-				StorageBuffer::Ptr  materialBuffer;
-				StorageBuffer::Ptr  transformBuffer;
-				DescriptorPool::Ptr descriptorPool
-				Material::Ptr             defaultMaterial;
-				std::vector<Texture::Ptr> shaderTextures;
-				DescriptorSet::Ptr sceneDescriptor;
-				DescriptorSet::Ptr vboDescriptor;
-				DescriptorSet::Ptr iboDescriptor;
-				DescriptorSet::Ptr materialDescriptor;
-				DescriptorSet::Ptr textureDescriptor;*/
 
 				DescriptorSet::Ptr samplerDescriptor;
 				DescriptorSet::Ptr outpuDescriptor;
@@ -215,12 +195,6 @@ namespace maple
 			raytracePass.samplerDescriptor->setTexture("uDepth", internal.depth[1 - internal.pingPong]);
 			raytracePass.outpuDescriptor->setTexture("iRadiance", internal.radiance);
 			raytracePass.outpuDescriptor->setTexture("iDirectionDistance", internal.directionDepth);
-
-			/*	raytracePass.sceneDescriptor->update(renderData.commandBuffer);
-			raytracePass.vboDescriptor->update(renderData.commandBuffer);
-			raytracePass.iboDescriptor->update(renderData.commandBuffer);
-			raytracePass.materialDescriptor->update(renderData.commandBuffer);
-			raytracePass.textureDescriptor->update(renderData.commandBuffer);*/
 
 			raytracePass.samplerDescriptor->update(renderData.commandBuffer);
 			raytracePass.outpuDescriptor->update(renderData.commandBuffer);
@@ -543,6 +517,8 @@ namespace maple
 
 				raytracePass.samplerDescriptor  = DescriptorSet::create({5, raytracePass.shader.get()});
 				raytracePass.outpuDescriptor    = DescriptorSet::create({6, raytracePass.shader.get()});
+
+				pipeline.ddgiCommon = raytracePass.samplerDescriptor;
 
 				uniformChanged(pipeline, entity, world);
 				ddgi::init::initializeProbeGrid(pipeline, pipe, uniform, world);

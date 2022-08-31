@@ -35,14 +35,6 @@
 
 namespace maple
 {
-	namespace
-	{
-		constexpr uint32_t MAX_SCENE_MESH_INSTANCE_COUNT    = 1024;
-		constexpr uint32_t MAX_SCENE_LIGHT_COUNT            = 300;
-		constexpr uint32_t MAX_SCENE_MATERIAL_COUNT         = 4096;
-		constexpr uint32_t MAX_SCENE_MATERIAL_TEXTURE_COUNT = MAX_SCENE_MATERIAL_COUNT * 4;
-	}        // namespace
-
 	namespace component
 	{
 		struct PathTracePipeline

@@ -45,7 +45,8 @@
 - Global Illumination(Light Propagation Volumes/Voxel Cone Tracing/DDGI)
 - Directional lights + Cascaded shadow maps
 - Soft shadows (PCF)
-- Ray traced shadows (Spatiotemporal Variance-Guided Filtering)
+- Ray traced Shadows 	 (Spatiotemporal Variance-Guided Filtering)
+- Ray traced Reflections (No Spatiotemporal Variance-Guided Filtering)
 - Screen Space Ambient Occlusion (SSAO)
 - Screen Space Reflections(SSR)
 - Lua Scripting
@@ -80,7 +81,7 @@ Precomputed Atmospheric Scattering 	| -          	| Low priority
 Spherical Harmonics Lighting | -          | Medium priority
 Subsurface Scattering 			| -          	| Low priority
 Screen-space blurred reflections using Screen-Space Roughness | -          	| -
-Ray-traced reflections			| -          	| -
+Ray-traced reflections			| 50%          	| No denoise becuase gbuffer is not satisfied
 SDF Shadow			| -          	| -
 SDF AO			| -          	| -
 GPU Driven Rendering			 	| -          	| High priority(https://vkguide.dev/docs/gpudriven/compute_culling/)

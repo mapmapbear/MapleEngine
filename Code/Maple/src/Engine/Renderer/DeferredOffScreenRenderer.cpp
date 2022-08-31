@@ -10,13 +10,13 @@
 #include "RHI/Shader.h"
 #include "RHI/Texture.h"
 
+#include "Engine/AmbientOcclusion/SSAORenderer.h"
 #include "Engine/Camera.h"
 #include "Engine/CaptureGraph.h"
 #include "Engine/GBuffer.h"
 #include "Engine/Mesh.h"
 #include "Engine/PathTracer/PathIntegrator.h"
 #include "Engine/Profiler.h"
-#include "Engine/AmbientOcclusion/SSAORenderer.h"
 
 #include "Engine/DDGI/DDGIRenderer.h"
 
@@ -37,8 +37,8 @@
 #include "Engine/VXGI/DrawVoxel.h"
 #include "Engine/VXGI/Voxelization.h"
 
-#include "Engine/Raytrace/RaytracedShadow.h"
 #include "Engine/Raytrace/RaytracedReflection.h"
+#include "Engine/Raytrace/RaytracedShadow.h"
 
 #include "Application.h"
 #include "ImGui/ImGuiHelpers.h"
@@ -201,7 +201,6 @@ namespace maple
 				auto [ddgi] = ddgiGroup.convert(*ddgiGroup.begin());
 				ddgiEanble  = ddgi.enable ? 1 : 0;
 			}
-
 
 			const glm::mat4 *shadowTransforms = shadowData.shadowProjView;
 			const glm::vec4 *splitDepth       = shadowData.splitDepth;
@@ -526,11 +525,14 @@ namespace maple
 
 		using RaytraceShadowGroup = ecs::Registry::Fetch<raytraced_shadow::component::RaytracedShadow>::To<ecs::Group>;
 
+		using RaytraceRefelectonGroup = ecs::Registry::Fetch<raytraced_reflection::component::RaytracedReflection>::To<ecs::Group>;
+
 		inline auto onRender(
 		    Entity                                                entity,
 		    EnvQuery                                              envQuery,
 		    PathTraceGroup                                        pathGroup,
 		    RaytraceShadowGroup                                   raytraceShadowGroup,
+		    RaytraceRefelectonGroup                               raytraceReflectionGroup,
 		    const vxgi_debug::global::component::DrawVoxelRender *voxelDebug,
 		    const vxgi::global::component::VoxelBuffer *          voxelBuffer,
 		    ecs::World                                            world)
@@ -559,16 +561,24 @@ namespace maple
 
 			if (!raytraceShadowGroup.empty())
 			{
-				for (auto ent : raytraceShadowGroup)
-				{
-					auto [shadow] = raytraceShadowGroup.convert(ent);
-					if (shadow.output)
+				auto [shadow] = raytraceShadowGroup.convert(*raytraceShadowGroup.begin());
+				if (shadow.output)
 					descriptorSet->setTexture("uShadowMapRaytrace", shadow.output);
-				}
 			}
 			else
 			{
 				descriptorSet->setTexture("uShadowMapRaytrace", rendererData.unitTexture);
+			}
+
+			if (!raytraceReflectionGroup.empty())
+			{
+				auto [reflect] = raytraceReflectionGroup.convert(*raytraceReflectionGroup.begin());
+				if (reflect.output)
+					descriptorSet->setTexture("uReflection", reflect.output);
+			}
+			else
+			{
+				descriptorSet->setTexture("uReflection", rendererData.unitTexture);
 			}
 
 			if (!envQuery.empty())

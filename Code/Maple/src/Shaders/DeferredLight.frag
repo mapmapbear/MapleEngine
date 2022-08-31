@@ -48,7 +48,8 @@ layout(set = 0, binding = 8)  uniform samplerCube uPrefilterMap;
 layout(set = 0, binding = 9)  uniform sampler2D uPreintegratedFG;
 layout(set = 0, binding = 10) uniform sampler2D uIndirectLight;
 layout(set = 0, binding = 11) uniform sampler2D uShadowMapRaytrace;
-layout(set = 0, binding = 12) uniform UniformBufferLight
+layout(set = 0, binding = 12) uniform sampler2D uReflection;
+layout(set = 0, binding = 13) uniform UniformBufferLight
 {
 	Light lights[MAX_LIGHTS];
 	mat4 shadowTransform[MAX_SHADOWMAPS];
@@ -249,10 +250,11 @@ vec3 lighting(vec3 F0, vec3 wsPos, Material material,vec2 fragTexCoord)
 		return material.albedo.rgb;
 	}
 	
+	float value = 1.0;
+	
 	for(int i = 0; i < ubo.lightCount; i++)
 	{
 		Light light = ubo.lights[i];
-		float value = 1.0;
 
 		float intensity = pow(light.intensity,1.4) + 0.1;
 
@@ -318,39 +320,25 @@ vec3 lighting(vec3 F0, vec3 wsPos, Material material,vec2 fragTexCoord)
 		
 		vec3 kd = (1.0 - F) * (1.0 - material.metallic.x);
 		vec3 diffuseBRDF = kd * material.albedo.xyz / PI;
-		
 		// Cook-Torrance
 		vec3 specularBRDF = (F * D * G) / max(EPSILON, 4.0 * cosLi * material.normalDotView);
-		
-		vec4 indirectShading = texture(uIndirectLight,fragTexCoord);
 
-		if(ubo.enableLPV == 1)
-		{
-			vec3 indirect = ( diffuseBRDF + specularBRDF ) * indirectShading.rgb;
-			indirectShading = vec4(indirect,1);
-		}	
+		vec3 directShading = (diffuseBRDF + specularBRDF) * Lradiance * cosLi;
 
-		if(ubo.enableDDGI == 1)
-		{
-			vec3 indirect = kd * material.albedo.xyz * indirectShading.rgb;
-			indirectShading = vec4(indirect,1);
-		}
-
-		if(ubo.shadowMethod == ShadowTypeTraceShadowCone)
-		{
-			value = indirectShading.a;
-		}
-
-		if(ubo.shadowMethod == ShadowTypeRaytraceShadow)
-		{
-			value = texture(uShadowMapRaytrace,fragTexCoord).r;
-		}
-
-		vec3 directShading = (diffuseBRDF + specularBRDF) * Lradiance * cosLi * value;
-
-		result += directShading + indirectShading.rgb;
+		result += directShading;
 	}
-	return result ;
+
+	if(ubo.shadowMethod == ShadowTypeTraceShadowCone)
+	{
+		value = texture(uIndirectLight,fragTexCoord).a;
+	}
+
+	if(ubo.shadowMethod == ShadowTypeRaytraceShadow)
+	{
+		value = texture(uShadowMapRaytrace,fragTexCoord).r;
+	}
+
+	return result * value;
 }
 
 vec3 radianceIBLIntegration(float NdotV, float roughness, vec3 metallic)
@@ -362,6 +350,7 @@ vec3 radianceIBLIntegration(float NdotV, float roughness, vec3 metallic)
 vec3 IBL(vec3 F0, vec3 Lr, Material material)
 {
 	float level = float(ubo.cubeMapMipLevels);
+
 	if(textureSize(uIrradianceMap,0).x == 1)
 	{
 		return vec3(0,0,0);
@@ -389,6 +378,26 @@ float attentuate( vec3 lightData, float dist )
 	float att =  1.0 / ( lightData.x + lightData.y*dist + lightData.z*dist*dist );
 	float damping = 1.0;
 	return max(att * damping, 0.0);
+}
+
+vec3 indirectLight(in Material material, vec3 F0, vec2 fragTexCoord)
+{
+	vec3 indirectShading = vec3(0);
+
+	if(ubo.enableLPV == 1 || ubo.enableDDGI == 1)
+	{
+		indirectShading = texture(uIndirectLight,fragTexCoord).rgb;
+		vec3 F = fresnelSchlickRoughness(F0, material.normalDotView, material.roughness);
+		vec3 kd = (1.0 - F) * (1.0 - material.metallic.x);
+		vec3 diffuseBRDF = kd * material.albedo.xyz / PI;
+		indirectShading = diffuseBRDF * indirectShading;
+	}
+
+	vec3 specularIrradiance = textureLod(uReflection, fragTexCoord, 0.0f).rgb;
+	vec2 specularBRDF = texture(uPreintegratedFG, vec2(material.normalDotView, material.roughness)).rg;
+	vec3 specular = specularIrradiance * (F0 * specularBRDF.x + specularBRDF.y);
+	
+	return indirectShading + specular;
 }
 
 void main()
@@ -434,8 +443,8 @@ void main()
 	}
 
 	vec3 lightContribution = lighting(F0, wsPos, material,fragTexCoord);
-
-	vec3 finalColor = (lightContribution + iblContribution) * material.ao * material.ssao + emissive;
+	vec3 indirect = indirectLight(material,F0, fragTexCoord);
+	vec3 finalColor = (lightContribution + iblContribution + indirect) * material.ao * material.ssao + emissive;
 
 	outColor = vec4(finalColor, 1.0);
 

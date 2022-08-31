@@ -119,12 +119,12 @@ namespace maple
 		deferred_offscreen::registerDeferredOffScreenRenderer(beginQ, renderQ, executePoint);
 		ssao::registerSSAOPass(beginQ, renderQ, executePoint);
 		vxgi::registerVXGIIndirectLighting(renderQ, executePoint);
+		
+		ddgi::registerDDGI(beginQ, renderQ, executePoint);
 		raytraced_reflection::registerRaytracedReflection(beginQ, renderQ, executePoint);
 		raytraced_shadow::registerRaytracedShadow(beginQ, renderQ, executePoint);
-		ddgi::registerDDGI(beginQ, renderQ, executePoint);
 
 		deferred_lighting::registerDeferredLighting(beginQ, renderQ, executePoint);
-
 		atmosphere_pass::registerAtmosphere(beginQ, renderQ, executePoint);
 		skybox_renderer::registerSkyboxRenderer(beginQ, renderQ, executePoint);
 		cloud_renderer::registerCloudRenderer(beginQ, renderQ, executePoint);

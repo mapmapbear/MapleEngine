@@ -18,13 +18,14 @@
 #include "Scene/SceneManager.h"
 #include "Scene/System/HierarchyModule.h"
 
+#include "Engine/DDGI/DDGIRenderer.h"
 #include "Engine/LPVGI/LPVIndirectLighting.h"
 #include "Engine/LPVGI/LightPropagationVolume.h"
 #include "Engine/LPVGI/ReflectiveShadowMap.h"
 #include "Engine/PathTracer/PathIntegrator.h"
-#include "Engine/VXGI/Voxelization.h"
+#include "Engine/Raytrace/RaytracedReflection.h"
 #include "Engine/Raytrace/RaytracedShadow.h"
-#include "Engine/DDGI/DDGIRenderer.h"
+#include "Engine/VXGI/Voxelization.h"
 
 #include "Engine/IconsDefine.inl"
 #include "ImGui/ImGuiHelpers.h"
@@ -217,6 +218,16 @@ namespace maple
 					auto entity = scene->createEntity("Raytraced-Shadow");
 					entity.addComponent<raytraced_shadow::component::RaytracedShadow>();
 					Application::getExecutePoint()->getGlobalComponent<global::component::SceneTransformChanged>().dirty = true;
+				}
+			}
+
+			if (!world.hasComponent<raytraced_reflection::component::RaytracedReflection>())
+			{
+				if (ImGui::Selectable("Add Raytraced-Reflection"))
+				{
+					auto entity = scene->createEntity("Raytraced-Reflection");
+					entity.addComponent<raytraced_reflection::component::RaytracedReflection>();
+					//Application::getExecutePoint()->getGlobalComponent<global::component::SceneTransformChanged>().dirty = true;
 				}
 			}
 
