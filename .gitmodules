@@ -1,0 +1,9 @@
+[submodule "ECS-Chain"]
+	path = Code/Maple/lib/ecs
+	url = https://github.com/flwmxd/ECS-Chain
+[submodule "Code/Maple/lib/ecs"]
+	path = Code/Maple/lib/ecs
+	url = https://github.com/flwmxd/ECS-Chain
+[submodule "Code/Maple/lib/bullet3"]
+	path = Code/Maple/lib/bullet3
+	url = https://github.com/bulletphysics/bullet3.git
