@@ -71,8 +71,11 @@ layout(set = 0, binding = 13) uniform UniformBufferLight
 	int enableLPV;
 	int enableShadow;
 	int shadowMethod;
+
 	int iblEnable;
 	int enableDDGI;
+	int enableVXGI;
+	int padding;
 } ubo;
 
 float RayMarch(vec3 startPos, vec3 viewDir, vec3 normal, vec3 cameraPos, Light light)
@@ -391,6 +394,11 @@ vec3 indirectLight(in Material material, vec3 F0, vec2 fragTexCoord)
 		vec3 kd = (1.0 - F) * (1.0 - material.metallic.x);
 		vec3 diffuseBRDF = kd * material.albedo.xyz / PI;
 		indirectShading = diffuseBRDF * indirectShading;
+	}
+
+	if(ubo.enableVXGI == 1)
+	{
+		indirectShading = texture(uIndirectLight,fragTexCoord).rgb;
 	}
 
 	vec3 specularIrradiance = textureLod(uReflection, fragTexCoord, 0.0f).rgb;

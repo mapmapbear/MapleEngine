@@ -124,15 +124,16 @@ namespace maple
 
 		using DDGIGroup = ecs::Registry::Fetch<ddgi::component::DDGIPipeline>::To<ecs::Group>;
 
-		inline auto beginScene(Entity           entity,
-		                       Group            lightQuery,
-		                       EnvQuery         env,
-		                       MeshQuery        meshQuery,
-		                       SkinnedMeshQuery skinnedMeshQuery,
-		                       BoneMeshQuery    boneQuery,
-		                       PathTraceGroup   pathGroup,
-		                       DDGIGroup        ddgiGroup,
-		                       ecs::World       world)
+		inline auto beginScene(Entity                                      entity,
+		                       Group                                       lightQuery,
+		                       EnvQuery                                    env,
+		                       MeshQuery                                   meshQuery,
+		                       SkinnedMeshQuery                            skinnedMeshQuery,
+		                       BoneMeshQuery                               boneQuery,
+		                       PathTraceGroup                              pathGroup,
+		                       DDGIGroup                                   ddgiGroup,
+		                       const vxgi::global::component::VoxelBuffer *voxelBuffer,
+		                       ecs::World                                  world)
 		{
 			auto [data, shadowData, cameraView, renderData, ssao] = entity;
 			data.commandQueue.clear();
@@ -202,6 +203,8 @@ namespace maple
 				ddgiEanble  = ddgi.enable ? 1 : 0;
 			}
 
+			int32_t vxgiEnable = voxelBuffer != nullptr ? 1 : 0;
+
 			const glm::mat4 *shadowTransforms = shadowData.shadowProjView;
 			const glm::vec4 *splitDepth       = shadowData.splitDepth;
 			const glm::mat4  lightView        = shadowData.lightMatrix;
@@ -225,6 +228,7 @@ namespace maple
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "shadowMethod", &shadowData.shadowMethod);
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "enableLPV", &lpvEnable);
 			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "enableDDGI", &ddgiEanble);
+			data.descriptorLightSet[0]->setUniform("UniformBufferLight", "enableVXGI", &vxgiEnable);
 
 			if (directionaLight != nullptr)
 			{

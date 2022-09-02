@@ -268,6 +268,9 @@ namespace maple
 
 	auto VulkanDevice::init() -> bool
 	{
+		const std::vector<const char *> kValidationLayers = {
+		    "VK_LAYER_KHRONOS_validation"};
+
 		physicalDevice = std::make_shared<VulkanPhysicalDevice>();
 
 		VkPhysicalDeviceVulkan11Features features11{};
@@ -353,7 +356,8 @@ namespace maple
 		deviceCreateInfo.ppEnabledExtensionNames = deviceExtensions.data();
 		//deviceCreateInfo.pEnabledFeatures        = &physicalDeviceFeatures;
 
-		deviceCreateInfo.enabledLayerCount = 0;
+	//	deviceCreateInfo.enabledLayerCount = kValidationLayers.size();
+	//	deviceCreateInfo.ppEnabledLayerNames = &kValidationLayers[0];
 		deviceCreateInfo.pNext             = (void *) &physicalDeviceFeatures2;
 
 		auto result = vkCreateDevice(*physicalDevice, &deviceCreateInfo, VK_NULL_HANDLE, &device);
